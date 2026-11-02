@@ -9,6 +9,18 @@ window.GRUPOS = [
   { id: 'ayuda', nombre: 'Ayuda', icono: 'ti-help' }
 ];
 
+// Catálogos compartidos: aparecen dentro de Catálogos en todos los módulos.
+window.CATALOGOS_COMUNES = [
+  {
+    subgrupo: 'Geografía',
+    icono: 'ti-map-2',
+    pantallas: [
+      { id: 'geografia', nombre: 'Geografía', icono: 'ti-world', descripcion: 'Países, estados o departamentos y ciudades o municipios.' },
+      { id: 'organizaciones', nombre: 'Organizaciones', icono: 'ti-building', descripcion: 'Organizaciones y sus localidades.' }
+    ]
+  }
+];
+
 window.MODULOS = [
   {
     id: 'contabilidad',

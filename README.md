@@ -28,6 +28,19 @@ Inicio de sesión con Supabase Auth (pantalla dividida). La migración
 `rol_modulos` con RLS. El primer usuario registrado queda como administrador; los
 demás quedan inactivos hasta que el administrador los active en **Usuarios**.
 
+## Catálogos comunes: Geografía
+
+En **Catálogos** de todos los módulos aparece el subgrupo **Geografía** con dos pantallas
+(`web/js/geografia.js` y `web/js/organizaciones.js`):
+
+- **Geografía:** países → estados / departamentos (con regiones) → ciudades / municipios.
+  Incluye los 22 departamentos, 8 regiones y 340 municipios de Guatemala.
+- **Organizaciones:** organizaciones y sus localidades (código `1-01`, `1-02`…), con
+  auditoría de quién grabó y modificó cada registro.
+
+Migración: `supabase/migrations/20261102000002_geografia_y_organizaciones.sql`. Leen todos los
+usuarios activos; graban el administrador y el contador. No se borra: se desactiva.
+
 ## Publicación
 
 GitHub Pages publica la rama `main` desde la raíz: https://consisav.github.io/Financiero/
