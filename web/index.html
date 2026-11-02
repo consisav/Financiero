@@ -8,13 +8,70 @@
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-  <header class="barra">
-    <a class="marca" href="#/"><i class="ti ti-chart-pie" aria-hidden="true"></i> Financiero</a>
-    <nav id="migas" class="migas" aria-label="Ubicación"></nav>
-    <span id="estado-bd" class="estado"></span>
-  </header>
+  <!-- Inicio de sesión: pantalla dividida -->
+  <div id="acceso" class="acceso" hidden>
+    <aside class="acceso-marca">
+      <div class="marca grande"><i class="ti ti-chart-pie" aria-hidden="true"></i> Financiero</div>
+      <p>Contabilidad, facturación, inventarios, SAT, nóminas e importaciones en un solo lugar.</p>
+      <div class="acceso-iconos" aria-hidden="true">
+        <i class="ti ti-calculator"></i><i class="ti ti-receipt"></i><i class="ti ti-packages"></i>
+        <i class="ti ti-building-bank"></i><i class="ti ti-users"></i><i class="ti ti-world"></i>
+      </div>
+    </aside>
 
-  <main id="vista" class="vista"></main>
+    <main class="acceso-panel">
+      <form id="f-entrar" class="formulario" data-paso="entrar">
+        <h1>Iniciar sesión</h1>
+        <label>Correo<input name="correo" type="email" autocomplete="email" required placeholder="nombre@consisav.com"></label>
+        <label>Contraseña<input name="clave" type="password" autocomplete="current-password" required></label>
+        <button type="submit" class="primario">Iniciar sesión</button>
+        <p class="enlaces"><a href="#" data-ir="recuperar">¿Olvidaste tu contraseña?</a> · <a href="#" data-ir="registrar">Crear cuenta</a></p>
+      </form>
+
+      <form id="f-registrar" class="formulario" data-paso="registrar" hidden>
+        <h1>Crear cuenta</h1>
+        <label>Nombre completo<input name="nombre" autocomplete="name" required placeholder="María López"></label>
+        <label>Correo<input name="correo" type="email" autocomplete="email" required placeholder="nombre@consisav.com"></label>
+        <label>Contraseña<input name="clave" type="password" autocomplete="new-password" minlength="8" required placeholder="Mínimo 8 caracteres"></label>
+        <button type="submit" class="primario">Crear cuenta</button>
+        <p class="enlaces"><a href="#" data-ir="entrar">Ya tengo cuenta</a></p>
+      </form>
+
+      <form id="f-recuperar" class="formulario" data-paso="recuperar" hidden>
+        <h1>Recuperar contraseña</h1>
+        <p class="sub">Te enviaremos un enlace para crear una contraseña nueva.</p>
+        <label>Correo<input name="correo" type="email" autocomplete="email" required placeholder="nombre@consisav.com"></label>
+        <button type="submit" class="primario">Enviar enlace</button>
+        <p class="enlaces"><a href="#" data-ir="entrar">Volver a iniciar sesión</a></p>
+      </form>
+
+      <form id="f-nueva" class="formulario" data-paso="nueva" hidden>
+        <h1>Contraseña nueva</h1>
+        <label>Contraseña nueva<input name="clave" type="password" autocomplete="new-password" minlength="8" required placeholder="Mínimo 8 caracteres"></label>
+        <button type="submit" class="primario">Guardar contraseña</button>
+      </form>
+
+      <div id="pendiente" class="formulario" data-paso="pendiente" hidden>
+        <h1>Cuenta pendiente</h1>
+        <p class="sub">Tu cuenta fue creada, pero un administrador todavía debe activarla y asignarte un rol.</p>
+        <button type="button" class="secundario" data-salir>Cerrar sesión</button>
+      </div>
+
+      <p id="mensaje" class="mensaje" role="status"></p>
+    </main>
+  </div>
+
+  <!-- Aplicación -->
+  <div id="app" hidden>
+    <header class="barra">
+      <a class="marca" href="#/"><i class="ti ti-chart-pie" aria-hidden="true"></i> Financiero</a>
+      <nav id="migas" class="migas" aria-label="Ubicación"></nav>
+      <a id="ir-usuarios" class="boton-barra" href="#/usuarios" hidden><i class="ti ti-user-cog" aria-hidden="true"></i> Usuarios</a>
+      <span id="quien" class="quien"></span>
+      <button type="button" class="boton-barra" data-salir><i class="ti ti-logout" aria-hidden="true"></i> Salir</button>
+    </header>
+    <main id="vista" class="vista"></main>
+  </div>
 
   <div id="aviso" class="aviso" role="status"></div>
 

@@ -51,8 +51,73 @@ a { color: var(--acento); text-decoration: none; }
 .migas { display: flex; gap: 6px; align-items: center; color: var(--suave); font-size: 14px; flex: 1; min-width: 0; }
 .migas span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.estado { font-size: 12px; color: var(--suave); border: 1px solid var(--borde); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
-.estado.ok { color: var(--ok); border-color: var(--ok); }
+.quien { font-size: 13px; color: var(--suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+
+.boton-barra {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--texto);
+  background: none;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.boton-barra:hover { border-color: var(--acento); color: var(--acento); }
+
+[hidden] { display: none !important; }
+
+/* Acceso: pantalla dividida */
+.acceso { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 100vh; }
+.acceso-marca {
+  background: var(--acento-fondo);
+  color: var(--acento);
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+.acceso-marca p { font-size: 18px; line-height: 1.5; max-width: 420px; margin: 0; color: var(--texto); }
+.marca.grande { font-size: 30px; color: var(--acento); }
+.marca.grande .ti { font-size: 36px; }
+.acceso-iconos { display: flex; gap: 14px; font-size: 26px; }
+.acceso-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; background: var(--panel); }
+
+.formulario { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
+.formulario h1 { font-size: 24px; margin: 0 0 4px; }
+.formulario .sub { margin: 0; }
+.formulario label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--suave); }
+.formulario input, .tabla select {
+  font: inherit;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.formulario input:focus, .tabla select:focus { outline: 2px solid var(--acento); outline-offset: -1px; border-color: var(--acento); }
+.primario, .secundario { font: inherit; font-size: 15px; border-radius: 8px; padding: 11px; cursor: pointer; }
+.primario { background: var(--acento); color: var(--panel); border: 0; }
+.primario:disabled { opacity: .6; cursor: wait; }
+.secundario { background: none; color: var(--texto); border: 1px solid var(--borde); }
+.enlaces { font-size: 14px; margin: 0; text-align: center; color: var(--suave); }
+.mensaje { max-width: 360px; width: 100%; font-size: 14px; color: var(--ok); margin: 16px 0 0; min-height: 1em; }
+.mensaje.error { color: #c62828; }
+
+/* Usuarios */
+.tabla-envoltura { overflow-x: auto; background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); }
+.tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabla th, .tabla td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--borde); }
+.tabla th { color: var(--suave); font-weight: 600; font-size: 13px; }
+.tabla tr:last-child td { border-bottom: 0; }
+.tabla select { padding: 6px 8px; font-size: 14px; }
+.tabla input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--acento); }
 
 .vista { max-width: 1200px; margin: 0 auto; padding: 28px 24px 48px; }
 .vista h1 { font-size: 24px; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; }
@@ -117,6 +182,17 @@ a { color: var(--acento); text-decoration: none; }
 
 @media (max-width: 600px) {
   .barra { padding: 10px 16px; gap: 10px; }
-  .estado { display: none; }
+  .quien { display: none; }
+  .boton-barra { padding: 5px 8px; }
   .vista { padding: 20px 16px 40px; }
+}
+
+@media (max-width: 800px) {
+  .acceso { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .acceso-panel { justify-content: flex-start; }
+  .acceso-marca { padding: 28px 16px; gap: 10px; }
+  .acceso-marca p { font-size: 15px; }
+  .marca.grande { font-size: 24px; }
+  .acceso-iconos { font-size: 22px; }
+  .acceso-panel { padding: 28px 16px 40px; }
 }

@@ -21,6 +21,13 @@ gráficas, Ayuda). Los módulos y opciones se definen en `web/js/menu.js`.
 La conexión a Supabase se configura en `web/js/config.js` (URL y llave pública
 anon; nunca la `service_role`).
 
+## Usuarios y roles
+
+Inicio de sesión con Supabase Auth (pantalla dividida). La migración
+`supabase/migrations/20261102000001_usuarios_y_roles.sql` crea `roles`, `perfiles` y
+`rol_modulos` con RLS. El primer usuario registrado queda como administrador; los
+demás quedan inactivos hasta que el administrador los active en **Usuarios**.
+
 ## Publicación
 
 GitHub Pages publica la rama `main` desde la raíz: https://consisav.github.io/Financiero/
