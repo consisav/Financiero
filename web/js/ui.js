@@ -53,7 +53,10 @@
   }
 
   // ---------- Ventana de formulario ----------
-  // campos: [{ nombre, etiqueta, tipo: texto|numero|correo|area|select|casilla, opciones: [{valor, texto}], requerido, ancho: 'completo' }]
+  // campos: [{ nombre, etiqueta, tipo: texto|numero|correo|area|select|casilla|imagen, opciones: [{valor, texto}], requerido, ancho: 'completo' }]
+  // Un campo "imagen" recibe en valores la URL actual y entrega { archivo: File|null, quitar: boolean }.
+  const IMAGEN_TIPOS = ['image/png', 'image/jpeg', 'image/webp'];
+  const IMAGEN_MAX = 2 * 1024 * 1024;
   function formulario({ titulo, campos, valores = {}, alGuardar, alPreparar }) {
     const velo = document.createElement('div');
     velo.className = 'modal-velo';
@@ -74,8 +77,27 @@
     const cerrar = () => velo.remove();
     velo.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', cerrar));
     velo.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+    const error = form.querySelector('.modal-error');
+    form.querySelectorAll('[data-imagen]').forEach((caja) => {
+      const input = caja.querySelector('input[type=file]');
+      const vista = caja.querySelector('.imagen-vista');
+      input.addEventListener('change', () => {
+        const f = input.files[0];
+        if (!f) return;
+        if (!IMAGEN_TIPOS.includes(f.type)) { error.textContent = 'La imagen debe ser PNG, JPG o WebP.'; input.value = ''; return; }
+        if (f.size > IMAGEN_MAX) { error.textContent = 'La imagen pesa más de 2 MB.'; input.value = ''; return; }
+        error.textContent = '';
+        caja.dataset.quitar = '';
+        vista.innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`;
+      });
+      caja.querySelector('[data-quitar]').addEventListener('click', () => {
+        input.value = '';
+        caja.dataset.quitar = '1';
+        vista.innerHTML = '<i class="ti ti-photo" aria-hidden="true"></i><small>Sin imagen</small>';
+      });
+    });
     if (alPreparar) alPreparar(form);
-    const primero = form.querySelector('input:not([type=checkbox]), select, textarea');
+    const primero = form.querySelector('input:not([type=checkbox]):not([type=file]), select, textarea');
     if (primero) primero.focus();
 
     form.addEventListener('submit', async (e) => {
@@ -83,7 +105,10 @@
       const datos = {};
       for (const c of campos) {
         const el = form.elements[c.nombre];
-        if (c.tipo === 'casilla') datos[c.nombre] = el.checked;
+        if (c.tipo === 'imagen') {
+          const caja = form.querySelector(`[data-imagen="${c.nombre}"]`);
+          datos[c.nombre] = { archivo: caja.querySelector('input[type=file]').files[0] || null, quitar: caja.dataset.quitar === '1' };
+        } else if (c.tipo === 'casilla') datos[c.nombre] = el.checked;
         else if (c.tipo === 'numero' || c.tipo === 'select-numero') datos[c.nombre] = el.value === '' ? null : Number(el.value);
         else datos[c.nombre] = el.value.trim() === '' ? null : el.value.trim();
       }
@@ -101,6 +126,20 @@
     const ancho = c.ancho === 'completo' ? ' completo' : '';
     if (c.tipo === 'casilla') {
       return `<label class="campo casilla${ancho}"><input type="checkbox" name="${c.nombre}" ${valor !== false ? 'checked' : ''}> ${esc(c.etiqueta)}</label>`;
+    }
+    if (c.tipo === 'imagen') {
+      return `
+        <div class="campo imagen${ancho}" data-imagen="${c.nombre}">
+          <span>${esc(c.etiqueta)}</span>
+          <div class="imagen-caja">
+            <div class="imagen-vista">${valor ? `<img src="${esc(valor)}" alt="">` : '<i class="ti ti-photo" aria-hidden="true"></i><small>Sin imagen</small>'}</div>
+            <div class="imagen-botones">
+              <label class="boton secundario-sm"><i class="ti ti-upload" aria-hidden="true"></i> Subir imagen<input type="file" accept="${IMAGEN_TIPOS.join(',')}" hidden></label>
+              <button type="button" class="boton secundario-sm" data-quitar>Quitar</button>
+              <small>PNG, JPG o WebP · máximo 2 MB</small>
+            </div>
+          </div>
+        </div>`;
     }
     let control;
     if (c.tipo === 'area') control = `<textarea name="${c.nombre}" rows="2" ${req}>${esc(valor)}</textarea>`;

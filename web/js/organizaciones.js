@@ -10,6 +10,37 @@
   const dato = (etiqueta, valor, completo) =>
     `<div class="dato${completo ? ' completo' : ''}"><span>${esc(etiqueta)}</span><b>${valor || '—'}</b></div>`;
 
+  // Logo y eslogan: imágenes en el bucket público "organizaciones" de Supabase Storage.
+  const BUCKET = 'organizaciones';
+  const IMAGENES = [
+    { campo: 'logo', columna: 'logo_ruta', etiqueta: 'Logo' },
+    { campo: 'eslogan', columna: 'eslogan_ruta', etiqueta: 'Eslogan' }
+  ];
+  const urlImagen = (ruta) => ruta ? window.FIN.sb.storage.from(BUCKET).getPublicUrl(ruta).data.publicUrl : null;
+  const imagen = (ruta, clase) => ruta ? `<img class="${clase}" src="${esc(urlImagen(ruta))}" alt="">` : '';
+
+  // Sube, reemplaza o quita las imágenes de una organización ya guardada.
+  async function guardarImagenes(sb, id, anterior, datos) {
+    const cambios = {};
+    const viejas = [];
+    for (const im of IMAGENES) {
+      const v = datos[im.campo];
+      if (!v || (!v.archivo && !v.quitar)) continue;
+      if (anterior && anterior[im.columna]) viejas.push(anterior[im.columna]);
+      if (v.archivo) {
+        const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[v.archivo.type];
+        const ruta = `${id}/${im.campo}-${Date.now()}.${ext}`;
+        const { error } = await sb.storage.from(BUCKET).upload(ruta, v.archivo, { contentType: v.archivo.type, cacheControl: '31536000' });
+        if (error) throw new Error(`No se pudo subir el ${im.etiqueta.toLowerCase()}: ${error.message || error.error || 'error del almacenamiento'}.`);
+        cambios[im.columna] = ruta;
+      } else cambios[im.columna] = null;
+    }
+    if (!Object.keys(cambios).length) return;
+    const { error } = await sb.from('organizaciones').update(cambios).eq('id', id);
+    if (error) throw error;
+    if (viejas.length) await sb.storage.from(BUCKET).remove(viejas);
+  }
+
   const camposUbicacion = [
     { nombre: 'pais_id', etiqueta: 'País', tipo: 'select-numero' },
     { nombre: 'departamento_id', etiqueta: 'Estado / departamento', tipo: 'select-numero' },
@@ -49,7 +80,7 @@
           id: 'orgs', editable, seleccionado: o && o.id, vacio: 'Todavía no hay organizaciones. Crea la primera.',
           columnas: [
             { titulo: 'Cód.', valor: (f) => f.codigo, clase: 'angosta' },
-            { titulo: 'Organización', valor: (f) => esc(f.nombre), clase: 'fuerte' },
+            { titulo: 'Organización', valor: (f) => `<span class="con-logo">${imagen(f.logo_ruta, 'logo-mini') || '<span class="logo-mini vacio-logo"><i class="ti ti-building" aria-hidden="true"></i></span>'} ${esc(f.nombre)}</span>`, clase: 'fuerte' },
             { titulo: 'Representante legal', valor: (f) => esc(f.representante_legal) || '—' },
             { titulo: 'Teléfonos', valor: (f) => esc(f.telefonos) || '—' },
             { titulo: 'Ubicación', valor: ubicacion },
@@ -70,12 +101,21 @@
               ${dato('Estado / departamento', o.departamento && esc(o.departamento.nombre))}
               ${dato('Ciudad / municipio', o.municipio && esc(o.municipio.nombre))}
             </div>
+            <div class="imagenes-org">
+              ${IMAGENES.map((im) => `
+                <figure class="imagen-org">
+                  <figcaption>${im.etiqueta}</figcaption>
+                  <div class="imagen-marco">${imagen(o[im.columna], '') || `<span class="sin-imagen"><i class="ti ti-photo" aria-hidden="true"></i> Sin ${im.etiqueta.toLowerCase()}</span>`}</div>
+                </figure>`).join('')}
+            </div>
           </div>` : ''}`;
       filtrar(pOrgs, estado.buscar.orgs || '');
     }
 
     function formOrg(fila) {
-      const valores = fila || { activo: true, pais_id: (estado.orgs[0] || {}).pais_id };
+      const valores = fila
+        ? { ...fila, logo: urlImagen(fila.logo_ruta), eslogan: urlImagen(fila.eslogan_ruta) }
+        : { activo: true, pais_id: (estado.orgs[0] || {}).pais_id };
       formulario({
         titulo: fila ? `Modificar organización · ${fila.codigo}` : 'Nueva organización',
         valores,
@@ -86,14 +126,22 @@
           { nombre: 'correos', etiqueta: 'Correos', placeholder: 'contacto@empresa.com', ancho: 'completo' },
           { nombre: 'direccion', etiqueta: 'Dirección', tipo: 'area', ancho: 'completo' },
           ...camposUbicacion,
-          { nombre: 'activo', etiqueta: 'Activa', tipo: 'casilla' }
+          { nombre: 'activo', etiqueta: 'Activa', tipo: 'casilla' },
+          { nombre: 'logo', etiqueta: 'Logo', tipo: 'imagen' },
+          { nombre: 'eslogan', etiqueta: 'Eslogan', tipo: 'imagen' }
         ],
         alPreparar: (form) => cascadaUbicacion(form, valores),
         alGuardar: async (d) => {
+          const imagenes = { logo: d.logo, eslogan: d.eslogan };
+          delete d.logo;
+          delete d.eslogan;
           const r = fila ? await sb.from('organizaciones').update(d).eq('id', fila.id).select('id').single()
                          : await sb.from('organizaciones').insert(d).select('id').single();
           if (r.error) throw r.error;
-          window.FIN.aviso('Organización guardada');
+          // Los datos ya quedaron guardados: si falla una imagen se avisa, sin dejar el formulario abierto.
+          let fallo = null;
+          try { await guardarImagenes(sb, r.data.id, fila, imagenes); } catch (err) { fallo = err; }
+          window.FIN.aviso(fallo ? `Organización guardada, pero ${fallo.message.charAt(0).toLowerCase()}${fallo.message.slice(1)}` : 'Organización guardada');
           estado.loc = null;
           await cargarOrgs(r.data.id);
         }

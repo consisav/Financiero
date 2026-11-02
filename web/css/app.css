@@ -286,6 +286,33 @@ p.vacio { color: var(--tenue); }
 .dato span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); }
 .dato b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 
+/* Logo y eslogan */
+.con-logo { display: inline-flex; align-items: center; gap: 10px; }
+.logo-mini { width: 30px; height: 30px; border-radius: 7px; object-fit: contain; background: #fff; border: 1px solid var(--borde); flex-shrink: 0; }
+.logo-mini.vacio-logo { display: inline-flex; align-items: center; justify-content: center; color: var(--tenue); background: var(--fondo); font-size: 15px; }
+.imagenes-org { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px 4px 0; }
+.imagen-org { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.imagen-org figcaption { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); }
+.imagen-marco {
+  height: 120px; border: 1px dashed var(--borde); border-radius: 12px; background: #fff;
+  display: flex; align-items: center; justify-content: center; padding: 12px; overflow: hidden;
+}
+.imagen-marco img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.sin-imagen { color: var(--tenue); font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+
+.campo.imagen { grid-column: auto; }
+.imagen-caja { display: flex; gap: 12px; align-items: center; }
+.imagen-vista {
+  width: 96px; height: 72px; flex-shrink: 0; border: 1px dashed var(--borde); border-radius: 10px; background: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--tenue); overflow: hidden;
+}
+.imagen-vista .ti { font-size: 22px; }
+.imagen-vista small { font-size: 11px; }
+.imagen-vista img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.imagen-botones { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; min-width: 0; }
+.imagen-botones .boton { font-size: 13px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; }
+.imagen-botones small { font-size: 11px; color: var(--tenue); }
+
 /* ---------- Ventana de formulario ---------- */
 .modal-velo {
   position: fixed; inset: 0; z-index: 40; background: rgba(5, 15, 30, .5);
@@ -400,7 +427,7 @@ p.vacio { color: var(--tenue); }
 }
 
 @media (max-width: 600px) {
-  .datos, .modal-cuerpo { grid-template-columns: 1fr; }
+  .datos, .modal-cuerpo, .imagenes-org { grid-template-columns: 1fr; }
   .panel { padding: 14px; }
   .auditoria-acciones { margin-left: 0; }
   .buscar { max-width: none; }
