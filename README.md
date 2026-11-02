@@ -23,6 +23,5 @@ anon; nunca la `service_role`).
 
 ## Publicación
 
-El flujo `.github/workflows/pages.yml` publica la carpeta `web/` en GitHub Pages
-en cada push a `main`. Requiere activar en GitHub: Settings → Pages → Source:
-**GitHub Actions**.
+GitHub Pages publica la rama `main` desde la raíz: https://consisav.github.io/Financiero/
+(`index.html` de la raíz redirige a `web/`; `.nojekyll` evita el procesamiento con Jekyll).
