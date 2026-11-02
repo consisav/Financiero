@@ -1,5 +1,5 @@
-// Financiero: inicio de sesión con Supabase Auth y tablero de módulos filtrado por rol.
-// Rutas: #/ módulos, #/<modulo> grupos del módulo, #/usuarios administración (solo administrador).
+// Financiero: inicio de sesión con Supabase Auth y panel ejecutivo filtrado por rol.
+// Rutas: #/ panel, #/<modulo> grupos del módulo, #/usuarios administración (solo administrador).
 (function () {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -15,6 +15,14 @@
   let perfil = null;      // fila de public.perfiles del usuario actual
   let permisos = {};      // modulo -> { puede_ver, puede_editar }
   let roles = [];
+
+  // Indicadores del panel; se conectarán a sus tablas cuando existan.
+  const INDICADORES = [
+    { nombre: 'Ventas del mes', valor: 'Q 0.00', nota: 'Facturación y ventas', icono: 'ti-trending-up', color: 'verde' },
+    { nombre: 'Cuentas por cobrar', valor: 'Q 0.00', nota: 'Saldo pendiente', icono: 'ti-cash', color: 'azul' },
+    { nombre: 'DTE emitidos', valor: '0', nota: 'Integraciones SAT', icono: 'ti-file-certificate', color: 'violeta' },
+    { nombre: 'Empleados activos', valor: '0', nota: 'Nóminas y planillas', icono: 'ti-users', color: 'coral' }
+  ];
 
   // ---------- Avisos ----------
   let temporizador;
@@ -131,62 +139,122 @@
 
     $('acceso').hidden = true;
     $('app').hidden = false;
-    const rol = roles.find((r) => r.id === perfil.rol_id);
-    $('quien').textContent = `${perfil.nombre || perfil.correo} · ${rol ? rol.nombre : perfil.rol_id}`;
-    $('ir-usuarios').hidden = perfil.rol_id !== 'administrador';
+    pintarLateral();
     rutear();
   }
 
-  // ---------- Tablero ----------
+  // ---------- Barra lateral ----------
+  const visibles = () => MODULOS.filter((m) => permisos[m.id] && permisos[m.id].puede_ver);
+  const nombreRol = () => (roles.find((r) => r.id === perfil.rol_id) || {}).nombre || perfil.rol_id;
+  const primerNombre = () => (perfil.nombre || perfil.correo).split(/[\s@]/)[0];
+
+  function pintarLateral() {
+    $('nav-modulos').innerHTML = visibles().map((m) =>
+      `<a href="#/${m.id}" data-ruta="${m.id}"><i class="ti ${m.icono}" aria-hidden="true"></i> ${esc(m.corto)}</a>`).join('');
+    $('nav-admin').hidden = perfil.rol_id !== 'administrador';
+    const nombre = perfil.nombre || perfil.correo;
+    $('quien-nombre').textContent = nombre;
+    $('quien-rol').textContent = nombreRol();
+    $('avatar').textContent = nombre.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0].toUpperCase()).join('');
+    const hoy = new Date().toLocaleDateString('es-GT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    $('fecha').textContent = hoy.charAt(0).toUpperCase() + hoy.slice(1);
+  }
+
+  function marcarActivo(ruta) {
+    document.querySelectorAll('.lateral-nav a').forEach((a) => a.classList.toggle('activo', a.dataset.ruta === ruta));
+  }
+
+  function menuMovil(abrir) {
+    $('app').classList.toggle('menu-abierto', abrir);
+    $('velo').hidden = !abrir;
+  }
+  $('abrir-menu').addEventListener('click', () => menuMovil(true));
+  $('velo').addEventListener('click', () => menuMovil(false));
+  $('lateral').addEventListener('click', (e) => { if (e.target.closest('a')) menuMovil(false); });
+
+  // ---------- Vistas ----------
   const vista = $('vista');
   const migas = $('migas');
-  const visibles = () => MODULOS.filter((m) => permisos[m.id] && permisos[m.id].puede_ver);
   const cuenta = (m) => Object.values(m.opciones).reduce((n, l) => n + l.length, 0);
 
+  function saludo() {
+    const h = new Date().getHours();
+    return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  }
+
   function inicio() {
-    migas.innerHTML = '<span>Inicio</span>';
+    migas.innerHTML = '<span>Panel ejecutivo</span>';
     const lista = visibles();
     vista.innerHTML = `
-      <h1>Módulos</h1>
-      <p class="sub">Elige un módulo para ver sus grupos de operaciones.</p>
+      <div class="titulo">
+        <div>
+          <h1>${saludo()}, ${esc(primerNombre())}</h1>
+          <p>Resumen general de la empresa y acceso a los módulos.</p>
+        </div>
+      </div>
+
+      <div class="indicadores">
+        ${INDICADORES.map((k) => `
+          <div class="indicador" data-color="${k.color}">
+            <div class="indicador-cab"><span>${esc(k.nombre)}</span><i class="ti ${k.icono}" aria-hidden="true"></i></div>
+            <b>${esc(k.valor)}</b>
+            <small>${esc(k.nota)}</small>
+          </div>`).join('')}
+      </div>
+
+      <h2 class="seccion">Módulos</h2>
       ${lista.length ? '' : '<p>Tu rol no tiene módulos asignados. Pide acceso a un administrador.</p>'}
       <div class="tarjetas">
         ${lista.map((m) => `
-          <a class="tarjeta" href="#/${m.id}">
-            <i class="ti ${m.icono}" aria-hidden="true"></i>
+          <a class="tarjeta" href="#/${m.id}" data-color="${m.color}">
+            <span class="ficha-icono"><i class="ti ${m.icono}" aria-hidden="true"></i></span>
             <h2>${esc(m.nombre)}</h2>
             <p>${esc(m.descripcion)}</p>
-            <span class="meta">${GRUPOS.length} grupos · ${cuenta(m)} opciones · ${permisos[m.id].puede_editar ? 'edición' : 'solo lectura'}</span>
+            <div class="chips">${GRUPOS.slice(0, 5).map((g) => `<span class="chip">${esc(g.nombre)}</span>`).join('')}</div>
+            <div class="tarjeta-pie">
+              <span>${cuenta(m)} opciones · ${permisos[m.id].puede_editar ? 'Edición' : 'Solo lectura'}</span>
+              <i class="ti ti-arrow-right" aria-hidden="true"></i>
+            </div>
           </a>`).join('')}
       </div>`;
+    marcarActivo('');
   }
 
   function modulo(m) {
-    migas.innerHTML = `<a href="#/">Inicio</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>${esc(m.nombre)}</span>`;
+    migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>${esc(m.nombre)}</span>`;
     vista.innerHTML = `
-      <h1><i class="ti ${m.icono}" aria-hidden="true"></i> ${esc(m.nombre)}</h1>
-      <p class="sub">${esc(m.descripcion)}${permisos[m.id].puede_editar ? '' : ' · Solo lectura'}</p>
-      <div class="grupos">
+      <div class="titulo" data-color="${m.color}">
+        <span class="ficha-icono"><i class="ti ${m.icono}" aria-hidden="true"></i></span>
+        <div>
+          <h1>${esc(m.nombre)}${permisos[m.id].puede_editar ? '' : '<span class="etiqueta">Solo lectura</span>'}</h1>
+          <p>${esc(m.descripcion)}</p>
+        </div>
+      </div>
+      <div class="grupos" data-color="${m.color}">
         ${GRUPOS.map((g) => `
           <section class="grupo">
             <h2><i class="ti ${g.icono}" aria-hidden="true"></i> ${esc(g.nombre)}</h2>
             <ul>
               ${(m.opciones[g.id] || []).map((o) => `
-                <li><button type="button" data-opcion="${esc(o)}" data-grupo="${esc(g.nombre)}">${esc(o)}</button></li>`).join('')}
+                <li><button type="button" data-opcion="${esc(o)}" data-grupo="${esc(g.nombre)}">${esc(o)}<i class="ti ti-chevron-right" aria-hidden="true"></i></button></li>`).join('')}
             </ul>
           </section>`).join('')}
       </div>`;
+    marcarActivo(m.id);
   }
 
-  // ---------- Usuarios (administrador) ----------
   async function usuarios() {
-    migas.innerHTML = '<a href="#/">Inicio</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>Usuarios</span>';
-    vista.innerHTML = '<h1><i class="ti ti-user-cog" aria-hidden="true"></i> Usuarios</h1><p class="sub">Cargando…</p>';
+    migas.innerHTML = '<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>Usuarios</span>';
+    marcarActivo('usuarios');
+    const cabecera = `
+      <div class="titulo" data-color="azul">
+        <span class="ficha-icono"><i class="ti ti-user-cog" aria-hidden="true"></i></span>
+        <div><h1>Usuarios</h1><p>Activa las cuentas nuevas y asigna su rol.</p></div>
+      </div>`;
+    vista.innerHTML = cabecera + '<p>Cargando…</p>';
     const { data, error } = await sb.from('perfiles').select('*').order('creado_en');
-    if (error) { vista.querySelector('.sub').textContent = traducir(error); return; }
-    vista.innerHTML = `
-      <h1><i class="ti ti-user-cog" aria-hidden="true"></i> Usuarios</h1>
-      <p class="sub">Activa las cuentas nuevas y asigna su rol.</p>
+    if (error) { vista.innerHTML = cabecera + `<p>${esc(traducir(error))}</p>`; return; }
+    vista.innerHTML = cabecera + `
       <div class="tabla-envoltura">
         <table class="tabla">
           <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Activo</th></tr></thead>

@@ -12,6 +12,8 @@ window.GRUPOS = [
 window.MODULOS = [
   {
     id: 'contabilidad',
+    corto: 'Contabilidad',
+    color: 'azul',
     nombre: 'Contabilidad y presupuesto',
     icono: 'ti-calculator',
     descripcion: 'Plan de cuentas, partidas, presupuesto y estados financieros.',
@@ -26,6 +28,8 @@ window.MODULOS = [
   },
   {
     id: 'facturacion',
+    corto: 'Facturación',
+    color: 'verde',
     nombre: 'Facturación y ventas',
     icono: 'ti-receipt',
     descripcion: 'Clientes, cotizaciones, facturas y cuentas por cobrar.',
@@ -40,6 +44,8 @@ window.MODULOS = [
   },
   {
     id: 'inventarios',
+    corto: 'Inventarios',
+    color: 'ambar',
     nombre: 'Inventarios',
     icono: 'ti-packages',
     descripcion: 'Productos, bodegas, existencias y kardex.',
@@ -54,6 +60,8 @@ window.MODULOS = [
   },
   {
     id: 'sat',
+    corto: 'Integraciones SAT',
+    color: 'violeta',
     nombre: 'Integraciones SAT',
     icono: 'ti-building-bank',
     descripcion: 'Factura electrónica FEL y obligaciones con la SAT Guatemala.',
@@ -68,6 +76,8 @@ window.MODULOS = [
   },
   {
     id: 'nominas',
+    corto: 'Nóminas',
+    color: 'coral',
     nombre: 'Nóminas y planillas',
     icono: 'ti-users',
     descripcion: 'Empleados, planillas, IGSS, ISR y prestaciones.',
@@ -82,6 +92,8 @@ window.MODULOS = [
   },
   {
     id: 'comercio',
+    corto: 'Import. y export.',
+    color: 'turquesa',
     nombre: 'Importaciones y exportaciones',
     icono: 'ti-world',
     descripcion: 'Pólizas, DUCA, costos de importación y embarques.',

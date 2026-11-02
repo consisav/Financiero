@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Financiero · CONSISAV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
@@ -11,17 +14,21 @@
   <!-- Inicio de sesión: pantalla dividida -->
   <div id="acceso" class="acceso" hidden>
     <aside class="acceso-marca">
-      <div class="marca grande"><i class="ti ti-chart-pie" aria-hidden="true"></i> Financiero</div>
+      <div class="logo grande"><span class="logo-icono"><i class="ti ti-chart-pie" aria-hidden="true"></i></span> Financiero</div>
+      <h2>Gestión financiera integral para su empresa.</h2>
       <p>Contabilidad, facturación, inventarios, SAT, nóminas e importaciones en un solo lugar.</p>
-      <div class="acceso-iconos" aria-hidden="true">
-        <i class="ti ti-calculator"></i><i class="ti ti-receipt"></i><i class="ti ti-packages"></i>
-        <i class="ti ti-building-bank"></i><i class="ti ti-users"></i><i class="ti ti-world"></i>
-      </div>
+      <ul class="acceso-lista">
+        <li><i class="ti ti-calculator" aria-hidden="true"></i> Contabilidad y presupuesto</li>
+        <li><i class="ti ti-receipt" aria-hidden="true"></i> Facturación electrónica FEL</li>
+        <li><i class="ti ti-users" aria-hidden="true"></i> Nóminas, IGSS e ISR</li>
+      </ul>
+      <span class="acceso-pie">CONSISAV · Guatemala</span>
     </aside>
 
     <main class="acceso-panel">
       <form id="f-entrar" class="formulario" data-paso="entrar">
         <h1>Iniciar sesión</h1>
+        <p class="sub">Ingresa con tu correo corporativo.</p>
         <label>Correo<input name="correo" type="email" autocomplete="email" required placeholder="nombre@consisav.com"></label>
         <label>Contraseña<input name="clave" type="password" autocomplete="current-password" required></label>
         <button type="submit" class="primario">Iniciar sesión</button>
@@ -30,6 +37,7 @@
 
       <form id="f-registrar" class="formulario" data-paso="registrar" hidden>
         <h1>Crear cuenta</h1>
+        <p class="sub">Un administrador activará tu acceso.</p>
         <label>Nombre completo<input name="nombre" autocomplete="name" required placeholder="María López"></label>
         <label>Correo<input name="correo" type="email" autocomplete="email" required placeholder="nombre@consisav.com"></label>
         <label>Contraseña<input name="clave" type="password" autocomplete="new-password" minlength="8" required placeholder="Mínimo 8 caracteres"></label>
@@ -61,16 +69,36 @@
     </main>
   </div>
 
-  <!-- Aplicación -->
-  <div id="app" hidden>
-    <header class="barra">
-      <a class="marca" href="#/"><i class="ti ti-chart-pie" aria-hidden="true"></i> Financiero</a>
-      <nav id="migas" class="migas" aria-label="Ubicación"></nav>
-      <a id="ir-usuarios" class="boton-barra" href="#/usuarios" hidden><i class="ti ti-user-cog" aria-hidden="true"></i> Usuarios</a>
-      <span id="quien" class="quien"></span>
-      <button type="button" class="boton-barra" data-salir><i class="ti ti-logout" aria-hidden="true"></i> Salir</button>
-    </header>
-    <main id="vista" class="vista"></main>
+  <!-- Aplicación: barra lateral oscura + contenido -->
+  <div id="app" class="app" hidden>
+    <aside id="lateral" class="lateral">
+      <a class="logo" href="#/"><span class="logo-icono"><i class="ti ti-chart-pie" aria-hidden="true"></i></span> Financiero</a>
+      <nav class="lateral-nav" aria-label="Módulos">
+        <span class="lateral-titulo">General</span>
+        <a href="#/" data-ruta=""><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Inicio</a>
+        <span class="lateral-titulo">Módulos</span>
+        <div id="nav-modulos"></div>
+        <div id="nav-admin" hidden>
+          <span class="lateral-titulo">Administración</span>
+          <a href="#/usuarios" data-ruta="usuarios"><i class="ti ti-user-cog" aria-hidden="true"></i> Usuarios</a>
+        </div>
+      </nav>
+      <div class="lateral-usuario">
+        <span id="avatar" class="avatar"></span>
+        <span class="lateral-quien"><b id="quien-nombre"></b><small id="quien-rol"></small></span>
+        <button type="button" class="icono-boton" data-salir aria-label="Cerrar sesión" title="Cerrar sesión"><i class="ti ti-logout" aria-hidden="true"></i></button>
+      </div>
+    </aside>
+    <div id="velo" class="velo" hidden></div>
+
+    <div class="principal">
+      <header class="superior">
+        <button type="button" id="abrir-menu" class="icono-boton menu-movil" aria-label="Abrir menú"><i class="ti ti-menu-2" aria-hidden="true"></i></button>
+        <nav id="migas" class="migas" aria-label="Ubicación"></nav>
+        <span id="fecha" class="fecha"></span>
+      </header>
+      <main id="vista" class="vista"></main>
+    </div>
   </div>
 
   <div id="aviso" class="aviso" role="status"></div>
