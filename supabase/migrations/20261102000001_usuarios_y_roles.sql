@@ -74,6 +74,17 @@ create trigger al_crear_usuario
   after insert on auth.users
   for each row execute function public.crear_perfil();
 
+-- Cuentas creadas antes de instalar estas tablas: el más antiguo queda como administrador activo.
+insert into public.perfiles (id, nombre, correo, rol_id, activo)
+select u.id,
+       coalesce(u.raw_user_meta_data ->> 'nombre', ''),
+       u.email,
+       case when row_number() over (order by u.created_at) = 1
+                 and not exists (select 1 from public.perfiles) then 'administrador' else 'consulta' end,
+       row_number() over (order by u.created_at) = 1 and not exists (select 1 from public.perfiles)
+from auth.users u
+where not exists (select 1 from public.perfiles p where p.id = u.id);
+
 -- Un usuario no puede cambiarse a sí mismo el rol ni activarse; solo un administrador.
 create function public.proteger_perfil() returns trigger
 language plpgsql security definer set search_path = '' as $$
@@ -114,3 +125,5 @@ create policy "perfiles: editar el propio o admin" on public.perfiles
 
 revoke execute on function public.crear_perfil() from public, anon, authenticated;
 revoke execute on function public.proteger_perfil() from public, anon, authenticated;
+
+notify pgrst, 'reload schema';
