@@ -11,3 +11,18 @@ publicado con **GitHub Pages**.
 
 - `supabase/` — migraciones SQL, políticas RLS y Edge Functions.
 - `web/` — sitio estático (HTML/CSS/JS + supabase-js) publicado en GitHub Pages.
+
+## Pantalla inicial
+
+`web/index.html` es un tablero de tarjetas con los 6 módulos; cada tarjeta abre
+sus 6 grupos de menú (Catálogos, Registros, Mantenimientos, Procesos, Reportes y
+gráficas, Ayuda). Los módulos y opciones se definen en `web/js/menu.js`.
+
+La conexión a Supabase se configura en `web/js/config.js` (URL y llave pública
+anon; nunca la `service_role`).
+
+## Publicación
+
+El flujo `.github/workflows/pages.yml` publica la carpeta `web/` en GitHub Pages
+en cada push a `main`. Requiere activar en GitHub: Settings → Pages → Source:
+**GitHub Actions**.
