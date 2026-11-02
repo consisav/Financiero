@@ -4,71 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Financiero</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; color: #1f2937; }
-    .estado { padding: .75rem 1rem; border-radius: 6px; background: #f3f4f6; }
-    .ok { background: #dcfce7; } .error { background: #fee2e2; }
-    form { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
-    input, select, button { padding: .4rem .6rem; font: inherit; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: .4rem; border-bottom: 1px solid #e5e7eb; }
-  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-  <!-- Pantalla provisional de prueba; el diseño definitivo se elegirá a partir de muestras. -->
-  <h1>Financiero</h1>
-  <p id="estado" class="estado">Verificando conexión con Oracle…</p>
-
-  <h2>Terceros (clientes / proveedores)</h2>
-  <form id="form">
-    <select name="TIPO"><option value="C">Cliente</option><option value="P">Proveedor</option><option value="A">Ambos</option></select>
-    <input name="NIT" placeholder="NIT">
-    <input name="NOMBRE" placeholder="Nombre" required>
-    <input name="EMAIL" type="email" placeholder="Email">
-    <button>Guardar</button>
-  </form>
-  <table>
-    <thead><tr><th>ID</th><th>Tipo</th><th>NIT</th><th>Nombre</th><th>Email</th><th></th></tr></thead>
-    <tbody id="filas"></tbody>
-  </table>
-
-  <script>
-    const $ = (s) => document.querySelector(s);
-    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-    async function api(url, opts = {}) {
-      const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || r.statusText);
-      return d;
-    }
-
-    async function cargar() {
-      const filas = await api('/api/terceros');
-      $('#filas').innerHTML = filas.map((t) => `<tr>
-        <td>${esc(t.ID_TERCERO)}</td><td>${esc(t.TIPO)}</td><td>${esc(t.NIT)}</td>
-        <td>${esc(t.NOMBRE)}</td><td>${esc(t.EMAIL)}</td>
-        <td><button data-id="${esc(t.ID_TERCERO)}">Eliminar</button></td></tr>`).join('');
-    }
-
-    $('#form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        await api('/api/terceros', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
-        e.target.reset();
-        cargar();
-      } catch (err) { alert(err.message); }
-    });
-
-    $('#filas').addEventListener('click', async (e) => {
-      const id = e.target.dataset.id;
-      if (!id || !confirm('¿Eliminar este tercero?')) return;
-      try { await api(`/api/terceros/${id}`, { method: 'DELETE' }); cargar(); } catch (err) { alert(err.message); }
-    });
-
-    api('/api/salud')
-      .then((d) => { $('#estado').className = 'estado ok'; $('#estado').textContent = `Conectado a Oracle (esquema ${d.oracle.ESQUEMA})`; cargar(); })
-      .catch((e) => { $('#estado').className = 'estado error'; $('#estado').textContent = `Sin conexión: ${e.message}`; });
-  </script>
+  <header class="barra">
+    <button class="btn-menu" id="btn-menu" aria-label="Abrir menú"><i class="ti ti-menu-2"></i></button>
+    <h1><a href="#/">Financiero</a></h1>
+    <span class="conexion" id="conexion">Verificando conexión…</span>
+  </header>
+  <div class="app">
+    <nav class="lateral" id="menu" aria-label="Módulos"></nav>
+    <main class="contenido" id="contenido"></main>
+  </div>
+  <script src="js/menu.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

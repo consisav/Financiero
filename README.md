@@ -3,10 +3,17 @@
 Aplicación financiera de CONSISAV sobre **Oracle Database 19c**.
 Backend Node.js (Express + `node-oracledb` en modo **Thin**, sin Oracle Instant Client) y frontend web.
 
-Módulos previstos: Cuentas por cobrar/pagar, Bancos y caja, Presupuesto, Inventarios, Nóminas, Integraciones y Reportes financieros.
+## Pantalla inicial
 
-> La pantalla actual (`public/index.html`) es provisional y solo sirve para probar la conexión.
-> El diseño definitivo se elegirá a partir de muestras visuales.
+Menú lateral con 6 módulos, cada uno con 6 grupos de menú:
+
+| Módulos | Grupos de menú |
+|---|---|
+| Contabilidad y presupuesto · Facturación y ventas · Inventarios · Integraciones SAT (FEL Guatemala) · Nóminas y planillas · Importaciones y exportaciones | Catálogos · Registros · Mantenimientos · Procesos · Reportes y gráficas · Ayuda |
+
+Las opciones de cada grupo se definen en `public/js/menu.js`. Una opción con `vista` abre una pantalla
+funcional (hoy: Facturación y ventas › Catálogos › Clientes y proveedores); las demás muestran
+"en construcción". La interfaz arranca aunque Oracle no esté disponible y lo indica en la barra superior.
 
 ## Requisitos
 

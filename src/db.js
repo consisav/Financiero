@@ -33,6 +33,7 @@ async function iniciarPool() {
 
 // Ejecuta fn(conn) con una conexión del pool y la libera siempre.
 async function conConexion(fn) {
+  if (!pool) throw Object.assign(new Error('Sin conexión a Oracle'), { status: 503 });
   const conn = await pool.getConnection();
   try {
     return await fn(conn);

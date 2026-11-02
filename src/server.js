@@ -33,18 +33,14 @@ app.use((err, _req, res, _next) => {
 
 const PORT = Number(process.env.PORT || 3000);
 
-iniciarPool()
-  .then(() => {
-    const server = app.listen(PORT, () => console.log(`Financiero escuchando en http://localhost:${PORT}`));
-    const salir = async () => {
-      server.close();
-      await cerrarPool();
-      process.exit(0);
-    };
-    process.on('SIGINT', salir);
-    process.on('SIGTERM', salir);
-  })
-  .catch((e) => {
-    console.error('No se pudo conectar a Oracle:', e.message);
-    process.exit(1);
-  });
+// La interfaz se sirve aunque Oracle no esté disponible; /api/salud informa el estado.
+iniciarPool().catch((e) => console.error('No se pudo conectar a Oracle:', e.message));
+
+const server = app.listen(PORT, () => console.log(`Financiero escuchando en http://localhost:${PORT}`));
+const salir = async () => {
+  server.close();
+  await cerrarPool();
+  process.exit(0);
+};
+process.on('SIGINT', salir);
+process.on('SIGTERM', salir);
