@@ -243,14 +243,14 @@
         ${GRUPOS.map((g) => `
           <section class="grupo">
             <h2><i class="ti ${g.icono}" aria-hidden="true"></i> ${esc(g.nombre)}</h2>
-            ${g.id === 'catalogos' ? CATALOGOS_COMUNES.map((s) => `
-              <div class="subgrupo">
-                <span class="subgrupo-titulo"><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span>
+            ${subgruposDe(m, g.id).map((s) => `
+              <details class="subgrupo">
+                <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
                 <ul>
                   ${s.pantallas.map((p) => `
                     <li><a class="opcion" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>`).join('')}
                 </ul>
-              </div>`).join('') : ''}
+              </details>`).join('')}
             <ul>
               ${(m.opciones[g.id] || []).map((o) => `
                 <li><button type="button" data-opcion="${esc(o)}" data-grupo="${esc(g.nombre)}">${esc(o)}<i class="ti ti-chevron-right" aria-hidden="true"></i></button></li>`).join('')}
@@ -304,7 +304,12 @@
     if (b) aviso(`${b.dataset.grupo} › ${b.dataset.opcion}: en construcción.`);
   });
 
-  // Pantalla de un catálogo común dentro de un módulo: #/<modulo>/<pantalla>
+  // Subgrupos desplegables de un grupo: los comunes (solo en Catálogos) y los propios del módulo.
+  function subgruposDe(m, grupo) {
+    return [...(grupo === 'catalogos' ? CATALOGOS_COMUNES : []), ...((m.subgrupos || {})[grupo] || [])];
+  }
+
+  // Pantalla de un subgrupo dentro de un módulo: #/<modulo>/<pantalla>
   function pantalla(m, p) {
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
       <a href="#/${m.id}">${esc(m.corto)}</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
@@ -326,7 +331,7 @@
     if (id === 'usuarios' && perfil.rol_id === 'administrador') usuarios();
     else {
       const m = visibles().find((x) => x.id === id);
-      const p = sub && CATALOGOS_COMUNES.flatMap((s) => s.pantallas).find((x) => x.id === sub);
+      const p = m && sub && GRUPOS.flatMap((g) => subgruposDe(m, g.id)).flatMap((s) => s.pantallas).find((x) => x.id === sub);
       if (m && p) pantalla(m, p);
       else if (m) modulo(m);
       else inicio();

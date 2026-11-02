@@ -41,6 +41,18 @@ En **Catálogos** de todos los módulos aparece el subgrupo **Geografía** con d
 Migración: `supabase/migrations/20261102000002_geografia_y_organizaciones.sql`. Leen todos los
 usuarios activos; graban el administrador y el contador. No se borra: se desactiva.
 
+## Contabilidad: cuentas y centros de costos
+
+En **Catálogos** de Contabilidad, el subgrupo desplegable **Cuentas y centros de costos**:
+
+- **Tipos de cuentas** (`web/js/tipos_cuenta.js`): naturaleza debe-haber / haber-debe y efecto en el resultado.
+- **Cuentas contables** y **Centros de costos** (`web/js/cuentas.js`): árbol en tres bloques
+  maestro → detalle → detalle (`web/js/jerarquia.js`), con Bajar / Subir nivel para niveles más
+  profundos. Las cuentas van por organización y versión del catálogo; los centros, por organización.
+  El código de un hijo comienza con el de su mayor (1 → 101 → 10101) y hereda nivel y tipo.
+
+Migración: `supabase/migrations/20261102000004_cuentas_y_centros_de_costo.sql`.
+
 ## Publicación
 
 GitHub Pages publica la rama `main` desde la raíz: https://consisav.github.io/Financiero/

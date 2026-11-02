@@ -10,6 +10,9 @@
     });
   }
 
+  // '2017-06-14' → '14-06-2017'
+  const fechaCorta = (f) => f ? f.split('-').reverse().join('-') : '';
+
   function romano(n) {
     const v = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
     let r = '';
@@ -146,8 +149,8 @@
     else if (c.tipo === 'select' || c.tipo === 'select-numero') {
       control = `<select name="${c.nombre}" ${req}>${opciones(c.opciones || [], valor, c.vacio)}</select>`;
     } else {
-      const tipo = c.tipo === 'numero' ? 'number' : c.tipo === 'correo' ? 'text' : 'text';
-      control = `<input type="${tipo}" name="${c.nombre}" value="${esc(valor)}" ${req} ${c.placeholder ? `placeholder="${esc(c.placeholder)}"` : ''} ${c.max ? `maxlength="${c.max}"` : ''}>`;
+      const tipo = c.tipo === 'numero' ? 'number' : c.tipo === 'fecha' ? 'date' : 'text';
+      control = `<input type="${tipo}" name="${c.nombre}" value="${esc(valor)}" ${req} ${c.soloLectura ? 'readonly' : ''} ${c.patron ? `pattern="${c.patron}"` : ''} ${c.placeholder ? `placeholder="${esc(c.placeholder)}"` : ''} ${c.max ? `maxlength="${c.max}"` : ''}>`;
     }
     return `<label class="campo${ancho}"><span>${esc(c.etiqueta)}${c.requerido ? ' *' : ''}</span>${control}</label>`;
   }
@@ -192,5 +195,5 @@
     });
   }
 
-  window.UI = { esc, fecha, romano, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar };
+  window.UI = { esc, fecha, fechaCorta, romano, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar };
 })();

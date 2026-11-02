@@ -9,7 +9,8 @@ window.GRUPOS = [
   { id: 'ayuda', nombre: 'Ayuda', icono: 'ti-help' }
 ];
 
-// Catálogos compartidos: aparecen dentro de Catálogos en todos los módulos.
+// Subgrupos desplegables de Catálogos. Los comunes aparecen en todos los módulos;
+// cada módulo puede agregar los suyos en "subgrupos.catalogos".
 window.CATALOGOS_COMUNES = [
   {
     subgrupo: 'Geografía',
@@ -29,8 +30,21 @@ window.MODULOS = [
     nombre: 'Contabilidad y presupuesto',
     icono: 'ti-calculator',
     descripcion: 'Plan de cuentas, partidas, presupuesto y estados financieros.',
+    subgrupos: {
+      catalogos: [
+        {
+          subgrupo: 'Cuentas y centros de costos',
+          icono: 'ti-sitemap',
+          pantallas: [
+            { id: 'tipos-cuenta', nombre: 'Tipos de cuentas', icono: 'ti-tags', descripcion: 'Naturaleza de cada tipo de cuenta y su efecto en el resultado del ejercicio.' },
+            { id: 'cuentas', nombre: 'Cuentas contables', icono: 'ti-list-tree', descripcion: 'Catálogo de cuentas por versión: cuenta principal, subcuentas y sus niveles.' },
+            { id: 'centros-costo', nombre: 'Centros de costos', icono: 'ti-hierarchy-2', descripcion: 'Centros de costo por organización, en niveles.' }
+          ]
+        }
+      ]
+    },
     opciones: {
-      catalogos: ['Plan de cuentas', 'Centros de costo', 'Monedas y tipos de cambio', 'Tipos de partida'],
+      catalogos: ['Monedas y tipos de cambio', 'Tipos de partida'],
       registros: ['Partidas contables', 'Presupuesto anual', 'Movimientos bancarios'],
       mantenimientos: ['Períodos contables', 'Empresas', 'Parámetros contables'],
       procesos: ['Mayorización', 'Conciliación bancaria', 'Cierre de mes', 'Cierre de año'],

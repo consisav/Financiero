@@ -207,8 +207,19 @@ a { color: var(--acento); text-decoration: none; }
 .grupo button:hover .ti { opacity: 1; color: var(--m-t); }
 
 /* Subgrupo de catálogos comunes (Geografía) dentro de Catálogos */
-.subgrupo { background: var(--m-f); border-radius: 10px; padding: 8px 6px 4px; margin-bottom: 10px; }
-.subgrupo-titulo { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--m-t); padding: 0 6px 4px; }
+.subgrupo { background: var(--m-f); border-radius: 10px; padding: 4px 6px; margin-bottom: 8px; }
+.subgrupo ul { padding-bottom: 4px; }
+.subgrupo-titulo {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; cursor: pointer;
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--m-t);
+  padding: 7px 6px; border-radius: 8px; list-style: none;
+}
+.subgrupo-titulo::-webkit-details-marker { display: none; }
+.subgrupo-titulo span { display: flex; align-items: center; gap: 6px; }
+.subgrupo-titulo .flecha { font-size: 16px; transition: transform .15s; }
+.subgrupo[open] .subgrupo-titulo .flecha { transform: rotate(180deg); }
+.subgrupo-titulo:hover { background: rgba(255, 255, 255, .5); }
+.subgrupo-titulo:focus-visible { outline: 2px solid var(--m-t); outline-offset: -2px; }
 .grupo a.opcion {
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 10px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--texto);
@@ -285,6 +296,30 @@ p.vacio { color: var(--tenue); }
 .dato.completo { grid-column: 1 / -1; }
 .dato span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); }
 .dato b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+
+/* Árbol jerárquico en bloques (cuentas contables, centros de costo) */
+.ruta-arbol { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--suave); margin: 0 0 14px; }
+.ruta-arbol > span { font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .06em; color: var(--tenue); }
+.ruta-arbol .ti { font-size: 14px; color: var(--tenue); }
+.miga { font: inherit; font-size: 13px; background: var(--panel); border: 1px solid var(--borde); border-radius: 999px; padding: 4px 12px; color: var(--texto); cursor: pointer; }
+.miga:hover { border-color: var(--m-t, var(--acento)); color: var(--m-t, var(--acento)); }
+.panel-cab h2 small { font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--suave); margin-left: 6px; }
+.bloque-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 16px; align-items: start; }
+.bloque .tabla-desplazable { max-height: 300px; }
+.bloque .tabla.catalogo th, .bloque .tabla.catalogo td { padding: 10px 12px; }
+.bloque .tabla.catalogo .codigo-col { width: 100px; }
+.ficha { background: var(--fondo); border: 1px solid var(--borde); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.ficha-dato { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
+.ficha-dato span { color: var(--tenue); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+.ficha-dato b { font-weight: 600; text-align: right; }
+.ficha-auditoria { font-size: 12px; color: var(--tenue); margin: 4px 0 0; border-top: 1px dashed var(--borde); padding-top: 10px; line-height: 1.5; }
+.ficha-auditoria b { color: var(--suave); }
+.tabla.catalogo .codigo-col { width: 120px; }
+.tabla.catalogo .centrada, .tabla .centrada { text-align: center; }
+.marca-si { color: var(--verde-t); font-size: 19px; }
+.marca-no { color: var(--tenue); font-size: 19px; }
+.selector-org { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--suave); }
+.selector-org select { font: inherit; font-size: 14px; font-weight: 500; color: var(--texto); background: var(--panel); border: 1px solid var(--borde); border-radius: 999px; padding: 7px 12px; max-width: 280px; }
 
 /* Logo y eslogan */
 .con-logo { display: inline-flex; align-items: center; gap: 10px; }
@@ -424,6 +459,7 @@ p.vacio { color: var(--tenue); }
 
 @media (max-width: 1100px) {
   .datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bloque-cuerpo { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
