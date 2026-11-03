@@ -1,7 +1,7 @@
 // Tickets · Generación. Arriba, la cabecera del ticket: número, estado, prioridad, datos por
 // defecto (organización, localidad, solicitante, fecha) y la gráfica del proceso. Debajo, dos
-// columnas: el requerimiento con sus adjuntos y la gestión (prioridad, estado, recurso asignado
-// e historial). Al final, la lista de tickets con filtros por estado y prioridad.
+// columnas: el requerimiento (módulo, descripción y adjuntos) y la gestión (prioridad, estado,
+// recurso asignado e historial). Al final, la lista de tickets con filtros por estado y prioridad.
 (function () {
   const { esc } = window.UI;
 
@@ -30,6 +30,7 @@
     const yo = window.FIN.perfil();
     let estados = [];
     let recursos = [];
+    let modulos = [];       // módulos principales del sistema
     let tickets = [];
     let org = null;
     let loc = null;
@@ -47,16 +48,18 @@
 
     const recurso = (id) => recursos.find((x) => x.id === id);
     const nombreRecurso = (id) => { const r = recurso(id); return r ? r.nombre || r.usuario : ''; };
+    const nombreModulo = (id) => { const m = modulos.find((x) => x.id === id); return m ? m.descripcion : 'Todos'; };
     const nombreEstado = (c) => (estados.find((e) => e.codigo === c) || {}).nombre || '';
     const marcaEstado = (c) => `<span class="tk-estado e${c}">${esc(nombreEstado(c))}</span>`;
     const puedeEditar = (t) => !t || window.FIN.puedeEditarCatalogos() || [t.perfil_id, t.recurso_id].includes(yo.id);
 
     async function iniciar() {
-      const [e, r, o, l] = await Promise.all([
+      const [e, r, o, l, md] = await Promise.all([
         sb.from('estados_ticket').select('*').eq('activo', true).order('codigo'),
         sb.rpc('recursos_ticket'),
         yo.organizacion_id ? sb.from('organizaciones').select('codigo, nombre').eq('id', yo.organizacion_id).maybeSingle() : { data: null },
-        yo.localidad_id ? sb.from('localidades').select('codigo, nombre_comercial').eq('id', yo.localidad_id).maybeSingle() : { data: null }
+        yo.localidad_id ? sb.from('localidades').select('codigo, nombre_comercial').eq('id', yo.localidad_id).maybeSingle() : { data: null },
+        sb.from('modulos_sistema').select('id, codigo, siglas, descripcion').is('modulo_mayor_id', null).eq('activo', true).order('codigo')
       ]);
       const err = e.error || r.error;
       if (err) {
@@ -67,6 +70,7 @@
       recursos = r.data || [];
       org = o.data;
       loc = l.data;
+      modulos = md.data || [];
       await cargarLista();
       abrir(null);
     }
@@ -86,7 +90,7 @@
       const filas = tickets.filter((t) =>
         (!filtroEstado || t.estado === filtroEstado) &&
         (!filtroPrioridad || t.prioridad === filtroPrioridad) &&
-        (!q || [t.numero, t.descripcion, t.usuario, nombreEstado(t.estado), prioridad(t.prioridad).texto, nombreRecurso(t.recurso_id)]
+        (!q || [t.numero, t.descripcion, t.usuario, nombreModulo(t.modulo_id), nombreEstado(t.estado), prioridad(t.prioridad).texto, nombreRecurso(t.recurso_id)]
           .some((v) => String(v || '').toLowerCase().includes(q))));
       const cuenta = (c) => tickets.filter((t) => t.estado === c).length;
       pLista.innerHTML = `
@@ -106,19 +110,20 @@
         </div>
         <div class="tabla-desplazable">
           <table class="tabla tk-tabla">
-            <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Requerimiento</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th><th><span class="oculto">Acciones</span></th></tr></thead>
+            <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Módulo</th><th>Requerimiento</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th><th><span class="oculto">Acciones</span></th></tr></thead>
             <tbody>
               ${filas.map((t) => `
                 <tr class="tk-fila ${actual && actual.id === t.id ? 'tk-actual' : ''}" data-ticket="${t.id}" tabindex="0">
                   <td class="fuerte">${esc(t.numero)}</td>
                   <td>${esc(fechaHora(t.fecha))}</td>
                   <td>${esc(t.usuario || '')}</td>
+                  <td>${t.modulo_id ? esc(nombreModulo(t.modulo_id)) : '<span class="tk-tenue">Todos</span>'}</td>
                   <td class="tk-desc" title="${esc(t.descripcion)}">${esc(t.descripcion)}</td>
                   <td>${marcaPrioridad(t.prioridad)}</td>
                   <td>${marcaEstado(t.estado)}</td>
                   <td>${t.recurso_id ? `<span class="tk-persona"><span class="tk-avatar">${esc(iniciales(nombreRecurso(t.recurso_id)))}</span>${esc(nombreRecurso(t.recurso_id))}</span>` : '<span class="tk-tenue">Sin asignar</span>'}</td>
                   <td class="tk-accion"><button type="button" class="boton secundario-sm" data-ticket="${t.id}" title="${puedeEditar(t) ? 'Modificar' : 'Ver'} el ticket ${esc(t.numero)}"><i class="ti ${puedeEditar(t) ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i> ${puedeEditar(t) ? 'Modificar' : 'Ver'}</button></td>
-                </tr>`).join('') || `<tr><td colspan="8" class="vacio">${tickets.length ? 'Ningún ticket coincide con los filtros.' : 'Todavía no hay tickets.'}</td></tr>`}
+                </tr>`).join('') || `<tr><td colspan="9" class="vacio">${tickets.length ? 'Ningún ticket coincide con los filtros.' : 'Todavía no hay tickets.'}</td></tr>`}
             </tbody>
           </table>
         </div>`;
@@ -181,6 +186,8 @@
           <div class="tk-cuerpo">
             <section class="panel tk-req">
               <div class="panel-cab"><h2>Requerimiento</h2></div>
+              <label class="campo"><span>Módulo</span>
+                <select name="modulo_id" ${dis}><option value="">Todos los módulos</option>${modulos.map((m) => `<option value="${m.id}" ${t && t.modulo_id === m.id ? 'selected' : ''}>${esc(m.siglas)} · ${esc(m.descripcion)}</option>`).join('')}</select></label>
               <label class="campo"><span>Descripción del requerimiento *</span>
                 <textarea name="descripcion" rows="6" required ${dis} placeholder="Describe qué se necesita, dónde y para cuándo.">${esc(t ? t.descripcion : '')}</textarea></label>
               <div class="campo">
@@ -269,7 +276,8 @@
         descripcion: form.elements.descripcion.value.trim(),
         prioridad: Number(form.querySelector('[name=prioridad]:checked').value),
         estado: Number(form.elements.estado.value),
-        recurso_id: form.elements.recurso_id.value || null
+        recurso_id: form.elements.recurso_id.value || null,
+        modulo_id: form.elements.modulo_id.value ? Number(form.elements.modulo_id.value) : null
       };
       if (!d.descripcion) { error.textContent = 'Escribe la descripción del requerimiento.'; form.elements.descripcion.focus(); return; }
       error.textContent = '';
@@ -278,7 +286,7 @@
         const r = actual
           ? await sb.from('tickets').update(d).eq('id', actual.id).select('id').single()
           : await sb.from('tickets').insert(d).select('id').single();
-        if (r.error) throw r.error;
+        if (r.error) throw /modulo_id/.test(r.error.message) ? new Error('Falta instalar el script 23 (módulo del ticket) en Supabase.') : r.error;
         const id = r.data.id;
         let fallidos = 0;
         for (const f of pendientes) {
@@ -379,12 +387,12 @@
       const form = pTicket.querySelector('.tk-form');
       const v = form ? {
         descripcion: form.elements.descripcion.value, estado: form.elements.estado.value,
-        recurso_id: form.elements.recurso_id.value, prioridad: form.querySelector('[name=prioridad]:checked').value
+        recurso_id: form.elements.recurso_id.value, modulo_id: form.elements.modulo_id.value, prioridad: form.querySelector('[name=prioridad]:checked').value
       } : null;
       pintarTicket();
       if (!v) return;
       const f = pTicket.querySelector('.tk-form');
-      ['descripcion', 'estado', 'recurso_id'].forEach((k) => { f.elements[k].value = v[k]; });
+      ['descripcion', 'estado', 'recurso_id', 'modulo_id'].forEach((k) => { f.elements[k].value = v[k]; });
       f.querySelector(`[name=prioridad][value="${v.prioridad}"]`).checked = true;
       vistaPrevia(f);
     }
