@@ -1416,3 +1416,32 @@ td.tk-vacio { display: table-cell; text-align: center; padding: 28px 10px; }
 td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ot-codigo input { font-weight: 700; }
 .oc-pendiente { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--ambar-t); }
+
+/* ---------- Presupuestos (rubros y presupuesto con el diseño de Partidas) ---------- */
+.rb-naturaleza { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.rb-naturaleza.ingreso { background: var(--verde-f); color: var(--verde-t); }
+.rb-naturaleza.egreso { background: var(--coral-f); color: var(--coral-t); }
+.rb-naturaleza.inversion { background: var(--violeta-f); color: var(--violeta-t); }
+.pp-espacio .ta-cuerpo { grid-template-rows: minmax(130px, 24%) minmax(0, 1fr); }
+.pp-espacio .ta-filtros { grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(90px, .5fr) minmax(0, 1.6fr) minmax(0, 1fr); }
+.pp-estado { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.pp-estado.formulacion { background: var(--fondo); color: var(--suave); border: 1px solid var(--borde); }
+.pp-estado.revision { background: var(--azul-f); color: var(--azul-t); }
+.pp-estado.aprobado { background: var(--verde-f); color: var(--verde-t); }
+.pp-estado.ejecucion { background: var(--ambar-f); color: var(--ambar-t); }
+.pp-estado.modificado { background: var(--violeta-f); color: var(--violeta-t); }
+.pp-estado.cerrado { background: var(--lateral); color: #fff; }
+.pp-estado.anulado { background: color-mix(in srgb, var(--error) 12%, var(--panel)); color: var(--error); }
+.pp-barra { display: inline-block; width: 70px; height: 6px; border-radius: 999px; background: var(--fondo); overflow: hidden; vertical-align: middle; }
+.pp-barra i { display: block; height: 100%; background: var(--ok); border-radius: 999px; }
+.pp-barra.excedido i { background: var(--error); }
+.pp-encabezado { grid-template-columns: auto minmax(140px, .6fr) minmax(0, 1.6fr) minmax(120px, .6fr) minmax(150px, .7fr) minmax(140px, .7fr); }
+.pp-fila2 { grid-template-columns: minmax(0, 2.4fr) minmax(170px, .7fr) minmax(170px, .7fr); }
+.pp-fila2 .pc-desc { grid-column: auto; }
+.pp-agregar { display: inline-flex; align-items: center; gap: 10px; }
+.pp-agregar select { font: inherit; font-size: 12.5px; padding: 5px 8px; border: 1px solid var(--borde); border-radius: 8px; background: var(--panel); color: var(--texto); max-width: 320px; }
+.pp-agregar .rp-enlace { display: inline-flex; align-items: center; gap: 4px; }
+.pp-lineas tr.pp-grupo td { background: color-mix(in srgb, var(--acento-fondo) 55%, var(--panel)); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--m-t, var(--acento)); padding: 6px 8px; font-variant-numeric: tabular-nums; }
+.pp-rubro { font-size: 13px; color: var(--texto); }
+.pp-lineas td small { color: var(--suave); }
+@media (max-width: 1500px) { .pp-encabezado { grid-template-columns: repeat(3, minmax(0, 1fr)); } .pp-encabezado .pc-periodo { grid-column: 1 / -1; } .pp-espacio .ta-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
