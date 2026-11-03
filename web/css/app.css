@@ -403,6 +403,8 @@ p.vacio { color: var(--tenue); }
 .rm-rol-cuenta { min-width: 24px; text-align: center; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 7px; background: var(--fondo); color: var(--suave); }
 .rm-rol.activo .rm-rol-cuenta { background: var(--panel); color: var(--m-t); }
 .rm-derecha { min-width: 0; }
+.rm-corona { color: var(--ambar-t); font-size: 14px; vertical-align: -1px; }
+.panel-cab h2 .estado { font-size: 11px; text-transform: none; letter-spacing: 0; margin-left: 6px; vertical-align: 2px; }
 .rm-desc { margin: 4px 0 0; font-size: 13px; color: var(--suave); }
 .segmentado { display: inline-flex; background: var(--fondo); border: 1px solid var(--borde); border-radius: 999px; padding: 3px; gap: 2px; }
 .segmentado button { font: inherit; font-size: 13px; font-weight: 600; color: var(--suave); background: none; border: 0; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
@@ -419,12 +421,14 @@ p.vacio { color: var(--tenue); }
 .rm-kpi b small { font-size: 13px; color: var(--tenue); font-weight: 600; }
 .rm-kpi.aviso { background: var(--ambar-f); }
 .rm-kpi.aviso b, .rm-kpi.aviso span { color: var(--ambar-t); }
-.rm-atajos { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; margin-bottom: 12px; border: 1px dashed var(--borde); border-radius: 12px; }
+.rm-atajos { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; padding: 6px 10px; margin-bottom: 12px; border: 1px dashed var(--borde); border-radius: 12px; }
 .rm-atajos-titulo { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); margin-right: 4px; }
 .atajo { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 12px; }
 .atajo[data-preset=total] { border-color: var(--verde-t); color: var(--verde-t); }
 .atajo[data-preset=ninguno] { border-color: var(--coral-t); color: var(--coral-t); }
-.selector-org.copiar { margin-left: auto; }
+.selector-org.copiar { margin-left: auto; flex-shrink: 0; }
+.selector-org.copiar select { max-width: 170px; padding: 5px 10px; font-size: 13px; }
+.rm-atajos .atajo { flex-shrink: 0; padding: 5px 11px; }
 .rm-matriz { border: 1px solid var(--borde); border-radius: 12px; overflow-x: auto; }
 .tabla.matriz { width: 100%; border-collapse: collapse; }
 .tabla.matriz th, .tabla.matriz td { padding: 8px 12px; border-bottom: 1px solid var(--borde); }

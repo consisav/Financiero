@@ -131,7 +131,7 @@
           ${lista.map((x) => `
             <li><button type="button" class="rm-rol ${estado.rol && x.id === estado.rol.id ? 'activo' : ''} ${x.activo ? '' : 'apagado'}" data-rol="${x.id}">
               <span class="rm-rol-cod">${x.codigo}</span>
-              <span class="rm-rol-nombre">${esc(x.nombre)}${x.activo ? '' : ' <small>(inactivo)</small>'}</span>
+              <span class="rm-rol-nombre">${esc(x.nombre)}${x.activo ? '' : ' <small>(inactivo)</small>'}${x.acceso_total ? ' <i class="ti ti-crown rm-corona" title="Acceso total" aria-label="Acceso total"></i>' : ''}</span>
               <span class="rm-rol-cuenta" title="Usuarios activos">${asigDe(x.id).filter((s) => s.estado === 'ACTIVO').length}</span>
             </button></li>`).join('') || '<li class="vacio">Sin roles</li>'}
         </ul>`;
@@ -143,7 +143,7 @@
       pUsu.innerHTML = `
         <div class="panel-cab">
           <div>
-            <h2>${esc(rol.nombre)} <small>· código ${rol.codigo}</small></h2>
+            <h2>${esc(rol.nombre)} <small>· código ${rol.codigo}</small>${rol.acceso_total ? ' <span class="estado activo"><i class="ti ti-crown" aria-hidden="true"></i> Acceso total</span>' : ''}</h2>
             <p class="rm-desc">${esc(rol.descripcion || 'Sin descripción')}</p>
           </div>
           <div class="panel-acciones">
@@ -166,6 +166,9 @@
         })}`;
     }
 
+    // Un rol con acceso total no se edita pantalla por pantalla (sí las excepciones de sus usuarios).
+    const editMatriz = () => editable && !(estado.modo === 'rol' && estado.rol && estado.rol.acceso_total);
+
     // Módulos de la matriz: comunes primero y luego por código del módulo.
     function modulosMatriz() {
       const mapa = new Map();
@@ -181,11 +184,11 @@
     function triestado(ids, ac, datos, titulo) {
       const n = ids.filter((id) => efectivo(id, ac)).length;
       const marca = n === ids.length && n > 0 ? 'checked' : '';
-      return `<input type="checkbox" class="tri" ${marca} data-indeterminado="${n > 0 && n < ids.length}" ${datos} ${editable ? '' : 'disabled'} aria-label="${esc(titulo)}" title="${esc(titulo)}">`;
+      return `<input type="checkbox" class="tri" ${marca} data-indeterminado="${n > 0 && n < ids.length}" ${datos} ${editMatriz() ? '' : 'disabled'} aria-label="${esc(titulo)}" title="${esc(titulo)}">`;
     }
 
     function atajos(alcance, compacto) {
-      if (!editable) return '';
+      if (!editMatriz()) return '';
       const b = (preset, icono, texto, titulo) => `<button type="button" class="${compacto ? 'atajo-mini' : 'boton secundario-sm atajo'}" data-preset="${preset}" data-alcance="${alcance}" title="${esc(titulo)}"><i class="ti ${icono}" aria-hidden="true"></i>${compacto ? '' : ' '}${texto}</button>`;
       return b('total', 'ti-checks', compacto ? 'Total' : 'Acceso total', 'Todas las acciones en todas las pantallas')
         + b('consulta', 'ti-eye', compacto ? 'Consulta' : 'Solo consulta', 'Solo Ver e Imprimir')
@@ -224,12 +227,12 @@
         </div>
 
         <p class="rm-ayuda">${estado.modo === 'rol'
-          ? `Lo que marques aquí lo heredan todos los usuarios con el rol <b>${esc(rol.nombre)}</b>.`
+          ? (rol.acceso_total ? `<b>${esc(rol.nombre)}</b> tiene <b>acceso total</b> a todo el sistema, también a las pantallas que se agreguen. Para limitarlo, quita «Acceso total» en Modificar rol.` : `Lo que marques aquí lo heredan todos los usuarios con el rol <b>${esc(rol.nombre)}</b>.`)
           : `Accesos finales de <b>${esc(usuarioSel.nombre)}</b>: los del rol más sus excepciones. Las celdas <span class="excepcion-muestra">resaltadas</span> son excepciones; al dejarlas igual que el rol vuelven a heredarse.`}</p>
 
         <div class="rm-atajos">
-          ${editable ? `<span class="rm-atajos-titulo">Aplicar a todo el sistema</span>${atajos('todo', false)}` : ''}
-          ${editable && estado.modo === 'rol' && estado.roles.length > 1 ? `
+          ${editMatriz() ? `<span class="rm-atajos-titulo">Todo el sistema</span>${atajos('todo', false)}` : ''}
+          ${editMatriz() && estado.modo === 'rol' && estado.roles.length > 1 ? `
             <label class="selector-org copiar">Copiar de <select data-copiar>
               <option value="">Otro rol…</option>
               ${estado.roles.filter((x) => x.id !== rol.id).map((x) => `<option value="${x.id}">${esc(x.nombre)}</option>`).join('')}
@@ -279,15 +282,15 @@
                     grupoActual = g;
                     return cab + `
                       <tr data-op="${op.id}">
-                        <td colspan="2"><button type="button" class="fila-todo" data-fila="${op.id}" ${editable ? '' : 'disabled'} title="Marcar o quitar toda la fila">${esc(op.nombre)}</button></td>
-                        ${ACCIONES.map((ac) => `<td class="centrada ${esExcepcion(op.id, ac.id) ? 'excepcion' : ''}"><input type="checkbox" data-celda="${op.id}|${ac.id}" ${efectivo(op.id, ac.id) ? 'checked' : ''} ${editable ? '' : 'disabled'} aria-label="${ac.nombre} ${esc(op.nombre)}"></td>`).join('')}
+                        <td colspan="2"><button type="button" class="fila-todo" data-fila="${op.id}" ${editMatriz() ? '' : 'disabled'} title="Marcar o quitar toda la fila">${esc(op.nombre)}</button></td>
+                        ${ACCIONES.map((ac) => `<td class="centrada ${esExcepcion(op.id, ac.id) ? 'excepcion' : ''}"><input type="checkbox" data-celda="${op.id}|${ac.id}" ${efectivo(op.id, ac.id) ? 'checked' : ''} ${editMatriz() ? '' : 'disabled'} aria-label="${ac.nombre} ${esc(op.nombre)}"></td>`).join('')}
                       </tr>`;
                   }).join('') : ''}
                 </tbody>`;
             }).join('') || `<tbody><tr><td colspan="${ACCIONES.length + 2}" class="vacio">Sin pantallas con esa búsqueda.</td></tr></tbody>`}
           </table>
         </div>
-        ${editable ? `
+        ${editMatriz() ? `
           <div class="barra-guardar rm-guardar">
             <span class="rm-cambios ${n ? 'pendientes' : ''}">${n ? `${n} pantalla${n === 1 ? '' : 's'} con cambios sin guardar` : 'Sin cambios'}</span>
             <button type="button" class="boton secundario-sm" data-accion="descartar" ${n ? '' : 'disabled'}>Descartar</button>
@@ -364,11 +367,12 @@
     function formRol(fila) {
       formulario({
         titulo: fila ? `Modificar rol · ${fila.nombre}` : 'Nuevo rol',
-        valores: fila || { codigo: Math.max(0, ...estado.roles.map((x) => x.codigo)) + 10, activo: true },
+        valores: fila || { codigo: Math.max(0, ...estado.roles.map((x) => x.codigo)) + 1, activo: true, acceso_total: false },
         campos: [
           { nombre: 'codigo', etiqueta: 'Código', tipo: 'numero', requerido: true },
           { nombre: 'nombre', etiqueta: 'Rol', requerido: true, placeholder: 'Contador' },
           { nombre: 'descripcion', etiqueta: 'Descripción', tipo: 'area', ancho: 'completo' },
+          { nombre: 'acceso_total', etiqueta: 'Acceso total a todo (incluye pantallas nuevas)', tipo: 'casilla', ancho: 'completo' },
           { nombre: 'activo', etiqueta: 'Activo', tipo: 'casilla' }
         ],
         alGuardar: async (d) => {
