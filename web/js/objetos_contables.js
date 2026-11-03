@@ -451,7 +451,9 @@
     function pintarDetalle(valores) {
       const x = actual;
       if (!seleccion.loc) { ctx.pDet.innerHTML = '<div class="tk-vacio ta-elige"><i class="ti ti-building" aria-hidden="true"></i>Elige la organización y la localidad.</div>'; return; }
-      const v = valores || (x ? { descripcion: x.descripcion, estado: x.estado, aplica_poliza: x.aplica_poliza, tipo_operacion: x.tipo_operacion || '' } : { descripcion: '', estado: 'ACTIVO', aplica_poliza: true, tipo_operacion: '' });
+      // Código sugerido para una transacción nueva: el siguiente de la localidad.
+      const sugerido = Math.max(1000, ...transacciones.map((t) => t.numero)) + 1;
+      const v = valores || (x ? { numero: x.numero, descripcion: x.descripcion, estado: x.estado, aplica_poliza: x.aplica_poliza, tipo_operacion: x.tipo_operacion || '' } : { numero: sugerido, descripcion: '', estado: 'ACTIVO', aplica_poliza: true, tipo_operacion: '' });
       const dis = ctx.admin ? '' : 'disabled';
       ctx.pDet.innerHTML = `
         <form class="tk-form ta-form ot-form" novalidate>
@@ -463,6 +465,7 @@
           <p class="modal-error tk-error" role="alert"></p>
           ${!ctx.catalogoId ? '<p class="tk-aviso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> La localidad no tiene un catálogo de cuentas activo.</p>' : ''}
           <div class="pc-encabezado ot-encabezado">
+            <label class="campo ot-codigo"><span>Código *</span><input type="number" name="numero" min="1" step="1" value="${esc(String(v.numero ?? ''))}" ${dis} aria-label="Código de la transacción"></label>
             <label class="campo pc-desc"><span>Descripción *</span><input name="descripcion" value="${esc(v.descripcion)}" maxlength="150" placeholder="Ej. DEPÓSITOS VARIOS, NOTAS DE CRÉDITO…" ${dis}></label>
             <label class="campo"><span>Estado</span><select name="estado" ${dis}><option ${v.estado === 'ACTIVO' ? 'selected' : ''}>ACTIVO</option><option ${v.estado === 'INACTIVO' ? 'selected' : ''}>INACTIVO</option></select></label>
             <label class="pc-check ot-aplica"><input type="checkbox" name="aplica_poliza" ${v.aplica_poliza ? 'checked' : ''} ${dis}> Aplica póliza</label>
@@ -488,6 +491,7 @@
     }
 
     const leerEncabezado = (form) => ({
+      numero: Number(form.elements.numero.value) || null,
       descripcion: form.elements.descripcion.value.trim(), estado: form.elements.estado.value,
       aplica_poliza: form.elements.aplica_poliza.checked, tipo_operacion: form.elements.tipo_operacion.value.trim() || null
     });
@@ -514,6 +518,8 @@
       const error = form.querySelector('.modal-error');
       leerLineas();
       const d = leerEncabezado(form);
+      if (!d.numero || d.numero < 1 || !Number.isInteger(d.numero)) { error.textContent = 'Escribe el código de la transacción (número entero mayor que cero).'; form.elements.numero.focus(); return; }
+      if (transacciones.some((t) => t.numero === d.numero && (!actual || t.id !== actual.id))) { error.textContent = `Ya existe la transacción ${d.numero} en esta localidad: usa otro código.`; form.elements.numero.focus(); return; }
       if (!d.descripcion) { error.textContent = 'Escribe la descripción de la transacción.'; return; }
       const validas = lineas.filter((l) => l.cuenta_id);
       const mala = lineas.findIndex((l, i) => !l.cuenta_id && ctx.pDet.querySelector(`tr[data-linea="${i}"] [data-campo=cuenta]`).value.trim());

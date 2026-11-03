@@ -1407,7 +1407,11 @@ span.tk-archivo { cursor: default; }
 .oc-orden { width: 70px; }
 .oc-oper { width: 130px; }
 .oc-col { width: 140px; }
-.ot-encabezado { grid-template-columns: minmax(0, 2fr) minmax(120px, .6fr) auto minmax(0, 1fr) minmax(150px, .7fr) minmax(150px, .7fr); }
+.ot-encabezado { grid-template-columns: minmax(100px, .45fr) minmax(0, 2fr) minmax(120px, .6fr) auto minmax(0, 1fr) minmax(150px, .7fr) minmax(150px, .7fr); }
 .ot-aplica { align-self: center; margin-top: 18px; }
 @media (max-width: 1500px) { .ot-encabezado { grid-template-columns: repeat(3, minmax(0, 1fr)); } .oc-espacio .ta-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 1100px), (max-height: 620px) { .oc-grid { grid-template-columns: minmax(0, 1fr) !important; } }
+/* Mensaje "sin registros" dentro de una tabla: ocupa todo el ancho. */
+td.tk-vacio { display: table-cell; text-align: center; padding: 28px 10px; }
+td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
+.ot-codigo input { font-weight: 700; }
