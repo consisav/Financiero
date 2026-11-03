@@ -1,7 +1,8 @@
 // Catálogos iniciales · Monedas y tipos de cambio (maestro - detalle).
 // Maestro: monedas. Detalle: tipos de cambio de la moneda seleccionada, del más reciente al más
 // antiguo, con la tasa de venta y la de compra expresadas en otra moneda ("cambio"), que por
-// defecto es la moneda de integración de Parámetros generales.
+// defecto es la moneda de integración de Parámetros generales. "Tasa cambio actual" graba en ese
+// momento la compra y venta de todas las monedas con referencia de Banco Industrial (script 18).
 (function () {
   const { esc, tabla, formulario, filtrar } = window.UI;
 
@@ -64,6 +65,7 @@
           <h2>Tipos de cambio monedas</h2>
           <div class="panel-acciones">
             ${estado.integracion ? `<span class="tc-integra" title="Moneda de integración de Parámetros generales"><i class="ti ti-coins" aria-hidden="true"></i> Integración: <b>${esc(estado.integracion.nombre)}</b></span>` : ''}
+            ${editable ? '<button type="button" class="boton secundario-sm" data-accion="tasa-actual" title="Graba la compra y venta de este momento con referencia de Banco Industrial"><i class="ti ti-refresh" aria-hidden="true"></i> Tasa cambio actual</button>' : ''}
             ${editable ? '<button type="button" class="boton primario-sm" data-accion="nueva-moneda">+ Moneda</button>' : ''}
           </div>
         </div>
@@ -74,6 +76,7 @@
             { titulo: 'Moneda', valor: (f) => f.codigo, clase: 'angosta' },
             { titulo: 'Nombre', valor: (f) => esc(f.nombre), clase: 'fuerte' },
             { titulo: 'Símbolo', valor: (f) => esc(f.simbolo), clase: 'centrada angosta' },
+            { titulo: 'ISO', valor: (f) => esc(f.iso || ''), clase: 'angosta' },
             { titulo: 'Lugar geográfico', valor: (f) => esc(f.lugar_geografico || '') },
             { titulo: 'Estado', valor: (f) => window.UI.estado(f.activo) }
           ],
@@ -118,12 +121,14 @@
           { nombre: 'codigo', etiqueta: 'Moneda', tipo: 'numero', requerido: true },
           { nombre: 'nombre', etiqueta: 'Nombre', requerido: true },
           { nombre: 'simbolo', etiqueta: 'Símbolo', requerido: true, max: 5 },
+          { nombre: 'iso', etiqueta: 'Código ISO (GTQ, USD, EUR…)', max: 3, patron: '[A-Za-z]{3}' },
           { nombre: 'lugar_geografico', etiqueta: 'Lugar geográfico' },
           { nombre: 'activo', etiqueta: 'Activa', tipo: 'casilla' }
         ],
         alGuardar: async (d) => {
           d.nombre = d.nombre.toUpperCase();
           if (d.lugar_geografico) d.lugar_geografico = d.lugar_geografico.toUpperCase();
+          d.iso = d.iso ? d.iso.toUpperCase() : null;
           const r = fila ? await sb.from('monedas').update(d).eq('id', fila.id).select('id').single()
                          : await sb.from('monedas').insert(d).select('id').single();
           if (r.error) {
@@ -165,8 +170,28 @@
       });
     }
 
+    // Compra y venta de este momento con referencia de Banco Industrial, para todas las monedas.
+    async function tasaActual(boton) {
+      boton.disabled = true;
+      const texto = boton.innerHTML;
+      boton.innerHTML = '<i class="ti ti-loader-2" aria-hidden="true"></i> Consultando Banco Industrial…';
+      const { data, error } = await sb.rpc('actualizar_tasas_banco_industrial');
+      boton.disabled = false;
+      boton.innerHTML = texto;
+      if (error) {
+        window.FIN.aviso(/actualizar_tasas_banco_industrial|schema cache/.test(error.message)
+          ? 'Falta instalar en Supabase el script 20261103000018_tasa_cambio_actual_banco_industrial.sql.'
+          : window.UI.traducirError(error));
+        return;
+      }
+      const usd = (data.monedas || []).find((x) => x.iso === 'USD');
+      window.FIN.aviso(`Tipos de cambio actualizados (${(data.monedas || []).length} monedas)${usd ? ` · Dólar: compra Q${usd.compra} · venta Q${usd.venta}` : ''}`);
+      await cargarTasas();
+    }
+
     cont.addEventListener('click', (e) => {
       const a = e.target.closest('[data-accion]');
+      if (a && a.dataset.accion === 'tasa-actual') return tasaActual(a);
       if (a && a.dataset.accion === 'nueva-moneda') return formMoneda();
       if (a && a.dataset.accion === 'nueva-tasa') return formTasa();
       const et = e.target.closest('[data-editar-tasa]');
