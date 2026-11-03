@@ -29,11 +29,14 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid #e3e8ef; }
         th { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #5a6678; }
-        tr.n1 td { font-weight: 700; } tr.inactiva td { color: #8a94a6; }
+        tr.integra td { font-weight: 700; background: #e8eef7; }
+        tr.n1 td { font-weight: 800; background: #d6e2f3; }
+        tr.inactiva td { color: #8a94a6; }
+        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       </style></head><body>
       <h1>${esc(titulo)}</h1><p>${esc(subtitulo)} · ${orden.length} registros · Impreso el ${new Date().toLocaleString('es-GT')}</p>
       <table><thead><tr><th>Código</th><th>Nombre</th><th>Nivel</th>${columnas.map((c) => `<th>${esc(c.titulo)}</th>`).join('')}<th>Vigente</th></tr></thead><tbody>
-      ${orden.map((f) => `<tr class="n${f.nivel} ${f.vigente ? '' : 'inactiva'}"><td>${esc(f.codigo)}</td><td style="padding-left:${8 + (f.nivel - 1) * 16}px">${esc(f.nombre)}</td><td>${f.nivel}</td>${columnas.map((c) => `<td>${c.valor(f)}</td>`).join('')}<td>${f.vigente ? 'Sí' : 'No'}</td></tr>`).join('')}
+      ${orden.map((f) => `<tr class="n${f.nivel} ${f.integra ? 'integra' : ''} ${f.vigente ? '' : 'inactiva'}"><td>${esc(f.codigo)}</td><td style="padding-left:${8 + (f.nivel - 1) * 16}px">${esc(f.nombre)}</td><td>${f.nivel}</td>${columnas.map((c) => `<td>${c.valor(f)}</td>`).join('')}<td>${f.vigente ? 'Sí' : 'No'}</td></tr>`).join('')}
       </tbody></table></body></html>`);
     w.document.close();
     w.focus();
