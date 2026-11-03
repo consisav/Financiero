@@ -48,10 +48,11 @@ En **Catálogos** de Contabilidad, el subgrupo desplegable **Cuentas y centros d
 - **Tipos de cuentas** (`web/js/tipos_cuenta.js`): naturaleza debe-haber / haber-debe y efecto en el resultado.
 - **Cuentas contables** y **Centros de costos** (`web/js/cuentas.js`): árbol en tres bloques
   maestro → detalle → detalle (`web/js/jerarquia.js`), con Bajar / Subir nivel para niveles más
-  profundos. Las cuentas van por organización y versión del catálogo; los centros, por organización.
+  profundos. Las cuentas van por organización, localidad y versión del catálogo; los centros, por organización.
   El código de un hijo comienza con el de su mayor (1 → 101 → 10101) y hereda nivel y tipo.
 
-Migración: `supabase/migrations/20261102000004_cuentas_y_centros_de_costo.sql`.
+Migraciones: `supabase/migrations/20261102000004_cuentas_y_centros_de_costo.sql` y
+`20261102000005_cuentas_por_localidad.sql`.
 
 ## Publicación
 

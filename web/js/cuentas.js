@@ -45,11 +45,11 @@
 
   window.PANTALLAS = window.PANTALLAS || {};
 
-  // ---------- Cuentas contables ----------
+  // ---------- Cuentas contables (organización → localidad → versión → árbol) ----------
   window.PANTALLAS.cuentas = async function (cont, m) {
     const sb = window.FIN.sb;
     const editable = window.FIN.puedeEditarCatalogos();
-    const estado = { orgs: [], org: null, versiones: [], version: null, tipos: [], arbol: null };
+    const estado = { orgs: [], org: null, locs: [], loc: null, versiones: [], version: null, tipos: [], arbol: null };
 
     try {
       const [orgs, tipos] = await Promise.all([organizaciones(sb), sb.from('tipos_cuenta').select('id, codigo, descripcion, activo').order('codigo')]);
@@ -64,8 +64,18 @@
     const pVer = cont.querySelector('#p-versiones');
     const tipoDe = (id) => estado.tipos.find((t) => t.id === id);
 
+    async function cargarLocalidades() {
+      const { data, error } = await sb.from('localidades').select('id, codigo, nombre_comercial').eq('organizacion_id', estado.org).eq('activo', true).order('correlativo');
+      if (error) { pVer.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
+      estado.locs = data;
+      estado.loc = data.length ? data[0].id : null;
+      estado.version = null;
+      await cargarVersiones();
+    }
+
     async function cargarVersiones(seleccion) {
-      const { data, error } = await sb.from('catalogos_cuentas').select('*').eq('organizacion_id', estado.org).order('version', { ascending: false });
+      if (!estado.loc) { estado.versiones = []; estado.version = null; pintarVersiones(); montarArbol(); return; }
+      const { data, error } = await sb.from('catalogos_cuentas').select('*').eq('localidad_id', estado.loc).order('version', { ascending: false });
       if (error) { pVer.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       estado.versiones = data;
       const previo = seleccion || (estado.version && estado.version.id);
@@ -74,29 +84,36 @@
       montarArbol();
     }
 
+    const locActual = () => estado.locs.find((l) => l.id === estado.loc);
+
     function pintarVersiones() {
       const org = estado.orgs.find((o) => o.id === estado.org);
+      const loc = locActual();
       pVer.innerHTML = `
         <div class="panel-cab">
           <h2>Catálogo de cuentas</h2>
           <div class="panel-acciones">
             <label class="selector-org">Empresa <select data-org>${opcionesOrg(estado.orgs, estado.org)}</select></label>
+            <label class="selector-org">Localidad <select data-loc ${estado.locs.length ? '' : 'disabled'}>
+              ${estado.locs.length ? estado.locs.map((l) => `<option value="${l.id}" ${l.id === estado.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('') : '<option>Sin localidades</option>'}
+            </select></label>
             ${estado.version ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
-            ${editable ? '<button type="button" class="boton primario-sm" data-accion="nueva-version">+ Versión</button>' : ''}
+            ${editable && loc ? '<button type="button" class="boton primario-sm" data-accion="nueva-version">+ Versión</button>' : ''}
           </div>
         </div>
-        ${tabla({
+        ${loc ? tabla({
           id: 'versiones', editable, seleccionado: estado.version && estado.version.id,
-          vacio: `${org.nombre} todavía no tiene un catálogo de cuentas. Crea la versión 1.`,
+          vacio: `${loc.codigo} · ${loc.nombre_comercial} todavía no tiene un catálogo de cuentas. Crea la versión 1.`,
           columnas: [
             { titulo: 'Versión', valor: (f) => f.version, clase: 'angosta' },
             { titulo: 'Del', valor: (f) => fechaCorta(f.fecha_del) },
             { titulo: 'Al', valor: (f) => fechaCorta(f.fecha_al) || 'Vigente' },
             { titulo: 'Empresa', valor: () => esc(org.nombre), clase: 'fuerte' },
+            { titulo: 'Localidad', valor: () => `<span class="codigo">${esc(loc.codigo)}</span> ${esc(loc.nombre_comercial)}` },
             { titulo: 'Estado', valor: (f) => window.UI.estado(f.activo) }
           ],
           filas: estado.versiones
-        })}`;
+        }) : `<p class="vacio">${esc(org.nombre)} todavía no tiene localidades. Las cuentas contables pertenecen a una localidad: crea una en <a href="#/${m.id}/organizaciones">Catálogos · Organizaciones</a>.</p>`}`;
     }
 
     function formVersion(fila) {
@@ -110,7 +127,7 @@
           { nombre: 'activo', etiqueta: 'Activa', tipo: 'casilla' }
         ],
         alGuardar: async (d) => {
-          d.organizacion_id = estado.org;
+          if (!fila) Object.assign(d, { organizacion_id: estado.org, localidad_id: estado.loc });
           const r = fila ? await sb.from('catalogos_cuentas').update(d).eq('id', fila.id).select('id').single()
                          : await sb.from('catalogos_cuentas').insert(d).select('id').single();
           if (r.error) {
@@ -154,18 +171,23 @@
     }
 
     cont.addEventListener('change', (e) => {
-      if (!e.target.matches('[data-org]')) return;
-      estado.org = Number(e.target.value);
-      estado.version = null;
-      cargarVersiones();
+      if (e.target.matches('[data-org]')) {
+        estado.org = Number(e.target.value);
+        cargarLocalidades();
+      } else if (e.target.matches('[data-loc]')) {
+        estado.loc = Number(e.target.value);
+        estado.version = null;
+        cargarVersiones();
+      }
     });
     pVer.addEventListener('click', (e) => {
       const accion = e.target.closest('[data-accion]');
       if (accion && accion.dataset.accion === 'nueva-version') return formVersion();
       if (accion && accion.dataset.accion === 'imprimir') {
         const org = estado.orgs.find((o) => o.id === estado.org);
+        const loc = locActual();
         const v = estado.version;
-        return imprimir(`Catálogo de cuentas · ${org.nombre}`, `Versión ${v.version}, del ${fechaCorta(v.fecha_del)} al ${fechaCorta(v.fecha_al) || 'vigente'}`,
+        return imprimir(`Catálogo de cuentas · ${org.nombre}`, `Localidad ${loc.codigo} · ${loc.nombre_comercial} · Versión ${v.version}, del ${fechaCorta(v.fecha_del)} al ${fechaCorta(v.fecha_al) || 'vigente'}`,
           estado.arbol.filas(), 'cuenta_mayor_id',
           [{ titulo: 'Tipo cuenta', valor: (f) => esc((tipoDe(f.tipo_cuenta_id) || {}).descripcion || '') },
            { titulo: 'Integración', valor: (f) => f.integra ? 'Sí' : 'No' },
@@ -181,7 +203,7 @@
       }
     });
 
-    cargarVersiones();
+    cargarLocalidades();
   };
 
   // ---------- Centros de costos ----------
