@@ -1,9 +1,10 @@
-// Tickets · Generación, en una sola pantalla sin desplazamiento (bandeja y detalle):
-//   Izquierda, la bandeja de tickets con filtros por estado y prioridad y búsqueda.
-//   Derecha, el ticket abierto: cabecera (número, estado, prioridad y acciones), datos por
-//   defecto (organización, localidad, solicitante, fecha), gráfica del proceso y dos columnas:
-//   requerimiento (módulo, descripción y adjuntos) y gestión (prioridad, estado, recurso
-//   asignado e historial).
+// Tickets · Generación (maestro - detalle), con el mismo diseño de Asignación:
+//   Arriba, los parámetros de consulta: organización, localidad, fecha inicial y final, módulo,
+//   prioridad y estado.
+//   Maestro: los tickets que cumplen esos parámetros, con búsqueda y el botón de nuevo ticket.
+//   Detalle: cabecera (número, estado, prioridad y acciones), gráfica del proceso y tres
+//   columnas: datos del ticket y requerimiento (organización, localidad, solicitante, fecha,
+//   módulo y descripción), gestión (prioridad, estado, recurso asignado y adjuntos) e historial.
 (function () {
   const { esc } = window.UI;
 
@@ -22,8 +23,9 @@
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   }).replace(',', '');
   const fechaCorta = (f) => new Date(f).toLocaleString('es-GT', {
-    timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+    timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
   }).replace(',', '');
+  const hoy = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' });
   const tamano = (b) => b == null ? '' : b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
   const iconoArchivo = (tipo = '') => tipo.startsWith('image/') ? 'ti-photo' : tipo === 'application/pdf' ? 'ti-file-type-pdf' : 'ti-file';
   const iniciales = (n = '') => n.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join('').toUpperCase() || '?';
@@ -44,11 +46,23 @@
     let movimientos = [];
     let pendientes = [];    // archivos elegidos que se suben al guardar
     let buscar = '';
-    let filtroEstado = 0;   // 0 = todos
-    let filtroPrioridad = 0;
+    let organizaciones = [];
+    let localidades = [];
+    const f = {
+      org: yo.organizacion_id || null, loc: yo.localidad_id || null,
+      desde: hoy().slice(0, 8) + '01', hasta: hoy(), modulo: '', prioridad: 0, estado: 0
+    };
 
-    cont.innerHTML = '<div class="tk-espacio"><section class="tk-bandeja" id="tk-lista"></section><section class="tk-detalle" id="tk-ticket"></section></div>';
-    const espacio = cont.querySelector('.tk-espacio');
+    cont.innerHTML = `
+      <div class="ta-espacio ta-apilado tg-espacio">
+        <section class="ta-filtros" id="tg-filtros"></section>
+        <div class="ta-cuerpo">
+          <section class="tk-bandeja ta-maestro" id="tk-lista"></section>
+          <section class="tk-detalle ta-detalle" id="tk-ticket"></section>
+        </div>
+      </div>`;
+    const espacio = cont.querySelector('.ta-espacio');
+    const pFil = cont.querySelector('#tg-filtros');
     const pTicket = cont.querySelector('#tk-ticket');
     const pLista = cont.querySelector('#tk-lista');
 
@@ -64,22 +78,24 @@
     function ajustarAlto() {
       if (!espacio.isConnected) return window.removeEventListener('resize', ajustarAlto);
       const arriba = espacio.getBoundingClientRect().top + window.scrollY;
-      const alto = Math.max(560, window.innerHeight - arriba - 16);
+      const alto = Math.max(600, window.innerHeight - arriba - 16);
       espacio.style.setProperty('--tk-alto', `${alto}px`);
       // Lo que sobra debajo (márgenes del contenedor) se descuenta para no desplazar la página.
       const sobra = document.documentElement.scrollHeight - window.innerHeight;
-      if (sobra > 0 && alto - sobra >= 560) espacio.style.setProperty('--tk-alto', `${alto - sobra}px`);
+      if (sobra > 0 && alto - sobra >= 600) espacio.style.setProperty('--tk-alto', `${alto - sobra}px`);
     }
     window.addEventListener('resize', ajustarAlto);
 
     async function iniciar() {
       ajustarAlto();
-      const [e, r, o, l, md] = await Promise.all([
+      const [e, r, o, l, md, os, ls] = await Promise.all([
         sb.from('estados_ticket').select('*').eq('activo', true).order('codigo'),
         sb.rpc('recursos_ticket'),
         yo.organizacion_id ? sb.from('organizaciones').select('codigo, nombre').eq('id', yo.organizacion_id).maybeSingle() : { data: null },
         yo.localidad_id ? sb.from('localidades').select('codigo, nombre_comercial').eq('id', yo.localidad_id).maybeSingle() : { data: null },
-        sb.from('modulos_sistema').select('id, codigo, siglas, descripcion').is('modulo_mayor_id', null).eq('activo', true).order('codigo')
+        sb.from('modulos_sistema').select('id, codigo, siglas, descripcion').is('modulo_mayor_id', null).eq('activo', true).order('codigo'),
+        sb.from('organizaciones').select('id, codigo, nombre').eq('activo', true).order('codigo'),
+        sb.from('localidades').select('id, codigo, correlativo, nombre_comercial, organizacion_id').eq('activo', true).order('organizacion_id').order('correlativo')
       ]);
       const err = e.error || r.error;
       if (err) {
@@ -91,14 +107,39 @@
       org = o.data;
       loc = l.data;
       modulos = md.data || [];
+      organizaciones = os.data || [];
+      localidades = ls.data || [];
+      pintarFiltros();
       await cargarLista();
       abrir(null);
     }
 
+    // ---------- Parámetros de consulta ----------
+    function pintarFiltros() {
+      const locs = localidades.filter((x) => x.organizacion_id === f.org);
+      pFil.innerHTML = `
+        <div class="ta-titulo"><span class="tk-icono"><i class="ti ti-ticket" aria-hidden="true"></i></span><div><small>Tickets</small><h2>Generación</h2></div></div>
+        <label class="campo"><span>Organización</span><select name="org">${organizaciones.map((o) => `<option value="${o.id}" ${f.org === o.id ? 'selected' : ''}>${o.codigo} · ${esc(o.nombre)}</option>`).join('')}</select></label>
+        <label class="campo"><span>Localidad</span><select name="loc"><option value="">Todas</option>${locs.map((x) => `<option value="${x.id}" ${f.loc === x.id ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</select></label>
+        <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
+        <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
+        <label class="campo"><span>Módulo</span><select name="modulo"><option value="">Todos</option><option value="general" ${f.modulo === 'general' ? 'selected' : ''}>Todos los módulos (general)</option>${modulos.map((m) => `<option value="${m.id}" ${String(f.modulo) === String(m.id) ? 'selected' : ''}>${esc(m.siglas)} · ${esc(m.descripcion)}</option>`).join('')}</select></label>
+        <label class="campo"><span>Prioridad</span><select name="prioridad"><option value="0">Todas</option>${PRIORIDADES.map((p) => `<option value="${p.valor}" ${f.prioridad === p.valor ? 'selected' : ''}>${p.valor}. ${esc(p.texto)}</option>`).join('')}</select></label>
+        <label class="campo"><span>Estado</span><select name="estado"><option value="0">Todos</option>${estados.map((x) => `<option value="${x.codigo}" ${f.estado === x.codigo ? 'selected' : ''}>${x.codigo}. ${esc(x.nombre)}</option>`).join('')}</select></label>`;
+    }
+
     async function cargarLista() {
-      const { data, error } = await sb.from('tickets')
+      let q = sb.from('tickets')
         .select('*, organizacion:organizaciones(codigo, nombre), localidad:localidades!tickets_localidad_id_organizacion_id_fkey(codigo, nombre_comercial)')
-        .order('fecha', { ascending: false }).limit(300);
+        .gte('fecha', `${f.desde}T00:00:00-06:00`).lte('fecha', `${f.hasta}T23:59:59.999-06:00`)
+        .order('fecha', { ascending: false }).limit(500);
+      if (f.org) q = q.eq('organizacion_id', f.org);
+      if (f.loc) q = q.eq('localidad_id', f.loc);
+      if (f.modulo === 'general') q = q.is('modulo_id', null);
+      else if (f.modulo) q = q.eq('modulo_id', Number(f.modulo));
+      if (f.prioridad) q = q.eq('prioridad', f.prioridad);
+      if (f.estado) q = q.eq('estado', f.estado);
+      const { data, error } = await q;
       if (error) { pLista.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       tickets = data;
       pintarLista();
@@ -107,47 +148,33 @@
     // ---------- Bandeja ----------
     function pintarLista() {
       const q = buscar.trim().toLowerCase();
-      const filas = tickets.filter((t) =>
-        (!filtroEstado || t.estado === filtroEstado) &&
-        (!filtroPrioridad || t.prioridad === filtroPrioridad) &&
-        (!q || [t.numero, t.descripcion, t.usuario, nombreModulo(t.modulo_id), nombreEstado(t.estado), prioridad(t.prioridad).texto, nombreRecurso(t.recurso_id)]
-          .some((v) => String(v || '').toLowerCase().includes(q))));
-      const cuenta = (c) => tickets.filter((t) => t.estado === c).length;
+      const filas = tickets.filter((t) => !q || [t.numero, t.descripcion, t.usuario, nombreModulo(t.modulo_id), nombreEstado(t.estado), prioridad(t.prioridad).texto, nombreRecurso(t.recurso_id)]
+        .some((v) => String(v || '').toLowerCase().includes(q)));
       pLista.innerHTML = `
-        <header class="tk-bandeja-cab">
+        <header class="tk-bandeja-cab tg-cab">
           <h2>Tickets <small>${filas.length === tickets.length ? tickets.length : `${filas.length} de ${tickets.length}`}</small></h2>
-          <button type="button" class="boton primario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>
-        </header>
-        <div class="tk-filtros" role="group" aria-label="Filtrar por estado">
-          <button type="button" class="tk-chip ${!filtroEstado ? 'activo' : ''}" data-filtro-estado="0">Todos <b>${tickets.length}</b></button>
-          ${estados.map((e) => `<button type="button" class="tk-chip ${filtroEstado === e.codigo ? 'activo' : ''}" data-filtro-estado="${e.codigo}" title="${esc(e.nombre)}"><i class="tk-punto-color e${e.codigo}" aria-hidden="true"></i>${esc(e.nombre)} <b>${cuenta(e.codigo)}</b></button>`).join('')}
-        </div>
-        <div class="tk-barra">
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar ticket, requerimiento, módulo…" value="${esc(buscar)}" aria-label="Buscar tickets"></label>
-          <select data-filtro-prioridad aria-label="Filtrar por prioridad">
-            <option value="0">Prioridad: todas</option>
-            ${PRIORIDADES.map((p) => `<option value="${p.valor}" ${filtroPrioridad === p.valor ? 'selected' : ''}>${p.valor}. ${esc(p.texto)}</option>`).join('')}
-          </select>
-        </div>
-        <ul class="tk-items">
-          ${filas.map((t) => `
-            <li class="tk-item ${actual && actual.id === t.id ? 'actual' : ''}" data-ticket="${t.id}" tabindex="0" aria-label="Ticket ${esc(t.numero)}">
-              <i class="tk-franja ${prioridad(t.prioridad).clase}" aria-hidden="true"></i>
-              <div class="tk-item-linea">
-                <b>${esc(t.numero)}</b>
-                ${marcaEstado(t.estado)}
-                <button type="button" class="icono-boton tk-item-editar" data-ticket="${t.id}" title="${puedeEditar(t) ? 'Modificar' : 'Ver'} el ticket ${esc(t.numero)}"><i class="ti ${puedeEditar(t) ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i></button>
-              </div>
-              <p class="tk-item-desc">${esc(t.descripcion)}</p>
-              <div class="tk-item-pie">
-                <span><i class="ti ti-clock" aria-hidden="true"></i>${esc(fechaCorta(t.fecha))}</span>
-                <span><i class="ti ti-user" aria-hidden="true"></i>${esc(t.usuario || '')}</span>
-                <span><i class="ti ti-apps" aria-hidden="true"></i>${esc(modulo(t.modulo_id)?.siglas || 'Todos')}</span>
-                ${marcaPrioridad(t.prioridad)}
-                ${t.recurso_id && nombreRecurso(t.recurso_id) ? `<span class="tk-avatar" title="Recurso: ${esc(nombreRecurso(t.recurso_id))}">${esc(iniciales(nombreRecurso(t.recurso_id)))}</span>` : ''}
-              </div>
-            </li>`).join('') || `<li class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>${tickets.length ? 'Ningún ticket coincide con los filtros.' : 'Todavía no hay tickets.'}</li>`}
-        </ul>`;
+          <button type="button" class="boton primario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo ticket</button>
+        </header>
+        <div class="ta-tabla">
+          <table>
+            <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Módulo</th><th>Requerimiento</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th><th><span class="oculto">Acciones</span></th></tr></thead>
+            <tbody>
+              ${filas.map((t) => `
+                <tr class="${actual && actual.id === t.id ? 'actual' : ''}" data-ticket="${t.id}" tabindex="0">
+                  <td class="fuerte"><i class="tk-franja-celda ${prioridad(t.prioridad).clase}" aria-hidden="true"></i>${esc(t.numero)}</td>
+                  <td>${esc(fechaCorta(t.fecha))}</td>
+                  <td>${esc(t.usuario || '')}</td>
+                  <td>${esc(modulo(t.modulo_id)?.siglas || 'Todos')}</td>
+                  <td class="ta-desc" title="${esc(t.descripcion)}">${esc(t.descripcion)}</td>
+                  <td>${marcaPrioridad(t.prioridad)}</td>
+                  <td>${marcaEstado(t.estado)}</td>
+                  <td>${t.recurso_id && nombreRecurso(t.recurso_id) ? `<span class="tk-persona"><span class="tk-avatar">${esc(iniciales(nombreRecurso(t.recurso_id)))}</span>${esc(nombreRecurso(t.recurso_id))}</span>` : '<span class="ta-sin">Sin asignar</span>'}</td>
+                  ${window.TICKETS.botones(t, { textoModificar: puedeEditar(t) ? 'Modificar' : 'Ver' })}
+                </tr>`).join('') || `<tr><td colspan="9" class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>${tickets.length ? 'Ningún ticket coincide con la búsqueda.' : 'No hay tickets con esos parámetros.'}</td></tr>`}
+            </tbody>
+          </table>
+        </div>`;
     }
 
     async function abrir(t) {
@@ -177,7 +204,7 @@
       const orgTexto = t ? `${t.organizacion?.codigo} · ${t.organizacion?.nombre}` : org ? `${org.codigo} · ${org.nombre}` : 'Sin organización';
       const locTexto = t ? `${t.localidad?.codigo} · ${t.localidad?.nombre_comercial}` : loc ? `${loc.codigo} · ${loc.nombre_comercial}` : 'Sin localidad';
       pTicket.innerHTML = `
-        <form class="tk-form" novalidate>
+        <form class="tk-form ta-form tg-form" novalidate>
           <header class="tk-titulo">
             <span class="tk-icono"><i class="ti ti-ticket" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto">
@@ -192,22 +219,36 @@
           </header>
           <p class="modal-error tk-error" role="alert"></p>
 
-          <dl class="tk-datos">
-            <div><dt><i class="ti ti-building" aria-hidden="true"></i> Organización</dt><dd title="${esc(orgTexto)}">${esc(orgTexto)}</dd></div>
-            <div><dt><i class="ti ti-map-pin" aria-hidden="true"></i> Localidad</dt><dd title="${esc(locTexto)}">${esc(locTexto)}</dd></div>
-            <div><dt><i class="ti ti-user" aria-hidden="true"></i> Solicitante</dt><dd>${esc(t ? t.usuario : (yo.usuario || '').toUpperCase())}</dd></div>
-            <div><dt><i class="ti ti-clock" aria-hidden="true"></i> Fecha y hora</dt><dd data-reloj="${t ? '' : '1'}">${esc(fechaHora(t ? t.fecha : new Date()))}</dd></div>
-          </dl>
-
           <div class="tk-proceso" data-grafica>${grafica(estado)}</div>
 
-          <div class="tk-cuerpo">
-            <div class="tk-col tk-req">
-              <h3>Requerimiento</h3>
+          <div class="ta-det-grid">
+            <div class="ta-col">
+              <h3 class="ta-col-titulo"><i class="ti ti-file-description" aria-hidden="true"></i> Datos del ticket</h3>
+              <dl class="tk-datos ta-datos">
+                <div><dt><i class="ti ti-building" aria-hidden="true"></i> Organización</dt><dd title="${esc(orgTexto)}">${esc(orgTexto)}</dd></div>
+                <div><dt><i class="ti ti-map-pin" aria-hidden="true"></i> Localidad</dt><dd title="${esc(locTexto)}">${esc(locTexto)}</dd></div>
+                <div><dt><i class="ti ti-user" aria-hidden="true"></i> Solicitante</dt><dd>${esc(t ? t.usuario : (yo.usuario || '').toUpperCase())}</dd></div>
+                <div><dt><i class="ti ti-clock" aria-hidden="true"></i> Fecha y hora</dt><dd data-reloj="${t ? '' : '1'}">${esc(fechaHora(t ? t.fecha : new Date()))}</dd></div>
+              </dl>
               <label class="campo"><span>Módulo</span>
                 <select name="modulo_id" ${dis}><option value="">Todos los módulos</option>${modulos.map((m) => `<option value="${m.id}" ${t && t.modulo_id === m.id ? 'selected' : ''}>${esc(m.siglas)} · ${esc(m.descripcion)}</option>`).join('')}</select></label>
-              <label class="campo tk-crece"><span>Descripción del requerimiento *</span>
+              <label class="campo tg-descripcion"><span>Descripción del requerimiento *</span>
                 <textarea name="descripcion" required ${dis} placeholder="Describe qué se necesita, dónde y para cuándo.">${esc(t ? t.descripcion : '')}</textarea></label>
+            </div>
+
+            <div class="ta-col">
+              <h3 class="ta-col-titulo"><i class="ti ti-adjustments" aria-hidden="true"></i> Gestión</h3>
+              <fieldset class="tk-prioridades" ${dis}>
+                <legend>Prioridad</legend>
+                ${PRIORIDADES.map((p) => `
+                  <label class="tk-opcion-prio ${p.clase}" title="${p.valor}. ${esc(p.texto)}"><input type="radio" name="prioridad" value="${p.valor}" ${prio === p.valor ? 'checked' : ''}><span class="tk-punto-color ${p.clase}" aria-hidden="true"></span>${p.valor}. ${esc(p.texto)}</label>`).join('')}
+              </fieldset>
+              <div class="tk-dos">
+                <label class="campo"><span>Estado</span>
+                  <select name="estado" ${dis}>${estados.map((e) => `<option value="${e.codigo}" ${estado === e.codigo ? 'selected' : ''}>${e.codigo}. ${esc(e.nombre)}</option>`).join('')}</select></label>
+                <label class="campo"><span>Recurso asignado</span>
+                  <select name="recurso_id" ${dis}><option value="">Sin asignar</option>${recursos.map((r) => `<option value="${r.id}" ${t && t.recurso_id === r.id ? 'selected' : ''}>${esc(r.nombre || r.usuario)}${r.usuario ? ` (${esc(r.usuario)})` : ''}</option>`).join('')}</select></label>
+              </div>
               <div class="campo">
                 <span>Adjuntos ${adjuntos.length + pendientes.length ? `<small class="tk-tenue">(${adjuntos.length + pendientes.length})</small>` : ''}</span>
                 <div class="tk-adjuntos">
@@ -221,31 +262,19 @@
                       <button type="button" class="tk-archivo" data-ver="${a.id}" title="Abrir ${esc(a.nombre)} (${tamano(a.tamano)})"><i class="ti ${iconoArchivo(a.tipo)}" aria-hidden="true"></i><span>${esc(a.nombre)}</span></button>
                       ${editable ? `<button type="button" class="icono-boton" data-quitar-adjunto="${a.id}" aria-label="Quitar ${esc(a.nombre)}"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}
                     </div>`).join('')}
-                  ${pendientes.map((f, i) => `
-                    <div class="tk-adjunto pendiente" title="${esc(f.name)} · ${tamano(f.size)} · se sube al guardar">
-                      <span class="tk-archivo"><i class="ti ${iconoArchivo(f.type)}" aria-hidden="true"></i><span>${esc(f.name)}</span></span>
-                      <button type="button" class="icono-boton" data-quitar-pendiente="${i}" aria-label="Quitar ${esc(f.name)}"><i class="ti ti-x" aria-hidden="true"></i></button>
+                  ${pendientes.map((x, i) => `
+                    <div class="tk-adjunto pendiente" title="${esc(x.name)} · ${tamano(x.size)} · se sube al guardar">
+                      <span class="tk-archivo"><i class="ti ${iconoArchivo(x.type)}" aria-hidden="true"></i><span>${esc(x.name)}</span></span>
+                      <button type="button" class="icono-boton" data-quitar-pendiente="${i}" aria-label="Quitar ${esc(x.name)}"><i class="ti ti-x" aria-hidden="true"></i></button>
                     </div>`).join('')}
                   ${!adjuntos.length && !pendientes.length && !editable ? '<small class="tk-tenue">Sin archivos adjuntos.</small>' : ''}
                 </div>
               </div>
             </div>
 
-            <div class="tk-col tk-gestion">
-              <h3>Gestión</h3>
-              <fieldset class="tk-prioridades" ${dis}>
-                <legend>Prioridad</legend>
-                ${PRIORIDADES.map((p) => `
-                  <label class="tk-opcion-prio ${p.clase}" title="${p.valor}. ${esc(p.texto)}"><input type="radio" name="prioridad" value="${p.valor}" ${prio === p.valor ? 'checked' : ''}><span class="tk-punto-color ${p.clase}" aria-hidden="true"></span>${p.valor}. ${esc(p.texto)}</label>`).join('')}
-              </fieldset>
-              <div class="tk-dos">
-                <label class="campo"><span>Estado</span>
-                  <select name="estado" ${dis}>${estados.map((e) => `<option value="${e.codigo}" ${estado === e.codigo ? 'selected' : ''}>${e.codigo}. ${esc(e.nombre)}</option>`).join('')}</select></label>
-                <label class="campo"><span>Recurso asignado</span>
-                  <select name="recurso_id" ${dis}><option value="">Sin asignar</option>${recursos.map((r) => `<option value="${r.id}" ${t && t.recurso_id === r.id ? 'selected' : ''}>${esc(r.nombre || r.usuario)}${r.usuario ? ` (${esc(r.usuario)})` : ''}</option>`).join('')}</select></label>
-              </div>
-              <div class="tk-historial tk-crece">
-                <span>Historial</span>
+            <div class="ta-col">
+              <h3 class="ta-col-titulo"><i class="ti ti-history" aria-hidden="true"></i> Historial</h3>
+              <div class="tk-historial ta-historial">
                 ${t ? `<ol>
                   ${movimientos.slice().reverse().map((m) => `
                     <li>
@@ -313,8 +342,9 @@
           const ins = await sb.from('ticket_adjuntos').insert({ ticket_id: id, ruta, nombre: f.name, tipo: f.type || null, tamano: f.size });
           if (ins.error) { fallidos++; await sb.storage.from(BUCKET).remove([ruta]); }
         }
+        if (!actual && (f.hasta < hoy() || f.estado > 1)) { f.hasta = hoy(); f.estado = 0; pintarFiltros(); }
         await cargarLista();
-        const t = tickets.find((x) => x.id === id);
+        const t = tickets.find((x) => x.id === id) || (await sb.from('tickets').select('*, organizacion:organizaciones(codigo, nombre), localidad:localidades!tickets_localidad_id_organizacion_id_fkey(codigo, nombre_comercial)').eq('id', id).single()).data;
         window.FIN.aviso(`${actual ? 'Ticket guardado' : `Ticket ${t ? t.numero : ''} generado`}${fallidos ? ` · ${fallidos} adjunto(s) no se pudieron subir` : ''}`);
         await abrir(t || null);
       } catch (err) {
@@ -333,10 +363,18 @@
     }
 
     cont.addEventListener('click', async (e) => {
+      const bmod = e.target.closest('[data-modificar]');
+      if (bmod) {
+        await abrir(tickets.find((x) => String(x.id) === bmod.dataset.modificar));
+        return pTicket.querySelector('[name=descripcion]')?.focus();
+      }
+      const bm = e.target.closest('[data-eliminar]');
+      if (bm) {
+        const t = tickets.find((x) => String(x.id) === bm.dataset.eliminar);
+        return window.TICKETS.eliminar(t).then(async (ok) => { if (ok) { if (actual && actual.id === t.id) actual = null; await cargarLista().then(() => { if (!actual) abrir(null); }); } });
+      }
       if (e.target.closest('[data-accion=nuevo]')) return abrir(null);
       if (e.target.closest('[data-accion=descartar]')) return abrir(actual);
-      const fe = e.target.closest('[data-filtro-estado]');
-      if (fe) { filtroEstado = Number(fe.dataset.filtroEstado); return pintarLista(); }
       const fila = e.target.closest('[data-ticket]');
       if (fila) return abrir(tickets.find((x) => String(x.id) === fila.dataset.ticket));
       const ver = e.target.closest('[data-ver]');
@@ -360,12 +398,12 @@
       }
     });
     cont.addEventListener('keydown', (e) => {
-      const fila = e.target.closest('li[data-ticket]');
+      const fila = e.target.closest('tr[data-ticket]');
       if (fila && e.target === fila && e.key === 'Enter') abrir(tickets.find((x) => String(x.id) === fila.dataset.ticket));
     });
     cont.addEventListener('change', (e) => {
       if (e.target.matches('[data-archivos]')) return agregarArchivos(e.target.files);
-      if (e.target.matches('[data-filtro-prioridad]')) { filtroPrioridad = Number(e.target.value); return pintarLista(); }
+      if (e.target.closest('#tg-filtros')) return cambiarFiltro(e.target);
       if (e.target.matches('[name=estado], [name=prioridad]')) vistaPrevia(e.target.form);
     });
     cont.addEventListener('dragover', (e) => {
@@ -395,6 +433,20 @@
       e.preventDefault();
       guardar(e.target);
     });
+
+    function cambiarFiltro(el) {
+      const n = el.name;
+      const val = el.value;
+      if (n === 'org') { f.org = Number(val); f.loc = null; pintarFiltros(); }
+      else if (n === 'loc') f.loc = val ? Number(val) : null;
+      else if (n === 'prioridad' || n === 'estado') f[n] = Number(val);
+      else f[n] = val;
+      if (n === 'desde' || n === 'hasta') {
+        if (f.desde && f.hasta && f.hasta < f.desde) { if (n === 'desde') f.hasta = f.desde; else f.desde = f.hasta; }
+        pintarFiltros();
+      }
+      if (f.desde && f.hasta) cargarLista();
+    }
 
     // Vuelve a pintar el ticket conservando lo que se escribió.
     function pintarConDatos() {

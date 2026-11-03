@@ -1259,3 +1259,24 @@ span.tk-archivo { cursor: default; }
 .ta-apilado .ts-tiempos > div:nth-child(n+3) { border-top: 1px solid var(--borde); }
 .ta-apilado .tk-proceso .tk-pasos { padding-top: 0; }
 .ta-col-titulo.tc-ok { color: var(--ok); }
+/* Generación con el diseño apilado de Asignación. */
+.tg-cab { gap: 12px; }
+.tg-cab .tk-buscar { margin-left: auto; width: min(340px, 100%); }
+.tg-cab .tk-buscar input { padding: 6px 0; }
+.ta-col .tg-descripcion { flex: 1; min-height: 0; }
+.ta-col .tg-descripcion textarea { flex: 1; min-height: 90px; resize: none; }
+.tg-espacio .tk-proceso .tk-pasos { padding-top: 0; }
+/* Tickets: botones Modificar y Eliminar de cada fila. */
+.tk-acciones { white-space: nowrap; text-align: right; }
+.tk-accion-btn { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 12px; font-weight: 600; color: var(--acento); background: var(--panel); border: 1px solid var(--borde); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.tk-accion-btn + .tk-accion-btn { margin-left: 4px; }
+.tk-accion-btn:hover:not(:disabled) { border-color: var(--acento); background: var(--acento-fondo); }
+.tk-accion-btn.peligro { color: var(--error); }
+.tk-accion-btn.peligro:hover:not(:disabled) { border-color: var(--error); background: color-mix(in srgb, var(--error) 8%, var(--panel)); }
+.tk-accion-btn:disabled { opacity: .4; cursor: not-allowed; }
+.ta-modo { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-radius: 8px; background: var(--fondo); font-size: 12px; color: var(--suave); }
+.ta-modo .rp-enlace { display: inline-flex; align-items: center; gap: 4px; }
+.ts-bitacora li > .icono-boton { width: 28px; height: 28px; flex: none; }
+.ts-bitacora li.editando form { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.ts-bitacora li.editando textarea { font: inherit; font-size: 13px; padding: 8px 12px; border: 1px solid var(--acento); border-radius: 10px; background: var(--panel); color: var(--texto); resize: vertical; }
+.ts-nota-pie > span { display: inline-flex; gap: 6px; }

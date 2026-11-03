@@ -45,6 +45,7 @@
     let actual = null;
     let procesos = [];
     let notas = [];
+    let editandoNota = null; // id de la observación que se modifica
     const nombres = {};     // id de perfil → { nombre, usuario }
     const f = {
       org: yo.organizacion_id || null, loc: yo.localidad_id || null,
@@ -68,6 +69,7 @@
     const marcaEstado = (c) => `<span class="tk-estado e${c}"><i class="tk-punto-color e${c}" aria-hidden="true"></i>${esc(nombreEstado(c))}</span>`;
     const modulo = (id) => modulos.find((m) => m.id === id);
     const nombreUsuario = (id) => { const r = nombres[id]; return r ? r.nombre || r.usuario : ''; };
+    const puedeEditarNota = (n) => window.FIN.puedeEditarCatalogos() || n.perfil_id === yo.id;
     const puedeAnotar = (t) => window.FIN.puedeEditarCatalogos() || [t.perfil_id, t.recurso_id].includes(yo.id);
     // El tiempo corre desde que se generó el ticket hasta que se resolvió (o hasta ahora).
     const finDe = (t) => {
@@ -166,7 +168,7 @@
         </header>
         <div class="ta-tabla">
           <table>
-            <thead><tr><th>Ticket</th><th>Descripción</th><th>Prioridad</th><th>Estado</th><th>Fecha asignación</th><th>Asignado a</th><th>Tiempo transcurrido</th><th>Entrega</th></tr></thead>
+            <thead><tr><th>Ticket</th><th>Descripción</th><th>Prioridad</th><th>Estado</th><th>Fecha asignación</th><th>Asignado a</th><th>Tiempo transcurrido</th><th>Entrega</th><th><span class="oculto">Acciones</span></th></tr></thead>
             <tbody>
               ${tickets.map((t) => `
                 <tr class="${actual && actual.id === t.id ? 'actual' : ''}" data-ticket="${t.id}" tabindex="0">
@@ -178,7 +180,8 @@
                   <td>${t.recurso_id ? `<span class="tk-persona"><span class="tk-avatar">${esc(iniciales(nombreUsuario(t.recurso_id)))}</span>${esc(nombreUsuario(t.recurso_id))}</span>` : '—'}</td>
                   <td><span class="ts-tiempo ${finDe(t) ? 'fin' : ''}" data-tiempo="${t.id}">${esc(transcurrido(t))}</span></td>
                   <td class="${vencido(t) ? 'ta-vencido' : ''}">${esc(fechaDia(t.fecha_entrega)) || '—'}</td>
-                </tr>`).join('') || '<tr><td colspan="8" class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>No hay tickets con esos parámetros.</td></tr>'}
+                  ${window.TICKETS.botones(t, { modificar: puedeAnotar(t) })}
+                </tr>`).join('') || '<tr><td colspan="9" class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>No hay tickets con esos parámetros.</td></tr>'}
             </tbody>
           </table>
         </div>`;
@@ -188,6 +191,7 @@
       actual = t;
       procesos = [];
       notas = [];
+      editandoNota = null;
       if (t) {
         const [p, n] = await Promise.all([
           sb.from('ticket_procesos').select('*').eq('ticket_id', t.id).order('numero'),
@@ -273,7 +277,17 @@
                 <p class="modal-error tk-error" role="alert"></p>
               </form>` : '<p class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo quien creó el ticket, el recurso asignado o un administrador pueden agregar observaciones</p>'}
             ${notas.length ? `<ol class="ts-bitacora">
-              ${notas.map((n) => `<li><span class="tk-avatar">${esc(iniciales(nombreUsuario(n.perfil_id) || n.usuario || ''))}</span><div><p>${esc(n.observacion)}</p><small>${esc(n.usuario || '')} · ${esc(fechaHora(n.fecha))}</small></div></li>`).join('')}
+              ${notas.map((n) => editandoNota === n.id ? `
+                <li class="editando"><span class="tk-avatar">${esc(iniciales(nombreUsuario(n.perfil_id) || n.usuario || ''))}</span>
+                  <form class="ts-nota-editar" data-nota="${n.id}" novalidate>
+                    <textarea name="observacion" rows="3" maxlength="1000">${esc(n.observacion)}</textarea>
+                    <p class="modal-error tk-error" role="alert"></p>
+                    <div class="ts-nota-pie"><small class="tk-tenue">${esc(n.usuario || '')} · ${esc(fechaHora(n.fecha))}</small>
+                      <span><button type="button" class="boton secundario-sm" data-cancelar-nota>Cancelar</button>
+                      <button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar cambios</button></span></div>
+                  </form></li>`
+                : `<li><span class="tk-avatar">${esc(iniciales(nombreUsuario(n.perfil_id) || n.usuario || ''))}</span><div><p>${esc(n.observacion)}</p><small>${esc(n.usuario || '')} · ${esc(fechaHora(n.fecha))}${n.modificado_en ? ` · modificada por ${esc(n.modificado_por || '')} el ${esc(fechaHora(n.modificado_en))}` : ''}</small></div>
+                  ${puedeEditarNota(n) ? `<button type="button" class="icono-boton" data-editar-nota="${n.id}" title="Modificar la observación"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}</li>`).join('')}
             </ol>` : '<p class="tk-tenue">Todavía no hay observaciones de seguimiento.</p>'}
           </section>
           </div>
@@ -309,6 +323,23 @@
       if (f.desde && f.hasta) consultar();
     });
     cont.addEventListener('click', (e) => {
+      const bmod = e.target.closest('[data-modificar]');
+      if (bmod) {
+        return abrir(tickets.find((x) => String(x.id) === bmod.dataset.modificar)).then(() => {
+          // Modificar: la última observación que el usuario puede corregir, o una nueva.
+          const n = notas.find(puedeEditarNota);
+          if (n) { editandoNota = n.id; pintarDetalle(); }
+          pDet.querySelector('.ts-nota-editar textarea, .ts-nota-form textarea')?.focus();
+        });
+      }
+      const bm = e.target.closest('[data-eliminar]');
+      if (bm) {
+        const t = tickets.find((x) => String(x.id) === bm.dataset.eliminar);
+        return window.TICKETS.eliminar(t).then(async (ok) => { if (ok) { if (actual && actual.id === t.id) actual = null; await consultar(); } });
+      }
+      const en = e.target.closest('[data-editar-nota]');
+      if (en) { editandoNota = Number(en.dataset.editarNota); pintarDetalle(); return pDet.querySelector('.ts-nota-editar textarea')?.focus(); }
+      if (e.target.closest('[data-cancelar-nota]')) { editandoNota = null; return pintarDetalle(); }
       const tr = e.target.closest('tr[data-ticket]');
       if (tr) abrir(tickets.find((t) => String(t.id) === tr.dataset.ticket));
     });
@@ -317,10 +348,24 @@
       if (tr && e.key === 'Enter') abrir(tickets.find((t) => String(t.id) === tr.dataset.ticket));
     });
     cont.addEventListener('submit', (e) => {
+      if (e.target.matches('.ts-nota-editar')) { e.preventDefault(); return guardarNota(e.target); }
       if (!e.target.matches('.ts-nota-form')) return;
       e.preventDefault();
       anotar(e.target);
     });
+
+    async function guardarNota(form) {
+      const error = form.querySelector('.modal-error');
+      const texto = form.elements.observacion.value.trim();
+      if (!texto) { error.textContent = 'Escribe la observación.'; return; }
+      const { data, error: err } = await sb.from('ticket_seguimientos').update({ observacion: texto }).eq('id', Number(form.dataset.nota)).select('id');
+      if (err || !data || !data.length) {
+        error.textContent = err ? window.UI.traducirError(err) : 'No se pudo modificar: falta instalar el script 32 en Supabase o no tienes permiso.';
+        return;
+      }
+      window.FIN.aviso('Observación modificada');
+      await abrir(actual);
+    }
 
     // Los tiempos transcurridos se actualizan cada 30 segundos.
     const reloj = setInterval(() => {

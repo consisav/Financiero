@@ -43,6 +43,7 @@
     let asignaciones = [];
     let procesos = [];
     let editando = null;    // id del proceso que se modifica (null = nuevo)
+    let modificando = false; // se modifica la asignación vigente en lugar de reasignar
     let nombres = {};       // id de perfil → nombre (de los recursos ya consultados)
     const f = {
       org: yo.organizacion_id || null, loc: yo.localidad_id || null,
@@ -159,7 +160,7 @@
         </header>
         <div class="ta-tabla">
           <table>
-            <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Módulo</th><th>Requerimiento</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th><th>Entrega</th></tr></thead>
+            <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Módulo</th><th>Requerimiento</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th><th>Entrega</th><th><span class="oculto">Acciones</span></th></tr></thead>
             <tbody>
               ${tickets.map((t) => `
                 <tr class="${actual && actual.id === t.id ? 'actual' : ''}" data-ticket="${t.id}" tabindex="0">
@@ -172,7 +173,8 @@
                   <td>${marcaEstado(t.estado)}</td>
                   <td>${t.recurso_id ? `<span class="tk-persona"><span class="tk-avatar">${esc(iniciales(nombreUsuario(t.recurso_id)))}</span>${esc(nombreUsuario(t.recurso_id))}</span>` : '<span class="ta-sin">Sin asignar</span>'}</td>
                   <td class="${t.fecha_entrega && t.fecha_entrega < hoy() && t.estado < 6 ? 'ta-vencido' : ''}">${esc(fechaDia(t.fecha_entrega)) || '—'}</td>
-                </tr>`).join('') || '<tr><td colspan="9" class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>No hay tickets con esos parámetros.</td></tr>'}
+                  ${window.TICKETS.botones(t, { modificar: editable })}
+                </tr>`).join('') || '<tr><td colspan="10" class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>No hay tickets con esos parámetros.</td></tr>'}
             </tbody>
           </table>
         </div>`;
@@ -184,6 +186,7 @@
       procesos = [];
       recursos = [];
       editando = null;
+      modificando = false;
       if (t) {
         const [a, p] = await Promise.all([
           sb.from('ticket_asignaciones').select('*').eq('ticket_id', t.id).order('fecha', { ascending: false }),
@@ -206,6 +209,8 @@
         return;
       }
       const dis = editable ? '' : 'disabled';
+      const vig = asignaciones[0];
+      const mod = modificando && vig;
       pDet.innerHTML = `
         <div class="tk-form ta-form">
           <header class="tk-titulo">
@@ -233,6 +238,7 @@
                   <span class="tk-punto-color ${i === 0 ? 'e3' : 'e1'}" aria-hidden="true"></span>
                   <div><b>${esc(nombreUsuario(a.recurso_id) || 'Usuario')}</b>${i === 0 ? ' <span class="ta-vigente">vigente</span>' : ''}
                     <small>${esc(fechaHora(a.fecha))} · asignó ${esc(a.asignado_por || '')}${a.fecha_entrega ? ` · entrega ${esc(fechaDia(a.fecha_entrega))}` : ''}</small>
+                    ${a.modificado_en ? `<small>Modificada por ${esc(a.modificado_por || '')} el ${esc(fechaHora(a.modificado_en))}</small>` : ''}
                     ${a.observaciones ? `<small class="ta-obs">${esc(a.observaciones)}</small>` : ''}</div>
                 </li>`).join('')}
             </ol>` : '<p class="tk-tenue">El ticket todavía no tiene asignaciones.</p>'}
@@ -242,19 +248,25 @@
           <div class="ta-col">
           <form class="ta-asignar-form" novalidate>
           <fieldset class="rp-seccion ta-asignar" ${dis}>
-            <legend><i class="ti ti-user-check" aria-hidden="true"></i> ${t.recurso_id ? 'Reasignación' : 'Asignación'}</legend>
+            <legend><i class="ti ${mod ? 'ti-pencil' : 'ti-user-check'}" aria-hidden="true"></i> ${mod ? 'Modificar asignación vigente' : t.recurso_id ? 'Reasignación' : 'Asignación'}</legend>
+            ${editable && vig ? `<div class="ta-modo">${mod
+              ? '<span>Corrige la asignación vigente sin crear una nueva.</span><button type="button" class="rp-enlace" data-modo-asignacion="reasignar">Reasignar en su lugar</button>'
+              : '<span>¿Solo corregir la asignación vigente?</span><button type="button" class="rp-enlace" data-modo-asignacion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar asignación</button>'}</div>` : ''}
             <div class="ta-asignar-campos">
               <label class="campo"><span>Usuario asignado *</span>
-                <select name="recurso_id" required><option value="">Seleccionar usuario…</option>${recursos.map((r) => `<option value="${r.id}" ${t.recurso_id === r.id ? 'selected' : ''}>${esc(r.nombre || r.usuario)}${r.usuario ? ` (${esc(r.usuario)})` : ''}</option>`).join('')}</select></label>
-              <label class="campo"><span>Fecha estimada de entrega</span><input type="date" name="fecha_entrega" value="${esc(t.fecha_entrega || '')}" min="${hoy()}"></label>
-              <div class="ta-auto"><span>Fecha de asignación</span><b data-reloj>${esc(fechaHora(new Date()))}</b><small>Se graba al asignar</small></div>
-              <div class="ta-auto"><span>Asignado por</span><b>${esc((yo.usuario || '').toUpperCase())}</b><small>Usuario actual</small></div>
+                <select name="recurso_id" required><option value="">Seleccionar usuario…</option>${recursos.map((r) => `<option value="${r.id}" ${(mod ? vig.recurso_id : t.recurso_id) === r.id ? 'selected' : ''}>${esc(r.nombre || r.usuario)}${r.usuario ? ` (${esc(r.usuario)})` : ''}</option>`).join('')}</select></label>
+              <label class="campo"><span>Fecha estimada de entrega</span><input type="date" name="fecha_entrega" value="${esc((mod ? vig.fecha_entrega : t.fecha_entrega) || '')}" ${mod ? '' : `min="${hoy()}"`}></label>
+              ${mod
+                ? `<div class="ta-auto"><span>Fecha de asignación</span><b>${esc(fechaHora(vig.fecha))}</b><small>No cambia</small></div>
+              <div class="ta-auto"><span>Asignado por</span><b>${esc(vig.asignado_por || '')}</b><small>No cambia</small></div>`
+                : `<div class="ta-auto"><span>Fecha de asignación</span><b data-reloj>${esc(fechaHora(new Date()))}</b><small>Se graba al asignar</small></div>
+              <div class="ta-auto"><span>Asignado por</span><b>${esc((yo.usuario || '').toUpperCase())}</b><small>Usuario actual</small></div>`}
             </div>
             <label class="campo"><span>Descripción / observaciones de la asignación</span>
-              <textarea name="observaciones" rows="3" placeholder="Instrucciones para el recurso, alcance, plazos…"></textarea></label>
+              <textarea name="observaciones" rows="3" placeholder="Instrucciones para el recurso, alcance, plazos…">${mod ? esc(vig.observaciones || '') : ''}</textarea></label>
             <p class="modal-error tk-error" role="alert"></p>
             <div class="ta-boton">
-              ${editable ? `<button type="submit" class="boton primario-sm"><i class="ti ti-user-check" aria-hidden="true"></i> ${t.recurso_id ? 'Reasignar' : 'Asignar'}</button>` : '<span class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo un administrador puede asignar tickets</span>'}
+              ${editable ? `<button type="submit" class="boton primario-sm"><i class="ti ${mod ? 'ti-device-floppy' : 'ti-user-check'}" aria-hidden="true"></i> ${mod ? 'Guardar modificación' : t.recurso_id ? 'Reasignar' : 'Asignar'}</button>` : '<span class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo un administrador puede asignar tickets</span>'}
             </div>
           </fieldset>
           </form>
@@ -349,10 +361,18 @@
       const boton = form.querySelector('[type=submit]');
       boton.disabled = true;
       error.textContent = '';
-      const { error: err } = await sb.from('ticket_asignaciones').insert({ ticket_id: actual.id, recurso_id: recurso, observaciones: form.elements.observaciones.value, fecha_entrega: form.elements.fecha_entrega.value || null });
+      const d = { recurso_id: recurso, observaciones: form.elements.observaciones.value, fecha_entrega: form.elements.fecha_entrega.value || null };
+      const mod = modificando && asignaciones[0];
+      const { error: err } = mod
+        ? await sb.from('ticket_asignaciones').update(d).eq('id', asignaciones[0].id)
+        : await sb.from('ticket_asignaciones').insert({ ...d, ticket_id: actual.id });
       boton.disabled = false;
-      if (err) { error.textContent = /fecha_entrega/.test(err.message) ? 'Falta instalar el script 29 (fecha de entrega y procesos) en Supabase.' : window.UI.traducirError(err); return; }
-      window.FIN.aviso(`Ticket ${actual.numero} asignado a ${nombreUsuario(recurso)}`);
+      if (err) {
+        error.textContent = /fecha_entrega/.test(err.message) ? 'Falta instalar el script 29 (fecha de entrega y procesos) en Supabase.'
+          : mod && /policy|permission|0 rows|JSON object/.test(err.message) ? 'Falta instalar el script 32 (modificar y eliminar tickets) en Supabase.' : window.UI.traducirError(err);
+        return;
+      }
+      window.FIN.aviso(mod ? `Asignación del ticket ${actual.numero} modificada` : `Ticket ${actual.numero} asignado a ${nombreUsuario(recurso)}`);
       await consultar();
     }
 
@@ -371,6 +391,20 @@
       if (f.desde && f.hasta) consultar();
     });
     cont.addEventListener('click', (e) => {
+      const bmod = e.target.closest('[data-modificar]');
+      if (bmod) {
+        return abrir(tickets.find((x) => String(x.id) === bmod.dataset.modificar)).then(() => {
+          if (asignaciones.length) { modificando = true; pintarDetalle(); }
+          pDet.querySelector('[name=recurso_id]')?.focus();
+        });
+      }
+      const bm = e.target.closest('[data-eliminar]');
+      if (bm) {
+        const t = tickets.find((x) => String(x.id) === bm.dataset.eliminar);
+        return window.TICKETS.eliminar(t).then(async (ok) => { if (ok) { if (actual && actual.id === t.id) actual = null; await consultar(); } });
+      }
+      const mo = e.target.closest('[data-modo-asignacion]');
+      if (mo) { modificando = mo.dataset.modoAsignacion === 'modificar'; return pintarDetalle(); }
       const ep = e.target.closest('[data-editar-proceso]');
       if (ep) { editando = Number(ep.dataset.editarProceso); pintarDetalle(); pDet.querySelector('.ta-proc-form')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
       if (e.target.closest('[data-cancelar-proceso]')) { editando = null; return pintarDetalle(); }

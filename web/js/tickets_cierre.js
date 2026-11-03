@@ -44,6 +44,7 @@
     let pruebas = [];       // adjuntos del cierre
     let procesos = [];
     let pendientes = [];    // archivos elegidos que se suben al cerrar
+    let modificando = false; // se modifica el cierre ya registrado
     const nombres = {};
     const f = {
       org: yo.organizacion_id || null, loc: yo.localidad_id || null,
@@ -164,7 +165,7 @@
         </header>
         <div class="ta-tabla">
           <table>
-            <thead><tr><th>Ticket</th><th>Descripción</th><th>Prioridad</th><th>Estado</th><th>Asignado a</th><th>Entrega</th><th>Fecha de cierre</th></tr></thead>
+            <thead><tr><th>Ticket</th><th>Descripción</th><th>Prioridad</th><th>Estado</th><th>Asignado a</th><th>Entrega</th><th>Fecha de cierre</th><th><span class="oculto">Acciones</span></th></tr></thead>
             <tbody>
               ${tickets.map((t) => `
                 <tr class="${actual && actual.id === t.id ? 'actual' : ''}" data-ticket="${t.id}" tabindex="0">
@@ -175,7 +176,8 @@
                   <td>${t.recurso_id ? `<span class="tk-persona"><span class="tk-avatar">${esc(iniciales(nombreUsuario(t.recurso_id)))}</span>${esc(nombreUsuario(t.recurso_id))}</span>` : '<span class="ta-sin">Sin asignar</span>'}</td>
                   <td class="${t.fecha_entrega && t.fecha_entrega < hoy() && t.estado < 6 ? 'ta-vencido' : ''}">${esc(fechaDia(t.fecha_entrega)) || '—'}</td>
                   <td>${t.cerrado_en ? `<span class="tc-cerrado"><i class="ti ti-lock" aria-hidden="true"></i> ${esc(fechaCorta(t.cerrado_en))}</span>` : '<span class="tk-tenue">Pendiente</span>'}</td>
-                </tr>`).join('') || '<tr><td colspan="7" class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>No hay tickets con esos parámetros.</td></tr>'}
+                  ${window.TICKETS.botones(t, { modificar: puedeCerrar(t) })}
+                </tr>`).join('') || '<tr><td colspan="8" class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>No hay tickets con esos parámetros.</td></tr>'}
             </tbody>
           </table>
         </div>`;
@@ -187,6 +189,7 @@
       pruebas = [];
       procesos = [];
       pendientes = [];
+      modificando = false;
       if (t) {
         const [c, p] = await Promise.all([
           sb.from('ticket_cierres').select('*').eq('ticket_id', t.id).maybeSingle(),
@@ -212,7 +215,10 @@
       }
       const usuarios = usuariosDe(t.localidad_id);
       const fin = procesos.filter((x) => x.estado === 'FINALIZADO').length;
-      const v = valores || { entrega_id: t.recurso_id || '', recibe_id: t.perfil_id || '', tipo: TIPOS[0], observaciones: '' };
+      const mod = modificando && cierre;
+      const v = valores || (mod
+        ? { entrega_id: cierre.entrega_id, recibe_id: cierre.recibe_id, tipo: cierre.tipo, observaciones: cierre.observaciones || '' }
+        : { entrega_id: t.recurso_id || '', recibe_id: t.perfil_id || '', tipo: TIPOS[0], observaciones: '' });
       const opciones = (sel) => '<option value="">Seleccionar usuario…</option>' + usuarios.map((r) => `<option value="${r.id}" ${sel === r.id ? 'selected' : ''}>${esc(r.nombre || r.usuario)}${r.usuario ? ` (${esc(r.usuario)})` : ''}</option>`).join('');
       pDet.innerHTML = `
         <div class="tk-form ta-form">
@@ -235,20 +241,23 @@
           ${procesos.length ? `<p class="tc-procesos ${fin < procesos.length ? 'aviso' : 'ok'}"><i class="ti ${fin < procesos.length ? 'ti-alert-triangle' : 'ti-circle-check'}" aria-hidden="true"></i> Procesos de la solución: ${fin} de ${procesos.length} finalizados${fin < procesos.length ? ' · hay procesos sin terminar' : ''}</p>` : ''}
           </div>
 
-          ${cierre ? resumenCierre() : !puedeCerrar(t) ? `
+          ${cierre && !mod ? resumenCierre() : !puedeCerrar(t) ? `
             <div class="ta-col"><p class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo quien creó el ticket, el recurso asignado o un administrador pueden cerrarlo</p></div>
             <div class="ta-col"></div>` : `
             <form class="tc-form" novalidate>
               <div class="ta-col">
-                <h3 class="ta-col-titulo"><i class="ti ti-circle-check" aria-hidden="true"></i> Cierre</h3>
+                <h3 class="ta-col-titulo"><i class="ti ${mod ? 'ti-pencil' : 'ti-circle-check'}" aria-hidden="true"></i> ${mod ? 'Modificar cierre' : 'Cierre'}</h3>
                 <div class="ta-asignar-campos">
-                  <div class="ta-auto"><span>Fecha de cierre</span><b data-reloj>${esc(fechaHora(new Date()))}</b><small>Se graba al cerrar</small></div>
-                  <div class="ta-auto"><span>Cierra</span><b>${esc((yo.usuario || '').toUpperCase())}</b><small>Usuario actual</small></div>
+                  ${mod
+                    ? `<div class="ta-auto"><span>Fecha de cierre</span><b>${esc(fechaHora(cierre.fecha))}</b><small>No cambia</small></div>
+                  <div class="ta-auto"><span>Cerró</span><b>${esc(cierre.cerrado_por || '')}</b><small>No cambia</small></div>`
+                    : `<div class="ta-auto"><span>Fecha de cierre</span><b data-reloj>${esc(fechaHora(new Date()))}</b><small>Se graba al cerrar</small></div>
+                  <div class="ta-auto"><span>Cierra</span><b>${esc((yo.usuario || '').toUpperCase())}</b><small>Usuario actual</small></div>`}
                   <label class="campo"><span>Usuario que entrega *</span><select name="entrega_id">${opciones(v.entrega_id)}</select></label>
                   <label class="campo"><span>Usuario que recibe *</span><select name="recibe_id">${opciones(v.recibe_id)}</select></label>
                 </div>
                 <label class="campo"><span>Tipo de pruebas o cierre *</span><select name="tipo">${TIPOS.map((x) => `<option ${v.tipo === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                <p class="rp-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Al cerrar, el ticket pasa a CERRADO y ya no cambia de estado.</p>
+                <p class="rp-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> ${mod ? 'Se corrigen los datos del cierre; el ticket sigue CERRADO.' : 'Al cerrar, el ticket pasa a CERRADO y ya no cambia de estado.'}</p>
               </div>
               <div class="ta-col">
                 <h3 class="ta-col-titulo"><i class="ti ti-paperclip" aria-hidden="true"></i> Pruebas y observaciones</h3>
@@ -260,6 +269,7 @@
                       <i class="ti ti-cloud-upload" aria-hidden="true"></i><span><b>Adjuntar pruebas</b> · arrastra o elige</span>
                       <input type="file" multiple hidden data-archivos>
                     </label>
+                    ${mod ? pruebas.map((a) => `<div class="tk-adjunto"><button type="button" class="tk-archivo" data-ver="${a.id}" title="Abrir ${esc(a.nombre)}"><i class="ti ${iconoArchivo(a.tipo)}" aria-hidden="true"></i><span>${esc(a.nombre)}</span></button></div>`).join('') : ''}
                     ${pendientes.map((a, i) => `
                       <div class="tk-adjunto pendiente" title="${esc(a.name)} · ${tamano(a.size)}">
                         <span class="tk-archivo"><i class="ti ${iconoArchivo(a.type)}" aria-hidden="true"></i><span>${esc(a.name)}</span></span>
@@ -268,7 +278,7 @@
                   </div>
                 </div>
                 <p class="modal-error tk-error" role="alert"></p>
-                <div class="ta-boton"><button type="submit" class="boton primario-sm"><i class="ti ti-lock" aria-hidden="true"></i> Cerrar ticket</button></div>
+                <div class="ta-boton">${mod ? '<button type="button" class="boton secundario-sm" data-cancelar-cierre>Cancelar</button><button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar modificación</button>' : '<button type="submit" class="boton primario-sm"><i class="ti ti-lock" aria-hidden="true"></i> Cerrar ticket</button>'}</div>
               </div>
             </form>`}
           </div>
@@ -286,6 +296,8 @@
             <div><dt><i class="ti ti-arrow-down-left" aria-hidden="true"></i> Recibe</dt><dd>${esc(nombreUsuario(cierre.recibe_id))}</dd></div>
           </dl>
           <p class="tc-tipo"><span class="rp-estado aplicada">${esc(cierre.tipo)}</span></p>
+          ${cierre.modificado_en ? `<p class="rp-nota"><i class="ti ti-pencil" aria-hidden="true"></i> Modificado por ${esc(cierre.modificado_por || '')} el ${esc(fechaHora(cierre.modificado_en))}</p>` : ''}
+          ${puedeCerrar(actual) ? '<div class="ta-boton"><button type="button" class="boton secundario-sm" data-modificar-cierre><i class="ti ti-pencil" aria-hidden="true"></i> Modificar cierre</button></div>' : ''}
         </div>
         <div class="ta-col">
           <h3 class="ta-col-titulo"><i class="ti ti-paperclip" aria-hidden="true"></i> Pruebas y observaciones</h3>
@@ -304,6 +316,7 @@
       const error = form.querySelector('.modal-error');
       const v = leer(form);
       if (!v.entrega_id || !v.recibe_id) { error.textContent = 'Elige el usuario que entrega y el que recibe.'; return; }
+      if (modificando && cierre) return guardarModificacion(form, v);
       if (!confirm(`¿Cerrar el ticket ${actual.numero}? Pasa a CERRADO y ya no cambia de estado.`)) return;
       const boton = form.querySelector('[type=submit]');
       boton.disabled = true;
@@ -323,6 +336,33 @@
       await consultar();
       const t = tickets.find((x) => x.id === id);
       if (t) await abrir(t);
+    }
+
+    async function subirPruebas(ticketId, cierreId) {
+      let fallidos = 0;
+      for (const a of pendientes) {
+        const ruta = `${ticketId}/cierre-${Date.now()}-${a.name.replace(/[^\w.\-]+/g, '_')}`;
+        const up = await sb.storage.from(BUCKET).upload(ruta, a, { contentType: a.type || 'application/octet-stream' });
+        if (up.error) { fallidos++; continue; }
+        const ins = await sb.from('ticket_adjuntos').insert({ ticket_id: ticketId, cierre_id: cierreId, ruta, nombre: a.name, tipo: a.type || null, tamano: a.size });
+        if (ins.error) { fallidos++; await sb.storage.from(BUCKET).remove([ruta]); }
+      }
+      return fallidos;
+    }
+
+    async function guardarModificacion(form, v) {
+      const error = form.querySelector('.modal-error');
+      const boton = form.querySelector('[type=submit]');
+      boton.disabled = true;
+      const { data, error: err } = await sb.from('ticket_cierres').update(v).eq('id', cierre.id).select('id');
+      if (err || !data || !data.length) {
+        boton.disabled = false;
+        error.textContent = err ? window.UI.traducirError(err) : 'No se pudo modificar: falta instalar el script 32 en Supabase o no tienes permiso.';
+        return;
+      }
+      const fallidos = await subirPruebas(actual.id, cierre.id);
+      window.FIN.aviso(`Cierre del ticket ${actual.numero} modificado${fallidos ? ` · ${fallidos} archivo(s) no se pudieron subir` : ''}`);
+      await abrir(actual);
     }
 
     cont.addEventListener('change', (e) => {
@@ -347,6 +387,19 @@
       if (f.desde && f.hasta) consultar();
     });
     cont.addEventListener('click', async (e) => {
+      const bmod = e.target.closest('[data-modificar]');
+      if (bmod) {
+        await abrir(tickets.find((x) => String(x.id) === bmod.dataset.modificar));
+        if (cierre) { modificando = true; pintarDetalle(); }
+        return pDet.querySelector('[name=entrega_id]')?.focus();
+      }
+      const bm = e.target.closest('[data-eliminar]');
+      if (bm) {
+        const t = tickets.find((x) => String(x.id) === bm.dataset.eliminar);
+        return window.TICKETS.eliminar(t).then(async (ok) => { if (ok) { if (actual && actual.id === t.id) actual = null; await consultar(); } });
+      }
+      if (e.target.closest('[data-modificar-cierre]')) { modificando = true; return pintarDetalle(); }
+      if (e.target.closest('[data-cancelar-cierre]')) { modificando = false; pendientes = []; return pintarDetalle(); }
       const qp = e.target.closest('[data-quitar-pendiente]');
       if (qp) { const v = leer(pDet.querySelector('.tc-form')); pendientes.splice(Number(qp.dataset.quitarPendiente), 1); return pintarDetalle(v); }
       const ver = e.target.closest('[data-ver]');
