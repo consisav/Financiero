@@ -52,7 +52,7 @@
     };
 
     cont.innerHTML = `
-      <div class="ta-espacio">
+      <div class="ta-espacio ta-apilado">
         <section class="ta-filtros ts-filtros" id="ts-filtros"></section>
         <div class="ta-cuerpo ts-cuerpo">
           <section class="tk-bandeja ta-maestro" id="ts-maestro"></section>
@@ -234,6 +234,11 @@
             <div class="tk-marcas">${marcaEstado(t.estado)}${marcaPrioridad(t.prioridad)}</div>
           </header>
 
+          <div class="tk-proceso">${grafica(t)}</div>
+
+          <div class="ta-det-grid">
+          <div class="ta-col">
+          <h3 class="ta-col-titulo"><i class="ti ti-file-description" aria-hidden="true"></i> Datos del ticket</h3>
           <div class="ts-tiempos">
             <div class="ts-reloj ${finDe(t) ? 'fin' : ''}"><span>Tiempo transcurrido</span><b data-tiempo-det>${esc(transcurrido(t))}</b><small>${finDe(t) ? `Resuelto el ${esc(fechaCorta(finDe(t)))}` : `Desde ${esc(fechaCorta(t.fecha))}`}</small></div>
             <div><span>Fecha asignación</span><b>${t.asignado_en ? esc(fechaHora(t.asignado_en)) : 'Sin asignar'}</b><small>${t.asignado_en ? `Hace ${esc(desdeAsignacion(t))} · por ${esc(t.asignado_por || '')}` : '&nbsp;'}</small></div>
@@ -241,10 +246,10 @@
             <div class="${vencido(t) ? 'ts-alerta' : ''}"><span>Entrega estimada</span><b>${esc(fechaDia(t.fecha_entrega)) || '—'}</b><small>${vencido(t) ? 'Vencida' : t.fecha_entrega ? 'En plazo' : '&nbsp;'}</small></div>
           </div>
 
-          <div class="tk-proceso">${grafica(t)}</div>
-
           <div class="ta-requerimiento"><span>Descripción</span><p>${esc(t.descripcion)}</p></div>
+          </div>
 
+          <div class="ta-col">
           ${procesos.length ? `
             <section class="ta-procesos ts-procesos">
               <div class="ta-proc-cab"><h3><i class="ti ti-list-numbers" aria-hidden="true"></i> Procesos de la solución</h3><span class="ta-avance"><i style="width:${pct}%"></i></span><small>${fin} de ${procesos.length} finalizados</small></div>
@@ -254,8 +259,10 @@
                     <div class="ta-proc-texto"><div class="ta-proc-linea"><b>${x.numero}. ${esc(x.descripcion)}</b><span class="ta-proc-estado ${({ ASIGNADO: 'asignado', 'EN PROCESO': 'proceso', FINALIZADO: 'finalizado' })[x.estado]}">${esc(x.estado)}</span></div>
                       <small><span class="${x.fecha_entrega && x.fecha_entrega < hoy() && x.estado !== 'FINALIZADO' ? 'ta-vencido' : ''}"><i class="ti ti-calendar-due" aria-hidden="true"></i> ${x.fecha_entrega ? `Entrega ${esc(fechaDia(x.fecha_entrega))}` : 'Sin fecha'}</span><span><i class="ti ti-user" aria-hidden="true"></i> ${esc(nombreUsuario(x.responsable_id) || '—')}</span></small></div></li>`).join('')}
               </ol>
-            </section>` : ''}
+            </section>` : '<h3 class="ta-col-titulo"><i class="ti ti-list-numbers" aria-hidden="true"></i> Procesos de la solución</h3><p class="tk-tenue">El ticket no tiene procesos registrados. Se definen en Tickets · Asignación.</p>'}
+          </div>
 
+          <div class="ta-col">
           <section class="ts-notas">
             <h3><i class="ti ti-notes" aria-hidden="true"></i> Observaciones de seguimiento <small class="tk-tenue">${notas.length || ''}</small></h3>
             ${puedeAnotar(t) ? `
@@ -269,6 +276,8 @@
               ${notas.map((n) => `<li><span class="tk-avatar">${esc(iniciales(nombreUsuario(n.perfil_id) || n.usuario || ''))}</span><div><p>${esc(n.observacion)}</p><small>${esc(n.usuario || '')} · ${esc(fechaHora(n.fecha))}</small></div></li>`).join('')}
             </ol>` : '<p class="tk-tenue">Todavía no hay observaciones de seguimiento.</p>'}
           </section>
+          </div>
+          </div>
         </div>`;
     }
 

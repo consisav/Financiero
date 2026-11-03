@@ -1252,3 +1252,10 @@ span.tk-archivo { cursor: default; }
   .ta-col { padding: 12px 0 4px; overflow: visible; }
   .ta-col + .ta-col { border-left: 0; border-top: 1px solid var(--borde); }
 }
+/* Seguimiento y cierre con el diseño apilado de Asignación. */
+.ta-apilado .tc-form { display: contents; }
+.ta-apilado .ts-tiempos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ta-apilado .ts-tiempos > div:nth-child(3) { border-left: 0; }
+.ta-apilado .ts-tiempos > div:nth-child(n+3) { border-top: 1px solid var(--borde); }
+.ta-apilado .tk-proceso .tk-pasos { padding-top: 0; }
+.ta-col-titulo.tc-ok { color: var(--ok); }

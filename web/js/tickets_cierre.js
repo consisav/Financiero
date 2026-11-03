@@ -51,7 +51,7 @@
     };
 
     cont.innerHTML = `
-      <div class="ta-espacio">
+      <div class="ta-espacio ta-apilado">
         <section class="ta-filtros" id="tc-filtros"></section>
         <div class="ta-cuerpo">
           <section class="tk-bandeja ta-maestro" id="tc-maestro"></section>
@@ -222,6 +222,9 @@
             <div class="tk-marcas">${marcaEstado(t.estado)}${marcaPrioridad(t.prioridad)}</div>
           </header>
 
+          <div class="ta-det-grid">
+          <div class="ta-col">
+          <h3 class="ta-col-titulo"><i class="ti ti-file-description" aria-hidden="true"></i> Datos del ticket</h3>
           <dl class="tk-datos ta-datos">
             <div><dt><i class="ti ti-user" aria-hidden="true"></i> Solicitante</dt><dd>${esc(t.usuario || '')}</dd></div>
             <div><dt><i class="ti ti-clock" aria-hidden="true"></i> Fecha del ticket</dt><dd>${esc(fechaHora(t.fecha))}</dd></div>
@@ -230,42 +233,52 @@
           </dl>
           <div class="ta-requerimiento"><span>Descripción</span><p>${esc(t.descripcion)}</p></div>
           ${procesos.length ? `<p class="tc-procesos ${fin < procesos.length ? 'aviso' : 'ok'}"><i class="ti ${fin < procesos.length ? 'ti-alert-triangle' : 'ti-circle-check'}" aria-hidden="true"></i> Procesos de la solución: ${fin} de ${procesos.length} finalizados${fin < procesos.length ? ' · hay procesos sin terminar' : ''}</p>` : ''}
+          </div>
 
-          ${cierre ? resumenCierre() : !puedeCerrar(t) ? '<p class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo quien creó el ticket, el recurso asignado o un administrador pueden cerrarlo</p>' : `
-            <form class="tc-form" novalidate><fieldset class="rp-seccion ta-asignar">
-              <legend><i class="ti ti-circle-check" aria-hidden="true"></i> Cierre</legend>
-              <div class="ta-asignar-campos">
-                <div class="ta-auto"><span>Fecha de cierre</span><b data-reloj>${esc(fechaHora(new Date()))}</b><small>Se graba al cerrar</small></div>
-                <div class="ta-auto"><span>Cierra</span><b>${esc((yo.usuario || '').toUpperCase())}</b><small>Usuario actual</small></div>
-                <label class="campo"><span>Usuario que entrega *</span><select name="entrega_id">${opciones(v.entrega_id)}</select></label>
-                <label class="campo"><span>Usuario que recibe *</span><select name="recibe_id">${opciones(v.recibe_id)}</select></label>
-              </div>
-              <label class="campo"><span>Tipo de pruebas o cierre *</span><select name="tipo">${TIPOS.map((x) => `<option ${v.tipo === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-              <label class="campo"><span>Observaciones</span><textarea name="observaciones" rows="3" placeholder="Pruebas realizadas, resultado, conformidad del usuario…">${esc(v.observaciones)}</textarea></label>
-              <div class="campo">
-                <span>Archivos adjuntos (pruebas) ${pendientes.length ? `<small class="tk-tenue">(${pendientes.length})</small>` : ''}</span>
-                <div class="tk-adjuntos">
-                  <label class="tk-zona" data-zona title="Arrastra archivos aquí o haz clic para elegirlos (máximo 10 MB cada uno)">
-                    <i class="ti ti-cloud-upload" aria-hidden="true"></i><span><b>Adjuntar pruebas</b> · arrastra o elige</span>
-                    <input type="file" multiple hidden data-archivos>
-                  </label>
-                  ${pendientes.map((a, i) => `
-                    <div class="tk-adjunto pendiente" title="${esc(a.name)} · ${tamano(a.size)}">
-                      <span class="tk-archivo"><i class="ti ${iconoArchivo(a.type)}" aria-hidden="true"></i><span>${esc(a.name)}</span></span>
-                      <button type="button" class="icono-boton" data-quitar-pendiente="${i}" aria-label="Quitar ${esc(a.name)}"><i class="ti ti-x" aria-hidden="true"></i></button>
-                    </div>`).join('')}
+          ${cierre ? resumenCierre() : !puedeCerrar(t) ? `
+            <div class="ta-col"><p class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo quien creó el ticket, el recurso asignado o un administrador pueden cerrarlo</p></div>
+            <div class="ta-col"></div>` : `
+            <form class="tc-form" novalidate>
+              <div class="ta-col">
+                <h3 class="ta-col-titulo"><i class="ti ti-circle-check" aria-hidden="true"></i> Cierre</h3>
+                <div class="ta-asignar-campos">
+                  <div class="ta-auto"><span>Fecha de cierre</span><b data-reloj>${esc(fechaHora(new Date()))}</b><small>Se graba al cerrar</small></div>
+                  <div class="ta-auto"><span>Cierra</span><b>${esc((yo.usuario || '').toUpperCase())}</b><small>Usuario actual</small></div>
+                  <label class="campo"><span>Usuario que entrega *</span><select name="entrega_id">${opciones(v.entrega_id)}</select></label>
+                  <label class="campo"><span>Usuario que recibe *</span><select name="recibe_id">${opciones(v.recibe_id)}</select></label>
                 </div>
+                <label class="campo"><span>Tipo de pruebas o cierre *</span><select name="tipo">${TIPOS.map((x) => `<option ${v.tipo === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                <p class="rp-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Al cerrar, el ticket pasa a CERRADO y ya no cambia de estado.</p>
               </div>
-              <p class="modal-error tk-error" role="alert"></p>
-              <div class="ta-boton"><button type="submit" class="boton primario-sm"><i class="ti ti-lock" aria-hidden="true"></i> Cerrar ticket</button></div>
-            </fieldset></form>`}
+              <div class="ta-col">
+                <h3 class="ta-col-titulo"><i class="ti ti-paperclip" aria-hidden="true"></i> Pruebas y observaciones</h3>
+                <label class="campo"><span>Observaciones (tipo de pruebas o cierre)</span><textarea name="observaciones" rows="3" placeholder="Pruebas realizadas, resultado, conformidad del usuario…">${esc(v.observaciones)}</textarea></label>
+                <div class="campo">
+                  <span>Archivos adjuntos (pruebas) ${pendientes.length ? `<small class="tk-tenue">(${pendientes.length})</small>` : ''}</span>
+                  <div class="tk-adjuntos">
+                    <label class="tk-zona" data-zona title="Arrastra archivos aquí o haz clic para elegirlos (máximo 10 MB cada uno)">
+                      <i class="ti ti-cloud-upload" aria-hidden="true"></i><span><b>Adjuntar pruebas</b> · arrastra o elige</span>
+                      <input type="file" multiple hidden data-archivos>
+                    </label>
+                    ${pendientes.map((a, i) => `
+                      <div class="tk-adjunto pendiente" title="${esc(a.name)} · ${tamano(a.size)}">
+                        <span class="tk-archivo"><i class="ti ${iconoArchivo(a.type)}" aria-hidden="true"></i><span>${esc(a.name)}</span></span>
+                        <button type="button" class="icono-boton" data-quitar-pendiente="${i}" aria-label="Quitar ${esc(a.name)}"><i class="ti ti-x" aria-hidden="true"></i></button>
+                      </div>`).join('')}
+                  </div>
+                </div>
+                <p class="modal-error tk-error" role="alert"></p>
+                <div class="ta-boton"><button type="submit" class="boton primario-sm"><i class="ti ti-lock" aria-hidden="true"></i> Cerrar ticket</button></div>
+              </div>
+            </form>`}
+          </div>
         </div>`;
     }
 
     function resumenCierre() {
       return `
-        <section class="tc-resumen">
-          <h3><i class="ti ti-lock" aria-hidden="true"></i> Cierre registrado</h3>
+        <div class="ta-col">
+          <h3 class="ta-col-titulo tc-ok"><i class="ti ti-lock" aria-hidden="true"></i> Cierre registrado</h3>
           <dl class="tk-datos ta-datos">
             <div><dt><i class="ti ti-calendar-check" aria-hidden="true"></i> Fecha de cierre</dt><dd>${esc(fechaHora(cierre.fecha))}</dd></div>
             <div><dt><i class="ti ti-user-shield" aria-hidden="true"></i> Cerró</dt><dd>${esc(cierre.cerrado_por || '')}</dd></div>
@@ -273,11 +286,14 @@
             <div><dt><i class="ti ti-arrow-down-left" aria-hidden="true"></i> Recibe</dt><dd>${esc(nombreUsuario(cierre.recibe_id))}</dd></div>
           </dl>
           <p class="tc-tipo"><span class="rp-estado aplicada">${esc(cierre.tipo)}</span></p>
-          ${cierre.observaciones ? `<div class="ta-requerimiento"><span>Observaciones</span><p>${esc(cierre.observaciones)}</p></div>` : ''}
+        </div>
+        <div class="ta-col">
+          <h3 class="ta-col-titulo"><i class="ti ti-paperclip" aria-hidden="true"></i> Pruebas y observaciones</h3>
+          <div class="ta-requerimiento"><span>Observaciones</span><p>${esc(cierre.observaciones || 'Sin observaciones.')}</p></div>
           <div class="campo"><span>Pruebas adjuntas</span>
             <div class="tk-adjuntos">${pruebas.map((a) => `<div class="tk-adjunto"><button type="button" class="tk-archivo" data-ver="${a.id}" title="Abrir ${esc(a.nombre)} (${tamano(a.tamano)})"><i class="ti ${iconoArchivo(a.tipo)}" aria-hidden="true"></i><span>${esc(a.nombre)}</span></button></div>`).join('') || '<small class="tk-tenue">Sin archivos adjuntos.</small>'}</div>
           </div>
-        </section>`;
+        </div>`;
     }
 
     function leer(form) {
