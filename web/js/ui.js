@@ -150,7 +150,7 @@
       control = `<select name="${c.nombre}" ${req}>${opciones(c.opciones || [], valor, c.vacio)}</select>`;
     } else {
       const tipo = c.tipo === 'numero' ? 'number' : c.tipo === 'fecha' ? 'date' : 'text';
-      control = `<input type="${tipo}" name="${c.nombre}" value="${esc(valor)}" ${req} ${c.soloLectura ? 'readonly' : ''} ${c.patron ? `pattern="${c.patron}"` : ''} ${c.placeholder ? `placeholder="${esc(c.placeholder)}"` : ''} ${c.max ? `maxlength="${c.max}"` : ''}>`;
+      control = `<input type="${tipo}" name="${c.nombre}" value="${esc(valor)}" ${req} ${c.soloLectura ? 'readonly' : ''} ${c.patron ? `pattern="${c.patron}"` : ''} ${c.placeholder ? `placeholder="${esc(c.placeholder)}"` : ''} ${c.max ? `maxlength="${c.max}"` : ''} ${c.paso ? `step="${c.paso}"` : ''}>`;
     }
     return `<label class="campo${ancho}"><span>${esc(c.etiqueta)}${c.requerido ? ' *' : ''}</span>${control}</label>`;
   }

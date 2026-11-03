@@ -755,3 +755,16 @@ p.vacio { color: var(--tenue); }
 
 /* Línea divisoria entre opciones de un subgrupo del menú. */
 .subgrupo li.separador { height: 1px; margin: 5px 10px; background: color-mix(in srgb, currentColor 18%, transparent); list-style: none; }
+
+/* Monedas y tipos de cambio: detalle con encabezado agrupado (Parámetros · Tasa venta · Tasa compra). */
+#tc-monedas, #tc-tasas { margin-bottom: 16px; }
+#tc-monedas .tabla-desplazable { max-height: 260px; overflow-y: auto; }
+.tc-integra { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--tenue); margin-right: 8px; }
+.tc-integra b { color: var(--texto); }
+.panel-cab h2 small { font-weight: 500; color: var(--tenue); font-size: .8em; }
+.tc-tabla th, .tc-tabla td { padding: 8px 14px; white-space: nowrap; }
+.tc-tabla thead tr.tc-grupos th { text-align: center; text-transform: uppercase; letter-spacing: .06em; font-size: 12px; color: var(--m-t, var(--acento)); background: var(--m-f, var(--acento-fondo)); }
+.tc-tabla .tc-ini { border-left: 1px solid var(--borde); }
+.tc-tabla thead tr.tc-grupos th + th { border-left: 1px solid var(--borde); }
+.tc-tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tc-tabla tbody tr.tc-vigente td { font-weight: 600; background: var(--fondo); }
