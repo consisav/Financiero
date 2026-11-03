@@ -752,3 +752,6 @@ p.vacio { color: var(--tenue); }
   .indicador b { font-size: 20px; }
   .titulo h1 { font-size: 22px; }
 }
+
+/* Línea divisoria entre opciones de un subgrupo del menú. */
+.subgrupo li.separador { height: 1px; margin: 5px 10px; background: color-mix(in srgb, currentColor 18%, transparent); list-style: none; }

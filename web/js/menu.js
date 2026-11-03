@@ -10,17 +10,20 @@ window.GRUPOS = [
 ];
 
 // Subgrupos desplegables de Catálogos. Los comunes aparecen en todos los módulos;
-// cada módulo puede agregar los suyos en "subgrupos.catalogos".
+// cada módulo puede agregar los suyos en "subgrupos.catalogos". "separador: true" dibuja una línea
+// debajo de la opción.
 window.CATALOGOS_COMUNES = [
   {
     subgrupo: 'Iniciales',
     icono: 'ti-adjustments',
     pantallas: [
       { id: 'usuarios', nombre: 'Usuarios', icono: 'ti-user-cog', descripcion: 'Usuarios del sistema por organización y localidad, con su rol y datos generales.' },
-      { id: 'generar-usuario', nombre: 'Generar usuario y clave', icono: 'ti-key', descripcion: 'Crea el usuario (iniciales de los nombres + primer apellido) y una clave nueva para entrar al sistema.' },
-      { id: 'parametros', nombre: 'Parámetros generales', icono: 'ti-settings', descripcion: 'Parámetros de tiempo, impuestos, monedas y firmantes de cada localidad.' },
+      { id: 'generar-usuario', nombre: 'Generar usuario y clave', icono: 'ti-key', descripcion: 'Crea el usuario (iniciales de los nombres + primer apellido) y una clave nueva para entrar al sistema.', separador: true },
+      { id: 'parametros', nombre: 'Parámetros generales', icono: 'ti-settings', descripcion: 'Parámetros de tiempo, impuestos, monedas y firmantes de cada localidad.', separador: true },
       { id: 'modulos', nombre: 'Módulos', icono: 'ti-apps', descripcion: 'Módulos principales del sistema y sus sub-módulos.' },
-      { id: 'roles-modulos', nombre: 'Roles módulos', icono: 'ti-shield-lock', descripcion: 'Roles funcionales, usuarios asignados y accesos a cada pantalla.' }
+      { id: 'roles-modulos', nombre: 'Roles módulos', icono: 'ti-shield-lock', descripcion: 'Roles funcionales, usuarios asignados y accesos a cada pantalla.', separador: true },
+      { id: 'monedas-y-tipos-de-cambio', nombre: 'Monedas y tipos de cambio', icono: 'ti-currency-dollar', descripcion: 'Monedas que maneja el sistema y su tipo de cambio por fecha.' },
+      { id: 'tipos-de-partida', nombre: 'Tipos de partida', icono: 'ti-file-invoice', descripcion: 'Clasificación de las partidas contables (diario, ajuste, cierre…).' }
     ]
   },
   {
@@ -55,7 +58,6 @@ window.MODULOS = [
       ]
     },
     opciones: {
-      catalogos: ['Monedas y tipos de cambio', 'Tipos de partida'],
       registros: ['Partidas contables', 'Presupuesto anual', 'Movimientos bancarios'],
       mantenimientos: ['Períodos contables', 'Empresas', 'Parámetros contables'],
       procesos: ['Mayorización', 'Conciliación bancaria', 'Cierre de mes', 'Cierre de año'],

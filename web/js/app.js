@@ -268,7 +268,7 @@
                   <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
                   <ul>
                     ${s.pantallas.map((p) => `
-                      <li><a class="opcion ${p === actual ? 'actual' : ''}" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>`).join('')}
+                      <li><a class="opcion ${p === actual ? 'actual' : ''}" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>${p.separador ? '<li class="separador" role="separator"></li>' : ''}`).join('')}
                   </ul>
                 </details>`).join('')}
               <ul class="menu-opciones">
@@ -348,6 +348,7 @@
     marcarActivo(p.id === 'usuarios' ? 'usuarios' : m.id);
     const fn = window.PANTALLAS[p.id];
     if (fn) fn($('pantalla'), m, extra);
+    else $('pantalla').innerHTML = `<section class="panel"><p class="vacio">${esc(p.nombre)}: en construcción.</p></section>`;
   }
 
   function rutear() {
