@@ -206,6 +206,63 @@ a { color: var(--acento); text-decoration: none; }
 .grupo button:hover, .grupo button:focus-visible { background: var(--m-f); color: var(--m-t); outline: none; }
 .grupo button:hover .ti { opacity: 1; color: var(--m-t); }
 
+/* ---------- Menú fijo del módulo (6 grupos con desplegable) ---------- */
+.menu-modulo {
+  position: sticky; top: 64px; z-index: 6;
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin: -32px -32px 24px; padding: 8px 32px;
+  background: var(--panel); border-bottom: 1px solid var(--borde);
+  box-shadow: 0 2px 8px rgba(15, 27, 45, .04);
+}
+.menu-item { position: relative; }
+.menu-boton {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--texto);
+  background: none; border: 1px solid transparent; border-radius: 10px;
+  padding: 6px 10px 6px 6px; cursor: pointer; white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.menu-icono { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--m-f); color: var(--m-t); font-size: 16px; }
+.menu-boton .flecha { font-size: 14px; color: var(--tenue); transition: transform .15s; }
+.menu-boton:hover { background: var(--fondo); }
+.menu-boton.abierto { background: var(--m-f); border-color: var(--m-f); color: var(--m-t); }
+.menu-boton.abierto .flecha { transform: rotate(180deg); color: var(--m-t); }
+.menu-boton.actual { box-shadow: inset 0 -2px 0 var(--m-t); border-radius: 10px 10px 0 0; }
+.menu-boton:focus-visible { outline: 2px solid var(--m-t); outline-offset: 1px; }
+.menu-panel {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 10;
+  width: 320px; max-height: calc(100vh - 160px); overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--borde); border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(15, 27, 45, .16); padding: 10px;
+}
+.menu-item:nth-last-child(-n+2) .menu-panel { left: auto; right: 0; }
+.menu-panel ul { list-style: none; margin: 0; padding: 0; }
+.menu-panel .subgrupo { margin-bottom: 6px; }
+.menu-panel a.opcion, .menu-opciones button {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px; border-radius: 8px; font: inherit; font-size: 14px; color: var(--texto);
+  background: none; border: 0; text-align: left; cursor: pointer;
+}
+.menu-panel a.opcion { font-weight: 500; }
+.menu-panel a.opcion span { display: flex; align-items: center; gap: 8px; }
+.menu-panel a.opcion span .ti, .menu-panel a.opcion > .ti { color: var(--m-t); font-size: 16px; }
+.menu-panel a.opcion:hover, .menu-panel a.opcion:focus-visible { background: var(--panel); outline: none; }
+.menu-panel a.opcion.actual { background: var(--panel); box-shadow: inset 3px 0 0 var(--m-t); }
+.menu-opciones button .ti { color: var(--tenue); font-size: 15px; opacity: 0; }
+.menu-opciones button:hover, .menu-opciones button:focus-visible { background: var(--m-f); color: var(--m-t); outline: none; }
+.menu-opciones button:hover .ti { opacity: 1; color: var(--m-t); }
+
+.accesos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.acceso-directo {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; color: var(--texto);
+  background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra);
+  transition: border-color .15s, transform .15s;
+}
+.acceso-directo:hover { border-color: var(--m-t); transform: translateY(-1px); }
+.acceso-directo .ficha-icono { width: 38px; height: 38px; font-size: 19px; }
+.acceso-directo b { display: block; font-size: 14px; font-weight: 600; }
+.acceso-directo small { color: var(--tenue); font-size: 12px; }
+
 /* Subgrupo de catálogos comunes (Geografía) dentro de Catálogos */
 .subgrupo { background: var(--m-f); border-radius: 10px; padding: 4px 6px; margin-bottom: 8px; }
 .subgrupo ul { padding-bottom: 4px; }
@@ -502,6 +559,12 @@ p.vacio { color: var(--tenue); }
   .superior { padding: 0 16px; }
   .fecha { display: none; }
   .vista { padding: 24px 16px 40px; }
+  .menu-modulo { margin: -24px -16px 20px; padding: 6px 12px; top: 64px; }
+  .menu-boton { font-size: 13px; padding: 4px 8px 4px 4px; gap: 6px; }
+  .menu-icono { width: 24px; height: 24px; font-size: 14px; }
+  .menu-item { position: static; }
+  .menu-panel { left: 12px; right: 12px; width: auto; top: calc(100% + 4px); }
+  .menu-item:nth-last-child(-n+2) .menu-panel { left: 12px; right: 12px; }
 
   .acceso { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .acceso-marca { padding: 28px 16px; gap: 10px; }

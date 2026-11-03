@@ -249,41 +249,85 @@
     marcarActivo('');
   }
 
+  // Barra fija con los 6 grupos del módulo; cada grupo despliega sus subgrupos y opciones al tocarlo.
+  // "actual" es la pantalla abierta: se marca su grupo y se abre su subgrupo dentro del desplegable.
+  function menuModulo(m, actual) {
+    const grupoDe = (g) => subgruposDe(m, g.id).some((s) => s.pantallas.some((p) => p === actual));
+    return `
+      <nav class="menu-modulo" data-color="${m.color}" aria-label="Menú de ${esc(m.corto)}">
+        ${GRUPOS.map((g) => `
+          <div class="menu-item">
+            <button type="button" class="menu-boton ${actual && grupoDe(g) ? 'actual' : ''}" data-menu="${g.id}" aria-expanded="false" aria-haspopup="true">
+              <span class="menu-icono"><i class="ti ${g.icono}" aria-hidden="true"></i></span>${esc(g.nombre)}<i class="ti ti-chevron-down flecha" aria-hidden="true"></i>
+            </button>
+            <div class="menu-panel" data-panel="${g.id}" hidden>
+              ${subgruposDe(m, g.id).map((s) => `
+                <details class="subgrupo" ${actual && s.pantallas.includes(actual) ? 'open' : ''}>
+                  <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
+                  <ul>
+                    ${s.pantallas.map((p) => `
+                      <li><a class="opcion ${p === actual ? 'actual' : ''}" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>`).join('')}
+                  </ul>
+                </details>`).join('')}
+              <ul class="menu-opciones">
+                ${(m.opciones[g.id] || []).map((o) => `
+                  <li><button type="button" data-opcion="${esc(o)}" data-grupo="${esc(g.nombre)}">${esc(o)}<i class="ti ti-chevron-right" aria-hidden="true"></i></button></li>`).join('')}
+              </ul>
+            </div>
+          </div>`).join('')}
+      </nav>`;
+  }
+
+  function cerrarMenus(excepto) {
+    vista.querySelectorAll('.menu-panel').forEach((p) => {
+      if (p.dataset.panel === excepto) return;
+      p.hidden = true;
+      const b = vista.querySelector(`[data-menu="${p.dataset.panel}"]`);
+      if (b) { b.setAttribute('aria-expanded', 'false'); b.classList.remove('abierto'); }
+    });
+  }
+
   function modulo(m) {
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>${esc(m.nombre)}</span>`;
+    const accesos = GRUPOS.flatMap((g) => subgruposDe(m, g.id).flatMap((s) => s.pantallas.map((p) => ({ g, s, p }))));
     vista.innerHTML = `
+      ${menuModulo(m, null)}
       <div class="titulo" data-color="${m.color}">
         <span class="ficha-icono"><i class="ti ${m.icono}" aria-hidden="true"></i></span>
         <div>
           <h1>${esc(m.nombre)}${permisos[m.id].puede_editar ? '' : '<span class="etiqueta">Solo lectura</span>'}</h1>
-          <p>${esc(m.descripcion)}</p>
+          <p>${esc(m.descripcion)} Elige un grupo en el menú de arriba.</p>
         </div>
       </div>
-      <div class="grupos" data-color="${m.color}">
-        ${GRUPOS.map((g) => `
-          <section class="grupo">
-            <h2><i class="ti ${g.icono}" aria-hidden="true"></i> ${esc(g.nombre)}</h2>
-            ${subgruposDe(m, g.id).map((s) => `
-              <details class="subgrupo">
-                <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
-                <ul>
-                  ${s.pantallas.map((p) => `
-                    <li><a class="opcion" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>`).join('')}
-                </ul>
-              </details>`).join('')}
-            <ul>
-              ${(m.opciones[g.id] || []).map((o) => `
-                <li><button type="button" data-opcion="${esc(o)}" data-grupo="${esc(g.nombre)}">${esc(o)}<i class="ti ti-chevron-right" aria-hidden="true"></i></button></li>`).join('')}
-            </ul>
-          </section>`).join('')}
+      <h2 class="seccion">Accesos directos</h2>
+      <div class="accesos" data-color="${m.color}">
+        ${accesos.map(({ g, s, p }) => `
+          <a class="acceso-directo" href="#/${m.id}/${p.id}">
+            <span class="ficha-icono"><i class="ti ${p.icono}" aria-hidden="true"></i></span>
+            <span><b>${esc(p.nombre)}</b><small>${esc(g.nombre)} · ${esc(s.subgrupo)}</small></span>
+          </a>`).join('')}
       </div>`;
     marcarActivo(m.id);
   }
 
   vista.addEventListener('click', (e) => {
+    const boton = e.target.closest('[data-menu]');
+    if (boton) {
+      const panel = vista.querySelector(`[data-panel="${boton.dataset.menu}"]`);
+      const abrir = panel.hidden;
+      cerrarMenus(abrir ? boton.dataset.menu : null);
+      panel.hidden = !abrir;
+      boton.setAttribute('aria-expanded', String(abrir));
+      boton.classList.toggle('abierto', abrir);
+      return;
+    }
+    if (e.target.closest('.menu-panel a.opcion')) cerrarMenus();
     const b = e.target.closest('button[data-opcion]');
-    if (b) aviso(`${b.dataset.grupo} › ${b.dataset.opcion}: en construcción.`);
+    if (b) { cerrarMenus(); aviso(`${b.dataset.grupo} › ${b.dataset.opcion}: en construcción.`); }
   });
+  // Se cierran al tocar fuera del menú o con Escape.
+  document.addEventListener('click', (e) => { if (!e.target.closest('.menu-modulo')) cerrarMenus(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMenus(); });
 
   // Subgrupos desplegables de un grupo: los comunes (solo en Catálogos) y los propios del módulo.
   function subgruposDe(m, grupo) {
@@ -296,6 +340,7 @@
       <a href="#/${m.id}">${esc(m.corto)}</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
       <span>Catálogos · ${esc(p.nombre)}</span>`;
     vista.innerHTML = `
+      ${menuModulo(m, p)}
       <div class="titulo" data-color="${m.color}">
         <span class="ficha-icono"><i class="ti ${p.icono}" aria-hidden="true"></i></span>
         <div><h1>${esc(p.nombre)}</h1><p>${esc(p.descripcion)}</p></div>
