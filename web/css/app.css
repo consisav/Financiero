@@ -1081,7 +1081,7 @@ span.tk-archivo { cursor: default; }
 .ta-titulo { display: flex; align-items: center; gap: 10px; padding-right: 6px; }
 .ta-titulo small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--tenue); }
 .ta-titulo h2 { margin: 1px 0 0; font-size: 18px; font-weight: 700; color: var(--texto); }
-.ta-cuerpo { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(400px, 1fr); gap: 16px; min-height: 0; }
+.ta-cuerpo { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(460px, 1fr); gap: 16px; min-height: 0; }
 .ta-maestro, .ta-detalle { height: auto; }
 .ta-totales { display: flex; gap: 6px; }
 .ta-total { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--fondo); color: var(--suave); }
@@ -1105,7 +1105,7 @@ span.tk-archivo { cursor: default; }
 .ta-elige { height: 100%; flex: 1; }
 .ta-form { overflow-y: auto; }
 .ta-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.ta-datos > div:nth-child(3) { border-left: 0; }
+.ta-datos > div:nth-child(odd) { border-left: 0; }
 .ta-datos > div:nth-child(n+3) { border-top: 1px solid var(--borde); }
 .ta-requerimiento span { font-size: 13px; font-weight: 500; color: var(--suave); }
 .ta-requerimiento p { margin: 4px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--fondo); font-size: 13.5px; color: var(--texto); max-height: 84px; overflow-y: auto; white-space: pre-wrap; }
@@ -1135,3 +1135,30 @@ span.tk-archivo { cursor: default; }
   .ta-maestro { max-height: 520px; }
   .ta-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.ta-vencido { color: var(--error) !important; font-weight: 700; }
+.ta-asignar-campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ta-procesos { display: grid; gap: 10px; padding: 10px 12px 12px; border: 1px solid var(--borde); border-radius: var(--radio); }
+.ta-proc-cab { display: flex; align-items: center; gap: 10px; }
+.ta-proc-cab h3 { display: flex; align-items: center; gap: 6px; margin: 0 auto 0 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--m-t, var(--acento)); }
+.ta-proc-cab small { font-size: 12px; color: var(--suave); white-space: nowrap; }
+.ta-avance { width: 90px; height: 6px; border-radius: 999px; background: var(--fondo); overflow: hidden; }
+.ta-avance i { display: block; height: 100%; background: var(--ok); border-radius: 999px; }
+.ta-proc-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ta-proc-lista li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; background: var(--fondo); border: 1px solid transparent; }
+.ta-proc-lista li.editando { border-color: var(--acento); background: var(--acento-fondo); }
+.ta-proc-num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 12px; font-weight: 700; color: #fff; background: var(--violeta-t); }
+.ta-proc-num.proceso { background: var(--ambar-t); }
+.ta-proc-num.finalizado { background: var(--ok); }
+.ta-proc-texto { flex: 1; min-width: 0; }
+.ta-proc-linea { display: flex; align-items: center; gap: 8px; }
+.ta-proc-linea b { font-size: 13px; color: var(--texto); flex: 1; min-width: 0; }
+.ta-proc-linea .icono-boton { width: 26px; height: 26px; flex: none; }
+.ta-proc-estado { font-size: 10.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; background: var(--violeta-f); color: var(--violeta-t); }
+.ta-proc-estado.proceso { background: var(--ambar-f); color: var(--ambar-t); }
+.ta-proc-estado.finalizado { background: var(--verde-f); color: var(--verde-t); }
+.ta-proc-texto small { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 3px; font-size: 11.5px; color: var(--suave); }
+.ta-proc-texto small span { display: inline-flex; align-items: center; gap: 3px; }
+.ta-proc-texto small.ta-obs { display: block; }
+.ta-proc-form { display: grid; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--borde); }
+.ta-proc-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; align-items: end; }
+.ta-proc-desc, .ta-proc-obs { grid-column: 1 / -1; }
