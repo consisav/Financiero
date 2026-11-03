@@ -555,6 +555,7 @@ p.vacio { color: var(--tenue); }
 .cc-contexto .flecha { color: var(--tenue); transition: transform .15s; }
 .cc-contexto.abierto { background: var(--m-f, var(--acento-fondo)); border-color: var(--m-f, var(--acento-fondo)); }
 .cc-contexto.abierto .flecha { transform: rotate(180deg); }
+.cc-barra .buscar-barra { margin: 0; max-width: 320px; padding: 7px 14px; }
 .cc-panel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--borde); }
 .cc-barra { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .cc-barra .selector-org select { max-width: 260px; }

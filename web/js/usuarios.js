@@ -60,9 +60,10 @@
       const locsFiltro = estado.locs.filter((x) => !estado.filtroOrg || x.organizacion_id === Number(estado.filtroOrg));
       const vencida = u && u.fecha_vence_clave && u.fecha_vence_clave < hoy();
       panel.innerHTML = `
-        <div class="panel-cab">
-          <h2>Usuarios generales</h2>
-          <div class="panel-acciones">
+        ${window.UI.barraContexto({
+          clave: 'usuarios', icono: 'ti-filter',
+          resumen: `<b>${estado.filtroOrg ? esc(org(Number(estado.filtroOrg)).nombre) : 'Todas las organizaciones'}</b>${estado.filtroLoc ? ` · ${esc(loc(Number(estado.filtroLoc)).codigo)} ${esc(loc(Number(estado.filtroLoc)).nombre_comercial)}` : ''} · ${visibles().length} usuario${visibles().length === 1 ? '' : 's'}`,
+          panel: `
             <label class="selector-org">Organización <select data-filtro="org">
               <option value="">Todas</option>
               ${estado.orgs.map((x) => `<option value="${x.id}" ${String(x.id) === estado.filtroOrg ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}
@@ -70,10 +71,9 @@
             <label class="selector-org">Localidad <select data-filtro="loc">
               <option value="">Todas</option>
               ${locsFiltro.map((x) => `<option value="${x.id}" ${String(x.id) === estado.filtroLoc ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}
-            </select></label>
-          </div>
-        </div>
-        <input type="search" class="buscar" data-buscar placeholder="Buscar usuario, nombre o correo" value="${esc(estado.buscar)}">
+            </select></label>`,
+          derecha: `<input type="search" class="buscar buscar-barra" data-buscar placeholder="Buscar usuario, nombre o correo" value="${esc(estado.buscar)}">`
+        })}
         ${tabla({
           id: 'usuarios', editable: admin, seleccionado: u && u.id, vacio: 'No hay usuarios con estos filtros.',
           columnas: [

@@ -75,14 +75,14 @@
         : [{ tipo: 'Contador general' }, { tipo: 'Representante legal' }];
       cont.innerHTML = `
         <form id="f-parametros" class="parametros">
-          <section class="panel cabecera-param">
-            <div class="panel-cab">
-              <h2>Parámetros</h2>
-              <div class="panel-acciones">
+          <section class="panel cabecera-param cc-encabezado">
+            ${window.UI.barraContexto({
+              clave: 'parametros',
+              resumen: `<b>${esc((estado.orgs.find((x) => x.id === estado.org) || {}).nombre || '')}</b>${locAct ? ` · ${esc(locAct.codigo)} ${esc(locAct.nombre_comercial)}` : ''}`,
+              panel: `
                 <label class="selector-org">Organización <select data-org>${estado.orgs.map((x) => `<option value="${x.id}" ${x.id === estado.org ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select></label>
-                <label class="selector-org">Localidad <select data-loc>${locsOrg.map((x) => `<option value="${x.id}" ${x.id === estado.loc ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</select></label>
-              </div>
-            </div>
+                <label class="selector-org">Localidad <select data-loc>${locsOrg.map((x) => `<option value="${x.id}" ${x.id === estado.loc ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</select></label>`
+            })}
             ${estado.param && estado.param.id
               ? window.UI.auditoria({ ...estado.param, activo: true }, false, 'param')
               :`<p class="aviso-param"><i class="ti ti-info-circle" aria-hidden="true"></i> Esta localidad todavía no tiene parámetros. Se muestran valores sugeridos${editable ? '; revísalos y pulsa Guardar cambios' : ''}.</p>`}

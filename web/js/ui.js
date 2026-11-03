@@ -195,5 +195,32 @@
     });
   }
 
-  window.UI = { esc, fecha, fechaCorta, romano, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar };
+  // ---------- Selectores plegables ----------
+  // Una línea con un botón de resumen (lo elegido) y acciones a la derecha; los selectores quedan en
+  // un panel que se abre con el botón. El estado abierto se recuerda por clave mientras se navega.
+  const contextoAbierto = {};
+  function barraContexto({ clave, icono = 'ti-building', resumen, panel, derecha = '', forzarAbierto = false }) {
+    const abierto = forzarAbierto || !!contextoAbierto[clave];
+    return `
+      <div class="cc-barra">
+        <button type="button" class="cc-contexto ${abierto ? 'abierto' : ''}" data-contexto="${clave}" aria-expanded="${abierto}" title="Mostrar u ocultar los filtros">
+          <i class="ti ${icono}" aria-hidden="true"></i><span>${resumen}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i>
+        </button>
+        <span class="cc-espacio"></span>
+        ${derecha}
+      </div>
+      <div class="cc-panel" data-contexto-panel="${clave}" ${abierto ? '' : 'hidden'}>${panel}</div>`;
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-contexto]');
+    if (!b) return;
+    const k = b.dataset.contexto;
+    contextoAbierto[k] = b.getAttribute('aria-expanded') !== 'true';
+    b.setAttribute('aria-expanded', String(contextoAbierto[k]));
+    b.classList.toggle('abierto', contextoAbierto[k]);
+    const p = document.querySelector(`[data-contexto-panel="${k}"]`);
+    if (p) p.hidden = !contextoAbierto[k];
+  });
+
+  window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar };
 })();

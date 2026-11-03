@@ -273,17 +273,19 @@
     let org = orgs[0].id;
     let arbol = null;
 
-    cont.innerHTML = `
-      <section class="panel">
-        <div class="panel-cab">
-          <h2>Administración de centros de costo</h2>
-          <div class="panel-acciones">
-            <label class="selector-org">Empresa <select data-org>${opcionesOrg(orgs, org)}</select></label>
-            <button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
-          </div>
-        </div>
-      </section>
-      <div id="arbol"></div>`;
+    cont.innerHTML = '<section class="panel cc-encabezado" id="cc-centros"></section><div id="arbol"></div>';
+    const pCab = cont.querySelector('#cc-centros');
+
+    // Empresa plegable tras el botón de resumen; a la vista solo Imprimir.
+    function pintarCabecera() {
+      const o = orgs.find((x) => x.id === org);
+      pCab.innerHTML = window.UI.barraContexto({
+        clave: 'centros-costo',
+        resumen: `<b>${esc(o.nombre)}</b> · centros de costo<span id="cc-centros-total"></span>`,
+        panel: `<label class="selector-org">Empresa <select data-org>${opcionesOrg(orgs, org)}</select></label>`,
+        derecha: '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>'
+      });
+    }
 
     function montar() {
       const destino = cont.querySelector('#arbol');
@@ -303,21 +305,25 @@
           { nombre: 'integra', etiqueta: 'Integra', tipo: 'casilla' },
           { nombre: 'vigente', etiqueta: 'Vigente', tipo: 'casilla' }
         ],
-        antesDeGuardar: (d) => { d.nombre = d.nombre.toUpperCase(); }
+        antesDeGuardar: (d) => { d.nombre = d.nombre.toUpperCase(); },
+        alCargar: (filas) => { const t = pCab.querySelector('#cc-centros-total'); if (t) t.textContent = ` · ${filas.length}`; }
       });
     }
 
     cont.addEventListener('change', (e) => {
       if (!e.target.matches('[data-org]')) return;
       org = Number(e.target.value);
+      pintarCabecera();
       montar();
     });
-    cont.querySelector('[data-accion=imprimir]').addEventListener('click', () => {
+    pCab.addEventListener('click', (e) => {
+      if (!e.target.closest('[data-accion=imprimir]')) return;
       const o = orgs.find((x) => x.id === org);
       imprimir(`Centros de costo · ${o.nombre}`, 'Administración de centros de costo', arbol.filas(), 'centro_mayor_id',
         [{ titulo: 'Integra', valor: (f) => f.integra ? 'Sí' : 'No' }]);
     });
 
+    pintarCabecera();
     montar();
   };
 })();

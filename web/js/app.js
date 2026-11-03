@@ -341,13 +341,9 @@
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
       <a href="#/${m.id}">${esc(m.corto)}</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
       <span>Catálogos · ${esc(p.nombre)}</span>`;
-    // sinTitulo: la pantalla usa todo el alto; el nombre ya está en la ruta de arriba.
+    // Las pantallas de catálogos no llevan título: el nombre ya está en la ruta de arriba.
     vista.innerHTML = `
       ${menuModulo(m, p)}
-      ${p.sinTitulo ? '' : `<div class="titulo" data-color="${m.color}">
-        <span class="ficha-icono"><i class="ti ${p.icono}" aria-hidden="true"></i></span>
-        <div><h1>${esc(p.nombre)}</h1><p>${esc(p.descripcion)}</p></div>
-      </div>`}
       <div id="pantalla" data-color="${m.color}"></div>`;
     marcarActivo(p.id === 'usuarios' ? 'usuarios' : m.id);
     const fn = window.PANTALLAS[p.id];
