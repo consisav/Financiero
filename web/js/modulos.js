@@ -1,4 +1,5 @@
-// Catálogos · Iniciales · Módulos: maestro (módulo principal) → detalle (sub-módulos).
+// Catálogos · Iniciales · Módulos (vista dividida): lista de módulos principales a la izquierda y,
+// a la derecha, la ficha del módulo elegido con sus sub-módulos.
 (function () {
   const { esc, tabla, formulario, filtrar } = window.UI;
 
@@ -6,22 +7,27 @@
   window.PANTALLAS.modulos = function (cont) {
     const sb = window.FIN.sb;
     const editable = window.FIN.puedeEditarCatalogos();
-    const estado = { filas: [], sel: null, buscar: '' };
+    const estado = { filas: [], sel: null, buscar: '', buscarSub: '' };
     const principales = () => estado.filas.filter((f) => !f.modulo_mayor_id);
     const subDe = (id) => estado.filas.filter((f) => f.modulo_mayor_id === id);
     const porId = (id) => estado.filas.find((f) => f.id === id);
 
-    cont.innerHTML = '<section class="panel" id="p-modulos"></section><section class="panel" id="p-sub"></section>';
-    const pMod = cont.querySelector('#p-modulos');
-    const pSub = cont.querySelector('#p-sub');
+    cont.innerHTML = `
+      <div class="md-barra" id="md-barra"></div>
+      <div class="rm-grid md-grid">
+        <aside class="panel rm-roles" id="md-lista"></aside>
+        <section class="panel md-detalle" id="md-detalle"></section>
+      </div>`;
+    const pBarra = cont.querySelector('#md-barra');
+    const pLista = cont.querySelector('#md-lista');
+    const pDet = cont.querySelector('#md-detalle');
 
     async function cargar(seleccion) {
       const { data, error } = await sb.from('modulos_sistema').select('*').order('codigo');
       if (error) {
-        pMod.innerHTML = /modulos_sistema/.test(error.message)
+        cont.innerHTML = /modulos_sistema/.test(error.message)
           ? '<p class="vacio">Falta instalar en Supabase el script <b>20261102000010_modulos_del_sistema.sql</b>.</p>'
           : `<p class="vacio">${esc(error.message)}</p>`;
-        pSub.innerHTML = '';
         return;
       }
       estado.filas = data;
@@ -30,44 +36,77 @@
       pintar();
     }
 
-    function pintar() {
-      pMod.innerHTML = `
-        <div class="panel-cab">
-          <h2>Módulo principal</h2>
-          <div class="panel-acciones">${editable ? '<button type="button" class="boton primario-sm" data-accion="nuevo-modulo">+ Módulo</button>' : ''}</div>
+    function pintarBarra() {
+      const p = principales();
+      const subs = estado.filas.length - p.length;
+      const activos = estado.filas.filter((f) => f.activo).length;
+      pBarra.innerHTML = `
+        <div class="rm-stats" role="list" aria-label="Resumen de módulos">
+          <span class="rm-stat" role="listitem"><i class="ti ti-apps" aria-hidden="true"></i><b>${p.length}</b> módulos</span>
+          <span class="rm-stat" role="listitem"><i class="ti ti-subtask" aria-hidden="true"></i><b>${subs}</b> sub-módulos</span>
+          <span class="rm-stat" role="listitem"><i class="ti ti-circle-check" aria-hidden="true"></i><b>${activos}</b> activos</span>
+          ${estado.filas.length - activos ? `<span class="rm-stat aviso" role="listitem"><i class="ti ti-circle-off" aria-hidden="true"></i><b>${estado.filas.length - activos}</b> inactivos</span>` : ''}
         </div>
-        <input type="search" class="buscar" data-buscar placeholder="Buscar módulo" value="${esc(estado.buscar)}">
-        ${tabla({
-          id: 'principales', editable, seleccionado: estado.sel && estado.sel.id, vacio: 'Todavía no hay módulos.',
-          columnas: [
-            { titulo: 'Módulo', valor: (f) => `<span class="codigo">${f.codigo}</span>`, clase: 'angosta' },
-            { titulo: 'Siglas', valor: (f) => `<span class="siglas">${esc(f.siglas)}</span>`, clase: 'angosta' },
-            { titulo: 'Descripción', valor: (f) => esc(f.descripcion), clase: 'fuerte' },
-            { titulo: 'Sub-módulos', valor: (f) => subDe(f.id).length || '—', clase: 'centrada' },
-            { titulo: 'Estado', valor: (f) => window.UI.estado(f.activo) }
-          ],
-          filas: principales()
-        })}`;
-      filtrar(pMod, estado.buscar);
-
-      const m = estado.sel;
-      pSub.innerHTML = m ? `
-        <div class="panel-cab">
-          <h2>Sub-módulos de ${m.codigo} · ${esc(m.descripcion)}</h2>
-          <div class="panel-acciones">${editable ? '<button type="button" class="boton primario-sm" data-accion="nuevo-sub">+ Sub-módulo</button>' : ''}</div>
-        </div>
-        ${tabla({
-          id: 'sub', editable, vacio: `${m.descripcion} todavía no tiene sub-módulos.`,
-          columnas: [
-            { titulo: 'Módulo', valor: (f) => `<span class="codigo">${f.codigo}</span>`, clase: 'angosta' },
-            { titulo: 'Siglas', valor: (f) => `<span class="siglas">${esc(f.siglas)}</span>`, clase: 'angosta' },
-            { titulo: 'Descripción', valor: (f) => esc(f.descripcion), clase: 'fuerte' },
-            { titulo: 'Módulo mayor', valor: () => `<span class="codigo">${m.codigo}</span> ${esc(m.siglas)}` },
-            { titulo: 'Estado', valor: (f) => window.UI.estado(f.activo) }
-          ],
-          filas: subDe(m.id)
-        })}` : '';
+        ${editable ? '<button type="button" class="boton primario-sm" data-accion="nuevo-modulo">+ Módulo</button>' : ''}`;
     }
+
+    function pintarLista() {
+      const q = estado.buscar.trim().toLowerCase();
+      const lista = principales().filter((m) => !q || [m.descripcion, m.siglas, String(m.codigo)].some((t) => t.toLowerCase().includes(q))
+        || subDe(m.id).some((s) => s.descripcion.toLowerCase().includes(q) || s.siglas.toLowerCase().includes(q)));
+      pLista.innerHTML = `
+        <div class="panel-cab"><h2>Módulos principales</h2></div>
+        <input type="search" class="buscar" data-buscar placeholder="Buscar módulo o sub-módulo" value="${esc(estado.buscar)}">
+        <ul class="rm-lista">
+          ${lista.map((m) => `
+            <li><button type="button" class="rm-rol md-item ${estado.sel && m.id === estado.sel.id ? 'activo' : ''} ${m.activo ? '' : 'apagado'}" data-mod="${m.id}">
+              <span class="siglas">${esc(m.siglas)}</span>
+              <span class="rm-rol-nombre">${esc(m.descripcion)}<small class="md-cod">Código ${m.codigo}${m.activo ? '' : ' · inactivo'}</small></span>
+              <span class="rm-rol-cuenta" title="Sub-módulos">${subDe(m.id).length}</span>
+            </button></li>`).join('') || '<li class="vacio">Sin coincidencias</li>'}
+        </ul>`;
+    }
+
+    function pintarDetalle() {
+      const m = estado.sel;
+      if (!m) {
+        pDet.innerHTML = `<div class="md-vacio"><i class="ti ti-apps" aria-hidden="true"></i><h2>Crea el primer módulo</h2><p>Los módulos principales agrupan las pantallas del sistema.</p>${editable ? '<button type="button" class="boton primario-sm" data-accion="nuevo-modulo">+ Módulo</button>' : ''}</div>`;
+        return;
+      }
+      const subs = subDe(m.id);
+      const q = estado.buscarSub.trim().toLowerCase();
+      pDet.innerHTML = `
+        <div class="md-ficha">
+          <span class="md-siglas">${esc(m.siglas)}</span>
+          <div class="md-ficha-texto">
+            <h2>${esc(m.descripcion)}</h2>
+            <p>Código <b>${m.codigo}</b> · ${window.UI.estado(m.activo)} · ${subs.length} sub-módulo${subs.length === 1 ? '' : 's'}
+              · Grabado por <b>${esc(m.creado_por_nombre || 'sistema')}</b>${m.modificado_en ? ` · modificado por <b>${esc(m.modificado_por_nombre || 'sistema')}</b> el ${window.UI.fecha(m.modificado_en).slice(0, 10)}` : ''}</p>
+          </div>
+          <div class="panel-acciones">
+            ${editable ? '<button type="button" class="boton secundario-sm" data-accion="modificar-modulo"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
+            ${editable ? '<button type="button" class="boton primario-sm" data-accion="nuevo-sub">+ Sub-módulo</button>' : ''}
+          </div>
+        </div>
+        <div class="panel-cab md-subcab">
+          <h2>Sub-módulos</h2>
+          ${subs.length > 6 ? `<input type="search" class="buscar" data-buscar-sub placeholder="Buscar sub-módulo" value="${esc(estado.buscarSub)}">` : ''}
+        </div>
+        ${tabla({
+          id: 'sub', editable, vacio: `${m.descripcion} todavía no tiene sub-módulos.${editable ? ' Agrega el primero con «+ Sub-módulo».' : ''}`,
+          columnas: [
+            { titulo: 'Código', valor: (f) => `<span class="codigo">${f.codigo}</span>`, clase: 'angosta' },
+            { titulo: 'Siglas', valor: (f) => `<span class="siglas">${esc(f.siglas)}</span>`, clase: 'angosta' },
+            { titulo: 'Descripción', valor: (f) => esc(f.descripcion), clase: 'fuerte' },
+            { titulo: 'Grabado por', valor: (f) => esc(f.creado_por_nombre || 'sistema') },
+            { titulo: 'Estado', valor: (f) => window.UI.estado(f.activo) }
+          ],
+          filas: subs
+        })}`;
+      if (q) filtrar(pDet, q);
+    }
+
+    function pintar() { pintarBarra(); pintarLista(); pintarDetalle(); }
 
     function form(fila, mayor) {
       const esSub = fila ? !!fila.modulo_mayor_id : !!mayor;
@@ -108,24 +147,32 @@
       const a = e.target.closest('[data-accion]');
       if (a) {
         if (a.dataset.accion === 'nuevo-modulo') form(null, null);
+        if (a.dataset.accion === 'modificar-modulo') form(estado.sel);
         if (a.dataset.accion === 'nuevo-sub') form(null, estado.sel);
         return;
       }
       const ed = e.target.closest('[data-editar]');
       if (ed) return form(porId(Number(ed.dataset.editar)));
-      const tr = e.target.closest('table[data-tabla=principales] tr[data-id]');
-      if (tr && Number(tr.dataset.id) !== (estado.sel && estado.sel.id)) {
-        estado.sel = porId(Number(tr.dataset.id));
-        pintar();
+      const b = e.target.closest('[data-mod]');
+      if (b && Number(b.dataset.mod) !== (estado.sel && estado.sel.id)) {
+        estado.sel = porId(Number(b.dataset.mod));
+        estado.buscarSub = '';
+        pintarLista();
+        pintarDetalle();
       }
     });
-    cont.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && e.target.matches('tr[data-id]')) e.target.click();
-    });
     cont.addEventListener('input', (e) => {
-      if (!e.target.matches('[data-buscar]')) return;
-      estado.buscar = e.target.value;
-      filtrar(pMod, estado.buscar);
+      if (e.target.matches('[data-buscar]')) {
+        estado.buscar = e.target.value;
+        pintarLista();
+        const el = cont.querySelector('[data-buscar]');
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+      }
+      if (e.target.matches('[data-buscar-sub]')) {
+        estado.buscarSub = e.target.value;
+        filtrar(pDet, estado.buscarSub);
+      }
     });
 
     cargar();

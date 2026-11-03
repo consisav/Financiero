@@ -136,7 +136,7 @@ a { color: var(--acento); text-decoration: none; }
 .migas span:last-child { color: var(--texto); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fecha { font-size: 13px; color: var(--suave); white-space: nowrap; }
 
-.vista { width: 100%; max-width: 1240px; padding: 32px; }
+.vista { width: 100%; max-width: 1760px; padding: 32px; }
 
 /* ---------- Encabezados ---------- */
 .titulo { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
@@ -476,6 +476,26 @@ p.vacio { color: var(--tenue); }
 .rm-cambios.pendientes { color: var(--ambar-t); font-weight: 600; }
 .boton:disabled { opacity: .5; cursor: not-allowed; }
 
+/* Módulos (vista dividida) */
+.md-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.md-barra .rm-stats { margin: 0; }
+.md-grid { grid-template-columns: 340px minmax(0, 1fr); }
+.md-item { grid-template-columns: 48px minmax(0, 1fr) auto; }
+.md-item .siglas { text-align: center; }
+.md-cod { display: block; font-size: 11px; font-weight: 500; color: var(--tenue); }
+.rm-rol.activo .md-cod { color: var(--m-t); }
+.md-detalle { min-height: 360px; }
+.md-ficha { display: flex; align-items: center; gap: 16px; padding-bottom: 16px; margin-bottom: 8px; border-bottom: 1px solid var(--borde); flex-wrap: wrap; }
+.md-siglas { min-width: 64px; height: 64px; padding: 0 10px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; letter-spacing: .06em; background: var(--m-f, var(--acento-fondo)); color: var(--m-t, var(--acento)); }
+.md-ficha-texto { flex: 1; min-width: 220px; }
+.md-ficha-texto h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.md-ficha-texto p { margin: 4px 0 0; font-size: 13px; color: var(--suave); }
+.md-subcab { margin-top: 8px; }
+.md-subcab .buscar { margin: 0; max-width: 260px; }
+.md-vacio { text-align: center; padding: 48px 16px; color: var(--suave); }
+.md-vacio .ti { font-size: 40px; color: var(--m-t, var(--acento)); }
+.md-vacio h2 { margin: 8px 0 4px; font-size: 18px; color: var(--texto); }
+
 /* Generar usuario y clave */
 .panel.generar { max-width: 760px; display: flex; flex-direction: column; gap: 16px; }
 .panel.generar .sub { margin: 0; }
@@ -677,6 +697,7 @@ p.vacio { color: var(--tenue); }
   .bloque-cuerpo { grid-template-columns: 1fr; }
   .param-grid, .datos-con-firma { grid-template-columns: 1fr; }
   .rm-grid { grid-template-columns: 250px minmax(0, 1fr); }
+  .md-grid { grid-template-columns: 280px minmax(0, 1fr); }
 }
 
 @media (max-width: 700px) {
