@@ -18,8 +18,9 @@
     const editable = window.FIN.esAdmin();
     const estado = {
       roles: [], asignaciones: [], opciones: [], usuarios: [],
-      rol: null, asig: null, modo: 'rol', filtroModulo: '', buscarRol: '', buscarPantalla: '',
-      base: new Map(), exc: new Map(), borrador: null
+      rol: null, asig: null, modo: 'rol', buscarRol: '', buscarPantalla: '',
+      base: new Map(), exc: new Map(), borrador: null,
+      abiertos: new Set(), excepcionesRol: 0
     };
 
     const [r, a, o, u] = await Promise.all([
@@ -40,7 +41,6 @@
 
     const usuario = (id) => estado.usuarios.find((x) => x.id === id) || { usuario: '', nombre: 'Usuario inactivo' };
     const asigDe = (rolId) => estado.asignaciones.filter((x) => x.rol_id === rolId);
-    const nombreModulo = (op) => op.modulo ? op.modulo.descripcion : 'COMÚN A TODOS LOS MÓDULOS';
 
     cont.innerHTML = `
       <div class="rm-grid">
@@ -61,6 +61,13 @@
       if (!estado.rol) return;
       const { data } = await sb.from('rol_accesos').select('*').eq('rol_id', estado.rol.id);
       (data || []).forEach((x) => estado.base.set(x.opcion_id, x));
+      // Excepciones de todos los usuarios del rol, para el resumen.
+      const ids = asigDe(estado.rol.id).map((x) => x.id);
+      estado.excepcionesRol = 0;
+      if (ids.length) {
+        const c = await sb.from('usuario_accesos').select('opcion_id', { count: 'exact', head: true }).in('rol_usuario_id', ids);
+        estado.excepcionesRol = c.count || 0;
+      }
       if (estado.asig) {
         const e = await sb.from('usuario_accesos').select('*').eq('rol_usuario_id', estado.asig.id);
         (e.data || []).forEach((x) => estado.exc.set(x.opcion_id, x));
@@ -159,17 +166,47 @@
         })}`;
     }
 
+    // Módulos de la matriz: comunes primero y luego por código del módulo.
+    function modulosMatriz() {
+      const mapa = new Map();
+      for (const op of estado.opciones) {
+        const k = String(op.modulo_id || 0);
+        if (!mapa.has(k)) mapa.set(k, { clave: k, nombre: op.modulo ? op.modulo.descripcion : 'COMÚN A TODOS LOS MÓDULOS', siglas: op.modulo ? op.modulo.siglas : 'COM', orden: op.modulo ? op.modulo.codigo : 0, opciones: [] });
+        mapa.get(k).opciones.push(op);
+      }
+      return [...mapa.values()].sort((a, b) => a.orden - b.orden);
+    }
+
+    // Casilla de tres estados: todas, algunas o ninguna de las pantallas tienen la acción.
+    function triestado(ids, ac, datos, titulo) {
+      const n = ids.filter((id) => efectivo(id, ac)).length;
+      const marca = n === ids.length && n > 0 ? 'checked' : '';
+      return `<input type="checkbox" class="tri" ${marca} data-indeterminado="${n > 0 && n < ids.length}" ${datos} ${editable ? '' : 'disabled'} aria-label="${esc(titulo)}" title="${esc(titulo)}">`;
+    }
+
+    function atajos(alcance, compacto) {
+      if (!editable) return '';
+      const b = (preset, icono, texto, titulo) => `<button type="button" class="${compacto ? 'atajo-mini' : 'boton secundario-sm atajo'}" data-preset="${preset}" data-alcance="${alcance}" title="${esc(titulo)}"><i class="ti ${icono}" aria-hidden="true"></i>${compacto ? '' : ' '}${texto}</button>`;
+      return b('total', 'ti-checks', compacto ? 'Total' : 'Acceso total', 'Todas las acciones en todas las pantallas')
+        + b('consulta', 'ti-eye', compacto ? 'Consulta' : 'Solo consulta', 'Solo Ver e Imprimir')
+        + b('ninguno', 'ti-ban', compacto ? 'Ninguno' : 'Quitar todo', 'Sin acceso');
+    }
+
     function pintarAccesos() {
       const rol = estado.rol;
       if (!rol) { pAcc.innerHTML = ''; return; }
       const q = estado.buscarPantalla.trim().toLowerCase();
-      const modulos = [...new Map(estado.opciones.map((x) => [x.modulo_id || 0, x.modulo ? `${x.modulo.siglas} · ${x.modulo.descripcion}` : 'Comunes'])).entries()];
-      const visibles = estado.opciones.filter((x) =>
-        (estado.filtroModulo === '' || String(x.modulo_id || 0) === estado.filtroModulo) &&
-        (!q || x.nombre.toLowerCase().includes(q)));
       const usuarioSel = estado.asig ? usuario(estado.asig.perfil_id) : null;
-      const conAcceso = estado.opciones.filter((x) => efectivo(x.id, 'ver')).length;
-      let grupoActual = '';
+      const todos = estado.opciones.map((x) => x.id);
+      const conVer = todos.filter((id) => efectivo(id, 'ver')).length;
+      const conModificar = todos.filter((id) => efectivo(id, 'modificar')).length;
+      const excepciones = estado.modo === 'usuario'
+        ? todos.filter((id) => ACCIONES.some((ac) => esExcepcion(id, ac.id))).length
+        : estado.excepcionesRol;
+      const activos = asigDe(rol.id).filter((x) => x.estado === 'ACTIVO').length;
+      const modulos = modulosMatriz();
+      const n = cambiosPendientes();
+
       pAcc.innerHTML = `
         <div class="panel-cab">
           <h2>Matriz de accesos</h2>
@@ -178,45 +215,117 @@
             <button type="button" role="tab" class="${estado.modo === 'usuario' ? 'activo' : ''}" data-modo="usuario" aria-selected="${estado.modo === 'usuario'}" ${usuarioSel ? '' : 'disabled title="Elige un usuario del rol"'}>Accesos de ${usuarioSel ? esc(usuarioSel.usuario || usuarioSel.nombre) : 'usuario'}</button>
           </div>
         </div>
-        <p class="rm-ayuda">${estado.modo === 'rol'
-          ? `Lo que marques aquí lo heredan todos los usuarios con el rol <b>${esc(rol.nombre)}</b>. ${conAcceso} de ${estado.opciones.length} pantallas con acceso.`
-          : `Accesos finales de <b>${esc(usuarioSel.nombre)}</b>: los del rol más sus excepciones. Las celdas <span class="excepcion-muestra">resaltadas</span> son excepciones; al dejarlas igual que el rol vuelven a heredarse.`}</p>
-        <div class="rm-filtros">
-          <label class="selector-org">Módulo <select data-filtro-modulo>
-            <option value="">Todos</option>
-            ${modulos.map(([id, n]) => `<option value="${id}" ${String(id) === estado.filtroModulo ? 'selected' : ''}>${esc(n)}</option>`).join('')}
-          </select></label>
-          <input type="search" class="buscar" data-buscar-pantalla placeholder="Buscar pantalla" value="${esc(estado.buscarPantalla)}">
+
+        <div class="rm-kpis">
+          <div class="rm-kpi"><span>Usuarios activos</span><b>${activos}</b></div>
+          <div class="rm-kpi"><span>Pantallas con acceso</span><b>${conVer} <small>/ ${todos.length}</small></b></div>
+          <div class="rm-kpi"><span>Pueden modificar</span><b>${conModificar}</b></div>
+          <div class="rm-kpi ${excepciones ? 'aviso' : ''}"><span>${estado.modo === 'usuario' ? 'Excepciones del usuario' : 'Excepciones de usuarios'}</span><b>${excepciones}</b></div>
         </div>
-        <div class="tabla-desplazable rm-matriz">
-          <table class="tabla catalogo matriz">
+
+        <p class="rm-ayuda">${estado.modo === 'rol'
+          ? `Lo que marques aquí lo heredan todos los usuarios con el rol <b>${esc(rol.nombre)}</b>.`
+          : `Accesos finales de <b>${esc(usuarioSel.nombre)}</b>: los del rol más sus excepciones. Las celdas <span class="excepcion-muestra">resaltadas</span> son excepciones; al dejarlas igual que el rol vuelven a heredarse.`}</p>
+
+        <div class="rm-atajos">
+          ${editable ? `<span class="rm-atajos-titulo">Aplicar a todo el sistema</span>${atajos('todo', false)}` : ''}
+          ${editable && estado.modo === 'rol' && estado.roles.length > 1 ? `
+            <label class="selector-org copiar">Copiar de <select data-copiar>
+              <option value="">Otro rol…</option>
+              ${estado.roles.filter((x) => x.id !== rol.id).map((x) => `<option value="${x.id}">${esc(x.nombre)}</option>`).join('')}
+            </select></label>` : ''}
+        </div>
+
+        <div class="rm-filtros">
+          <input type="search" class="buscar" data-buscar-pantalla placeholder="Buscar pantalla" value="${esc(estado.buscarPantalla)}">
+          <button type="button" class="boton secundario-sm" data-plegar-todo="abrir"><i class="ti ti-arrows-maximize" aria-hidden="true"></i> Expandir todo</button>
+          <button type="button" class="boton secundario-sm" data-plegar-todo="cerrar"><i class="ti ti-arrows-minimize" aria-hidden="true"></i> Contraer todo</button>
+        </div>
+
+        <div class="rm-matriz">
+          <table class="tabla matriz">
             <thead><tr>
-              <th>Pantalla</th>
-              ${ACCIONES.map((ac) => `<th class="centrada"><button type="button" class="col-todo" data-columna="${ac.id}" ${editable ? '' : 'disabled'} title="Marcar o quitar en las pantallas visibles">${ac.nombre}</button></th>`).join('')}
+              <th>Módulo · pantalla</th>
+              <th class="rm-avance-col">Acceso</th>
+              ${ACCIONES.map((ac) => `<th class="centrada"><label class="col-tri">${triestado(todos, ac.id, `data-tri-todo="${ac.id}"`, `${ac.nombre} en todo el sistema`)}<span>${ac.nombre}</span></label></th>`).join('')}
             </tr></thead>
-            <tbody>
-              ${visibles.map((op) => {
-                const g = `${op.modulo_id || 0}|${op.grupo}`;
-                const cab = g !== grupoActual ? `<tr class="grupo-matriz"><td colspan="${ACCIONES.length + 1}">${esc(nombreModulo(op))} · ${GRUPO_NOMBRE[op.grupo]}${op.subgrupo ? ` · ${esc(op.subgrupo)}` : ''}</td></tr>` : '';
-                grupoActual = g;
-                return cab + `
-                  <tr data-op="${op.id}">
-                    <td><button type="button" class="fila-todo" data-fila="${op.id}" ${editable ? '' : 'disabled'} title="Marcar o quitar toda la fila">${esc(op.nombre)}</button></td>
-                    ${ACCIONES.map((ac) => `<td class="centrada ${esExcepcion(op.id, ac.id) ? 'excepcion' : ''}"><input type="checkbox" data-celda="${op.id}|${ac.id}" ${efectivo(op.id, ac.id) ? 'checked' : ''} ${editable ? '' : 'disabled'} aria-label="${ac.nombre} ${esc(op.nombre)}"></td>`).join('')}
-                  </tr>`;
-              }).join('') || `<tr><td colspan="${ACCIONES.length + 1}" class="vacio">Sin pantallas con este filtro.</td></tr>`}
-            </tbody>
+            ${modulos.map((md) => {
+              const ops = md.opciones.filter((x) => !q || x.nombre.toLowerCase().includes(q));
+              if (q && !ops.length) return '';
+              const ids = md.opciones.map((x) => x.id);
+              const c = ids.filter((id) => efectivo(id, 'ver')).length;
+              const pct = Math.round((c / ids.length) * 100);
+              const abierto = q ? true : estado.abiertos.has(md.clave);
+              let grupoActual = '';
+              return `
+                <tbody class="rm-modulo ${abierto ? 'abierto' : ''}">
+                  <tr class="rm-modulo-cab">
+                    <td><div class="rm-cab-celda">
+                      <button type="button" class="rm-plegar" data-plegar="${md.clave}" aria-expanded="${abierto}">
+                        <i class="ti ti-chevron-${abierto ? 'down' : 'right'}" aria-hidden="true"></i>
+                        <span class="siglas">${esc(md.siglas)}</span> ${esc(md.nombre)} <small>${ids.length} pantallas</small>
+                      </button>
+                      <span class="rm-atajos-mini">${atajos(md.clave, true)}</span>
+                    </div></td>
+                    <td class="rm-avance-col">
+                      <div class="rm-avance" title="${c} de ${ids.length} pantallas con acceso"><i style="width:${pct}%" class="${pct === 100 ? 'completo' : pct ? 'parcial' : ''}"></i></div>
+                      <small>${c}/${ids.length}</small>
+                    </td>
+                    ${ACCIONES.map((ac) => `<td class="centrada">${triestado(ids, ac.id, `data-tri-modulo="${md.clave}|${ac.id}"`, `${ac.nombre} en ${md.nombre}`)}</td>`).join('')}
+                  </tr>
+                  ${abierto ? ops.map((op) => {
+                    const g = `${op.grupo}|${op.subgrupo || ''}`;
+                    const cab = g !== grupoActual ? `<tr class="grupo-matriz"><td colspan="${ACCIONES.length + 2}">${GRUPO_NOMBRE[op.grupo]}${op.subgrupo ? ` · ${esc(op.subgrupo)}` : ''}</td></tr>` : '';
+                    grupoActual = g;
+                    return cab + `
+                      <tr data-op="${op.id}">
+                        <td colspan="2"><button type="button" class="fila-todo" data-fila="${op.id}" ${editable ? '' : 'disabled'} title="Marcar o quitar toda la fila">${esc(op.nombre)}</button></td>
+                        ${ACCIONES.map((ac) => `<td class="centrada ${esExcepcion(op.id, ac.id) ? 'excepcion' : ''}"><input type="checkbox" data-celda="${op.id}|${ac.id}" ${efectivo(op.id, ac.id) ? 'checked' : ''} ${editable ? '' : 'disabled'} aria-label="${ac.nombre} ${esc(op.nombre)}"></td>`).join('')}
+                      </tr>`;
+                  }).join('') : ''}
+                </tbody>`;
+            }).join('') || `<tbody><tr><td colspan="${ACCIONES.length + 2}" class="vacio">Sin pantallas con esa búsqueda.</td></tr></tbody>`}
           </table>
         </div>
-        ${editable ? (() => {
-          const n = cambiosPendientes();
-          return `
+        ${editable ? `
           <div class="barra-guardar rm-guardar">
             <span class="rm-cambios ${n ? 'pendientes' : ''}">${n ? `${n} pantalla${n === 1 ? '' : 's'} con cambios sin guardar` : 'Sin cambios'}</span>
             <button type="button" class="boton secundario-sm" data-accion="descartar" ${n ? '' : 'disabled'}>Descartar</button>
             <button type="button" class="boton primario-sm" data-accion="guardar-accesos" ${n ? '' : 'disabled'}>Guardar accesos</button>
-          </div>`;
-        })() : ''}`;
+          </div>` : ''}`;
+      pAcc.querySelectorAll('[data-indeterminado=true]').forEach((x) => { x.indeterminate = true; });
+    }
+
+    // Atajos: total = todas las acciones; consulta = ver e imprimir; ninguno = sin acceso.
+    function aplicarPreset(ids, preset) {
+      for (const id of ids) {
+        for (const ac of ACCIONES) {
+          const v = preset === 'total' || (preset === 'consulta' && (ac.id === 'ver' || ac.id === 'imprimir'));
+          if (!v) fijar(id, ac.id, false);
+        }
+        for (const ac of ACCIONES) {
+          const v = preset === 'total' || (preset === 'consulta' && (ac.id === 'ver' || ac.id === 'imprimir'));
+          if (v) fijar(id, ac.id, true);
+        }
+      }
+    }
+
+    // Marca o quita una acción en un conjunto de pantallas (si todas la tienen, se quita).
+    function alternarAccion(ids, ac) {
+      const todas = ids.every((id) => efectivo(id, ac));
+      ids.forEach((id) => fijar(id, ac, !todas));
+    }
+
+    async function copiarDeRol(idRol) {
+      const { data, error } = await sb.from('rol_accesos').select('*').eq('rol_id', idRol);
+      if (error) { window.FIN.aviso(window.UI.traducirError(error)); return; }
+      const origen = new Map((data || []).map((x) => [x.opcion_id, x]));
+      for (const op of estado.opciones) {
+        const f = origen.get(op.id) || vacio();
+        estado.borrador.set(op.id, Object.fromEntries(ACCIONES.map((ac) => [ac.id, !!f[ac.id]])));
+      }
+      const r = estado.roles.find((x) => x.id === idRol);
+      window.FIN.aviso(`Permisos copiados de ${r ? r.nombre : 'otro rol'}. Revisa y pulsa Guardar accesos.`);
     }
 
     function pintar() { pintarRoles(); pintarUsuarios(); pintarAccesos(); }
@@ -333,11 +442,22 @@
         reiniciarBorrador();
         return pintarAccesos();
       }
-      const col = e.target.closest('[data-columna]');
-      if (col) {
-        const ids = [...pAcc.querySelectorAll('tr[data-op]')].map((tr) => Number(tr.dataset.op));
-        const todos = ids.every((id) => efectivo(id, col.dataset.columna));
-        ids.forEach((id) => fijar(id, col.dataset.columna, !todos));
+      const preset = e.target.closest('[data-preset]');
+      if (preset) {
+        const alcance = preset.dataset.alcance;
+        const ids = estado.opciones.filter((x) => alcance === 'todo' || String(x.modulo_id || 0) === alcance).map((x) => x.id);
+        aplicarPreset(ids, preset.dataset.preset);
+        return pintarAccesos();
+      }
+      const plegar = e.target.closest('[data-plegar]');
+      if (plegar) {
+        const k = plegar.dataset.plegar;
+        if (estado.abiertos.has(k)) estado.abiertos.delete(k); else estado.abiertos.add(k);
+        return pintarAccesos();
+      }
+      const todoP = e.target.closest('[data-plegar-todo]');
+      if (todoP) {
+        estado.abiertos = todoP.dataset.plegarTodo === 'abrir' ? new Set(modulosMatriz().map((x) => x.clave)) : new Set();
         return pintarAccesos();
       }
       const fila = e.target.closest('[data-fila]');
@@ -376,7 +496,19 @@
         fijar(Number(id), ac, e.target.checked);
         return pintarAccesos();
       }
-      if (e.target.matches('[data-filtro-modulo]')) { estado.filtroModulo = e.target.value; pintarAccesos(); }
+      // Casillas de tres estados: toda la columna del sistema o de un módulo.
+      if (e.target.dataset.triTodo) {
+        alternarAccion(estado.opciones.map((x) => x.id), e.target.dataset.triTodo);
+        return pintarAccesos();
+      }
+      if (e.target.dataset.triModulo) {
+        const [clave, ac] = e.target.dataset.triModulo.split('|');
+        alternarAccion(estado.opciones.filter((x) => String(x.modulo_id || 0) === clave).map((x) => x.id), ac);
+        return pintarAccesos();
+      }
+      if (e.target.matches('[data-copiar]') && e.target.value) {
+        copiarDeRol(Number(e.target.value)).then(pintarAccesos);
+      }
     });
     cont.addEventListener('input', (e) => {
       const restaurar = (sel) => { const el = cont.querySelector(sel); el.focus(); el.setSelectionRange(el.value.length, el.value.length); };
@@ -384,6 +516,9 @@
       if (e.target.matches('[data-buscar-pantalla]')) { estado.buscarPantalla = e.target.value; pintarAccesos(); restaurar('[data-buscar-pantalla]'); }
     });
 
+    // Al entrar, se abre el primer módulo de la matriz.
+    const primero = modulosMatriz()[0];
+    if (primero) estado.abiertos.add(primero.clave);
     await cargarAccesos();
     pintar();
   };
