@@ -827,8 +827,15 @@ span.tk-archivo { cursor: default; }
 .tk-historial li { display: flex; gap: 10px; align-items: baseline; margin-left: -9px; font-size: 13px; color: var(--texto); }
 .tk-historial li .tk-punto-color { width: 12px; height: 12px; border: 2px solid var(--panel); box-sizing: content-box; margin-top: 2px; }
 .tk-historial small { display: block; color: var(--tenue); font-size: 11.5px; margin-top: 2px; }
-.tk-pie { position: sticky; bottom: 0; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; margin: 16px 0 20px; padding: 12px 16px; background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--borde); border-radius: 14px; box-shadow: var(--sombra); }
-.tk-pie .modal-error { margin: 0 auto 0 0; padding: 0; }
+.tk-titulo-acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.tk-error:empty { display: none; }
+.tk-error { margin: 10px 0 0; }
+.tk-aviso { display: flex; align-items: center; gap: 6px; margin: 12px 0 0; padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--suave); background: var(--fondo); }
+.tk-aviso.editando { color: var(--acento); background: var(--acento-fondo); }
+.tk-cuerpo { margin-bottom: 20px; }
+.tk-accion { text-align: right; white-space: nowrap; }
+.tk-accion .boton { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; font-size: 13px; }
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .tk-pasos { list-style: none; margin: 0; padding: 6px 0 4px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(96px, 1fr); overflow-x: auto; }
 .tk-paso { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; padding: 0 4px; color: var(--tenue); }
 .tk-paso::before { content: ""; position: absolute; top: 15px; left: -50%; width: 100%; height: 3px; background: var(--borde); z-index: 0; }

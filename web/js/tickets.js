@@ -106,7 +106,7 @@
         </div>
         <div class="tabla-desplazable">
           <table class="tabla tk-tabla">
-            <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Requerimiento</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th></tr></thead>
+            <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Requerimiento</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th><th><span class="oculto">Acciones</span></th></tr></thead>
             <tbody>
               ${filas.map((t) => `
                 <tr class="tk-fila ${actual && actual.id === t.id ? 'tk-actual' : ''}" data-ticket="${t.id}" tabindex="0">
@@ -117,7 +117,8 @@
                   <td>${marcaPrioridad(t.prioridad)}</td>
                   <td>${marcaEstado(t.estado)}</td>
                   <td>${t.recurso_id ? `<span class="tk-persona"><span class="tk-avatar">${esc(iniciales(nombreRecurso(t.recurso_id)))}</span>${esc(nombreRecurso(t.recurso_id))}</span>` : '<span class="tk-tenue">Sin asignar</span>'}</td>
-                </tr>`).join('') || `<tr><td colspan="7" class="vacio">${tickets.length ? 'Ningún ticket coincide con los filtros.' : 'Todavía no hay tickets.'}</td></tr>`}
+                  <td class="tk-accion"><button type="button" class="boton secundario-sm" data-ticket="${t.id}" title="${puedeEditar(t) ? 'Modificar' : 'Ver'} el ticket ${esc(t.numero)}"><i class="ti ${puedeEditar(t) ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i> ${puedeEditar(t) ? 'Modificar' : 'Ver'}</button></td>
+                </tr>`).join('') || `<tr><td colspan="8" class="vacio">${tickets.length ? 'Ningún ticket coincide con los filtros.' : 'Todavía no hay tickets.'}</td></tr>`}
             </tbody>
           </table>
         </div>`;
@@ -159,8 +160,15 @@
                 <h2>${t ? esc(t.numero) : 'Se numera al generarlo'}</h2>
               </div>
               <div class="tk-marcas" data-marcas>${marcaEstado(estado)}${marcaPrioridad(prio)}</div>
-              <div class="tk-titulo-acciones">${t ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo ticket</button>' : ''}</div>
+              <div class="tk-titulo-acciones">
+                ${t ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo ticket</button>' : ''}
+                ${editable && t ? '<button type="button" class="boton secundario-sm" data-accion="descartar"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Descartar cambios</button>' : ''}
+                ${editable ? `<button type="submit" class="boton primario-sm"><i class="ti ${t ? 'ti-device-floppy' : 'ti-send'}" aria-hidden="true"></i> ${t ? 'Guardar cambios' : 'Generar ticket'}</button>` : ''}
+              </div>
             </div>
+            <p class="modal-error tk-error" role="alert"></p>
+            ${t && !editable ? '<p class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo quien lo creó, el recurso asignado o un administrador pueden modificar este ticket.</p>' : ''}
+            ${t && editable ? '<p class="tk-aviso editando"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando el ticket: cambia lo que necesites y presiona «Guardar cambios».</p>' : ''}
             <dl class="tk-datos">
               <div><dt><i class="ti ti-building" aria-hidden="true"></i> Organización</dt><dd>${esc(orgTexto)}</dd></div>
               <div><dt><i class="ti ti-map-pin" aria-hidden="true"></i> Localidad</dt><dd>${esc(locTexto)}</dd></div>
@@ -224,13 +232,6 @@
                   </ol>
                 </div>` : ''}
             </section>
-          </div>
-
-          <div class="tk-pie">
-            <p class="modal-error" role="alert"></p>
-            ${editable
-              ? `${t ? '<button type="button" class="boton secundario-sm" data-accion="descartar">Descartar cambios</button>' : ''}<button type="submit" class="boton primario-sm"><i class="ti ${t ? 'ti-device-floppy' : 'ti-send'}" aria-hidden="true"></i> ${t ? 'Guardar cambios' : 'Generar ticket'}</button>`
-              : '<p class="tk-tenue">Solo quien lo creó, el recurso asignado o un administrador pueden modificarlo.</p>'}
           </div>
         </form>`;
     }
