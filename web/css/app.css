@@ -1214,3 +1214,14 @@ span.tk-archivo { cursor: default; }
 @media (max-width: 1100px), (max-height: 620px) {
   .ts-cuerpo { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- Tickets · Cierre (usa los estilos de Asignación) ---------- */
+.ta-total.listo { background: var(--verde-f); color: var(--verde-t); }
+.ta-total.listo b { color: var(--verde-t); }
+.tc-cerrado { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: var(--texto); }
+.tc-procesos { display: flex; align-items: center; gap: 6px; margin: 0; padding: 7px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 600; }
+.tc-procesos.ok { background: var(--verde-f); color: var(--verde-t); }
+.tc-procesos.aviso { background: var(--ambar-f); color: var(--ambar-t); }
+.tc-resumen { display: grid; gap: 10px; padding: 10px 12px 12px; border: 1px solid color-mix(in srgb, var(--ok) 40%, var(--borde)); border-radius: var(--radio); }
+.tc-resumen h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ok); }
+.tc-tipo { margin: 0; }
