@@ -1282,7 +1282,7 @@ span.tk-archivo { cursor: default; }
 .ts-nota-pie > span { display: inline-flex; gap: 6px; }
 
 /* ---------- Contabilidad · Partidas contables (diseño apilado de Asignación) ---------- */
-.pc-espacio .ta-cuerpo { grid-template-rows: minmax(140px, 27%) minmax(0, 1fr); }
+.pc-espacio .ta-cuerpo { grid-template-rows: minmax(120px, 20%) minmax(0, 1fr); }
 .pc-espacio .ta-filtros { grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(90px, .55fr) minmax(130px, .8fr) minmax(0, 1.3fr) minmax(0, 1fr); }
 .ta-tabla th.num, .ta-tabla td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .pc-resumen { margin-left: 8px; }
@@ -1302,7 +1302,7 @@ span.tk-archivo { cursor: default; }
 .pc-imprimir .boton:last-child { border-radius: 0 999px 999px 0; margin-left: -1px; font-size: 12.5px; }
 .pc-form { overflow-y: auto !important; gap: 10px; }
 .pc-encabezado { display: grid; grid-template-columns: auto minmax(220px, 1.2fr) minmax(150px, .8fr) minmax(110px, .5fr) minmax(0, 2fr) minmax(170px, .8fr) minmax(170px, .8fr); gap: 10px; align-items: end; }
-.pc-periodo { display: grid; grid-template-columns: repeat(4, auto); border: 1px solid var(--borde); border-radius: var(--radio); background: var(--fondo); align-self: stretch; }
+.pc-periodo { display: grid; grid-template-columns: repeat(5, auto); border: 1px solid var(--borde); border-radius: var(--radio); background: var(--fondo); align-self: stretch; }
 .pc-periodo > div { display: flex; flex-direction: column; justify-content: center; gap: 1px; padding: 4px 12px; }
 .pc-periodo > div + div { border-left: 1px solid var(--borde); }
 .pc-periodo span { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
@@ -1347,4 +1347,39 @@ span.tk-archivo { cursor: default; }
   .pc-encabezado { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .pc-periodo, .pc-desc { grid-column: 1 / -1; }
   .pc-lineas { max-height: 420px; }
+}
+/* Partidas: elementos de Administración de pólizas (encabezado en dos filas, banda de aprobación y pie). */
+.pc-encabezado { grid-template-columns: auto minmax(150px, .8fr) minmax(110px, .55fr) minmax(170px, .8fr) minmax(130px, .6fr); }
+.pc-encabezado.pc-fila2 { grid-template-columns: minmax(260px, 1.1fr) minmax(0, 2.2fr) minmax(180px, .8fr); }
+.pc-fila2 .pc-desc { grid-column: auto; }
+.pc-empresa { font-size: 13px !important; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.pc-poliza b { color: var(--acento) !important; }
+.pc-poliza .rp-enlace { font-size: 11px; padding: 0; text-align: left; }
+.pc-rojo { color: var(--error) !important; }
+.pc-banda { display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; padding: 8px 14px; border-radius: var(--radio); background: color-mix(in srgb, var(--ambar-f) 70%, var(--panel)); border: 1px solid color-mix(in srgb, var(--ambar-t) 25%, var(--borde)); }
+.pc-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--texto); cursor: pointer; }
+.pc-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--ok); }
+.pc-check:has(input:disabled) { cursor: default; opacity: .75; }
+.pc-banda-dato { display: inline-flex; align-items: baseline; gap: 6px; font-size: 12.5px; }
+.pc-banda-dato span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--suave); }
+.pc-banda-dato b { color: var(--texto); }
+.pc-banda-sep { flex: 1; }
+.pc-generar { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--suave); }
+.pc-generar input { width: 130px; font: inherit; font-size: 12.5px; padding: 5px 8px; border: 1px solid var(--borde); border-radius: 8px; background: var(--panel); }
+.pc-banda .boton, .pc-liquidar .boton, .pc-impresion .boton { display: inline-flex; align-items: center; gap: 5px; }
+.pc-pie { display: grid; grid-template-columns: minmax(0, 1.4fr) auto auto; gap: 12px 18px; align-items: end; }
+.pc-pie .pc-justificacion textarea { min-height: 40px; }
+.pc-liquidar, .pc-impresion { display: flex; flex-direction: column; gap: 5px; }
+.pc-liquidar > span, .pc-impresion > span { font-size: 13px; font-weight: 500; color: var(--suave); }
+.pc-liquidar > div { display: flex; gap: 6px; flex-wrap: wrap; }
+.pc-impresion { flex-direction: row; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--fondo); }
+.pc-impresion > span { display: none; }
+.pc-radios { display: flex; gap: 12px; font-size: 12.5px; color: var(--texto); }
+.pc-radios label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; }
+.pc-radios input { margin: 0; accent-color: var(--acento); }
+@media (max-width: 1500px) {
+  .pc-encabezado, .pc-encabezado.pc-fila2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pc-periodo { grid-column: 1 / -1; }
+  .pc-fila2 .pc-desc { grid-column: 1 / -1; }
+  .pc-pie { grid-template-columns: minmax(0, 1fr); }
 }

@@ -21,6 +21,13 @@
   const hoy = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' });
   const monto = (n) => Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const redondear = (n) => Math.round(Number(n || 0) * 100) / 100;
+  const CLASIFICACIONES = ['PARTIDA DEL MES', 'PARTIDA DE APERTURA', 'PARTIDA DE AJUSTE', 'PARTIDA DE CIERRE'];
+  // Procesos que generan partidas automáticas; se habilitan cuando existan sus módulos.
+  const LIQUIDACIONES = [
+    { id: 'ventas', texto: 'Liquidar ventas', icono: 'ti-receipt', modulo: 'Facturación y ventas' },
+    { id: 'compras', texto: 'Liquidar compras', icono: 'ti-shopping-cart', modulo: 'Compras' },
+    { id: 'caja', texto: 'Liquidar caja chica', icono: 'ti-cash', modulo: 'Caja chica' }
+  ];
 
   window.PANTALLAS = window.PANTALLAS || {};
   window.PANTALLAS['partidas-contables'] = function (cont) {
@@ -37,6 +44,8 @@
     let lineas = [];        // líneas en edición: { cuenta_id, centro_id, concepto, debe, haber }
     let copia = null;       // encabezado de la partida que se copia
     let buscar = '';
+    let siguiente = null;   // número que tendría la partida nueva (Obtener póliza)
+    let modoImpresion = 'general';
     const catalogos = {};   // cuentas por versión del catálogo
     const centrosLoc = {};  // centros de costo por localidad
     const [anioHoy, mesHoy] = hoy().split('-').map(Number);
@@ -200,6 +209,7 @@
     // ---------- Detalle ----------
     async function abrir(p, desde = null) {
       actual = p;
+      siguiente = null;
       copia = desde;
       if (p) {
         const { data } = await sb.from('partida_lineas').select('*').eq('partida_id', p.id).order('linea');
@@ -224,29 +234,25 @@
       const ed = editable();
       const dis = ed ? '' : 'disabled';
       const base = copia || p || {};
-      const tp = tipo(base.tipo_partida_id);
+      // Tipo de partida por defecto: Partida de Diario.
+      const tp = tipo(base.tipo_partida_id) || tipos.find((t) => t.siglas === 'PD') || null;
       const mon = moneda(base.moneda_id) || monedas.find((m) => m.iso === 'GTQ') || monedas[0];
       const org = organizacion(p ? p.organizacion_id : f.org);
       const loc = localidad(p ? p.localidad_id : f.loc);
       const movimiento = cuentas.filter((c) => c.movimiento);
+      const clasif = base.clasificacion || CLASIFICACIONES[0];
+      const procesar = admin && p && p.estado === 'VIGENTE' && !p.definitiva;
       pDet.innerHTML = `
         <form class="tk-form ta-form pc-form" novalidate>
           <header class="tk-titulo">
             <span class="tk-icono"><i class="ti ti-file-invoice" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto">
-              <small>${esc(org ? org.nombre : '')} · ${esc(loc ? `${loc.codigo} ${loc.nombre_comercial}` : '')}</small>
-              <h2>${p ? `Partida ${String(p.mes).padStart(2, '0')}-${p.numero} <span class="pc-anual">anual ${p.numero_anual}</span>` : copia ? 'Copia de partida' : 'Nueva partida'}</h2>
+              <small>Administración de pólizas · ${esc(org ? org.nombre : '')}</small>
+              <h2>${p ? `Partida ${String(p.mes).padStart(2, '0')}-${p.numero} <span class="pc-anual">anual ${p.numero_anual}</span>` : copia ? 'Réplica de partida' : 'Nueva partida'}</h2>
             </div>
             <div class="tk-marcas">${p ? marcas(p) : '<span class="pc-marca pendiente">Sin registrar</span>'}</div>
             <div class="tk-titulo-acciones">
-              ${p ? `
-                <button type="button" class="boton secundario-sm" data-accion="copiar" ${admin ? '' : 'disabled'} title="Crear una partida nueva con este encabezado y estas líneas"><i class="ti ti-copy" aria-hidden="true"></i> Copiar</button>
-                <span class="pc-imprimir"><button type="button" class="boton secundario-sm" data-imprimir="general" title="Imprimir la partida"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button><button type="button" class="boton secundario-sm" data-imprimir="centros" title="Imprimir integrada por centro de costo">por centro</button></span>
-                ${admin && p.estado === 'VIGENTE' && !p.definitiva ? `
-                  <button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>
-                  ${p.aprobada
-                    ? '<button type="button" class="boton secundario-sm" data-accion="desaprobar"><i class="ti ti-x" aria-hidden="true"></i> Quitar aprobación</button><button type="button" class="boton primario-sm" data-accion="definitiva"><i class="ti ti-lock" aria-hidden="true"></i> Hacer definitiva</button>'
-                    : '<button type="button" class="boton secundario-sm" data-accion="aprobar"><i class="ti ti-circle-check" aria-hidden="true"></i> Aprobar</button>'}` : ''}` : ''}
+              ${procesar ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>' : ''}
               ${ed ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${p ? 'Guardar cambios' : 'Registrar partida'}</button>` : ''}
             </div>
           </header>
@@ -256,20 +262,38 @@
 
           <div class="pc-encabezado">
             <div class="pc-periodo">
+              <div><span>Empresa</span><b class="pc-empresa" title="${esc(loc ? loc.nombre_comercial : '')}">${esc(loc ? `${loc.codigo} · ${loc.nombre_comercial}` : '')}</b></div>
               <div><span>Año</span><b>${p ? p.anio : f.anio}</b></div>
               <div><span>Mes</span><b>${MESES[(p ? p.mes : f.mes) - 1]}</b></div>
-              <div><span>Partida</span><b>${p ? p.numero : '—'}</b></div>
-              <div><span>Anual</span><b>${p ? p.numero_anual : '—'}</b></div>
+              <div class="pc-poliza"><span>Póliza</span><b data-poliza>${p ? p.numero : siguiente ? siguiente.numero : '—'}</b>${p ? '' : '<button type="button" class="rp-enlace" data-accion="obtener" title="Ver el número que tendrá la partida al registrarla">Obtener póliza</button>'}</div>
+              <div><span>Póliza anual</span><b data-anual>${p ? p.numero_anual : siguiente ? siguiente.anual : '—'}</b></div>
             </div>
-            <label class="campo pc-tipo-campo"><span>Tipo de partida *</span>
-              <select name="tipo_partida_id" ${dis}><option value="">Seleccionar…</option>${tipos.map((t) => `<option value="${t.id}" ${tp && tp.id === t.id ? 'selected' : ''}>${esc(t.siglas)} · ${esc(t.nombre)}</option>`).join('')}</select>
-              <small class="pc-clasif" data-clasificacion>${tp ? `Clasificación: ${esc(tp.clasificacion)}` : '&nbsp;'}</small></label>
             <label class="campo"><span>Moneda</span>
               <select name="moneda_id" ${dis}>${monedas.map((m) => `<option value="${m.id}" ${mon && mon.id === m.id ? 'selected' : ''}>${esc(m.nombre)} (${esc(m.simbolo)})</option>`).join('')}</select></label>
-            <label class="campo"><span>Tipo de cambio</span><input type="number" name="tipo_cambio" step="any" min="0" value="${esc(String(base.tipo_cambio ?? mon?.cambio ?? 1))}" ${dis}></label>
+            <label class="campo"><span>Valor cambio</span><input type="number" name="tipo_cambio" step="any" min="0" value="${esc(String(base.tipo_cambio ?? mon?.cambio ?? 1))}" ${dis}></label>
+            <div class="ta-auto pc-auto"><span>Fecha · usuario</span><b ${p ? '' : 'data-reloj'}>${esc(fechaHora(p ? p.fecha : new Date()))}</b><small>${esc(p ? p.usuario || '' : (yo.usuario || '').toUpperCase())}</small></div>
+            <div class="ta-auto pc-auto"><span>Estado · tipo</span><b class="${p && p.estado === 'ANULADA' ? 'pc-rojo' : ''}">${p ? esc(p.estado) : 'VIGENTE'}</b><small>${p ? esc(p.origen) : 'MANUAL'}</small></div>
+          </div>
+
+          <div class="pc-encabezado pc-fila2">
+            <label class="campo"><span>Tipo de partida (transacción) *</span>
+              <select name="tipo_partida_id" ${dis}><option value="">Seleccionar…</option>${tipos.map((t) => `<option value="${t.id}" ${tp && tp.id === t.id ? 'selected' : ''}>${t.codigo} · ${esc(t.siglas)} · ${esc(t.nombre)}</option>`).join('')}</select></label>
             <label class="campo pc-desc"><span>Descripción *</span><input name="descripcion" value="${esc(base.descripcion || '')}" maxlength="300" placeholder="Concepto general de la partida" ${dis}></label>
-            <div class="ta-auto pc-auto"><span>Fecha y usuario</span><b ${p ? '' : 'data-reloj'}>${esc(fechaHora(p ? p.fecha : new Date()))}</b><small>${esc(p ? p.usuario || '' : (yo.usuario || '').toUpperCase())}${p ? ` · ${esc(p.origen)}` : ' · se graba al registrar'}</small></div>
-            <div class="ta-auto pc-auto"><span>Aprobación</span><b>${p && p.aprobada ? `${esc(p.aprobada_por)}` : 'Pendiente'}</b><small>${p && p.definitiva ? `Definitiva: ${esc(p.definitiva_por)} · ${esc(fechaCorta(p.definitiva_en))}` : p && p.aprobada ? esc(fechaCorta(p.aprobada_en)) : 'Requiere debe = haber'}</small></div>
+            <label class="campo"><span>Clasificación</span>
+              <select name="clasificacion" ${dis}>${CLASIFICACIONES.map((c) => `<option ${clasif === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+          </div>
+
+          <div class="pc-banda">
+            <label class="pc-check" title="${p ? 'Aprobar requiere que la partida esté cuadrada (debe = haber)' : 'Registra la partida para poder aprobarla'}">
+              <input type="checkbox" data-check="aprobada" ${p && p.aprobada ? 'checked' : ''} ${procesar ? '' : 'disabled'}> Aprobada</label>
+            <span class="pc-banda-dato"><span>Aprobado por</span><b>${p && p.aprobada ? esc(p.aprobada_por || '') : '—'}</b><b>${p && p.aprobada ? esc(fechaCorta(p.aprobada_en)) : ''}</b></span>
+            <label class="pc-check" title="Una partida definitiva ya no se modifica, anula ni elimina">
+              <input type="checkbox" data-check="definitiva" ${p && p.definitiva ? 'checked' : ''} ${procesar && p.aprobada ? '' : 'disabled'}> Definitiva</label>
+            ${p && p.definitiva ? `<span class="pc-banda-dato"><span>Por</span><b>${esc(p.definitiva_por || '')}</b><b>${esc(fechaCorta(p.definitiva_en))}</b></span>` : ''}
+            <span class="pc-banda-sep"></span>
+            <label class="pc-generar" title="Genera las líneas de la partida a partir de una transacción de otro módulo"><span>Generar transacción</span><input disabled placeholder="Próximamente"></label>
+            <button type="button" class="boton secundario-sm" data-proximamente="Transacciones" title="Transacciones de los módulos (facturación, compras, bancos…): se habilitan cuando existan esos módulos"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transacciones</button>
+            <button type="button" class="boton secundario-sm" data-accion="copiar" ${p && admin ? '' : 'disabled'} title="Crear una partida nueva con este encabezado y estas líneas"><i class="ti ti-copy" aria-hidden="true"></i> Replicar</button>
           </div>
 
           <section class="pc-detalle">
@@ -288,7 +312,21 @@
             <datalist id="pc-centros">${centros.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>
           </section>
 
-          <label class="campo pc-justificacion"><span>Justificación</span><textarea name="justificacion" rows="2" placeholder="Soporte o motivo de la partida (documentos, autorizaciones…)" ${dis}>${esc(base.justificacion || '')}</textarea></label>
+          <div class="pc-pie">
+            <label class="campo pc-justificacion"><span>Justificación</span><textarea name="justificacion" rows="2" placeholder="Soporte o motivo de la partida (documentos, autorizaciones…)" ${dis}>${esc(base.justificacion || '')}</textarea></label>
+            <div class="pc-liquidar">
+              <span>Liquidaciones</span>
+              <div>${LIQUIDACIONES.map((l) => `<button type="button" class="boton secundario-sm" data-proximamente="${esc(l.texto)}" data-modulo="${esc(l.modulo)}" title="Genera la partida automática con los movimientos de ${esc(l.modulo)}: se habilita cuando exista ese módulo"><i class="ti ${l.icono}" aria-hidden="true"></i> ${esc(l.texto)}</button>`).join('')}</div>
+            </div>
+            <div class="pc-impresion">
+              <span>Impresión</span>
+              <div class="pc-radios" role="radiogroup" aria-label="Tipo de impresión">
+                <label><input type="radio" name="impresion" value="general" ${modoImpresion === 'general' ? 'checked' : ''}> Póliza general</label>
+                <label><input type="radio" name="impresion" value="centros" ${modoImpresion === 'centros' ? 'checked' : ''}> Integración por centro de costo</label>
+              </div>
+              <button type="button" class="boton primario-sm" data-imprimir ${p ? '' : 'disabled'}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
+            </div>
+          </div>
         </form>`;
       totalizar();
     }
@@ -332,6 +370,7 @@
         moneda_id: Number(form.elements.moneda_id.value),
         tipo_cambio: Number(form.elements.tipo_cambio.value) || 1,
         descripcion: form.elements.descripcion.value.trim(),
+        clasificacion: form.elements.clasificacion.value,
         justificacion: form.elements.justificacion.value
       };
     }
@@ -368,7 +407,7 @@
         actual = { id };
         await consultar();
       } catch (err) {
-        error.textContent = window.UI.traducirError(err);
+        error.textContent = /clasificacion/.test(err.message || '') ? 'Falta instalar el script 35 (clasificación de partidas) en Supabase.' : window.UI.traducirError(err);
       } finally {
         boton.disabled = false;
       }
@@ -380,18 +419,31 @@
       const nombre = `${String(p.mes).padStart(2, '0')}-${p.numero}`;
       if (accion === 'ANULAR') {
         motivo = prompt(`Motivo de la anulación de la partida ${nombre}:`);
-        if (motivo === null) return;
-      } else if (accion === 'DEFINITIVA' && !confirm(`¿Hacer definitiva la partida ${nombre}? Ya no se podrá modificar, anular ni eliminar.`)) return;
-      else if (accion === 'ELIMINAR' && !confirm(`¿Eliminar la partida ${nombre}? Se borra con todas sus líneas. No se puede deshacer.`)) return;
+        if (motivo === null) return false;
+      } else if (accion === 'DEFINITIVA' && !confirm(`¿Hacer definitiva la partida ${nombre}? Ya no se podrá modificar, anular ni eliminar.`)) return false;
+      else if (accion === 'ELIMINAR' && !confirm(`¿Eliminar la partida ${nombre}? Se borra con todas sus líneas. No se puede deshacer.`)) return false;
       const { error } = await sb.rpc('cambiar_estado_partida', { p_id: p.id, p_accion: accion, p_motivo: motivo });
       if (error) {
         const e = pDet.querySelector('.modal-error');
         if (e) e.textContent = window.UI.traducirError(error); else window.FIN.aviso(window.UI.traducirError(error));
-        return;
+        return false;
       }
       window.FIN.aviso({ APROBAR: 'Partida aprobada', DESAPROBAR: 'Se quitó la aprobación', DEFINITIVA: 'Partida definitiva', ANULAR: 'Partida anulada', ELIMINAR: 'Partida eliminada' }[accion]);
       if (accion === 'ELIMINAR') actual = null;
       await consultar();
+      return true;
+    }
+
+    // Número que tendrá la partida nueva en la empresa y período elegidos.
+    async function obtenerPoliza() {
+      const [m, a] = await Promise.all([
+        sb.from('partidas').select('numero').eq('localidad_id', f.loc).eq('anio', f.anio).eq('mes', f.mes).order('numero', { ascending: false }).limit(1),
+        sb.from('partidas').select('numero_anual').eq('localidad_id', f.loc).eq('anio', f.anio).order('numero_anual', { ascending: false }).limit(1)
+      ]);
+      siguiente = { numero: (m.data?.[0]?.numero || 0) + 1, anual: (a.data?.[0]?.numero_anual || 0) + 1 };
+      pDet.querySelector('[data-poliza]').textContent = siguiente.numero;
+      pDet.querySelector('[data-anual]').textContent = siguiente.anual;
+      window.FIN.aviso(`La partida se registrará como ${String(f.mes).padStart(2, '0')}-${siguiente.numero} (anual ${siguiente.anual}) si nadie registra otra antes`);
     }
 
     // ---------- Impresión ----------
@@ -479,6 +531,13 @@
         const t = tipo(Number(e.target.value));
         pDet.querySelector('[data-clasificacion]').innerHTML = t ? `Clasificación: ${esc(t.clasificacion)}` : '&nbsp;';
       }
+      if (e.target.name === 'impresion') { modoImpresion = e.target.value; return; }
+      const ck = e.target.closest('[data-check]');
+      if (ck) {
+        const accion = ck.dataset.check === 'aprobada' ? (ck.checked ? 'APROBAR' : 'DESAPROBAR') : 'DEFINITIVA';
+        if (accion === 'DEFINITIVA' && !ck.checked) { ck.checked = true; return; }
+        return cambiarEstado(accion).then((ok) => { if (!ok) ck.checked = !ck.checked; });
+      }
       if (e.target.name === 'moneda_id') {
         const m = moneda(Number(e.target.value));
         if (m) e.target.form.elements.tipo_cambio.value = m.cambio;
@@ -516,6 +575,7 @@
       if (ac) {
         const a = ac.dataset.accion;
         if (a === 'nueva') return abrir(null);
+        if (a === 'obtener') return obtenerPoliza();
         if (a === 'linea') return agregarLinea();
         if (a === 'copiar') {
           const form = pDet.querySelector('.pc-form');
@@ -529,7 +589,9 @@
         return cambiarEstado({ anular: 'ANULAR', aprobar: 'APROBAR', desaprobar: 'DESAPROBAR', definitiva: 'DEFINITIVA' }[a]);
       }
       const im = e.target.closest('[data-imprimir]');
-      if (im) return imprimir(im.dataset.imprimir);
+      if (im) return imprimir(modoImpresion);
+      const px = e.target.closest('[data-proximamente]');
+      if (px) return window.FIN.aviso(`${px.dataset.proximamente}: se habilita cuando exista el módulo${px.dataset.modulo ? ` de ${px.dataset.modulo}` : ' que origina las transacciones'}`);
       const ql = e.target.closest('[data-quitar-linea]');
       if (ql) {
         lineas.splice(Number(ql.dataset.quitarLinea), 1);
