@@ -113,6 +113,7 @@
           <span id="cc-cifras"></span>
           ${v ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ""}
         </div>
+        <div id="cc-plantilla"></div>
         ${!loc ? `<p class="vacio">${esc(org.nombre)} todavía no tiene localidades. Las cuentas contables pertenecen a una localidad: crea una en <a href="#/${m.id}/organizaciones">Catálogos · Organizaciones</a>.</p>`
           : !v ? `<p class="vacio">${esc(loc.codigo)} · ${esc(loc.nombre_comercial)} todavía no tiene un catálogo de cuentas.${editable ? " Crea la versión 1 con «+ Versión»." : ""}</p>` : ""}`;
     }
@@ -120,6 +121,15 @@
     function pintarCifras(filas) {
       const caja = pVer.querySelector("#cc-cifras");
       if (!caja) return;
+      // Versión vacía: ofrecer el catálogo estándar de Guatemala.
+      const aviso = pVer.querySelector("#cc-plantilla");
+      if (aviso) aviso.innerHTML = !filas.length && editable ? `
+        <div class="cc-plantilla">
+          <i class="ti ti-book-2" aria-hidden="true"></i>
+          <div><b>Esta versión todavía no tiene cuentas.</b>
+            <p>Puedes empezar con el catálogo estándar de Guatemala: 200 cuentas en 4 niveles basadas en NIIF, con IVA, ISR, ISO, IGSS, IRTRA, INTECAP, prestaciones laborales y reserva legal. Después lo ajustas a tu empresa.</p></div>
+          <button type="button" class="boton primario-sm" data-accion="cargar-estandar">Cargar catálogo estándar</button>
+        </div>` : "";
       const niveles = filas.reduce((n, f) => Math.max(n, f.nivel), 0);
       const vigentes = filas.filter((f) => f.vigente).length;
       caja.innerHTML = `
@@ -202,6 +212,21 @@
     pVer.addEventListener('click', (e) => {
       const accion = e.target.closest('[data-accion]');
       if (accion && accion.dataset.accion === 'nueva-version') return formVersion();
+      if (accion && accion.dataset.accion === 'cargar-estandar') {
+        accion.disabled = true;
+        accion.textContent = 'Cargando…';
+        sb.rpc('cargar_plantilla_cuentas', { p_catalogo: estado.version.id }).then(({ data, error }) => {
+          if (error) {
+            accion.disabled = false;
+            accion.textContent = 'Cargar catálogo estándar';
+            window.FIN.aviso(/cargar_plantilla_cuentas/.test(error.message) ? 'Falta instalar en Supabase el script 20261102000013_catalogo_estandar_guatemala.sql.' : window.UI.traducirError(error));
+            return;
+          }
+          window.FIN.aviso(`Catálogo estándar cargado: ${data} cuentas`);
+          montarArbol();
+        });
+        return;
+      }
       if (accion && accion.dataset.accion === 'imprimir') {
         const org = estado.orgs.find((o) => o.id === estado.org);
         const loc = locActual();

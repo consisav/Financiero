@@ -551,6 +551,10 @@ p.vacio { color: var(--tenue); }
 .cc-barra .selector-org select { max-width: 260px; }
 .cc-espacio { flex: 1; }
 .cc-encabezado .vacio { margin: 12px 0 0; }
+.cc-plantilla { display: flex; align-items: center; gap: 14px; margin-top: 12px; padding: 12px 16px; border-radius: 12px; background: var(--m-f, var(--acento-fondo)); }
+.cc-plantilla > .ti { font-size: 26px; color: var(--m-t, var(--acento)); }
+.cc-plantilla div { flex: 1; }
+.cc-plantilla p { margin: 2px 0 0; font-size: 13px; color: var(--suave); }
 .jq-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
 .jq-bloques { min-width: 0; }
 .bloque.compacto { padding: 12px 16px 14px; margin-bottom: 14px; }

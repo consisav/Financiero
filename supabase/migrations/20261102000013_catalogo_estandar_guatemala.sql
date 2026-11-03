@@ -1,0 +1,281 @@
+-- Catálogo de cuentas estándar para Guatemala (plantilla reutilizable).
+-- Estructura usual en Guatemala basada en NIIF / NIIF para PYMES, con las cuentas que exigen la
+-- legislación tributaria y laboral (IVA, ISR, ISO, IGSS, IRTRA, INTECAP, bonificación incentivo,
+-- aguinaldo, bono 14, indemnización) y la reserva legal del Código de Comercio.
+-- Códigos de 2 dígitos por nivel: 1 → 101 → 10101 → 1010101 (4 niveles).
+-- Las entidades bancarias y financieras usan el Manual de Instrucciones Contables de la SIB.
+--
+-- cargar_plantilla_cuentas(catalogo, plantilla) copia la plantilla a una versión del catálogo
+-- (que debe estar vacía): crea las cuentas en orden, con su cuenta mayor, tipo y nivel.
+
+create table public.plantillas_cuentas (
+  plantilla    text not null,
+  codigo       text not null check (codigo ~ '^[0-9]+$'),
+  nombre       text not null,
+  tipo_codigo  integer not null,
+  primary key (plantilla, codigo)
+);
+
+alter table public.plantillas_cuentas enable row level security;
+create policy "plantillas_cuentas: leer" on public.plantillas_cuentas for select to authenticated using (public.usuario_activo());
+
+insert into public.plantillas_cuentas (plantilla, codigo, nombre, tipo_codigo) values
+  -- 1 ACTIVO
+  ('GT-ESTANDAR', '1', 'ACTIVO', 1),
+  ('GT-ESTANDAR', '101', 'ACTIVO CORRIENTE', 1),
+  ('GT-ESTANDAR', '10101', 'EFECTIVO Y EQUIVALENTES DE EFECTIVO', 1),
+  ('GT-ESTANDAR', '1010101', 'CAJA GENERAL', 1),
+  ('GT-ESTANDAR', '1010102', 'CAJA CHICA', 1),
+  ('GT-ESTANDAR', '1010103', 'BANCOS MONEDA NACIONAL', 1),
+  ('GT-ESTANDAR', '1010104', 'BANCOS MONEDA EXTRANJERA', 1),
+  ('GT-ESTANDAR', '1010105', 'INVERSIONES TEMPORALES', 1),
+  ('GT-ESTANDAR', '10102', 'CUENTAS POR COBRAR COMERCIALES', 1),
+  ('GT-ESTANDAR', '1010201', 'CLIENTES', 1),
+  ('GT-ESTANDAR', '1010202', 'DOCUMENTOS POR COBRAR', 1),
+  ('GT-ESTANDAR', '1010203', 'ESTIMACIÓN PARA CUENTAS INCOBRABLES', 1),
+  ('GT-ESTANDAR', '10103', 'OTRAS CUENTAS POR COBRAR', 1),
+  ('GT-ESTANDAR', '1010301', 'ANTICIPOS A PROVEEDORES', 1),
+  ('GT-ESTANDAR', '1010302', 'PRÉSTAMOS Y ANTICIPOS A EMPLEADOS', 1),
+  ('GT-ESTANDAR', '1010303', 'CUENTAS POR COBRAR A PARTES RELACIONADAS', 1),
+  ('GT-ESTANDAR', '1010304', 'DEUDORES VARIOS', 1),
+  ('GT-ESTANDAR', '10104', 'IMPUESTOS POR COBRAR Y CRÉDITOS FISCALES', 1),
+  ('GT-ESTANDAR', '1010401', 'IVA POR COBRAR (CRÉDITO FISCAL)', 1),
+  ('GT-ESTANDAR', '1010402', 'RETENCIONES DE IVA A FAVOR', 1),
+  ('GT-ESTANDAR', '1010403', 'ISR PAGOS TRIMESTRALES', 1),
+  ('GT-ESTANDAR', '1010404', 'RETENCIONES DE ISR A FAVOR', 1),
+  ('GT-ESTANDAR', '1010405', 'IMPUESTO DE SOLIDARIDAD (ISO) POR ACREDITAR', 1),
+  ('GT-ESTANDAR', '10105', 'INVENTARIOS', 1),
+  ('GT-ESTANDAR', '1010501', 'INVENTARIO DE MERCADERÍAS', 1),
+  ('GT-ESTANDAR', '1010502', 'INVENTARIO DE MATERIA PRIMA', 1),
+  ('GT-ESTANDAR', '1010503', 'INVENTARIO DE PRODUCTOS EN PROCESO', 1),
+  ('GT-ESTANDAR', '1010504', 'INVENTARIO DE PRODUCTOS TERMINADOS', 1),
+  ('GT-ESTANDAR', '1010505', 'INVENTARIO DE MATERIALES Y SUMINISTROS', 1),
+  ('GT-ESTANDAR', '1010506', 'MERCADERÍA EN TRÁNSITO', 1),
+  ('GT-ESTANDAR', '1010507', 'ESTIMACIÓN POR OBSOLESCENCIA DE INVENTARIOS', 1),
+  ('GT-ESTANDAR', '10106', 'GASTOS PAGADOS POR ANTICIPADO', 1),
+  ('GT-ESTANDAR', '1010601', 'SEGUROS PAGADOS POR ANTICIPADO', 1),
+  ('GT-ESTANDAR', '1010602', 'ALQUILERES PAGADOS POR ANTICIPADO', 1),
+  ('GT-ESTANDAR', '1010603', 'PAPELERÍA Y ÚTILES', 1),
+  ('GT-ESTANDAR', '1010604', 'OTROS GASTOS ANTICIPADOS', 1),
+  ('GT-ESTANDAR', '102', 'ACTIVO NO CORRIENTE', 1),
+  ('GT-ESTANDAR', '10201', 'PROPIEDAD, PLANTA Y EQUIPO', 1),
+  ('GT-ESTANDAR', '1020101', 'TERRENOS', 1),
+  ('GT-ESTANDAR', '1020102', 'EDIFICIOS', 1),
+  ('GT-ESTANDAR', '1020103', 'MAQUINARIA Y EQUIPO', 1),
+  ('GT-ESTANDAR', '1020104', 'MOBILIARIO Y EQUIPO DE OFICINA', 1),
+  ('GT-ESTANDAR', '1020105', 'EQUIPO DE COMPUTACIÓN', 1),
+  ('GT-ESTANDAR', '1020106', 'VEHÍCULOS', 1),
+  ('GT-ESTANDAR', '1020107', 'HERRAMIENTAS', 1),
+  ('GT-ESTANDAR', '1020108', 'CONSTRUCCIONES EN PROCESO', 1),
+  ('GT-ESTANDAR', '10202', 'DEPRECIACIÓN ACUMULADA', 1),
+  ('GT-ESTANDAR', '1020201', 'DEPRECIACIÓN ACUMULADA DE EDIFICIOS', 1),
+  ('GT-ESTANDAR', '1020202', 'DEPRECIACIÓN ACUMULADA DE MAQUINARIA Y EQUIPO', 1),
+  ('GT-ESTANDAR', '1020203', 'DEPRECIACIÓN ACUMULADA DE MOBILIARIO Y EQUIPO', 1),
+  ('GT-ESTANDAR', '1020204', 'DEPRECIACIÓN ACUMULADA DE EQUIPO DE COMPUTACIÓN', 1),
+  ('GT-ESTANDAR', '1020205', 'DEPRECIACIÓN ACUMULADA DE VEHÍCULOS', 1),
+  ('GT-ESTANDAR', '1020206', 'DEPRECIACIÓN ACUMULADA DE HERRAMIENTAS', 1),
+  ('GT-ESTANDAR', '10203', 'ACTIVOS INTANGIBLES', 1),
+  ('GT-ESTANDAR', '1020301', 'SOFTWARE Y LICENCIAS', 1),
+  ('GT-ESTANDAR', '1020302', 'MARCAS Y PATENTES', 1),
+  ('GT-ESTANDAR', '1020303', 'AMORTIZACIÓN ACUMULADA DE INTANGIBLES', 1),
+  ('GT-ESTANDAR', '10204', 'INVERSIONES A LARGO PLAZO', 1),
+  ('GT-ESTANDAR', '1020401', 'INVERSIONES EN ACCIONES', 1),
+  ('GT-ESTANDAR', '1020402', 'INVERSIONES EN ASOCIADAS', 1),
+  ('GT-ESTANDAR', '10205', 'OTROS ACTIVOS NO CORRIENTES', 1),
+  ('GT-ESTANDAR', '1020501', 'DEPÓSITOS EN GARANTÍA', 1),
+  ('GT-ESTANDAR', '1020502', 'ACTIVO POR IMPUESTO DIFERIDO', 1),
+  ('GT-ESTANDAR', '1020503', 'GASTOS DE ORGANIZACIÓN', 1),
+  -- 2 PASIVO
+  ('GT-ESTANDAR', '2', 'PASIVO', 2),
+  ('GT-ESTANDAR', '201', 'PASIVO CORRIENTE', 2),
+  ('GT-ESTANDAR', '20101', 'CUENTAS POR PAGAR COMERCIALES', 2),
+  ('GT-ESTANDAR', '2010101', 'PROVEEDORES LOCALES', 2),
+  ('GT-ESTANDAR', '2010102', 'PROVEEDORES DEL EXTERIOR', 2),
+  ('GT-ESTANDAR', '2010103', 'DOCUMENTOS POR PAGAR', 2),
+  ('GT-ESTANDAR', '20102', 'IMPUESTOS POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010201', 'IVA POR PAGAR (DÉBITO FISCAL)', 2),
+  ('GT-ESTANDAR', '2010202', 'ISR POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010203', 'RETENCIONES DE ISR POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010204', 'RETENCIONES DE IVA POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010205', 'ISR RETENIDO A EMPLEADOS', 2),
+  ('GT-ESTANDAR', '2010206', 'IMPUESTO DE SOLIDARIDAD (ISO) POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010207', 'IMPUESTO DE TIMBRES FISCALES POR PAGAR', 2),
+  ('GT-ESTANDAR', '20103', 'OBLIGACIONES LABORALES', 2),
+  ('GT-ESTANDAR', '2010301', 'SUELDOS Y SALARIOS POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010302', 'BONIFICACIÓN INCENTIVO POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010303', 'CUOTA LABORAL IGSS POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010304', 'CUOTA PATRONAL IGSS POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010305', 'IRTRA POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010306', 'INTECAP POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010307', 'PROVISIÓN PARA AGUINALDO', 2),
+  ('GT-ESTANDAR', '2010308', 'PROVISIÓN PARA BONO 14', 2),
+  ('GT-ESTANDAR', '2010309', 'PROVISIÓN PARA VACACIONES', 2),
+  ('GT-ESTANDAR', '2010310', 'PROVISIÓN PARA INDEMNIZACIONES', 2),
+  ('GT-ESTANDAR', '20104', 'OTRAS CUENTAS POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010401', 'ACREEDORES VARIOS', 2),
+  ('GT-ESTANDAR', '2010402', 'ANTICIPOS DE CLIENTES', 2),
+  ('GT-ESTANDAR', '2010403', 'CUENTAS POR PAGAR A PARTES RELACIONADAS', 2),
+  ('GT-ESTANDAR', '2010404', 'DIVIDENDOS POR PAGAR', 2),
+  ('GT-ESTANDAR', '2010405', 'INTERESES POR PAGAR', 2),
+  ('GT-ESTANDAR', '20105', 'PRÉSTAMOS A CORTO PLAZO', 2),
+  ('GT-ESTANDAR', '2010501', 'PRÉSTAMOS BANCARIOS A CORTO PLAZO', 2),
+  ('GT-ESTANDAR', '2010502', 'PORCIÓN CORRIENTE DE PRÉSTAMOS A LARGO PLAZO', 2),
+  ('GT-ESTANDAR', '2010503', 'SOBREGIROS BANCARIOS', 2),
+  ('GT-ESTANDAR', '202', 'PASIVO NO CORRIENTE', 2),
+  ('GT-ESTANDAR', '20201', 'PRÉSTAMOS A LARGO PLAZO', 2),
+  ('GT-ESTANDAR', '2020101', 'PRÉSTAMOS BANCARIOS A LARGO PLAZO', 2),
+  ('GT-ESTANDAR', '2020102', 'PRÉSTAMOS DE PARTES RELACIONADAS', 2),
+  ('GT-ESTANDAR', '20202', 'PROVISIONES Y PASIVOS DIFERIDOS', 2),
+  ('GT-ESTANDAR', '2020201', 'PROVISIÓN PARA INDEMNIZACIONES A LARGO PLAZO', 2),
+  ('GT-ESTANDAR', '2020202', 'PASIVO POR IMPUESTO DIFERIDO', 2),
+  -- 3 PATRIMONIO
+  ('GT-ESTANDAR', '3', 'PATRIMONIO', 3),
+  ('GT-ESTANDAR', '301', 'CAPITAL', 3),
+  ('GT-ESTANDAR', '30101', 'CAPITAL SOCIAL', 3),
+  ('GT-ESTANDAR', '3010101', 'CAPITAL AUTORIZADO', 3),
+  ('GT-ESTANDAR', '3010102', 'CAPITAL SUSCRITO NO PAGADO', 3),
+  ('GT-ESTANDAR', '3010103', 'CAPITAL PAGADO', 3),
+  ('GT-ESTANDAR', '30102', 'APORTES PARA FUTURAS CAPITALIZACIONES', 3),
+  ('GT-ESTANDAR', '3010201', 'APORTES DE SOCIOS', 3),
+  ('GT-ESTANDAR', '302', 'RESERVAS', 3),
+  ('GT-ESTANDAR', '30201', 'RESERVAS DE CAPITAL', 3),
+  ('GT-ESTANDAR', '3020101', 'RESERVA LEGAL', 3),
+  ('GT-ESTANDAR', '3020102', 'OTRAS RESERVAS', 3),
+  ('GT-ESTANDAR', '303', 'RESULTADOS', 3),
+  ('GT-ESTANDAR', '30301', 'RESULTADOS ACUMULADOS', 3),
+  ('GT-ESTANDAR', '3030101', 'UTILIDADES ACUMULADAS', 3),
+  ('GT-ESTANDAR', '3030102', 'PÉRDIDAS ACUMULADAS', 3),
+  ('GT-ESTANDAR', '3030103', 'AJUSTES DE EJERCICIOS ANTERIORES', 3),
+  ('GT-ESTANDAR', '30302', 'RESULTADO DEL EJERCICIO', 3),
+  ('GT-ESTANDAR', '3030201', 'UTILIDAD O PÉRDIDA DEL EJERCICIO', 3),
+  -- 4 INGRESOS
+  ('GT-ESTANDAR', '4', 'INGRESOS', 4),
+  ('GT-ESTANDAR', '401', 'INGRESOS DE OPERACIÓN', 4),
+  ('GT-ESTANDAR', '40101', 'VENTAS', 4),
+  ('GT-ESTANDAR', '4010101', 'VENTAS LOCALES', 4),
+  ('GT-ESTANDAR', '4010102', 'VENTAS DE EXPORTACIÓN', 4),
+  ('GT-ESTANDAR', '4010103', 'INGRESOS POR SERVICIOS', 4),
+  ('GT-ESTANDAR', '40102', 'DEVOLUCIONES Y DESCUENTOS SOBRE VENTAS', 4),
+  ('GT-ESTANDAR', '4010201', 'DEVOLUCIONES SOBRE VENTAS', 4),
+  ('GT-ESTANDAR', '4010202', 'DESCUENTOS SOBRE VENTAS', 4),
+  -- 5 COSTO DE VENTAS
+  ('GT-ESTANDAR', '5', 'COSTO DE VENTAS', 5),
+  ('GT-ESTANDAR', '501', 'COSTOS', 5),
+  ('GT-ESTANDAR', '50101', 'COSTO DE VENTAS', 5),
+  ('GT-ESTANDAR', '5010101', 'COSTO DE MERCADERÍA VENDIDA', 5),
+  ('GT-ESTANDAR', '5010102', 'COSTO DE SERVICIOS PRESTADOS', 5),
+  ('GT-ESTANDAR', '5010103', 'COSTO DE PRODUCCIÓN VENDIDA', 5),
+  ('GT-ESTANDAR', '50102', 'COMPRAS', 5),
+  ('GT-ESTANDAR', '5010201', 'COMPRAS LOCALES', 5),
+  ('GT-ESTANDAR', '5010202', 'IMPORTACIONES', 5),
+  ('GT-ESTANDAR', '5010203', 'FLETES Y GASTOS SOBRE COMPRAS', 5),
+  ('GT-ESTANDAR', '5010204', 'DEVOLUCIONES Y DESCUENTOS SOBRE COMPRAS', 5),
+  -- 6 GASTOS DE OPERACIÓN
+  ('GT-ESTANDAR', '6', 'GASTOS DE OPERACIÓN', 6),
+  ('GT-ESTANDAR', '601', 'GASTOS DE VENTA', 6),
+  ('GT-ESTANDAR', '60101', 'GASTOS DE PERSONAL DE VENTAS', 6),
+  ('GT-ESTANDAR', '6010101', 'SUELDOS Y SALARIOS DE VENTAS', 6),
+  ('GT-ESTANDAR', '6010102', 'BONIFICACIÓN INCENTIVO DE VENTAS', 6),
+  ('GT-ESTANDAR', '6010103', 'COMISIONES SOBRE VENTAS', 6),
+  ('GT-ESTANDAR', '6010104', 'CUOTA PATRONAL IGSS, IRTRA E INTECAP DE VENTAS', 6),
+  ('GT-ESTANDAR', '6010105', 'PRESTACIONES LABORALES DE VENTAS', 6),
+  ('GT-ESTANDAR', '60102', 'OTROS GASTOS DE VENTA', 6),
+  ('GT-ESTANDAR', '6010201', 'PUBLICIDAD Y PROPAGANDA', 6),
+  ('GT-ESTANDAR', '6010202', 'FLETES Y ACARREOS SOBRE VENTAS', 6),
+  ('GT-ESTANDAR', '6010203', 'COMBUSTIBLES Y LUBRICANTES', 6),
+  ('GT-ESTANDAR', '6010204', 'DEPRECIACIONES DE VENTAS', 6),
+  ('GT-ESTANDAR', '602', 'GASTOS DE ADMINISTRACIÓN', 6),
+  ('GT-ESTANDAR', '60201', 'GASTOS DE PERSONAL ADMINISTRATIVO', 6),
+  ('GT-ESTANDAR', '6020101', 'SUELDOS Y SALARIOS DE ADMINISTRACIÓN', 6),
+  ('GT-ESTANDAR', '6020102', 'BONIFICACIÓN INCENTIVO DE ADMINISTRACIÓN', 6),
+  ('GT-ESTANDAR', '6020103', 'HORAS EXTRA', 6),
+  ('GT-ESTANDAR', '6020104', 'CUOTA PATRONAL IGSS, IRTRA E INTECAP DE ADMINISTRACIÓN', 6),
+  ('GT-ESTANDAR', '6020105', 'PRESTACIONES LABORALES DE ADMINISTRACIÓN', 6),
+  ('GT-ESTANDAR', '60202', 'GASTOS GENERALES', 6),
+  ('GT-ESTANDAR', '6020201', 'ALQUILERES', 6),
+  ('GT-ESTANDAR', '6020202', 'ENERGÍA ELÉCTRICA', 6),
+  ('GT-ESTANDAR', '6020203', 'AGUA', 6),
+  ('GT-ESTANDAR', '6020204', 'TELÉFONO E INTERNET', 6),
+  ('GT-ESTANDAR', '6020205', 'PAPELERÍA Y ÚTILES DE OFICINA', 6),
+  ('GT-ESTANDAR', '6020206', 'MANTENIMIENTO Y REPARACIONES', 6),
+  ('GT-ESTANDAR', '6020207', 'SEGUROS', 6),
+  ('GT-ESTANDAR', '6020208', 'HONORARIOS PROFESIONALES', 6),
+  ('GT-ESTANDAR', '6020209', 'SERVICIOS DE SEGURIDAD', 6),
+  ('GT-ESTANDAR', '6020210', 'DEPRECIACIONES DE ADMINISTRACIÓN', 6),
+  ('GT-ESTANDAR', '6020211', 'AMORTIZACIONES', 6),
+  ('GT-ESTANDAR', '6020212', 'CUENTAS INCOBRABLES', 6),
+  ('GT-ESTANDAR', '6020213', 'IMPUESTOS Y CONTRIBUCIONES (IUSI Y TIMBRES)', 6),
+  ('GT-ESTANDAR', '6020214', 'GASTOS NO DEDUCIBLES', 6),
+  -- 7 OTROS INGRESOS
+  ('GT-ESTANDAR', '7', 'OTROS INGRESOS', 7),
+  ('GT-ESTANDAR', '701', 'OTROS INGRESOS', 7),
+  ('GT-ESTANDAR', '70101', 'INGRESOS FINANCIEROS', 7),
+  ('GT-ESTANDAR', '7010101', 'INTERESES GANADOS', 7),
+  ('GT-ESTANDAR', '7010102', 'DIFERENCIAL CAMBIARIO A FAVOR', 7),
+  ('GT-ESTANDAR', '70102', 'OTROS INGRESOS NO OPERACIONALES', 7),
+  ('GT-ESTANDAR', '7010201', 'GANANCIA EN VENTA DE ACTIVOS', 7),
+  ('GT-ESTANDAR', '7010202', 'OTROS INGRESOS VARIOS', 7),
+  -- 8 OTROS GASTOS
+  ('GT-ESTANDAR', '8', 'OTROS GASTOS', 8),
+  ('GT-ESTANDAR', '801', 'GASTOS FINANCIEROS', 8),
+  ('GT-ESTANDAR', '80101', 'GASTOS FINANCIEROS', 8),
+  ('GT-ESTANDAR', '8010101', 'INTERESES PAGADOS', 8),
+  ('GT-ESTANDAR', '8010102', 'COMISIONES BANCARIAS', 8),
+  ('GT-ESTANDAR', '8010103', 'DIFERENCIAL CAMBIARIO EN CONTRA', 8),
+  ('GT-ESTANDAR', '802', 'OTROS GASTOS', 8),
+  ('GT-ESTANDAR', '80201', 'OTROS GASTOS NO OPERACIONALES', 8),
+  ('GT-ESTANDAR', '8020101', 'PÉRDIDA EN VENTA DE ACTIVOS', 8),
+  ('GT-ESTANDAR', '8020102', 'OTROS GASTOS VARIOS', 8),
+  ('GT-ESTANDAR', '80202', 'IMPUESTO SOBRE LA RENTA DEL EJERCICIO', 8),
+  ('GT-ESTANDAR', '8020201', 'GASTO POR IMPUESTO SOBRE LA RENTA', 8);
+
+-- Copia una plantilla a una versión vacía del catálogo. Las cuentas con sub-cuentas quedan con
+-- Integración = Sí (agrupan) y las de último nivel con Integración = No (reciben movimientos).
+create function public.cargar_plantilla_cuentas(p_catalogo bigint, p_plantilla text default 'GT-ESTANDAR')
+returns integer
+language plpgsql volatile security definer set search_path = '' as $$
+declare
+  fila record;
+  creadas integer := 0;
+begin
+  if not public.puede_editar_catalogos() then
+    raise exception 'Solo un administrador puede cargar el catálogo estándar';
+  end if;
+  if not exists (select 1 from public.catalogos_cuentas where id = p_catalogo) then
+    raise exception 'La versión del catálogo no existe';
+  end if;
+  if exists (select 1 from public.cuentas where catalogo_id = p_catalogo) then
+    raise exception 'La versión ya tiene cuentas; el catálogo estándar solo se carga en una versión vacía';
+  end if;
+
+  for fila in
+    select p.codigo, p.nombre, t.id as tipo_id,
+           exists (select 1 from public.plantillas_cuentas h
+                   where h.plantilla = p.plantilla and h.codigo like p.codigo || '%' and h.codigo <> p.codigo) as agrupa
+    from public.plantillas_cuentas p
+    join public.tipos_cuenta t on t.codigo = p.tipo_codigo
+    where p.plantilla = p_plantilla
+    order by length(p.codigo), p.codigo
+  loop
+    insert into public.cuentas (catalogo_id, codigo, nombre, cuenta_mayor_id, tipo_cuenta_id, integra)
+    values (
+      p_catalogo, fila.codigo, fila.nombre,
+      (select c.id from public.cuentas c
+        where c.catalogo_id = p_catalogo
+          and c.codigo = left(fila.codigo, case when length(fila.codigo) = 3 then 1 else length(fila.codigo) - 2 end)
+          and length(fila.codigo) > 1),
+      fila.tipo_id, fila.agrupa);
+    creadas := creadas + 1;
+  end loop;
+
+  if creadas = 0 then
+    raise exception 'La plantilla % no existe', p_plantilla;
+  end if;
+  return creadas;
+end;
+$$;
+
+revoke execute on function public.cargar_plantilla_cuentas(bigint, text) from public, anon;
+grant execute on function public.cargar_plantilla_cuentas(bigint, text) to authenticated;
+
+notify pgrst, 'reload schema';
