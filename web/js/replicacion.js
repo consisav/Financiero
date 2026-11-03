@@ -207,6 +207,12 @@
 
           <div class="tk-cuerpo rp-cuerpo">
             <div class="tk-col rp-objetos">
+              <div class="rp-marcar">
+                <span><b>Objetos a replicar</b> <small>${plural(v.objetos.length, 'marcado', 'marcados')} de ${SELECCIONABLES.length} disponibles</small></span>
+                ${!bloqueada ? `
+                  <button type="button" class="boton secundario-sm" data-marcar="todos" ${v.objetos.length === SELECCIONABLES.length ? 'disabled' : ''}><i class="ti ti-checks" aria-hidden="true"></i> Marcar todos</button>
+                  <button type="button" class="boton secundario-sm" data-marcar="ninguno" ${!v.objetos.length ? 'disabled' : ''}><i class="ti ti-square-off" aria-hidden="true"></i> Desmarcar todos</button>` : ''}
+              </div>
               ${SECCIONES.map((s) => seccion(s, v, bloqueada)).join('')}
               <p class="rp-leyenda">
                 <span><i class="rp-etiqueta comun">Común</i> compartido por todas las empresas, no se copia</span>
@@ -374,6 +380,12 @@
       if (ac) return ejecutar(ac.dataset.accion);
       const vt = e.target.closest('[data-vista]');
       if (vt) { vistaDerecha = vt.dataset.vista; return pintarDetalle(leer(pDet.querySelector('form'))); }
+      const mk = e.target.closest('[data-marcar]');
+      if (mk) {
+        const v = leer(pDet.querySelector('form'));
+        v.objetos = mk.dataset.marcar === 'todos' ? [...SELECCIONABLES] : [];
+        return pintarDetalle(v);
+      }
       const td = e.target.closest('[data-todos]');
       if (td) {
         e.preventDefault();

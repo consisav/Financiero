@@ -1070,3 +1070,7 @@ span.tk-archivo { cursor: default; }
   .tk-espacio.rc-espacio { grid-template-columns: minmax(0, 1fr); }
   .rc-espacio .tk-bandeja { order: 2; max-height: 600px; }
 }
+.rp-marcar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-radius: var(--radio); background: var(--fondo); }
+.rp-marcar > span { margin-right: auto; font-size: 13px; color: var(--texto); }
+.rp-marcar small { color: var(--tenue); font-size: 12px; margin-left: 4px; }
+.rp-marcar .boton { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; font-size: 12.5px; }
