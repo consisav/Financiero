@@ -7,6 +7,14 @@ alter table public.localidades
 
 alter table public.catalogos_cuentas add column localidad_id bigint;
 
+-- Organizaciones con versiones del catálogo pero sin localidades: se les crea una localidad
+-- con el nombre y la ubicación de la organización (se puede renombrar después).
+insert into public.localidades (organizacion_id, nombre_comercial, razon_social, pais_id, departamento_id, municipio_id)
+select o.id, o.nombre, o.nombre, o.pais_id, o.departamento_id, o.municipio_id
+from public.organizaciones o
+where exists (select 1 from public.catalogos_cuentas c where c.organizacion_id = o.id)
+  and not exists (select 1 from public.localidades l where l.organizacion_id = o.id);
+
 -- Versiones creadas antes de este cambio: se asignan a la primera localidad de su organización.
 update public.catalogos_cuentas c
 set localidad_id = (
@@ -15,14 +23,6 @@ set localidad_id = (
   order by l.activo desc, l.correlativo
   limit 1)
 where c.localidad_id is null;
-
-do $$
-begin
-  if exists (select 1 from public.catalogos_cuentas where localidad_id is null) then
-    raise exception 'Hay versiones del catálogo de cuentas en organizaciones sin localidades. Crea al menos una localidad en esas organizaciones y vuelve a ejecutar este script.';
-  end if;
-end;
-$$;
 
 alter table public.catalogos_cuentas
   alter column localidad_id set not null,
