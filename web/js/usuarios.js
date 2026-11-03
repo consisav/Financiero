@@ -1,6 +1,7 @@
 // Catálogos · Iniciales · Usuarios: cada usuario pertenece a una organización y una localidad,
 // con su código, rol, estado, vencimiento de clave, empleado, extensión y firma.
-// Solo el administrador modifica; los demás ven su propio usuario (RLS de perfiles).
+// Administradores modifican; solo el Super Administrador cambia roles o modifica a otro Super
+// Administrador. Los demás ven su propio usuario (RLS de perfiles).
 (function () {
   const { esc, fecha, fechaCorta, tabla, formulario, filtrar } = window.UI;
   const BUCKET = 'firmas';
@@ -19,8 +20,11 @@
   window.PANTALLAS.usuarios = async function (cont, m) {
     const sb = window.FIN.sb;
     const admin = window.FIN.esAdmin();
+    const superAdmin = window.FIN.esSuperAdmin();
     const yo = window.FIN.perfil();
     const roles = window.FIN.roles();
+    // Un administrador modifica a todos salvo al Super Administrador; solo este cambia roles.
+    const puedeModificar = (u) => admin && (u.rol_id !== 'superadministrador' || superAdmin);
     const estado = { filas: [], sel: null, orgs: [], locs: [], filtroOrg: '', filtroLoc: '', buscar: '', firma: null };
 
     const [o, l] = await Promise.all([
@@ -91,10 +95,10 @@
               <span>Creado el <b>${fecha(u.creado_en)}</b></span>
               ${vencida ? '<span class="estado vencida">Clave vencida</span>' : ''}
               <span class="auditoria-acciones">
-                ${admin ? '<button type="button" class="boton secundario-sm" data-accion="clave"><i class="ti ti-key" aria-hidden="true"></i> Enviar cambio de clave</button>' : ''}
-                ${admin ? '<button type="button" class="boton primario-sm" data-accion="modificar">Modificar</button>' : ''}
+                ${puedeModificar(u) ? '<button type="button" class="boton secundario-sm" data-accion="clave"><i class="ti ti-key" aria-hidden="true"></i> Enviar cambio de clave</button>' : ''}
+                ${puedeModificar(u) ? '<button type="button" class="boton primario-sm" data-accion="modificar">Modificar</button>' : ''}
                 <button type="button" class="boton secundario-sm" data-accion="actualizar">Actualizar</button>
-                ${admin ? '<button type="button" class="boton secundario-sm" data-accion="generar"><i class="ti ti-key" aria-hidden="true"></i> Generar usuario</button>' : ''}
+                ${puedeModificar(u) ? '<button type="button" class="boton secundario-sm" data-accion="generar"><i class="ti ti-key" aria-hidden="true"></i> Generar usuario</button>' : ''}
               </span>
             </div>
             <div class="datos-con-firma">
@@ -121,22 +125,23 @@
     }
 
     function formUsuario(u) {
+      if (!puedeModificar(u)) { window.FIN.aviso('Solo el Super Administrador puede modificar a un Super Administrador.'); return; }
       const propio = u.id === yo.id;
+      const rolesActivos = roles.filter((r) => r.activo !== false || r.id === u.rol_id);
       const firmaActual = estado.sel && estado.sel.id === u.id ? estado.firma : null;
       formulario({
         titulo: `Modificar usuario · ${u.nombre || u.correo}`,
         valores: { ...u, firma: firmaActual },
         campos: [
-          { nombre: 'usuario', etiqueta: 'Usuario (código)', requerido: true, patron: '[A-Za-z0-9]{2,20}', max: 20,
+          { nombre: 'usuario', etiqueta: 'Usuario (código)', patron: '[A-Za-z0-9]{2,20}', max: 20,
             placeholder: window.UI.proponerUsuario ? window.UI.proponerUsuario(u.nombre || '', []) || 'Oasturias' : 'Oasturias' },
           { nombre: 'nombre', etiqueta: 'Nombre', requerido: true },
           { nombre: 'organizacion_id', etiqueta: 'Organización', tipo: 'select-numero', requerido: true,
             opciones: estado.orgs.map((x) => ({ valor: x.id, texto: `${x.codigo} · ${x.nombre}` })) },
           { nombre: 'localidad_id', etiqueta: 'Localidad', tipo: 'select-numero', requerido: true, opciones: [] },
-          ...(propio ? [] : [
-            { nombre: 'rol_id', etiqueta: 'Rol', tipo: 'select', requerido: true, opciones: roles.map((r) => ({ valor: r.id, texto: r.nombre })) },
-            { nombre: 'activo', etiqueta: 'Activo', tipo: 'casilla' }
-          ]),
+          // El rol solo lo cambia el Super Administrador, y nunca el suyo propio (para no quedarse sin acceso).
+          ...(superAdmin && !propio ? [{ nombre: 'rol_id', etiqueta: 'Rol', tipo: 'select', requerido: true, opciones: rolesActivos.map((r) => ({ valor: r.id, texto: r.nombre })) }] : []),
+          ...(propio ? [] : [{ nombre: 'activo', etiqueta: 'Activo', tipo: 'casilla' }]),
           { nombre: 'fecha_vence_clave', etiqueta: 'Fecha vence clave', tipo: 'fecha' },
           { nombre: 'empleado', etiqueta: 'Empleado' },
           { nombre: 'extension', etiqueta: 'Extensión telefónica' },
@@ -160,6 +165,7 @@
           if (error) {
             if (/perfiles_usuario_key|perfiles_usuario_unico|duplicate/i.test(error.message)) throw new Error(`Ya existe otro usuario con el código ${d.usuario}.`);
             if (/perfiles_usuario_check/i.test(error.message)) throw new Error('El código solo admite letras y números (2 a 20).');
+            if (/Super Administrador/i.test(error.message)) throw new Error(error.message + '.');
             if (/perfiles_activo_con_localidad/i.test(error.message)) throw new Error('Un usuario activo debe tener organización y localidad.');
             if (/perfiles_localidad_fkey/i.test(error.message)) throw new Error('La localidad no pertenece a la organización elegida.');
             throw error;

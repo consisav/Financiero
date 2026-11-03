@@ -34,7 +34,7 @@ En **Catálogos** de todos los módulos, el subgrupo **Iniciales** (antes de Geo
 
 - **Usuarios** (`web/js/usuarios.js`): cada usuario pertenece a una organización y una localidad;
   código, rol, estado, vencimiento de clave, empleado, extensión y firma (bucket privado `firmas`).
-  Solo el administrador modifica.
+  Roles: Super Administrador (único que cambia roles), Administrador y Cliente (solo lectura).
 - **Generar usuario y clave** (`web/js/generar_usuario.js`): código = iniciales de los nombres + primer
   apellido (Oliver Asturias → Oasturias, Juan Carlos Tut → JCtut). La clave la genera
   `public.generar_clave`, se muestra una sola vez y vence hoy: al entrar se pide crear una propia.

@@ -23,10 +23,12 @@
     aviso: (t) => aviso(t),
     perfil: () => perfil,
     roles: () => roles,
-    esAdmin: () => !!perfil && perfil.activo && perfil.rol_id === 'administrador',
+    // Deben coincidir con public.es_admin() / public.es_superadmin() en Supabase
+    esAdmin: () => !!perfil && perfil.activo && ['superadministrador', 'administrador'].includes(perfil.rol_id),
+    esSuperAdmin: () => !!perfil && perfil.activo && perfil.rol_id === 'superadministrador',
     urlSitio,
     // Debe coincidir con public.puede_editar_catalogos() en Supabase
-    puedeEditarCatalogos: () => !!perfil && perfil.activo && ['administrador', 'contador'].includes(perfil.rol_id)
+    puedeEditarCatalogos: () => !!perfil && perfil.activo && ['superadministrador', 'administrador'].includes(perfil.rol_id)
   };
 
   // Indicadores del panel; se conectarán a sus tablas cuando existan.
@@ -161,10 +163,10 @@
 
     const [{ data: pm }, { data: rs }] = await Promise.all([
       sb.from('rol_modulos').select('modulo, puede_ver, puede_editar').eq('rol_id', perfil.rol_id),
-      sb.from('roles').select('id, nombre').order('nombre')
+      sb.from('roles').select('*')
     ]);
     permisos = Object.fromEntries((pm || []).map((x) => [x.modulo, x]));
-    roles = rs || [];
+    roles = (rs || []).sort((a, b) => (a.orden ?? 99) - (b.orden ?? 99) || a.nombre.localeCompare(b.nombre));
 
     $('acceso').hidden = true;
     $('app').hidden = false;
@@ -180,7 +182,7 @@
   function pintarLateral() {
     $('nav-modulos').innerHTML = visibles().map((m) =>
       `<a href="#/${m.id}" data-ruta="${m.id}"><i class="ti ${m.icono}" aria-hidden="true"></i> ${esc(m.corto)}</a>`).join('');
-    $('nav-admin').hidden = perfil.rol_id !== 'administrador';
+    $('nav-admin').hidden = !window.FIN.esAdmin();
     const nombre = perfil.nombre || perfil.correo;
     $('quien-nombre').textContent = nombre;
     $('quien-rol').textContent = nombreRol();
