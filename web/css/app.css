@@ -1383,3 +1383,31 @@ span.tk-archivo { cursor: default; }
   .pc-fila2 .pc-desc { grid-column: 1 / -1; }
   .pc-pie { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- Catálogos · Objetos contables (Definición de objetos y Transacciones) ---------- */
+.oc-espacio .ta-filtros { grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1.2fr) auto minmax(0, 1fr); }
+.oc-espacio .ta-cuerpo { grid-template-rows: minmax(150px, 34%) minmax(0, 1fr); }
+.oc-pestanas { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--fondo); align-self: end; }
+.oc-pestanas a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--suave); text-decoration: none; white-space: nowrap; }
+.oc-pestanas a.activa { background: var(--panel); color: var(--acento); box-shadow: 0 1px 3px rgba(15, 27, 45, .12); }
+.oc-pestanas a:hover:not(.activa) { color: var(--texto); }
+.oc-extra { display: flex; justify-content: flex-end; align-self: end; }
+.oc-extra .boton { display: inline-flex; align-items: center; gap: 6px; }
+.oc-form .tk-titulo, .ot-form .tk-titulo { flex-wrap: nowrap; }
+.oc-desc { flex: 1; max-width: 520px; }
+.oc-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+.oc-grid .ta-col { gap: 6px; }
+.oc-grid .pc-lineas { flex: 1; }
+.oc-linea { width: 110px; }
+.oc-trans { width: 120px; }
+.oc-trans select, .oc-oper select { width: 100%; font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); color: var(--texto); }
+.oc-dh { white-space: nowrap; width: 84px; }
+.oc-dh label { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; font-size: 12.5px; cursor: pointer; }
+.oc-dh input { width: auto; margin: 0; accent-color: var(--acento); }
+.oc-orden { width: 70px; }
+.oc-oper { width: 130px; }
+.oc-col { width: 140px; }
+.ot-encabezado { grid-template-columns: minmax(0, 2fr) minmax(120px, .6fr) auto minmax(0, 1fr) minmax(150px, .7fr) minmax(150px, .7fr); }
+.ot-aplica { align-self: center; margin-top: 18px; }
+@media (max-width: 1500px) { .ot-encabezado { grid-template-columns: repeat(3, minmax(0, 1fr)); } .oc-espacio .ta-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1100px), (max-height: 620px) { .oc-grid { grid-template-columns: minmax(0, 1fr) !important; } }

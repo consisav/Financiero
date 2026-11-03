@@ -77,6 +77,14 @@ window.MODULOS = [
           ]
         },
         {
+          subgrupo: 'Objetos contables',
+          icono: 'ti-box',
+          pantallas: [
+            { id: 'objetos-definicion', nombre: 'Definición de objetos', icono: 'ti-category', descripcion: 'Objetos contables de cada organización y localidad con sus cuentas y transacciones.' },
+            { id: 'objetos-transacciones', nombre: 'Transacciones', icono: 'ti-arrows-exchange', descripcion: 'Plantillas de partida con sus cuentas, debe o haber, operación y centro de costo.' }
+          ]
+        },
+        {
           subgrupo: 'Replicación',
           icono: 'ti-copy',
           pantallas: [
