@@ -545,6 +545,26 @@ p.vacio { color: var(--tenue); }
 .barra-guardar { position: sticky; bottom: 0; display: flex; justify-content: flex-end; align-items: center; gap: 16px; padding: 14px 0; background: linear-gradient(transparent, var(--fondo) 30%); }
 .barra-guardar .modal-error { margin: 0; }
 
+/* Cuentas contables: encabezado de una línea, bloques compactos y ficha única */
+.cc-encabezado { padding: 12px 16px; }
+.cc-barra { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cc-barra .selector-org select { max-width: 260px; }
+.cc-espacio { flex: 1; }
+.cc-encabezado .vacio { margin: 12px 0 0; }
+.jq-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+.jq-bloques { min-width: 0; }
+.bloque.compacto { padding: 12px 16px 14px; margin-bottom: 14px; }
+.bloque.compacto .panel-cab { margin-bottom: 8px; }
+.bloque.compacto .tabla-desplazable { max-height: 230px; }
+.bloque.compacto .tabla.catalogo td { padding: 8px 12px; }
+.jq-ficha { position: sticky; top: 140px; margin-bottom: 0; display: flex; flex-direction: column; gap: 14px; }
+.jq-ficha-cab { display: flex; gap: 12px; align-items: center; }
+.jq-ficha-cod { min-width: 56px; height: 56px; padding: 0 10px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; background: var(--m-f, var(--acento-fondo)); color: var(--m-t, var(--acento)); }
+.jq-ficha-cab h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.jq-ficha-cab p { margin: 2px 0 0; font-size: 12px; color: var(--tenue); }
+.jq-ficha-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.jq-ficha .ficha { background: var(--fondo); }
+
 /* Logo y eslogan */
 .con-logo { display: inline-flex; align-items: center; gap: 10px; }
 .logo-mini { width: 30px; height: 30px; border-radius: 7px; object-fit: contain; background: #fff; border: 1px solid var(--borde); flex-shrink: 0; }
@@ -695,7 +715,8 @@ p.vacio { color: var(--tenue); }
 @media (max-width: 1100px) {
   .datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bloque-cuerpo { grid-template-columns: 1fr; }
-  .param-grid, .datos-con-firma { grid-template-columns: 1fr; }
+  .param-grid, .datos-con-firma, .jq-layout { grid-template-columns: 1fr; }
+  .jq-ficha { position: static; }
   .rm-grid { grid-template-columns: 250px minmax(0, 1fr); }
   .md-grid { grid-template-columns: 280px minmax(0, 1fr); }
 }

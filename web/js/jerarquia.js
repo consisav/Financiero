@@ -9,7 +9,7 @@
   //        columnas(fila), ficha(fila), campos(fila, mayor), valores(mayor, hermanos), antesDeGuardar(d, fila, mayor) }
   window.Jerarquia = function (cont, cfg) {
     const sb = window.FIN.sb;
-    const estado = { filas: [], ruta: [], base: 1, buscar: {} };
+    const estado = { filas: [], ruta: [], base: 1, buscar: {}, foco: null };
     const hijos = (id) => estado.filas.filter((f) => (f[cfg.padre] ?? null) === id);
     const porId = (id) => estado.filas.find((f) => f.id === id);
     const titulo = (nivel) => cfg.titulos[nivel - 1] || `Nivel ${nivel}`;
@@ -20,8 +20,9 @@
       const { data, error } = await q;
       if (error) { cont.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       estado.filas = data.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
-      if (seleccion) seleccionar(seleccion, true);
+      if (seleccion) { seleccionar(seleccion, true); estado.foco = seleccion; }
       completarRuta();
+      if (cfg.alCargar) cfg.alCargar(estado.filas);
       pintar();
     }
 
@@ -56,12 +57,16 @@
         bloques.push(bloque(nivel, idMayor, i));
       }
       const camino = estado.ruta.map(porId).filter(Boolean);
+      // Ficha única: muestra el registro tocado o, si no, el más profundo de la ruta.
+      const foco = porId(estado.foco) && estado.ruta.includes(estado.foco) ? porId(estado.foco) : camino[camino.length - 1];
       cont.innerHTML = `
         <div class="ruta-arbol">
           <span>Ruta:</span>
           ${camino.length ? camino.map((f) => `<button type="button" class="miga" data-ir="${f.id}">${esc(f.codigo)} · ${esc(f.nombre)}</button>`).join('<i class="ti ti-chevron-right" aria-hidden="true"></i>') : '<em>sin registros</em>'}
         </div>
-        ${bloques.join('')}`;
+        ${cfg.fichaUnica
+          ? `<div class="jq-layout"><div class="jq-bloques">${bloques.join('')}</div><aside class="panel jq-ficha">${foco ? fichaUnica(foco) : '<p class="vacio">Elige una cuenta para ver su ficha.</p>'}</aside></div>`
+          : bloques.join('')}`;
       for (let i = 0; i < bloques.length; i++) {
         const b = cont.querySelector(`[data-bloque="${estado.base + i}"]`);
         if (b) filtrar(b, estado.buscar[estado.base + i] || '');
@@ -74,7 +79,7 @@
       const sel = porId(estado.ruta[nivel - 1]);
       const puedeBajar = posicion === 2 && sel;
       return `
-        <section class="panel bloque" data-bloque="${nivel}">
+        <section class="panel bloque ${cfg.fichaUnica ? 'compacto' : ''}" data-bloque="${nivel}">
           <div class="panel-cab">
             <h2>${esc(titulo(nivel))}${mayor ? ` <small>de ${esc(mayor.codigo)} · ${esc(mayor.nombre)}</small>` : ''}</h2>
             <div class="panel-acciones">
@@ -84,7 +89,7 @@
             </div>
           </div>
           ${lista.length > 8 ? `<input type="search" class="buscar" data-buscar="${nivel}" placeholder="Buscar en ${esc(titulo(nivel).toLowerCase())}" value="${esc(estado.buscar[nivel] || '')}">` : ''}
-          <div class="bloque-cuerpo">
+          <div class="${cfg.fichaUnica ? '' : 'bloque-cuerpo'}">
             ${tabla({
               id: `nivel-${nivel}`, editable: cfg.editable, seleccionado: sel && sel.id,
               vacio: mayor ? `${mayor.codigo} · ${mayor.nombre} todavía no tiene registros en este nivel.` : 'Todavía no hay registros. Crea el primero.',
@@ -93,11 +98,11 @@
                 { titulo: 'Nombre', valor: (f) => esc(f.nombre), clase: 'fuerte' },
                 { titulo: cfg.etiquetaMayor, valor: (f) => esc((porId(f[cfg.padre]) || {}).codigo || '') },
                 ...cfg.columnas,
-                { titulo: 'Niveles abajo', valor: (f) => hijos(f.id).length || '—', clase: 'centrada' }
+                { titulo: cfg.etiquetaHijos || 'Niveles abajo', valor: (f) => hijos(f.id).length || '—', clase: 'centrada' }
               ],
               filas: lista
             })}
-            <aside class="ficha">${sel ? ficha(sel) : '<p class="vacio">Sin selección</p>'}</aside>
+            ${cfg.fichaUnica ? '' : `<aside class="ficha">${sel ? ficha(sel) : '<p class="vacio">Sin selección</p>'}</aside>`}
           </div>
         </section>`;
     }
@@ -109,6 +114,21 @@
         <div class="ficha-dato"><span>Vigente</span><b><span class="estado ${f.vigente ? 'activo' : 'inactivo'}">${f.vigente ? 'Sí' : 'No'}</span></b></div>
         <p class="ficha-auditoria">Grabado por <b>${esc(f.creado_por_nombre || 'sistema')}</b> el ${window.UI.fecha(f.creado_en)}
           ${f.modificado_en ? `<br>Modificado por <b>${esc(f.modificado_por_nombre || 'sistema')}</b> el ${window.UI.fecha(f.modificado_en)}` : ''}</p>`;
+    }
+
+    // Ficha compartida de la cuenta enfocada, con sus acciones.
+    function fichaUnica(f) {
+      const subtitulo = titulo(f.nivel + 1);
+      return `
+        <div class="jq-ficha-cab">
+          <span class="jq-ficha-cod">${esc(f.codigo)}</span>
+          <div><h2>${esc(f.nombre)}</h2><p>${esc(titulo(f.nivel))} · nivel ${f.nivel}${porId(f[cfg.padre]) ? ` · de ${esc(porId(f[cfg.padre]).codigo)}` : ''}</p></div>
+        </div>
+        <div class="ficha">${ficha(f)}<div class="ficha-dato"><span>${esc(cfg.etiquetaHijos || 'Niveles abajo')}</span><b>${hijos(f.id).length || '—'}</b></div></div>
+        ${cfg.editable ? `<div class="jq-ficha-acciones">
+          <button type="button" class="boton primario-sm" data-editar="${f.id}"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>
+          <button type="button" class="boton secundario-sm" data-accion="nuevo" data-nivel="${f.nivel + 1}">+ ${esc(subtitulo)}</button>
+        </div>` : ''}`;
     }
 
     function abrirFormulario(fila, nivel) {
@@ -134,7 +154,7 @@
     // ---------- Eventos ----------
     cont.addEventListener('click', (e) => {
       const ir = e.target.closest('[data-ir]');
-      if (ir) { seleccionar(Number(ir.dataset.ir), true); completarRuta(); return pintar(); }
+      if (ir) { estado.foco = Number(ir.dataset.ir); seleccionar(estado.foco, true); completarRuta(); return pintar(); }
       const accion = e.target.closest('[data-accion]');
       if (accion) {
         const a = accion.dataset.accion;
@@ -146,11 +166,13 @@
       const ed = e.target.closest('[data-editar]');
       if (ed) return abrirFormulario(porId(Number(ed.dataset.editar)));
       const tr = e.target.closest('tr[data-id]');
-      if (tr && !tr.classList.contains('seleccionada')) {
-        seleccionar(Number(tr.dataset.id), false);
-        completarRuta();
-        pintar();
-      }
+      if (!tr) return;
+      const id = Number(tr.dataset.id);
+      // Con ficha única, tocar una fila ya elegida también la enfoca en la ficha.
+      if (cfg.fichaUnica && estado.foco !== id) estado.foco = id;
+      else if (tr.classList.contains('seleccionada')) return;
+      if (!tr.classList.contains('seleccionada')) { seleccionar(id, false); completarRuta(); }
+      pintar();
     });
     cont.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.matches('tr[data-id]')) e.target.click();

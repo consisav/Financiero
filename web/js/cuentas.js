@@ -40,7 +40,7 @@
     w.print();
   }
 
-  const titulosCuentas = ['Cuenta principal', 'Subcuenta', ...Array.from({ length: 8 }, (_, i) => `Subcuenta de nivel ${i + 3}`)];
+  const titulosCuentas = ['Cuenta principal', 'Sub-cuenta', 'Sub-sub-cuenta', ...Array.from({ length: 7 }, (_, i) => `Sub-cuenta de nivel ${i + 4}`)];
   const titulosCentros = ['Primer nivel', 'Segundo nivel', 'Tercer nivel', 'Cuarto nivel', 'Quinto nivel', 'Sexto nivel', 'Séptimo nivel', 'Octavo nivel'];
 
   window.PANTALLAS = window.PANTALLAS || {};
@@ -60,7 +60,7 @@
     if (!estado.orgs.length) { cont.innerHTML = sinOrganizaciones(m); return; }
     estado.org = estado.orgs[0].id;
 
-    cont.innerHTML = '<section class="panel" id="p-versiones"></section><div id="arbol"></div>';
+    cont.innerHTML = '<section class="panel cc-encabezado" id="p-versiones"></section><div id="arbol"></div>';
     const pVer = cont.querySelector('#p-versiones');
     const tipoDe = (id) => estado.tipos.find((t) => t.id === id);
 
@@ -91,34 +91,43 @@
 
     const locActual = () => estado.locs.find((l) => l.id === estado.loc);
 
+    const textoVersion = (v) => `Versión ${v.version} · ${fechaCorta(v.fecha_del)} al ${fechaCorta(v.fecha_al) || "vigente"}${v.activo ? "" : " (inactiva)"}`;
+
+    // Encabezado de una línea: empresa, localidad, versión, cifras del catálogo y acciones.
     function pintarVersiones() {
       const org = estado.orgs.find((o) => o.id === estado.org);
       const loc = locActual();
+      const v = estado.version;
       pVer.innerHTML = `
-        <div class="panel-cab">
-          <h2>Catálogo de cuentas</h2>
-          <div class="panel-acciones">
-            <label class="selector-org">Empresa <select data-org>${opcionesOrg(estado.orgs, estado.org)}</select></label>
-            <label class="selector-org">Localidad <select data-loc ${estado.locs.length ? '' : 'disabled'}>
-              ${estado.locs.length ? estado.locs.map((l) => `<option value="${l.id}" ${l.id === estado.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('') : '<option>Sin localidades</option>'}
-            </select></label>
-            ${estado.version ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
-            ${editable && loc ? '<button type="button" class="boton primario-sm" data-accion="nueva-version">+ Versión</button>' : ''}
-          </div>
+        <div class="cc-barra">
+          <label class="selector-org">Empresa <select data-org>${opcionesOrg(estado.orgs, estado.org)}</select></label>
+          <label class="selector-org">Localidad <select data-loc ${estado.locs.length ? "" : "disabled"}>
+            ${estado.locs.length ? estado.locs.map((l) => `<option value="${l.id}" ${l.id === estado.loc ? "selected" : ""}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join("") : "<option>Sin localidades</option>"}
+          </select></label>
+          <label class="selector-org">Versión <select data-version ${estado.versiones.length ? "" : "disabled"}>
+            ${estado.versiones.length ? estado.versiones.map((x) => `<option value="${x.id}" ${v && x.id === v.id ? "selected" : ""}>${esc(textoVersion(x))}</option>`).join("") : "<option>Sin versiones</option>"}
+          </select></label>
+          ${editable && v ? `<button type="button" class="icono-editar" data-editar-version="${v.id}" aria-label="Modificar versión" title="Modificar versión"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ""}
+          ${editable && loc ? '<button type="button" class="boton secundario-sm" data-accion="nueva-version">+ Versión</button>' : ""}
+          <span class="cc-espacio"></span>
+          <span id="cc-cifras"></span>
+          ${v ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ""}
         </div>
-        ${loc ? tabla({
-          id: 'versiones', editable, seleccionado: estado.version && estado.version.id,
-          vacio: `${loc.codigo} · ${loc.nombre_comercial} todavía no tiene un catálogo de cuentas. Crea la versión 1.`,
-          columnas: [
-            { titulo: 'Versión', valor: (f) => f.version, clase: 'angosta' },
-            { titulo: 'Del', valor: (f) => fechaCorta(f.fecha_del) },
-            { titulo: 'Al', valor: (f) => fechaCorta(f.fecha_al) || 'Vigente' },
-            { titulo: 'Empresa', valor: () => esc(org.nombre), clase: 'fuerte' },
-            { titulo: 'Localidad', valor: () => `<span class="codigo">${esc(loc.codigo)}</span> ${esc(loc.nombre_comercial)}` },
-            { titulo: 'Estado', valor: (f) => window.UI.estado(f.activo) }
-          ],
-          filas: estado.versiones
-        }) : `<p class="vacio">${esc(org.nombre)} todavía no tiene localidades. Las cuentas contables pertenecen a una localidad: crea una en <a href="#/${m.id}/organizaciones">Catálogos · Organizaciones</a>.</p>`}`;
+        ${!loc ? `<p class="vacio">${esc(org.nombre)} todavía no tiene localidades. Las cuentas contables pertenecen a una localidad: crea una en <a href="#/${m.id}/organizaciones">Catálogos · Organizaciones</a>.</p>`
+          : !v ? `<p class="vacio">${esc(loc.codigo)} · ${esc(loc.nombre_comercial)} todavía no tiene un catálogo de cuentas.${editable ? " Crea la versión 1 con «+ Versión»." : ""}</p>` : ""}`;
+    }
+
+    function pintarCifras(filas) {
+      const caja = pVer.querySelector("#cc-cifras");
+      if (!caja) return;
+      const niveles = filas.reduce((n, f) => Math.max(n, f.nivel), 0);
+      const vigentes = filas.filter((f) => f.vigente).length;
+      caja.innerHTML = `
+        <span class="rm-stats" role="list" aria-label="Resumen del catálogo">
+          <span class="rm-stat" role="listitem"><i class="ti ti-list-tree" aria-hidden="true"></i><b>${filas.length}</b> cuentas</span>
+          <span class="rm-stat" role="listitem"><i class="ti ti-stack-2" aria-hidden="true"></i><b>${niveles}</b> nivel${niveles === 1 ? "" : "es"}</span>
+          <span class="rm-stat ${filas.length - vigentes ? "aviso" : ""}" role="listitem"><i class="ti ti-circle-check" aria-hidden="true"></i><b>${vigentes}</b> vigentes</span>
+        </span>`;
     }
 
     function formVersion(fila) {
@@ -154,7 +163,8 @@
       const tiposActivos = estado.tipos.filter((t) => t.activo).map((t) => ({ valor: t.id, texto: `${t.codigo} · ${t.descripcion}` }));
       estado.arbol = window.Jerarquia(div, {
         tabla: 'cuentas', padre: 'cuenta_mayor_id', filtro: { catalogo_id: estado.version.id },
-        titulos: titulosCuentas, etiquetaCodigo: 'Cuenta', etiquetaMayor: 'Cuenta mayor', editable,
+        titulos: titulosCuentas, etiquetaCodigo: 'Cuenta', etiquetaMayor: 'Cuenta mayor', etiquetaHijos: 'Sub-cuentas', editable,
+        fichaUnica: true, alCargar: pintarCifras,
         columnas: [
           { titulo: 'Tipo cuenta', valor: (f) => esc((tipoDe(f.tipo_cuenta_id) || {}).descripcion || '') },
           { titulo: 'Integración', valor: (f) => siNo(f.integra) }
@@ -179,6 +189,10 @@
       if (e.target.matches('[data-org]')) {
         estado.org = Number(e.target.value);
         cargarLocalidades();
+      } else if (e.target.matches('[data-version]')) {
+        estado.version = estado.versiones.find((v) => String(v.id) === e.target.value);
+        pintarVersiones();
+        montarArbol();
       } else if (e.target.matches('[data-loc]')) {
         estado.loc = Number(e.target.value);
         estado.version = null;
@@ -198,14 +212,8 @@
            { titulo: 'Integración', valor: (f) => f.integra ? 'Sí' : 'No' },
            { titulo: 'Cta. anterior', valor: (f) => esc(f.cuenta_anterior || '') }]);
       }
-      const ed = e.target.closest('[data-editar]');
-      if (ed) return formVersion(estado.versiones.find((v) => String(v.id) === ed.dataset.editar));
-      const tr = e.target.closest('tr[data-id]');
-      if (tr && Number(tr.dataset.id) !== (estado.version && estado.version.id)) {
-        estado.version = estado.versiones.find((v) => String(v.id) === tr.dataset.id);
-        pintarVersiones();
-        montarArbol();
-      }
+      const ed = e.target.closest('[data-editar-version]');
+      if (ed) return formVersion(estado.versiones.find((v) => String(v.id) === ed.dataset.editarVersion));
     });
 
     cargarLocalidades();
