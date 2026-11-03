@@ -355,7 +355,7 @@
   function pantalla(m, p, extra) {
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
       <a href="#/${m.id}">${esc(m.corto)}</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
-      <span>Catálogos · ${esc(p.nombre)}</span>`;
+      <span>${esc((GRUPOS.find((g) => subgruposDe(m, g.id).some((sg) => contiene(sg, p))) || GRUPOS[0]).nombre)} · ${esc(p.nombre)}</span>`;
     // Las pantallas de catálogos no llevan título: el nombre ya está en la ruta de arriba.
     vista.innerHTML = `
       ${menuModulo(m, p)}

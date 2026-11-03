@@ -1280,3 +1280,71 @@ span.tk-archivo { cursor: default; }
 .ts-bitacora li.editando form { flex: 1; min-width: 0; display: grid; gap: 6px; }
 .ts-bitacora li.editando textarea { font: inherit; font-size: 13px; padding: 8px 12px; border: 1px solid var(--acento); border-radius: 10px; background: var(--panel); color: var(--texto); resize: vertical; }
 .ts-nota-pie > span { display: inline-flex; gap: 6px; }
+
+/* ---------- Contabilidad · Partidas contables (diseño apilado de Asignación) ---------- */
+.pc-espacio .ta-cuerpo { grid-template-rows: minmax(140px, 27%) minmax(0, 1fr); }
+.pc-espacio .ta-filtros { grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(90px, .55fr) minmax(130px, .8fr) minmax(0, 1.3fr) minmax(0, 1fr); }
+.ta-tabla th.num, .ta-tabla td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.pc-resumen { margin-left: 8px; }
+.pc-tipo { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--fondo); color: var(--texto); }
+.pc-marcas { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.pc-marca { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pc-marca.pendiente { background: var(--ambar-f); color: var(--ambar-t); }
+.pc-marca.aprobada { background: var(--verde-f); color: var(--verde-t); }
+.pc-marca.definitiva { background: var(--lateral); color: #fff; }
+.pc-marca.anulada { background: color-mix(in srgb, var(--error) 12%, var(--panel)); color: var(--error); }
+.pc-marca.descuadrada { background: color-mix(in srgb, var(--error) 8%, var(--panel)); color: var(--error); border: 1px dashed color-mix(in srgb, var(--error) 50%, transparent); }
+.ta-tabla tr.pc-anulada td { color: var(--tenue); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--tenue) 60%, transparent); }
+.ta-tabla tr.pc-anulada td.tk-acciones, .ta-tabla tr.pc-anulada td:nth-child(8) { text-decoration: none; }
+.pc-anual { font-size: 13px; font-weight: 600; color: var(--tenue); margin-left: 6px; }
+.pc-imprimir { display: inline-flex; }
+.pc-imprimir .boton:first-child { border-radius: 999px 0 0 999px; }
+.pc-imprimir .boton:last-child { border-radius: 0 999px 999px 0; margin-left: -1px; font-size: 12.5px; }
+.pc-form { overflow-y: auto !important; gap: 10px; }
+.pc-encabezado { display: grid; grid-template-columns: auto minmax(220px, 1.2fr) minmax(150px, .8fr) minmax(110px, .5fr) minmax(0, 2fr) minmax(170px, .8fr) minmax(170px, .8fr); gap: 10px; align-items: end; }
+.pc-periodo { display: grid; grid-template-columns: repeat(4, auto); border: 1px solid var(--borde); border-radius: var(--radio); background: var(--fondo); align-self: stretch; }
+.pc-periodo > div { display: flex; flex-direction: column; justify-content: center; gap: 1px; padding: 4px 12px; }
+.pc-periodo > div + div { border-left: 1px solid var(--borde); }
+.pc-periodo span { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.pc-periodo b { font-size: 16px; color: var(--texto); white-space: nowrap; }
+.pc-clasif { font-size: 11px; font-weight: 600; color: var(--violeta-t); }
+.pc-tipo-campo { margin-bottom: -16px; }
+.pc-auto { align-self: stretch; justify-content: center; }
+.pc-detalle { display: flex; flex-direction: column; gap: 6px; min-height: 180px; flex: 1; }
+.pc-detalle-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pc-detalle-cab .ta-col-titulo small { text-transform: none; letter-spacing: 0; font-weight: 500; margin-left: 6px; }
+.pc-detalle .rp-enlace { display: inline-flex; align-items: center; gap: 4px; }
+.pc-lineas { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--borde); border-radius: var(--radio); }
+.pc-lineas table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pc-lineas th { position: sticky; top: 0; z-index: 1; text-align: left; padding: 7px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); background: var(--fondo); border-bottom: 1px solid var(--borde); white-space: nowrap; }
+.pc-lineas td { padding: 3px 6px; border-bottom: 1px solid var(--borde); vertical-align: middle; }
+.pc-lineas th.num, .pc-lineas td.num { text-align: right; }
+.pc-lineas input { width: 100%; font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--texto); }
+.pc-lineas input:hover:not(:disabled) { border-color: var(--borde); }
+.pc-lineas input:focus { outline: none; border-color: var(--acento); background: var(--panel); box-shadow: 0 0 0 3px var(--acento-fondo); }
+.pc-lineas td.num input { text-align: right; font-variant-numeric: tabular-nums; }
+.pc-lineas input:disabled { color: var(--texto); }
+.pc-n { width: 34px; color: var(--tenue); text-align: center !important; }
+.pc-cta { width: 140px; }
+.pc-cc { width: 110px; }
+.pc-lineas td.num { width: 130px; }
+.pc-nombre { font-size: 12.5px; color: var(--suave); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-error { color: var(--error); font-weight: 600; }
+.pc-lineas tbody tr:hover td { background: color-mix(in srgb, var(--fondo) 60%, transparent); }
+.pc-lineas .icono-boton { width: 26px; height: 26px; }
+.pc-lineas tfoot td { position: sticky; bottom: 0; background: var(--fondo); border-top: 2px solid var(--borde); border-bottom: 0; padding: 8px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pc-totales-lbl { text-transform: uppercase; font-size: 11.5px; letter-spacing: .05em; color: var(--suave); }
+.pc-cuadre { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; }
+.pc-cuadre.ok { color: var(--ok); }
+.pc-cuadre.no { color: var(--error); }
+.pc-justificacion textarea { min-height: 44px; resize: vertical; }
+@media (max-width: 1500px) {
+  .pc-encabezado { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, .6fr); }
+  .pc-desc { grid-column: 1 / 3; }
+  .pc-espacio .ta-filtros { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 1100px), (max-height: 620px) {
+  .pc-encabezado { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .pc-periodo, .pc-desc { grid-column: 1 / -1; }
+  .pc-lineas { max-height: 420px; }
+}

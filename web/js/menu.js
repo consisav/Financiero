@@ -56,6 +56,15 @@ window.MODULOS = [
     icono: 'ti-calculator',
     descripcion: 'Plan de cuentas, partidas, presupuesto y estados financieros.',
     subgrupos: {
+      registros: [
+        {
+          subgrupo: 'Partidas',
+          icono: 'ti-notebook',
+          pantallas: [
+            { id: 'partidas-contables', nombre: 'Partidas contables', icono: 'ti-file-invoice', descripcion: 'Pólizas de cada organización y localidad: encabezado, detalle de cuentas, aprobación y cierre definitivo.' }
+          ]
+        }
+      ],
       catalogos: [
         {
           subgrupo: 'Cuentas y CC',
@@ -89,7 +98,7 @@ window.MODULOS = [
       ]
     },
     opciones: {
-      registros: ['Partidas contables', 'Presupuesto anual', 'Movimientos bancarios'],
+      registros: ['Presupuesto anual', 'Movimientos bancarios'],
       mantenimientos: ['Períodos contables', 'Empresas', 'Parámetros contables'],
       procesos: ['Mayorización', 'Conciliación bancaria', 'Cierre de mes', 'Cierre de año'],
       reportes: ['Libro diario', 'Libro mayor', 'Balance general', 'Estado de resultados', 'Presupuesto vs. ejecutado'],
