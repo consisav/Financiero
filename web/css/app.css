@@ -1074,3 +1074,64 @@ span.tk-archivo { cursor: default; }
 .rp-marcar > span { margin-right: auto; font-size: 13px; color: var(--texto); }
 .rp-marcar small { color: var(--tenue); font-size: 12px; margin-left: 4px; }
 .rp-marcar .boton { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; font-size: 12.5px; }
+
+/* ---------- Tickets · Asignación (maestro - detalle) ---------- */
+.ta-espacio { --tk-alto: calc(100vh - 220px); height: var(--tk-alto); display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 14px; }
+.ta-filtros { display: grid; grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(130px, .8fr) minmax(130px, .8fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .9fr); gap: 10px; align-items: end; padding: 12px 16px; background: var(--panel); border: 1px solid var(--borde); border-radius: 16px; box-shadow: var(--sombra); }
+.ta-titulo { display: flex; align-items: center; gap: 10px; padding-right: 6px; }
+.ta-titulo small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--tenue); }
+.ta-titulo h2 { margin: 1px 0 0; font-size: 18px; font-weight: 700; color: var(--texto); }
+.ta-cuerpo { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(400px, 1fr); gap: 16px; min-height: 0; }
+.ta-maestro, .ta-detalle { height: auto; }
+.ta-totales { display: flex; gap: 6px; }
+.ta-total { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--fondo); color: var(--suave); }
+.ta-total b { color: var(--texto); }
+.ta-total.sin { background: var(--ambar-f); color: var(--ambar-t); }
+.ta-total.sin b { color: var(--ambar-t); }
+.ta-tabla { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--borde); }
+.ta-tabla table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ta-tabla th { position: sticky; top: 0; z-index: 1; text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); background: var(--fondo); border-bottom: 1px solid var(--borde); white-space: nowrap; }
+.ta-tabla td { padding: 8px 10px; border-bottom: 1px solid var(--borde); color: var(--texto); white-space: nowrap; }
+.ta-tabla td.fuerte { font-weight: 700; position: relative; padding-left: 16px; }
+.ta-tabla tbody tr[data-ticket] { cursor: pointer; }
+.ta-tabla tbody tr[data-ticket]:hover td, .ta-tabla tbody tr[data-ticket]:focus-visible td { background: var(--fondo); outline: none; }
+.ta-tabla tbody tr.actual td { background: var(--acento-fondo); }
+.ta-tabla tbody tr.actual td:first-child { box-shadow: inset 3px 0 0 var(--acento); }
+.tk-franja-celda { position: absolute; left: 6px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--tenue); }
+.tk-franja-celda.p1 { background: var(--azul-t); } .tk-franja-celda.p2 { background: var(--ambar-t); } .tk-franja-celda.p3 { background: var(--violeta-t); }
+.tk-franja-celda.p4 { background: var(--turquesa-t); } .tk-franja-celda.p5 { background: var(--coral-t); }
+.ta-desc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.ta-sin { font-size: 12px; font-weight: 600; color: var(--ambar-t); }
+.ta-elige { height: 100%; flex: 1; }
+.ta-form { overflow-y: auto; }
+.ta-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ta-datos > div:nth-child(3) { border-left: 0; }
+.ta-datos > div:nth-child(n+3) { border-top: 1px solid var(--borde); }
+.ta-requerimiento span { font-size: 13px; font-weight: 500; color: var(--suave); }
+.ta-requerimiento p { margin: 4px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--fondo); font-size: 13.5px; color: var(--texto); max-height: 84px; overflow-y: auto; white-space: pre-wrap; }
+.ta-asignar { display: grid; gap: 10px; padding: 6px 12px 12px; border-color: color-mix(in srgb, var(--acento) 35%, var(--borde)); }
+.ta-asignar-campos { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, .8fr); gap: 10px; align-items: end; }
+.ta-auto { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-radius: 10px; background: var(--fondo); min-width: 0; }
+.ta-auto span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.ta-auto b { font-size: 13.5px; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ta-auto small { font-size: 10.5px; color: var(--tenue); }
+.ta-asignar textarea { resize: vertical; min-height: 60px; }
+.ta-boton { display: flex; justify-content: flex-end; }
+.ta-boton .boton { display: inline-flex; align-items: center; gap: 6px; }
+.ta-historial ol { max-height: none; }
+.ta-vigente { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--violeta-t); background: var(--violeta-f); padding: 1px 6px; border-radius: 999px; }
+.ta-obs { color: var(--suave) !important; font-style: italic; }
+@container (max-width: 520px) {
+  .ta-asignar-campos { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ta-asignar-campos > .campo { grid-column: 1 / -1; }
+}
+@media (max-width: 1500px) {
+  .ta-filtros { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ta-titulo { grid-column: 1 / -1; }
+}
+@media (max-width: 1100px), (max-height: 620px) {
+  .ta-espacio { height: auto; }
+  .ta-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .ta-maestro { max-height: 520px; }
+  .ta-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
