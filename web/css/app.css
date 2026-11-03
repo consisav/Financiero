@@ -768,3 +768,43 @@ p.vacio { color: var(--tenue); }
 .tc-tabla thead tr.tc-grupos th + th { border-left: 1px solid var(--borde); }
 .tc-tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
 .tc-tabla tbody tr.tc-vigente td { font-weight: 600; background: var(--fondo); }
+
+/* ---------- Tickets ---------- */
+.tk-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.tk-defecto { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 14px; padding: 12px; border-radius: var(--radio); background: var(--fondo); }
+.tk-defecto input[readonly] { background: var(--panel); color: var(--suave); }
+.tk-defecto input.tk-numero { color: var(--texto); font-weight: 700; }
+.tk-fila3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 14px; }
+.tk-adjuntos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tk-adjunto { display: flex; align-items: center; gap: 2px; border: 1px solid var(--borde); border-radius: 10px; padding: 2px 4px 2px 2px; max-width: 100%; }
+.tk-adjunto.pendiente { border-style: dashed; }
+.tk-archivo { display: flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; color: var(--texto); background: none; border: 0; padding: 6px 8px; cursor: pointer; min-width: 0; text-align: left; }
+span.tk-archivo { cursor: default; }
+.tk-archivo span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+.tk-archivo small, .tk-sin { color: var(--tenue); font-size: 12px; font-weight: 400; }
+.tk-archivo .ti { color: var(--acento); font-size: 18px; }
+.tk-subir { display: inline-flex; align-items: center; gap: 6px; }
+.tk-pie { display: flex; justify-content: flex-end; }
+.tk-pasos { list-style: none; margin: 0; padding: 6px 0 4px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(96px, 1fr); overflow-x: auto; }
+.tk-paso { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; padding: 0 4px; color: var(--tenue); }
+.tk-paso::before { content: ""; position: absolute; top: 15px; left: -50%; width: 100%; height: 3px; background: var(--borde); z-index: 0; }
+.tk-paso:first-child::before { display: none; }
+.tk-paso.hecho::before, .tk-paso.actual::before { background: var(--ok); }
+.tk-punto { position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--panel); border: 2px solid var(--borde); color: var(--tenue); }
+.tk-paso.hecho .tk-punto { background: var(--ok); border-color: var(--ok); color: #fff; }
+.tk-paso.actual .tk-punto { background: var(--acento); border-color: var(--acento); color: #fff; box-shadow: 0 0 0 4px var(--acento-fondo); }
+.tk-paso-nombre { font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+.tk-paso.hecho .tk-paso-nombre { color: var(--ok); }
+.tk-paso.actual .tk-paso-nombre { color: var(--acento); }
+.tk-paso small { font-size: 10.5px; color: var(--tenue); min-height: 1em; }
+.tk-fila { cursor: pointer; }
+.tk-fila:hover td, .tk-fila:focus-visible td { background: var(--acento-fondo); outline: none; }
+.tk-actual td { background: var(--acento-fondo); }
+.tk-desc { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tk-prioridad { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.tk-prioridad.p1 { background: var(--azul-f); color: var(--azul-t); }
+.tk-prioridad.p2 { background: var(--ambar-f); color: var(--ambar-t); }
+.tk-prioridad.p3 { background: var(--violeta-f); color: var(--violeta-t); }
+.tk-prioridad.p4 { background: var(--turquesa-f); color: var(--turquesa-t); }
+.tk-prioridad.p5 { background: var(--coral-f); color: var(--coral-t); }
+.tk-fila td:nth-child(-n+2), .tk-fila td:nth-child(5) { white-space: nowrap; }
