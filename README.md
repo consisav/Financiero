@@ -41,6 +41,9 @@ En **Catálogos** de todos los módulos, el subgrupo **Iniciales** (antes de Geo
 - **Parámetros generales** (`web/js/parametros.js`): uno por localidad — tiempo, uso de pantallas,
   impuestos, IDP, monedas, NIT, meses contables y personas que firman.
 
+- **Módulos** (`web/js/modulos.js`): maestro-detalle de módulos principales y sub-módulos
+  (código, siglas, descripción, módulo mayor). Migración `20261102000010_modulos_del_sistema.sql`.
+
 Migraciones: `20261102000006_usuarios_y_parametros.sql` y `20261102000007_generar_usuario_y_clave.sql`.
 
 ## Catálogos comunes: Geografía

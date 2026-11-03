@@ -326,6 +326,7 @@ a { color: var(--acento); text-decoration: none; }
 .tabla td:first-child { font-weight: inherit; }
 p.vacio { color: var(--tenue); }
 
+.siglas { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em; padding: 2px 8px; border-radius: 6px; background: var(--m-f, var(--acento-fondo)); color: var(--m-t, var(--acento)); }
 .iso { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--suave); margin-right: 4px; }
 .codigo { color: var(--m-t, var(--acento)); font-weight: 600; }
 
