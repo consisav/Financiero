@@ -254,7 +254,7 @@
   // Barra fija con los 6 grupos del módulo; cada grupo despliega sus subgrupos y opciones al tocarlo.
   // "actual" es la pantalla abierta: se marca su grupo y se abre su subgrupo dentro del desplegable.
   function menuModulo(m, actual) {
-    const grupoDe = (g) => subgruposDe(m, g.id).some((s) => s.pantallas.some((p) => p === actual));
+    const grupoDe = (g) => subgruposDe(m, g.id).some((s) => contiene(s, actual));
     return `
       <nav class="menu-modulo" data-color="${m.color}" aria-label="Menú de ${esc(m.corto)}">
         ${GRUPOS.map((g) => `
@@ -264,12 +264,9 @@
             </button>
             <div class="menu-panel" data-panel="${g.id}" hidden>
               ${subgruposDe(m, g.id).map((s) => `
-                <details class="subgrupo" name="sub-${m.id}-${g.id}" ${actual && s.pantallas.includes(actual) ? 'open' : ''}>
+                <details class="subgrupo" name="sub-${m.id}-${g.id}" ${contiene(s, actual) ? 'open' : ''}>
                   <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
-                  <ul>
-                    ${s.pantallas.map((p) => `
-                      <li><a class="opcion ${p === actual ? 'actual' : ''}" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>${p.separador ? '<li class="separador" role="separator"></li>' : ''}`).join('')}
-                  </ul>
+                  ${listaOpciones(m, s.pantallas, actual)}
                 </details>`).join('')}
               <ul class="menu-opciones">
                 ${(m.opciones[g.id] || []).map((o) => `
@@ -278,6 +275,18 @@
             </div>
           </div>`).join('')}
       </nav>`;
+  }
+
+  // Opciones de un subgrupo; una opción con "pantallas" es un subgrupo anidado (p. ej. Replicación).
+  function listaOpciones(m, pantallas, actual) {
+    return `<ul>${pantallas.map((p) => p.pantallas ? `
+      <li>
+        <details class="subgrupo anidado" ${contiene(p, actual) ? 'open' : ''}>
+          <summary class="subgrupo-titulo"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
+          ${listaOpciones(m, p.pantallas, actual)}
+        </details>
+      </li>${p.separador ? '<li class="separador" role="separator"></li>' : ''}` : `
+      <li><a class="opcion ${p === actual ? 'actual' : ''}" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>${p.separador ? '<li class="separador" role="separator"></li>' : ''}`).join('')}</ul>`;
   }
 
   function cerrarMenus(excepto) {
@@ -291,7 +300,7 @@
 
   function modulo(m) {
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>${esc(m.nombre)}</span>`;
-    const accesos = GRUPOS.flatMap((g) => subgruposDe(m, g.id).flatMap((s) => s.pantallas.map((p) => ({ g, s, p }))));
+    const accesos = GRUPOS.flatMap((g) => subgruposDe(m, g.id).flatMap((s) => hojas(s).map(({ p, ruta }) => ({ g, ruta, p }))));
     vista.innerHTML = `
       ${menuModulo(m, null)}
       <div class="titulo" data-color="${m.color}">
@@ -303,10 +312,10 @@
       </div>
       <h2 class="seccion">Accesos directos</h2>
       <div class="accesos" data-color="${m.color}">
-        ${accesos.map(({ g, s, p }) => `
+        ${accesos.map(({ g, ruta, p }) => `
           <a class="acceso-directo" href="#/${m.id}/${p.id}">
             <span class="ficha-icono"><i class="ti ${p.icono}" aria-hidden="true"></i></span>
-            <span><b>${esc(p.nombre)}</b><small>${esc(g.nombre)} · ${esc(s.subgrupo)}</small></span>
+            <span><b>${esc(p.nombre)}</b><small>${esc(g.nombre)} · ${esc(ruta)}</small></span>
           </a>`).join('')}
       </div>`;
     marcarActivo(m.id);
@@ -336,6 +345,12 @@
     return [...(grupo === 'catalogos' ? CATALOGOS_COMUNES : []), ...((m.subgrupos || {})[grupo] || [])];
   }
 
+  // Pantallas de un subgrupo con su ruta, también las de sus subgrupos anidados.
+  function hojas(s, ruta = s.subgrupo) {
+    return s.pantallas.flatMap((p) => p.pantallas ? hojas(p, `${ruta} · ${p.subgrupo}`) : [{ p, ruta }]);
+  }
+  const contiene = (s, actual) => !!actual && hojas(s).some((h) => h.p === actual);
+
   // Pantalla de un subgrupo dentro de un módulo: #/<modulo>/<pantalla>
   function pantalla(m, p, extra) {
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
@@ -358,7 +373,7 @@
     if (id === 'usuarios' && visibles().length) { location.replace(`#/${visibles()[0].id}/usuarios`); return; }
     {
       const m = visibles().find((x) => x.id === id);
-      const p = m && sub && GRUPOS.flatMap((g) => subgruposDe(m, g.id)).flatMap((s) => s.pantallas).find((x) => x.id === sub);
+      const p = m && sub && GRUPOS.flatMap((g) => subgruposDe(m, g.id)).flatMap((s) => hojas(s).map((h) => h.p)).find((x) => x.id === sub);
       if (m && p) pantalla(m, p, extra);
       else if (m) modulo(m);
       else inicio();
