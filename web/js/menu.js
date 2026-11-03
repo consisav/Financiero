@@ -33,7 +33,7 @@ window.MODULOS = [
     subgrupos: {
       catalogos: [
         {
-          subgrupo: 'Cuentas y centros de costos',
+          subgrupo: 'Cuentas y CC',
           icono: 'ti-sitemap',
           pantallas: [
             { id: 'tipos-cuenta', nombre: 'Tipos de cuentas', icono: 'ti-tags', descripcion: 'Naturaleza de cada tipo de cuenta y su efecto en el resultado del ejercicio.' },
