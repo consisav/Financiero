@@ -16,7 +16,7 @@
   }
 
   window.PANTALLAS = window.PANTALLAS || {};
-  window.PANTALLAS.usuarios = async function (cont) {
+  window.PANTALLAS.usuarios = async function (cont, m) {
     const sb = window.FIN.sb;
     const admin = window.FIN.esAdmin();
     const yo = window.FIN.perfil();
@@ -94,6 +94,7 @@
                 ${admin ? '<button type="button" class="boton secundario-sm" data-accion="clave"><i class="ti ti-key" aria-hidden="true"></i> Enviar cambio de clave</button>' : ''}
                 ${admin ? '<button type="button" class="boton primario-sm" data-accion="modificar">Modificar</button>' : ''}
                 <button type="button" class="boton secundario-sm" data-accion="actualizar">Actualizar</button>
+                ${admin ? '<button type="button" class="boton secundario-sm" data-accion="generar"><i class="ti ti-key" aria-hidden="true"></i> Generar usuario</button>' : ''}
               </span>
             </div>
             <div class="datos-con-firma">
@@ -126,7 +127,8 @@
         titulo: `Modificar usuario · ${u.nombre || u.correo}`,
         valores: { ...u, firma: firmaActual },
         campos: [
-          { nombre: 'usuario', etiqueta: 'Usuario (código)', requerido: true, patron: '[A-Za-z0-9]{2,10}', max: 10, placeholder: 'OLI' },
+          { nombre: 'usuario', etiqueta: 'Usuario (código)', requerido: true, patron: '[A-Za-z0-9]{2,20}', max: 20,
+            placeholder: window.UI.proponerUsuario ? window.UI.proponerUsuario(u.nombre || '', []) || 'Oasturias' : 'Oasturias' },
           { nombre: 'nombre', etiqueta: 'Nombre', requerido: true },
           { nombre: 'organizacion_id', etiqueta: 'Organización', tipo: 'select-numero', requerido: true,
             opciones: estado.orgs.map((x) => ({ valor: x.id, texto: `${x.codigo} · ${x.nombre}` })) },
@@ -154,10 +156,10 @@
         alGuardar: async (d) => {
           const firma = d.firma;
           delete d.firma;
-          d.usuario = d.usuario.toUpperCase();
           const { error } = await sb.from('perfiles').update(d).eq('id', u.id);
           if (error) {
-            if (/perfiles_usuario_key|duplicate/i.test(error.message)) throw new Error(`Ya existe otro usuario con el código ${d.usuario}.`);
+            if (/perfiles_usuario_key|perfiles_usuario_unico|duplicate/i.test(error.message)) throw new Error(`Ya existe otro usuario con el código ${d.usuario}.`);
+            if (/perfiles_usuario_check/i.test(error.message)) throw new Error('El código solo admite letras y números (2 a 20).');
             if (/perfiles_activo_con_localidad/i.test(error.message)) throw new Error('Un usuario activo debe tener organización y localidad.');
             if (/perfiles_localidad_fkey/i.test(error.message)) throw new Error('La localidad no pertenece a la organización elegida.');
             throw error;
@@ -189,6 +191,7 @@
         const a = accion.dataset.accion;
         if (a === 'modificar') formUsuario(estado.sel);
         if (a === 'actualizar') { await cargar(); window.FIN.aviso('Datos actualizados'); }
+        if (a === 'generar') location.hash = `#/${m.id}/generar-usuario/${estado.sel.id}`;
         if (a === 'clave') {
           const { error } = await sb.auth.resetPasswordForEmail(estado.sel.correo, { redirectTo: window.FIN.urlSitio });
           window.FIN.aviso(error ? window.UI.traducirError(error) : `Se envió a ${estado.sel.correo} el enlace para cambiar la clave`);

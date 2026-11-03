@@ -35,10 +35,13 @@ En **Catálogos** de todos los módulos, el subgrupo **Iniciales** (antes de Geo
 - **Usuarios** (`web/js/usuarios.js`): cada usuario pertenece a una organización y una localidad;
   código, rol, estado, vencimiento de clave, empleado, extensión y firma (bucket privado `firmas`).
   Solo el administrador modifica.
+- **Generar usuario y clave** (`web/js/generar_usuario.js`): código = iniciales de los nombres + primer
+  apellido (Oliver Asturias → Oasturias, Juan Carlos Tut → JCtut). La clave la genera
+  `public.generar_clave`, se muestra una sola vez y vence hoy: al entrar se pide crear una propia.
 - **Parámetros generales** (`web/js/parametros.js`): uno por localidad — tiempo, uso de pantallas,
   impuestos, IDP, monedas, NIT, meses contables y personas que firman.
 
-Migración: `supabase/migrations/20261102000006_usuarios_y_parametros.sql`.
+Migraciones: `20261102000006_usuarios_y_parametros.sql` y `20261102000007_generar_usuario_y_clave.sql`.
 
 ## Catálogos comunes: Geografía
 

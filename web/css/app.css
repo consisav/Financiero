@@ -327,6 +327,20 @@ p.vacio { color: var(--tenue); }
 .imagen-org.firma { padding-top: 16px; }
 .estado.vencida { background: var(--coral-f); color: var(--coral-t); }
 
+/* Generar usuario y clave */
+.panel.generar { max-width: 760px; display: flex; flex-direction: column; gap: 16px; }
+.panel.generar .sub { margin: 0; }
+.panel.generar .campo input, .panel.generar .campo select { font: inherit; font-size: 15px; color: var(--texto); background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; }
+.panel.generar .campo input[type=search] { max-width: 340px; border-radius: 999px; }
+.paso { display: flex; gap: 14px; border: 1px solid var(--borde); border-radius: 14px; padding: 16px; }
+.paso-num { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; background: var(--m-t, var(--acento)); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+.paso-cuerpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.paso-cuerpo h3 { margin: 4px 0 0; font-size: 16px; }
+.paso-cuerpo small { color: var(--tenue); font-size: 13px; line-height: 1.5; }
+.paso-fila { display: flex; gap: 10px; align-items: center; }
+.codigo-usuario { flex: 1; min-width: 0; font-family: ui-monospace, Consolas, monospace; font-size: 16px; color: var(--texto); background: var(--fondo); border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; }
+.clave-visible { background: var(--verde-f); color: var(--verde-t); font-weight: 700; letter-spacing: .04em; }
+
 /* Parámetros generales */
 .cabecera-param .auditoria { margin-top: 4px; }
 .aviso-param { display: flex; gap: 8px; align-items: center; margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--ambar-f); color: var(--ambar-t); font-size: 14px; }

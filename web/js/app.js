@@ -114,15 +114,26 @@
   alEnviar('f-nueva', async (d) => {
     const { error } = await sb.auth.updateUser({ password: d.clave });
     if (error) throw error;
+    // Renueva el vencimiento de la clave (90 días); si la función aún no existe, se deja pasar esta vez.
+    const r = await sb.rpc('renovar_vencimiento_clave');
+    if (r.error) claveRenovada = true;
     aviso('Contraseña actualizada');
     history.replaceState(null, '', urlSitio);
     await cargarSesion();
   });
 
-  document.querySelectorAll('[data-salir]').forEach((b) => b.addEventListener('click', () => sb.auth.signOut()));
+  document.querySelectorAll('[data-salir]').forEach((b) => b.addEventListener('click', (e) => {
+    e.preventDefault();
+    recuperando = false;
+    sb.auth.signOut();
+  }));
 
   // ---------- Sesión ----------
   let recuperando = false;
+  let claveRenovada = false;
+  // Fecha local de hoy (yyyy-mm-dd) para comparar con perfiles.fecha_vence_clave.
+  const hoyLocal = () => { const h = new Date(); return new Date(h - h.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+  const claveVencida = (p) => !!p.fecha_vence_clave && p.fecha_vence_clave <= hoyLocal();
   sb.auth.onAuthStateChange((evento, sesion) => {
     if (evento === 'PASSWORD_RECOVERY') { recuperando = true; mostrarAcceso('nueva'); return; }
     if (recuperando) return;
@@ -142,6 +153,11 @@
     }
     perfil = p;
     if (!perfil.activo) return mostrarAcceso('pendiente');
+    if (claveVencida(perfil) && !claveRenovada) {
+      recuperando = true;
+      mostrarAcceso('nueva');
+      return mensaje('Tu clave venció o es temporal. Crea una clave nueva para continuar.', true);
+    }
 
     const [{ data: pm }, { data: rs }] = await Promise.all([
       sb.from('rol_modulos').select('modulo, puede_ver, puede_editar').eq('rol_id', perfil.rol_id),
@@ -275,7 +291,7 @@
   }
 
   // Pantalla de un subgrupo dentro de un módulo: #/<modulo>/<pantalla>
-  function pantalla(m, p) {
+  function pantalla(m, p, extra) {
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
       <a href="#/${m.id}">${esc(m.corto)}</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
       <span>Catálogos · ${esc(p.nombre)}</span>`;
@@ -287,18 +303,18 @@
       <div id="pantalla" data-color="${m.color}"></div>`;
     marcarActivo(p.id === 'usuarios' ? 'usuarios' : m.id);
     const fn = window.PANTALLAS[p.id];
-    if (fn) fn($('pantalla'), m);
+    if (fn) fn($('pantalla'), m, extra);
   }
 
   function rutear() {
     if (!perfil || !perfil.activo) return;
-    const [id, sub] = location.hash.replace(/^#\/?/, '').split('/');
+    const [id, sub, extra] = location.hash.replace(/^#\/?/, '').split('/');
     // El enlace "Usuarios" de la barra lateral abre Catálogos · Iniciales · Usuarios del primer módulo.
     if (id === 'usuarios' && visibles().length) { location.replace(`#/${visibles()[0].id}/usuarios`); return; }
     {
       const m = visibles().find((x) => x.id === id);
       const p = m && sub && GRUPOS.flatMap((g) => subgruposDe(m, g.id)).flatMap((s) => s.pantallas).find((x) => x.id === sub);
-      if (m && p) pantalla(m, p);
+      if (m && p) pantalla(m, p, extra);
       else if (m) modulo(m);
       else inicio();
     }
