@@ -1415,3 +1415,4 @@ span.tk-archivo { cursor: default; }
 td.tk-vacio { display: table-cell; text-align: center; padding: 28px 10px; }
 td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ot-codigo input { font-weight: 700; }
+.oc-pendiente { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--ambar-t); }

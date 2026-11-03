@@ -365,7 +365,7 @@
     let actual = null;
     let lineas = [];        // { cuenta_id, naturaleza, orden, operacion, centro_id, columna_nomina }
     let buscar = '';
-    const nuevaLinea = (n) => ({ cuenta_id: null, naturaleza: 'D', orden: n, operacion: 'TOTAL', centro_id: null, columna_nomina: '' });
+    const nuevaLinea = (n) => ({ cuenta_id: null, cuenta_codigo: "", naturaleza: 'D', orden: n, operacion: 'TOTAL', centro_id: null, columna_nomina: '' });
 
     async function iniciar() {
       await ctx.cargarBase();
@@ -425,20 +425,22 @@
       lineas = [];
       if (x) {
         const { data } = await sb.from('transaccion_cuentas').select('*').eq('transaccion_id', x.id).order('linea');
-        lineas = (data || []).map((l) => ({ cuenta_id: l.cuenta_id, naturaleza: l.naturaleza, orden: l.orden, operacion: l.operacion, centro_id: l.centro_id, columna_nomina: l.columna_nomina || '' }));
+        lineas = (data || []).map((l) => ({ cuenta_id: l.cuenta_id, cuenta_codigo: l.cuenta_codigo || "", naturaleza: l.naturaleza, orden: l.orden, operacion: l.operacion, centro_id: l.centro_id, columna_nomina: l.columna_nomina || '' }));
       }
       if (!lineas.length) lineas = [nuevaLinea(1), { ...nuevaLinea(2), naturaleza: 'H' }];
       pintarDetalle();
       ctx.pMae.querySelectorAll('tr[data-fila]').forEach((tr) => tr.classList.toggle('actual', !!x && tr.dataset.fila === String(x.id)));
     }
 
+    // Línea con un código que todavía no existe en el catálogo de la localidad.
+    const pendiente = '<span class="oc-pendiente" title="La línea se guarda con este código y se liga sola cuando la cuenta exista en el catálogo de la localidad"><i class="ti ti-clock-exclamation" aria-hidden="true"></i> Cuenta pendiente: no existe en el catálogo</span>';
     function filaLinea(l, i, dis) {
       const c = ctx.cuentas.find((x) => x.id === l.cuenta_id);
       const cc = ctx.centros.find((x) => x.id === l.centro_id);
       return `<tr data-linea="${i}">
         <td class="pc-n">${i + 1}</td>
-        <td class="pc-cta"><input list="oc-cuentas-mov" data-campo="cuenta" value="${esc(c ? c.codigo : '')}" placeholder="Código" ${dis} aria-label="Cuenta de la línea ${i + 1}"></td>
-        <td class="pc-nombre" data-nombre-cuenta>${esc(c ? c.nombre : '')}</td>
+        <td class="pc-cta"><input list="oc-cuentas-mov" data-campo="cuenta" value="${esc(c ? c.codigo : l.cuenta_codigo || '')}" placeholder="Código" ${dis} aria-label="Cuenta de la línea ${i + 1}"></td>
+        <td class="pc-nombre" data-nombre-cuenta>${c ? esc(c.nombre) : l.cuenta_codigo ? pendiente : ''}</td>
         <td class="oc-dh"><label title="Debe"><input type="radio" name="dh${i}" value="D" ${l.naturaleza === 'D' ? 'checked' : ''} ${dis}> D</label><label title="Haber"><input type="radio" name="dh${i}" value="H" ${l.naturaleza === 'H' ? 'checked' : ''} ${dis}> H</label></td>
         <td class="oc-orden"><input type="number" min="1" data-campo="orden" value="${l.orden ?? ''}" ${dis} aria-label="Orden de la línea ${i + 1}"></td>
         <td class="oc-oper"><select data-campo="operacion" ${dis} aria-label="Operación de la línea ${i + 1}">${OPERACIONES.map((o) => `<option ${l.operacion === o ? 'selected' : ''}>${o}</option>`).join('')}</select></td>
@@ -501,8 +503,10 @@
         const l = lineas[Number(tr.dataset.linea)];
         const cod = tr.querySelector('[data-campo=cuenta]').value.trim();
         const c = ctx.cuentaPorCodigo(cod, true);
+        const existe = ctx.cuentas.find((x) => x.codigo === cod);
         l.cuenta_id = c ? c.id : null;
-        tr.querySelector('[data-nombre-cuenta]').innerHTML = c ? esc(c.nombre) : cod ? '<span class="pc-error">No es una cuenta de movimiento</span>' : '';
+        l.cuenta_codigo = cod;
+        tr.querySelector('[data-nombre-cuenta]').innerHTML = c ? esc(c.nombre) : existe ? '<span class="pc-error">Agrupa a otras cuentas: usa una cuenta de movimiento</span>' : cod ? pendiente : '';
         const codc = tr.querySelector('[data-campo=centro]').value.trim();
         const cc = ctx.centros.find((x) => x.codigo === codc);
         l.centro_id = cc ? cc.id : null;
@@ -521,9 +525,10 @@
       if (!d.numero || d.numero < 1 || !Number.isInteger(d.numero)) { error.textContent = 'Escribe el código de la transacción (número entero mayor que cero).'; form.elements.numero.focus(); return; }
       if (transacciones.some((t) => t.numero === d.numero && (!actual || t.id !== actual.id))) { error.textContent = `Ya existe la transacción ${d.numero} en esta localidad: usa otro código.`; form.elements.numero.focus(); return; }
       if (!d.descripcion) { error.textContent = 'Escribe la descripción de la transacción.'; return; }
-      const validas = lineas.filter((l) => l.cuenta_id);
-      const mala = lineas.findIndex((l, i) => !l.cuenta_id && ctx.pDet.querySelector(`tr[data-linea="${i}"] [data-campo=cuenta]`).value.trim());
-      if (mala >= 0) { error.textContent = `La cuenta de la línea ${mala + 1} no es una cuenta de movimiento de la localidad.`; return; }
+      const validas = lineas.filter((l) => l.cuenta_id || l.cuenta_codigo);
+      // Una cuenta que existe pero agrupa a otras no sirve; un código que no existe queda pendiente.
+      const mala = lineas.findIndex((l) => !l.cuenta_id && l.cuenta_codigo && ctx.cuentas.some((x) => x.codigo === l.cuenta_codigo));
+      if (mala >= 0) { error.textContent = `La cuenta de la línea ${mala + 1} agrupa a otras cuentas: usa una cuenta de movimiento.`; return; }
       error.textContent = '';
       let id = actual?.id;
       const eraNuevo = !actual;
@@ -540,7 +545,7 @@
         }
         if (validas.length) {
           const r = await sb.from('transaccion_cuentas').insert(validas.map((l, i) => ({
-            transaccion_id: id, linea: i + 1, cuenta_id: l.cuenta_id, naturaleza: l.naturaleza, orden: l.orden, operacion: l.operacion, centro_id: l.centro_id || null, columna_nomina: l.columna_nomina || null
+            transaccion_id: id, linea: i + 1, cuenta_id: l.cuenta_id || null, cuenta_codigo: l.cuenta_codigo || null, naturaleza: l.naturaleza, orden: l.orden, operacion: l.operacion, centro_id: l.centro_id || null, columna_nomina: l.columna_nomina || null
           })));
           if (r.error) throw r.error;
         }
@@ -566,7 +571,7 @@
         const ls = (data || []).filter((l) => l.transaccion_id === t.id);
         return `<h3>${t.numero} · ${esc(t.descripcion)} <small>${esc(t.estado)}${t.aplica_poliza ? ' · aplica póliza' : ''}${t.tipo_operacion ? ` · ${esc(t.tipo_operacion)}` : ''}</small></h3>
           <table><thead><tr><th>Línea</th><th>Cuenta</th><th>Nombre</th><th>D/H</th><th>Orden</th><th>Operación</th><th>Centro de costo</th><th>Columna</th></tr></thead><tbody>
-          ${ls.map((l) => { const c = ctx.cuentas.find((x) => x.id === l.cuenta_id); const cc = ctx.centros.find((x) => x.id === l.centro_id); return `<tr><td>${l.linea}</td><td>${esc(c?.codigo || '')}</td><td>${esc(c?.nombre || '')}</td><td>${l.naturaleza}</td><td>${l.orden ?? ''}</td><td>${esc(l.operacion)}</td><td>${esc(cc ? `${cc.codigo} ${cc.nombre}` : '')}</td><td>${esc(l.columna_nomina || '')}</td></tr>`; }).join('') || '<tr><td colspan="8">Sin cuentas</td></tr>'}
+          ${ls.map((l) => { const c = ctx.cuentas.find((x) => x.id === l.cuenta_id); const cc = ctx.centros.find((x) => x.id === l.centro_id); return `<tr><td>${l.linea}</td><td>${esc(c?.codigo || l.cuenta_codigo || '')}</td><td>${esc(c?.nombre || (l.cuenta_codigo ? '(cuenta pendiente)' : ''))}</td><td>${l.naturaleza}</td><td>${l.orden ?? ''}</td><td>${esc(l.operacion)}</td><td>${esc(cc ? `${cc.codigo} ${cc.nombre}` : '')}</td><td>${esc(l.columna_nomina || '')}</td></tr>`; }).join('') || '<tr><td colspan="8">Sin cuentas</td></tr>'}
           </tbody></table>`;
       }).join('');
       const v = window.open('', '_blank');
