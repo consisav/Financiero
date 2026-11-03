@@ -41,6 +41,13 @@
     // Elige el primer hijo en los niveles visibles que aún no tienen selección.
     function completarRuta() {
       estado.ruta = estado.ruta.filter((id) => porId(id));
+      if (estado.base > 1) {
+        const actual = porId(estado.ruta[estado.base - 1]);
+        if (!actual || actual.nivel !== estado.base) {
+          const primero = estado.filas.find((f) => f.nivel === estado.base);
+          if (primero) seleccionar(primero.id, false); else estado.base = 1;
+        }
+      }
       for (let n = estado.ruta.length + 1; n <= estado.base + 2; n++) {
         const lista = hijos(n === 1 ? null : estado.ruta[n - 2]);
         if (!lista.length) break;
@@ -73,17 +80,23 @@
       }
     }
 
+    const nivelMaximo = () => estado.filas.reduce((n, f) => Math.max(n, f.nivel), 1);
+
     function bloque(nivel, idMayor, posicion) {
-      const lista = hijos(idMayor);
-      const mayor = idMayor && porId(idMayor);
+      // Primer bloque desde un nivel > 1: todas las cuentas de ese nivel, de cualquier cuenta mayor.
+      const todasDelNivel = posicion === 0 && nivel > 1;
+      const lista = todasDelNivel ? estado.filas.filter((f) => f.nivel === nivel) : hijos(idMayor);
+      const mayor = !todasDelNivel && idMayor && porId(idMayor);
       const sel = porId(estado.ruta[nivel - 1]);
       const puedeBajar = posicion === 2 && sel;
       return `
         <section class="panel bloque ${cfg.fichaUnica ? 'compacto' : ''}" data-bloque="${nivel}">
           <div class="panel-cab">
-            <h2>${esc(titulo(nivel))}${mayor ? ` <small>de ${esc(mayor.codigo)} · ${esc(mayor.nombre)}</small>` : ''}</h2>
+            <h2>${esc(titulo(nivel))}${mayor ? ` <small>de ${esc(mayor.codigo)} · ${esc(mayor.nombre)}</small>` : ''}${todasDelNivel ? ` <small>· nivel ${nivel}, todas (${lista.length})</small>` : ''}</h2>
             <div class="panel-acciones">
-              ${posicion === 0 && estado.base > 1 ? '<button type="button" class="boton secundario-sm" data-accion="subir"><i class="ti ti-arrow-up" aria-hidden="true"></i> Subir nivel</button>' : ''}
+              ${posicion === 0 && nivelMaximo() > 1 ? `<label class="selector-org nivel-base" title="Nivel que se muestra en el primer bloque">Ver desde <select data-nivel-base>
+                ${Array.from({ length: nivelMaximo() }, (_, i) => i + 1).map((n) => `<option value="${n}" ${n === estado.base ? 'selected' : ''}>Nivel ${n} · ${esc(titulo(n))}</option>`).join('')}
+              </select></label>` : ''}
               ${puedeBajar ? '<button type="button" class="boton secundario-sm" data-accion="bajar">Bajar nivel <i class="ti ti-arrow-down" aria-hidden="true"></i></button>' : ''}
               ${cfg.editable ? `<button type="button" class="boton primario-sm" data-accion="nuevo" data-nivel="${nivel}">+ ${esc(titulo(nivel))}</button>` : ''}
             </div>
@@ -176,6 +189,13 @@
     });
     cont.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.matches('tr[data-id]')) e.target.click();
+    });
+    cont.addEventListener('change', (e) => {
+      if (!e.target.matches('[data-nivel-base]')) return;
+      estado.base = Number(e.target.value);
+      estado.foco = null;
+      completarRuta();
+      pintar();
     });
     cont.addEventListener('input', (e) => {
       const n = e.target.dataset.buscar;
