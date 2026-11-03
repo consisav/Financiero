@@ -386,7 +386,7 @@ p.vacio { color: var(--tenue); }
 .estado.vencida { background: var(--coral-f); color: var(--coral-t); }
 
 /* Roles módulos (diseño B) */
-.rm-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 20px; align-items: start; }
+.rm-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
 .rm-roles { position: sticky; top: 132px; max-height: calc(100vh - 150px); overflow-y: auto; margin-bottom: 0; }
 .rm-roles .buscar { max-width: none; }
 .rm-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -399,7 +399,7 @@ p.vacio { color: var(--tenue); }
 .rm-rol.activo { background: var(--m-f); border-color: var(--m-f); color: var(--m-t); font-weight: 600; }
 .rm-rol.apagado { color: var(--tenue); }
 .rm-rol-cod { font-size: 12px; color: var(--tenue); font-weight: 600; }
-.rm-rol-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rm-rol-nombre { white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
 .rm-rol-cuenta { min-width: 24px; text-align: center; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 7px; background: var(--fondo); color: var(--suave); }
 .rm-rol.activo .rm-rol-cuenta { background: var(--panel); color: var(--m-t); }
 .rm-derecha { min-width: 0; }
@@ -676,7 +676,7 @@ p.vacio { color: var(--tenue); }
   .datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bloque-cuerpo { grid-template-columns: 1fr; }
   .param-grid, .datos-con-firma { grid-template-columns: 1fr; }
-  .rm-grid { grid-template-columns: 230px minmax(0, 1fr); }
+  .rm-grid { grid-template-columns: 250px minmax(0, 1fr); }
 }
 
 @media (max-width: 700px) {
