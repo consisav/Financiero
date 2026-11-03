@@ -13,6 +13,14 @@ window.GRUPOS = [
 // cada módulo puede agregar los suyos en "subgrupos.catalogos".
 window.CATALOGOS_COMUNES = [
   {
+    subgrupo: 'Iniciales',
+    icono: 'ti-adjustments',
+    pantallas: [
+      { id: 'usuarios', nombre: 'Usuarios', icono: 'ti-user-cog', descripcion: 'Usuarios del sistema por organización y localidad, con su rol y datos generales.' },
+      { id: 'parametros', nombre: 'Parámetros generales', icono: 'ti-settings', descripcion: 'Parámetros de tiempo, impuestos, monedas y firmantes de cada localidad.' }
+    ]
+  },
+  {
     subgrupo: 'Geografía',
     icono: 'ti-map-2',
     pantallas: [

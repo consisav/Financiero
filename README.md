@@ -28,6 +28,18 @@ Inicio de sesión con Supabase Auth (pantalla dividida). La migración
 `rol_modulos` con RLS. El primer usuario registrado queda como administrador; los
 demás quedan inactivos hasta que el administrador los active en **Usuarios**.
 
+## Catálogos comunes: Iniciales
+
+En **Catálogos** de todos los módulos, el subgrupo **Iniciales** (antes de Geografía):
+
+- **Usuarios** (`web/js/usuarios.js`): cada usuario pertenece a una organización y una localidad;
+  código, rol, estado, vencimiento de clave, empleado, extensión y firma (bucket privado `firmas`).
+  Solo el administrador modifica.
+- **Parámetros generales** (`web/js/parametros.js`): uno por localidad — tiempo, uso de pantallas,
+  impuestos, IDP, monedas, NIT, meses contables y personas que firman.
+
+Migración: `supabase/migrations/20261102000006_usuarios_y_parametros.sql`.
+
 ## Catálogos comunes: Geografía
 
 En **Catálogos** de todos los módulos aparece el subgrupo **Geografía** con dos pantallas

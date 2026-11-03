@@ -21,6 +21,10 @@
   window.FIN = {
     sb,
     aviso: (t) => aviso(t),
+    perfil: () => perfil,
+    roles: () => roles,
+    esAdmin: () => !!perfil && perfil.activo && perfil.rol_id === 'administrador',
+    urlSitio,
     // Debe coincidir con public.puede_editar_catalogos() en Supabase
     puedeEditarCatalogos: () => !!perfil && perfil.activo && ['administrador', 'contador'].includes(perfil.rol_id)
   };
@@ -260,45 +264,6 @@
     marcarActivo(m.id);
   }
 
-  async function usuarios() {
-    migas.innerHTML = '<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>Usuarios</span>';
-    marcarActivo('usuarios');
-    const cabecera = `
-      <div class="titulo" data-color="azul">
-        <span class="ficha-icono"><i class="ti ti-user-cog" aria-hidden="true"></i></span>
-        <div><h1>Usuarios</h1><p>Activa las cuentas nuevas y asigna su rol.</p></div>
-      </div>`;
-    vista.innerHTML = cabecera + '<p>Cargando…</p>';
-    const { data, error } = await sb.from('perfiles').select('*').order('creado_en');
-    if (error) { vista.innerHTML = cabecera + `<p>${esc(traducir(error))}</p>`; return; }
-    vista.innerHTML = cabecera + `
-      <div class="tabla-envoltura">
-        <table class="tabla">
-          <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Activo</th></tr></thead>
-          <tbody>
-            ${data.map((u) => `
-              <tr data-id="${u.id}">
-                <td>${esc(u.nombre) || '—'}</td>
-                <td>${esc(u.correo)}</td>
-                <td><select data-campo="rol_id" ${u.id === perfil.id ? 'disabled' : ''}>
-                  ${roles.map((r) => `<option value="${r.id}" ${r.id === u.rol_id ? 'selected' : ''}>${esc(r.nombre)}</option>`).join('')}
-                </select></td>
-                <td><input type="checkbox" data-campo="activo" ${u.activo ? 'checked' : ''} ${u.id === perfil.id ? 'disabled' : ''} aria-label="Activo"></td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`;
-  }
-
-  vista.addEventListener('change', async (e) => {
-    const campo = e.target.dataset.campo;
-    if (!campo) return;
-    const id = e.target.closest('tr').dataset.id;
-    const valor = campo === 'activo' ? e.target.checked : e.target.value;
-    const { error } = await sb.from('perfiles').update({ [campo]: valor }).eq('id', id);
-    if (error) { aviso(traducir(error)); usuarios(); } else aviso('Cambio guardado');
-  });
-
   vista.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-opcion]');
     if (b) aviso(`${b.dataset.grupo} › ${b.dataset.opcion}: en construcción.`);
@@ -320,7 +285,7 @@
         <div><h1>${esc(p.nombre)}</h1><p>${esc(p.descripcion)}</p></div>
       </div>
       <div id="pantalla" data-color="${m.color}"></div>`;
-    marcarActivo(m.id);
+    marcarActivo(p.id === 'usuarios' ? 'usuarios' : m.id);
     const fn = window.PANTALLAS[p.id];
     if (fn) fn($('pantalla'), m);
   }
@@ -328,8 +293,9 @@
   function rutear() {
     if (!perfil || !perfil.activo) return;
     const [id, sub] = location.hash.replace(/^#\/?/, '').split('/');
-    if (id === 'usuarios' && perfil.rol_id === 'administrador') usuarios();
-    else {
+    // El enlace "Usuarios" de la barra lateral abre Catálogos · Iniciales · Usuarios del primer módulo.
+    if (id === 'usuarios' && visibles().length) { location.replace(`#/${visibles()[0].id}/usuarios`); return; }
+    {
       const m = visibles().find((x) => x.id === id);
       const p = m && sub && GRUPOS.flatMap((g) => subgruposDe(m, g.id)).flatMap((s) => s.pantallas).find((x) => x.id === sub);
       if (m && p) pantalla(m, p);

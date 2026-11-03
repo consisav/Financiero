@@ -2,8 +2,13 @@
 -- cada localidad tiene sus propias versiones del catálogo (versión 1, 2…).
 
 -- Para exigir que la localidad sea de la misma organización (llave foránea compuesta).
-alter table public.localidades
-  add constraint localidades_id_organizacion_key unique (id, organizacion_id);
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'localidades_id_organizacion_key') then
+    alter table public.localidades add constraint localidades_id_organizacion_key unique (id, organizacion_id);
+  end if;
+end;
+$$;
 
 alter table public.catalogos_cuentas add column localidad_id bigint;
 
