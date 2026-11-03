@@ -139,8 +139,9 @@
           { nombre: 'organizacion_id', etiqueta: 'Organización', tipo: 'select-numero', requerido: true,
             opciones: estado.orgs.map((x) => ({ valor: x.id, texto: `${x.codigo} · ${x.nombre}` })) },
           { nombre: 'localidad_id', etiqueta: 'Localidad', tipo: 'select-numero', requerido: true, opciones: [] },
-          // El rol solo lo cambia el Super Administrador, y nunca el suyo propio (para no quedarse sin acceso).
-          ...(superAdmin && !propio ? [{ nombre: 'rol_id', etiqueta: 'Rol', tipo: 'select', requerido: true, opciones: rolesActivos.map((r) => ({ valor: r.id, texto: r.nombre })) }] : []),
+          // El rol solo lo cambia el Super Administrador (también el suyo; la base de datos impide
+          // quitarle el rol al último Super Administrador).
+          ...(superAdmin ? [{ nombre: 'rol_id', etiqueta: 'Rol', tipo: 'select', requerido: true, opciones: rolesActivos.map((r) => ({ valor: r.id, texto: r.nombre })) }] : []),
           ...(propio ? [] : [{ nombre: 'activo', etiqueta: 'Activo', tipo: 'casilla' }]),
           { nombre: 'fecha_vence_clave', etiqueta: 'Fecha vence clave', tipo: 'fecha' },
           { nombre: 'empleado', etiqueta: 'Empleado' },
@@ -165,7 +166,7 @@
           if (error) {
             if (/perfiles_usuario_key|perfiles_usuario_unico|duplicate/i.test(error.message)) throw new Error(`Ya existe otro usuario con el código ${d.usuario}.`);
             if (/perfiles_usuario_check/i.test(error.message)) throw new Error('El código solo admite letras y números (2 a 20).');
-            if (/Super Administrador/i.test(error.message)) throw new Error(error.message + '.');
+            if (/Super Administrador/i.test(error.message)) throw new Error(error.message.replace(/\.?$/, '.'));
             if (/perfiles_activo_con_localidad/i.test(error.message)) throw new Error('Un usuario activo debe tener organización y localidad.');
             if (/perfiles_localidad_fkey/i.test(error.message)) throw new Error('La localidad no pertenece a la organización elegida.');
             throw error;
@@ -186,6 +187,8 @@
             } catch (err) { fallo = err; }
           }
           window.FIN.aviso(fallo ? `Usuario guardado, pero no se pudo guardar la firma: ${fallo.message}` : 'Usuario guardado');
+          // Si cambió su propio rol, se recarga para aplicar los nuevos permisos.
+          if (propio && d.rol_id && d.rol_id !== u.rol_id) { location.reload(); return; }
           await cargar(u.id);
         }
       });
