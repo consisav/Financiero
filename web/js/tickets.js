@@ -1,7 +1,9 @@
-// Tickets · Generación. Arriba, la cabecera del ticket: número, estado, prioridad, datos por
-// defecto (organización, localidad, solicitante, fecha) y la gráfica del proceso. Debajo, dos
-// columnas: el requerimiento (módulo, descripción y adjuntos) y la gestión (prioridad, estado,
-// recurso asignado e historial). Al final, la lista de tickets con filtros por estado y prioridad.
+// Tickets · Generación, en una sola pantalla sin desplazamiento (bandeja y detalle):
+//   Izquierda, la bandeja de tickets con filtros por estado y prioridad y búsqueda.
+//   Derecha, el ticket abierto: cabecera (número, estado, prioridad y acciones), datos por
+//   defecto (organización, localidad, solicitante, fecha), gráfica del proceso y dos columnas:
+//   requerimiento (módulo, descripción y adjuntos) y gestión (prioridad, estado, recurso
+//   asignado e historial).
 (function () {
   const { esc } = window.UI;
 
@@ -18,6 +20,9 @@
   const fechaHora = (f) => new Date(f).toLocaleString('es-GT', {
     timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  }).replace(',', '');
+  const fechaCorta = (f) => new Date(f).toLocaleString('es-GT', {
+    timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
   }).replace(',', '');
   const tamano = (b) => b == null ? '' : b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
   const iconoArchivo = (tipo = '') => tipo.startsWith('image/') ? 'ti-photo' : tipo === 'application/pdf' ? 'ti-file-type-pdf' : 'ti-file';
@@ -42,18 +47,33 @@
     let filtroEstado = 0;   // 0 = todos
     let filtroPrioridad = 0;
 
-    cont.innerHTML = '<div id="tk-ticket"></div><section class="panel" id="tk-lista"></section>';
+    cont.innerHTML = '<div class="tk-espacio"><section class="tk-bandeja" id="tk-lista"></section><section class="tk-detalle" id="tk-ticket"></section></div>';
+    const espacio = cont.querySelector('.tk-espacio');
     const pTicket = cont.querySelector('#tk-ticket');
     const pLista = cont.querySelector('#tk-lista');
 
     const recurso = (id) => recursos.find((x) => x.id === id);
     const nombreRecurso = (id) => { const r = recurso(id); return r ? r.nombre || r.usuario : ''; };
-    const nombreModulo = (id) => { const m = modulos.find((x) => x.id === id); return m ? m.descripcion : 'Todos'; };
+    const modulo = (id) => modulos.find((x) => x.id === id);
+    const nombreModulo = (id) => { const m = modulo(id); return m ? m.descripcion : 'Todos'; };
     const nombreEstado = (c) => (estados.find((e) => e.codigo === c) || {}).nombre || '';
     const marcaEstado = (c) => `<span class="tk-estado e${c}">${esc(nombreEstado(c))}</span>`;
     const puedeEditar = (t) => !t || window.FIN.puedeEditarCatalogos() || [t.perfil_id, t.recurso_id].includes(yo.id);
 
+    // El espacio de trabajo ocupa el alto visible de la ventana, debajo del menú.
+    function ajustarAlto() {
+      if (!espacio.isConnected) return window.removeEventListener('resize', ajustarAlto);
+      const arriba = espacio.getBoundingClientRect().top + window.scrollY;
+      const alto = Math.max(560, window.innerHeight - arriba - 16);
+      espacio.style.setProperty('--tk-alto', `${alto}px`);
+      // Lo que sobra debajo (márgenes del contenedor) se descuenta para no desplazar la página.
+      const sobra = document.documentElement.scrollHeight - window.innerHeight;
+      if (sobra > 0 && alto - sobra >= 560) espacio.style.setProperty('--tk-alto', `${alto - sobra}px`);
+    }
+    window.addEventListener('resize', ajustarAlto);
+
     async function iniciar() {
+      ajustarAlto();
       const [e, r, o, l, md] = await Promise.all([
         sb.from('estados_ticket').select('*').eq('activo', true).order('codigo'),
         sb.rpc('recursos_ticket'),
@@ -63,7 +83,7 @@
       ]);
       const err = e.error || r.error;
       if (err) {
-        pTicket.innerHTML = `<section class="panel"><p class="vacio">${/estados_ticket|recursos_ticket/.test(err.message) ? 'Falta instalar el script 21 (tickets) en Supabase.' : esc(err.message)}</p></section>`;
+        espacio.innerHTML = `<section class="panel"><p class="vacio">${/estados_ticket|recursos_ticket/.test(err.message) ? 'Falta instalar el script 21 (tickets) en Supabase.' : esc(err.message)}</p></section>`;
         return;
       }
       estados = e.data;
@@ -84,7 +104,7 @@
       pintarLista();
     }
 
-    // ---------- Lista ----------
+    // ---------- Bandeja ----------
     function pintarLista() {
       const q = buscar.trim().toLowerCase();
       const filas = tickets.filter((t) =>
@@ -94,39 +114,40 @@
           .some((v) => String(v || '').toLowerCase().includes(q))));
       const cuenta = (c) => tickets.filter((t) => t.estado === c).length;
       pLista.innerHTML = `
-        <div class="panel-cab">
+        <header class="tk-bandeja-cab">
           <h2>Tickets <small>${filas.length === tickets.length ? tickets.length : `${filas.length} de ${tickets.length}`}</small></h2>
-        </div>
+          <button type="button" class="boton primario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>
+        </header>
         <div class="tk-filtros" role="group" aria-label="Filtrar por estado">
           <button type="button" class="tk-chip ${!filtroEstado ? 'activo' : ''}" data-filtro-estado="0">Todos <b>${tickets.length}</b></button>
-          ${estados.map((e) => `<button type="button" class="tk-chip ${filtroEstado === e.codigo ? 'activo' : ''}" data-filtro-estado="${e.codigo}"><i class="tk-punto-color e${e.codigo}" aria-hidden="true"></i>${esc(e.nombre)} <b>${cuenta(e.codigo)}</b></button>`).join('')}
+          ${estados.map((e) => `<button type="button" class="tk-chip ${filtroEstado === e.codigo ? 'activo' : ''}" data-filtro-estado="${e.codigo}" title="${esc(e.nombre)}"><i class="tk-punto-color e${e.codigo}" aria-hidden="true"></i>${esc(e.nombre)} <b>${cuenta(e.codigo)}</b></button>`).join('')}
         </div>
         <div class="tk-barra">
-          <input type="search" class="buscar" data-buscar placeholder="Buscar por ticket, requerimiento, solicitante o recurso" value="${esc(buscar)}">
+          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar ticket, requerimiento, módulo…" value="${esc(buscar)}" aria-label="Buscar tickets"></label>
           <select data-filtro-prioridad aria-label="Filtrar por prioridad">
-            <option value="0">Todas las prioridades</option>
+            <option value="0">Prioridad: todas</option>
             ${PRIORIDADES.map((p) => `<option value="${p.valor}" ${filtroPrioridad === p.valor ? 'selected' : ''}>${p.valor}. ${esc(p.texto)}</option>`).join('')}
           </select>
         </div>
-        <div class="tabla-desplazable">
-          <table class="tabla tk-tabla">
-            <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Módulo</th><th>Requerimiento</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th><th><span class="oculto">Acciones</span></th></tr></thead>
-            <tbody>
-              ${filas.map((t) => `
-                <tr class="tk-fila ${actual && actual.id === t.id ? 'tk-actual' : ''}" data-ticket="${t.id}" tabindex="0">
-                  <td class="fuerte">${esc(t.numero)}</td>
-                  <td>${esc(fechaHora(t.fecha))}</td>
-                  <td>${esc(t.usuario || '')}</td>
-                  <td>${t.modulo_id ? esc(nombreModulo(t.modulo_id)) : '<span class="tk-tenue">Todos</span>'}</td>
-                  <td class="tk-desc" title="${esc(t.descripcion)}">${esc(t.descripcion)}</td>
-                  <td>${marcaPrioridad(t.prioridad)}</td>
-                  <td>${marcaEstado(t.estado)}</td>
-                  <td>${t.recurso_id ? `<span class="tk-persona"><span class="tk-avatar">${esc(iniciales(nombreRecurso(t.recurso_id)))}</span>${esc(nombreRecurso(t.recurso_id))}</span>` : '<span class="tk-tenue">Sin asignar</span>'}</td>
-                  <td class="tk-accion"><button type="button" class="boton secundario-sm" data-ticket="${t.id}" title="${puedeEditar(t) ? 'Modificar' : 'Ver'} el ticket ${esc(t.numero)}"><i class="ti ${puedeEditar(t) ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i> ${puedeEditar(t) ? 'Modificar' : 'Ver'}</button></td>
-                </tr>`).join('') || `<tr><td colspan="9" class="vacio">${tickets.length ? 'Ningún ticket coincide con los filtros.' : 'Todavía no hay tickets.'}</td></tr>`}
-            </tbody>
-          </table>
-        </div>`;
+        <ul class="tk-items">
+          ${filas.map((t) => `
+            <li class="tk-item ${actual && actual.id === t.id ? 'actual' : ''}" data-ticket="${t.id}" tabindex="0" aria-label="Ticket ${esc(t.numero)}">
+              <i class="tk-franja ${prioridad(t.prioridad).clase}" aria-hidden="true"></i>
+              <div class="tk-item-linea">
+                <b>${esc(t.numero)}</b>
+                ${marcaEstado(t.estado)}
+                <button type="button" class="icono-boton tk-item-editar" data-ticket="${t.id}" title="${puedeEditar(t) ? 'Modificar' : 'Ver'} el ticket ${esc(t.numero)}"><i class="ti ${puedeEditar(t) ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i></button>
+              </div>
+              <p class="tk-item-desc">${esc(t.descripcion)}</p>
+              <div class="tk-item-pie">
+                <span><i class="ti ti-clock" aria-hidden="true"></i>${esc(fechaCorta(t.fecha))}</span>
+                <span><i class="ti ti-user" aria-hidden="true"></i>${esc(t.usuario || '')}</span>
+                <span><i class="ti ti-apps" aria-hidden="true"></i>${esc(modulo(t.modulo_id)?.siglas || 'Todos')}</span>
+                ${marcaPrioridad(t.prioridad)}
+                ${t.recurso_id && nombreRecurso(t.recurso_id) ? `<span class="tk-avatar" title="Recurso: ${esc(nombreRecurso(t.recurso_id))}">${esc(iniciales(nombreRecurso(t.recurso_id)))}</span>` : ''}
+              </div>
+            </li>`).join('') || `<li class="tk-vacio"><i class="ti ti-inbox" aria-hidden="true"></i>${tickets.length ? 'Ningún ticket coincide con los filtros.' : 'Todavía no hay tickets.'}</li>`}
+        </ul>`;
     }
 
     async function abrir(t) {
@@ -157,88 +178,84 @@
       const locTexto = t ? `${t.localidad?.codigo} · ${t.localidad?.nombre_comercial}` : loc ? `${loc.codigo} · ${loc.nombre_comercial}` : 'Sin localidad';
       pTicket.innerHTML = `
         <form class="tk-form" novalidate>
-          <section class="panel tk-cabecera">
-            <div class="tk-titulo">
-              <span class="tk-icono"><i class="ti ti-ticket" aria-hidden="true"></i></span>
-              <div>
-                <small>${t ? 'Ticket' : 'Nuevo ticket'}</small>
-                <h2>${t ? esc(t.numero) : 'Se numera al generarlo'}</h2>
-              </div>
-              <div class="tk-marcas" data-marcas>${marcaEstado(estado)}${marcaPrioridad(prio)}</div>
-              <div class="tk-titulo-acciones">
-                ${t ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo ticket</button>' : ''}
-                ${editable && t ? '<button type="button" class="boton secundario-sm" data-accion="descartar"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Descartar cambios</button>' : ''}
-                ${editable ? `<button type="submit" class="boton primario-sm"><i class="ti ${t ? 'ti-device-floppy' : 'ti-send'}" aria-hidden="true"></i> ${t ? 'Guardar cambios' : 'Generar ticket'}</button>` : ''}
-              </div>
+          <header class="tk-titulo">
+            <span class="tk-icono"><i class="ti ti-ticket" aria-hidden="true"></i></span>
+            <div class="tk-titulo-texto">
+              <small>${t ? (editable ? 'Modificando ticket' : 'Ticket (solo consulta)') : 'Nuevo ticket'}</small>
+              <h2>${t ? esc(t.numero) : 'Se numera al generarlo'}</h2>
             </div>
-            <p class="modal-error tk-error" role="alert"></p>
-            ${t && !editable ? '<p class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo quien lo creó, el recurso asignado o un administrador pueden modificar este ticket.</p>' : ''}
-            ${t && editable ? '<p class="tk-aviso editando"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando el ticket: cambia lo que necesites y presiona «Guardar cambios».</p>' : ''}
-            <dl class="tk-datos">
-              <div><dt><i class="ti ti-building" aria-hidden="true"></i> Organización</dt><dd>${esc(orgTexto)}</dd></div>
-              <div><dt><i class="ti ti-map-pin" aria-hidden="true"></i> Localidad</dt><dd>${esc(locTexto)}</dd></div>
-              <div><dt><i class="ti ti-user" aria-hidden="true"></i> Solicitante</dt><dd>${esc(t ? t.usuario : (yo.usuario || '').toUpperCase())}</dd></div>
-              <div><dt><i class="ti ti-clock" aria-hidden="true"></i> Fecha y hora</dt><dd data-reloj="${t ? '' : '1'}">${esc(fechaHora(t ? t.fecha : new Date()))}</dd></div>
-            </dl>
-            <div class="tk-proceso" data-grafica>${grafica(estado)}</div>
-          </section>
+            <div class="tk-marcas" data-marcas>${marcaEstado(estado)}${marcaPrioridad(prio)}</div>
+            <div class="tk-titulo-acciones">
+              ${editable && t ? '<button type="button" class="boton secundario-sm" data-accion="descartar" title="Descartar cambios"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Descartar</button>' : ''}
+              ${editable ? `<button type="submit" class="boton primario-sm"><i class="ti ${t ? 'ti-device-floppy' : 'ti-send'}" aria-hidden="true"></i> ${t ? 'Guardar cambios' : 'Generar ticket'}</button>` : '<span class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo quien lo creó, el recurso asignado o un administrador pueden modificarlo</span>'}
+            </div>
+          </header>
+          <p class="modal-error tk-error" role="alert"></p>
+
+          <dl class="tk-datos">
+            <div><dt><i class="ti ti-building" aria-hidden="true"></i> Organización</dt><dd title="${esc(orgTexto)}">${esc(orgTexto)}</dd></div>
+            <div><dt><i class="ti ti-map-pin" aria-hidden="true"></i> Localidad</dt><dd title="${esc(locTexto)}">${esc(locTexto)}</dd></div>
+            <div><dt><i class="ti ti-user" aria-hidden="true"></i> Solicitante</dt><dd>${esc(t ? t.usuario : (yo.usuario || '').toUpperCase())}</dd></div>
+            <div><dt><i class="ti ti-clock" aria-hidden="true"></i> Fecha y hora</dt><dd data-reloj="${t ? '' : '1'}">${esc(fechaHora(t ? t.fecha : new Date()))}</dd></div>
+          </dl>
+
+          <div class="tk-proceso" data-grafica>${grafica(estado)}</div>
 
           <div class="tk-cuerpo">
-            <section class="panel tk-req">
-              <div class="panel-cab"><h2>Requerimiento</h2></div>
+            <div class="tk-col tk-req">
+              <h3>Requerimiento</h3>
               <label class="campo"><span>Módulo</span>
                 <select name="modulo_id" ${dis}><option value="">Todos los módulos</option>${modulos.map((m) => `<option value="${m.id}" ${t && t.modulo_id === m.id ? 'selected' : ''}>${esc(m.siglas)} · ${esc(m.descripcion)}</option>`).join('')}</select></label>
-              <label class="campo"><span>Descripción del requerimiento *</span>
-                <textarea name="descripcion" rows="6" required ${dis} placeholder="Describe qué se necesita, dónde y para cuándo.">${esc(t ? t.descripcion : '')}</textarea></label>
+              <label class="campo tk-crece"><span>Descripción del requerimiento *</span>
+                <textarea name="descripcion" required ${dis} placeholder="Describe qué se necesita, dónde y para cuándo.">${esc(t ? t.descripcion : '')}</textarea></label>
               <div class="campo">
-                <span>Adjuntos <small class="tk-tenue">${adjuntos.length + pendientes.length || ''}</small></span>
-                ${editable ? `
-                  <label class="tk-zona" data-zona>
-                    <i class="ti ti-cloud-upload" aria-hidden="true"></i>
-                    <span><b>Arrastra archivos o imágenes aquí</b> o haz clic para elegirlos</span>
-                    <small>Máximo 10 MB por archivo</small>
-                    <input type="file" multiple hidden data-archivos>
-                  </label>` : ''}
+                <span>Adjuntos ${adjuntos.length + pendientes.length ? `<small class="tk-tenue">(${adjuntos.length + pendientes.length})</small>` : ''}</span>
                 <div class="tk-adjuntos">
+                  ${editable ? `
+                    <label class="tk-zona" data-zona title="Arrastra archivos aquí o haz clic para elegirlos (máximo 10 MB cada uno)">
+                      <i class="ti ti-cloud-upload" aria-hidden="true"></i><span><b>Adjuntar</b> · arrastra o elige</span>
+                      <input type="file" multiple hidden data-archivos>
+                    </label>` : ''}
                   ${adjuntos.map((a) => `
                     <div class="tk-adjunto">
-                      <button type="button" class="tk-archivo" data-ver="${a.id}" title="Abrir ${esc(a.nombre)}"><i class="ti ${iconoArchivo(a.tipo)}" aria-hidden="true"></i><span>${esc(a.nombre)}</span><small>${tamano(a.tamano)}</small></button>
+                      <button type="button" class="tk-archivo" data-ver="${a.id}" title="Abrir ${esc(a.nombre)} (${tamano(a.tamano)})"><i class="ti ${iconoArchivo(a.tipo)}" aria-hidden="true"></i><span>${esc(a.nombre)}</span></button>
                       ${editable ? `<button type="button" class="icono-boton" data-quitar-adjunto="${a.id}" aria-label="Quitar ${esc(a.nombre)}"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}
                     </div>`).join('')}
                   ${pendientes.map((f, i) => `
-                    <div class="tk-adjunto pendiente">
-                      <span class="tk-archivo"><i class="ti ${iconoArchivo(f.type)}" aria-hidden="true"></i><span>${esc(f.name)}</span><small>${tamano(f.size)} · se sube al guardar</small></span>
+                    <div class="tk-adjunto pendiente" title="${esc(f.name)} · ${tamano(f.size)} · se sube al guardar">
+                      <span class="tk-archivo"><i class="ti ${iconoArchivo(f.type)}" aria-hidden="true"></i><span>${esc(f.name)}</span></span>
                       <button type="button" class="icono-boton" data-quitar-pendiente="${i}" aria-label="Quitar ${esc(f.name)}"><i class="ti ti-x" aria-hidden="true"></i></button>
                     </div>`).join('')}
                   ${!adjuntos.length && !pendientes.length && !editable ? '<small class="tk-tenue">Sin archivos adjuntos.</small>' : ''}
                 </div>
               </div>
-            </section>
+            </div>
 
-            <section class="panel tk-gestion">
-              <div class="panel-cab"><h2>Gestión</h2></div>
+            <div class="tk-col tk-gestion">
+              <h3>Gestión</h3>
               <fieldset class="tk-prioridades" ${dis}>
                 <legend>Prioridad</legend>
                 ${PRIORIDADES.map((p) => `
-                  <label class="tk-opcion-prio ${p.clase}"><input type="radio" name="prioridad" value="${p.valor}" ${prio === p.valor ? 'checked' : ''}><span class="tk-punto-color ${p.clase}" aria-hidden="true"></span>${p.valor}. ${esc(p.texto)}</label>`).join('')}
+                  <label class="tk-opcion-prio ${p.clase}" title="${p.valor}. ${esc(p.texto)}"><input type="radio" name="prioridad" value="${p.valor}" ${prio === p.valor ? 'checked' : ''}><span class="tk-punto-color ${p.clase}" aria-hidden="true"></span>${p.valor}. ${esc(p.texto)}</label>`).join('')}
               </fieldset>
-              <label class="campo"><span>Estado</span>
-                <select name="estado" ${dis}>${estados.map((e) => `<option value="${e.codigo}" ${estado === e.codigo ? 'selected' : ''}>${e.codigo}. ${esc(e.nombre)}</option>`).join('')}</select></label>
-              <label class="campo"><span>Recurso asignado</span>
-                <select name="recurso_id" ${dis}><option value="">Sin asignar</option>${recursos.map((r) => `<option value="${r.id}" ${t && t.recurso_id === r.id ? 'selected' : ''}>${esc(r.nombre || r.usuario)}${r.usuario ? ` (${esc(r.usuario)})` : ''}</option>`).join('')}</select></label>
-              ${t ? `
-                <div class="tk-historial">
-                  <h3>Historial</h3>
-                  <ol>
-                    ${movimientos.slice().reverse().map((m) => `
-                      <li>
-                        <span class="tk-punto-color e${m.estado}" aria-hidden="true"></span>
-                        <div><b>${esc(nombreEstado(m.estado))}</b>${m.recurso_id ? ` · ${esc(nombreRecurso(m.recurso_id))}` : ''}
-                        <small>${esc(fechaHora(m.fecha))} · ${esc(m.usuario || '')}</small></div>
-                      </li>`).join('')}
-                  </ol>
-                </div>` : ''}
-            </section>
+              <div class="tk-dos">
+                <label class="campo"><span>Estado</span>
+                  <select name="estado" ${dis}>${estados.map((e) => `<option value="${e.codigo}" ${estado === e.codigo ? 'selected' : ''}>${e.codigo}. ${esc(e.nombre)}</option>`).join('')}</select></label>
+                <label class="campo"><span>Recurso asignado</span>
+                  <select name="recurso_id" ${dis}><option value="">Sin asignar</option>${recursos.map((r) => `<option value="${r.id}" ${t && t.recurso_id === r.id ? 'selected' : ''}>${esc(r.nombre || r.usuario)}${r.usuario ? ` (${esc(r.usuario)})` : ''}</option>`).join('')}</select></label>
+              </div>
+              <div class="tk-historial tk-crece">
+                <span>Historial</span>
+                ${t ? `<ol>
+                  ${movimientos.slice().reverse().map((m) => `
+                    <li>
+                      <span class="tk-punto-color e${m.estado}" aria-hidden="true"></span>
+                      <div><b>${esc(nombreEstado(m.estado))}</b>${m.recurso_id && nombreRecurso(m.recurso_id) ? ` · ${esc(nombreRecurso(m.recurso_id))}` : ''}
+                      <small>${esc(fechaHora(m.fecha))} · ${esc(m.usuario || '')}</small></div>
+                    </li>`).join('')}
+                </ol>` : '<p class="tk-tenue">El historial de estados se registra al generar el ticket.</p>'}
+              </div>
+            </div>
           </div>
         </form>`;
     }
@@ -255,7 +272,7 @@
               <li class="tk-paso ${clase}" ${e.codigo === estado ? 'aria-current="step"' : ''} title="${esc(e.descripcion || '')}">
                 <span class="tk-punto">${e.codigo < estado ? '<i class="ti ti-check" aria-hidden="true"></i>' : e.codigo}</span>
                 <span class="tk-paso-nombre">${esc(e.nombre)}</span>
-                <small>${llegada[e.codigo] && e.codigo <= estado ? esc(fechaHora(llegada[e.codigo])) : ''}</small>
+                <small>${llegada[e.codigo] && e.codigo <= estado ? esc(fechaCorta(llegada[e.codigo])) : ''}</small>
               </li>`;
           }).join('')}
         </ol>`;
@@ -321,10 +338,7 @@
       const fe = e.target.closest('[data-filtro-estado]');
       if (fe) { filtroEstado = Number(fe.dataset.filtroEstado); return pintarLista(); }
       const fila = e.target.closest('[data-ticket]');
-      if (fila) {
-        await abrir(tickets.find((x) => String(x.id) === fila.dataset.ticket));
-        return pTicket.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (fila) return abrir(tickets.find((x) => String(x.id) === fila.dataset.ticket));
       const ver = e.target.closest('[data-ver]');
       if (ver) {
         const a = adjuntos.find((x) => String(x.id) === ver.dataset.ver);
@@ -346,8 +360,8 @@
       }
     });
     cont.addEventListener('keydown', (e) => {
-      const fila = e.target.closest('[data-ticket]');
-      if (fila && e.key === 'Enter') abrir(tickets.find((x) => String(x.id) === fila.dataset.ticket));
+      const fila = e.target.closest('li[data-ticket]');
+      if (fila && e.target === fila && e.key === 'Enter') abrir(tickets.find((x) => String(x.id) === fila.dataset.ticket));
     });
     cont.addEventListener('change', (e) => {
       if (e.target.matches('[data-archivos]')) return agregarArchivos(e.target.files);
@@ -387,7 +401,8 @@
       const form = pTicket.querySelector('.tk-form');
       const v = form ? {
         descripcion: form.elements.descripcion.value, estado: form.elements.estado.value,
-        recurso_id: form.elements.recurso_id.value, modulo_id: form.elements.modulo_id.value, prioridad: form.querySelector('[name=prioridad]:checked').value
+        recurso_id: form.elements.recurso_id.value, modulo_id: form.elements.modulo_id.value,
+        prioridad: form.querySelector('[name=prioridad]:checked').value
       } : null;
       pintarTicket();
       if (!v) return;
