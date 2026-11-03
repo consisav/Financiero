@@ -1,4 +1,4 @@
-// Catálogos iniciales · Monedas y tipos de cambio (maestro - detalle).
+// Catálogos · Parámetros · Tipos de cambio (maestro - detalle).
 // Maestro: monedas. Detalle: tipos de cambio de la moneda seleccionada, del más reciente al más
 // antiguo, con la tasa de venta y la de compra expresadas en otra moneda ("cambio"), que por
 // defecto es la moneda de integración de Parámetros generales. "Tasa cambio actual" graba en ese

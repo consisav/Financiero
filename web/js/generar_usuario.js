@@ -1,4 +1,4 @@
-// Catálogos · Iniciales · Generar usuario y clave (solo administrador).
+// Catálogos · Usuarios · Generar clave (solo administrador).
 // Usuario = iniciales de los nombres + primer apellido completo: Oliver Asturias → Oasturias,
 // Juan Carlos Tut → JCtut. La clave la genera Supabase (public.generar_clave), se muestra una
 // sola vez y vence hoy, para que el usuario la cambie al entrar.

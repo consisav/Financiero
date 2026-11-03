@@ -264,7 +264,7 @@
             </button>
             <div class="menu-panel" data-panel="${g.id}" hidden>
               ${subgruposDe(m, g.id).map((s) => `
-                <details class="subgrupo" ${actual && s.pantallas.includes(actual) ? 'open' : ''}>
+                <details class="subgrupo" name="sub-${m.id}-${g.id}" ${actual && s.pantallas.includes(actual) ? 'open' : ''}>
                   <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
                   <ul>
                     ${s.pantallas.map((p) => `
