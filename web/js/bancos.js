@@ -167,34 +167,32 @@
       abrirBanco(bancoActual, cuentaActual?.id);
     }
 
+    // Lista compacta de bancos: siglas, nombre, cuentas en la localidad y costo de transferencia.
     function pintarMaestro() {
+      const { monto } = window.BANCOS.fmt;
       ctx.pMae.innerHTML = `
         <header class="tk-bandeja-cab tg-cab"><h2>Bancos del sistema <small>${ctx.bancos.length}</small></h2>
-          <span class="rp-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Bancos del sistema bancario de Guatemala (verifica el listado vigente con la SIB)</span></header>
-        <div class="ta-tabla">
-          <table>
-            <thead><tr><th>Banco</th><th>Nombre</th><th>Siglas</th><th class="num">Costo de transferencias</th><th class="num">Cuentas en esta localidad</th><th>Estado</th><th><span class="oculto">Acciones</span></th></tr></thead>
-            <tbody>
-              ${ctx.bancos.map((b) => `
-                <tr class="${bancoActual && bancoActual.id === b.id ? 'actual' : ''}" data-banco="${b.id}" tabindex="0">
-                  <td class="fuerte">${b.codigo}</td>
-                  <td>${esc(b.nombre)}</td>
-                  <td>${esc(b.siglas || '')}</td>
-                  <td class="num">${b.costo_transferencia != null ? window.BANCOS.fmt.monto(b.costo_transferencia) : ''}</td>
-                  <td class="num">${cuentas.filter((c) => c.banco_id === b.id).length || ''}</td>
-                  <td>${window.UI.estado(b.activo)}</td>
-                  <td class="tk-acciones">${ctx.admin ? `<button type="button" class="tk-accion-btn" data-editar-banco="${b.id}"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>` : ''}</td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
+          <span class="rp-nota" title="Bancos del sistema bancario de Guatemala: verifica el listado vigente con la SIB"><i class="ti ti-info-circle" aria-hidden="true"></i> SIB</span></header>
+        <label class="bk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar-banco placeholder="Buscar banco…" aria-label="Buscar banco"></label>
+        <ul class="bk-bancos">
+          ${ctx.bancos.map((b) => {
+            const n = cuentas.filter((c) => c.banco_id === b.id).length;
+            return `
+            <li class="${bancoActual && bancoActual.id === b.id ? 'actual' : ''} ${b.activo ? '' : 'inactivo'}" data-banco="${b.id}" tabindex="0" data-texto="${esc(`${b.codigo} ${b.nombre} ${b.siglas || ''}`.toLowerCase())}">
+              <span class="bk-cod">${b.codigo}</span>
+              <span class="bk-banco-txt"><b>${esc(b.siglas || b.nombre)}</b><small>${esc(b.nombre)}${b.costo_transferencia != null ? ` · Transf. ${monto(b.costo_transferencia)}` : ''}${b.activo ? '' : ' · Inactivo'}</small></span>
+              <span class="bk-n ${n ? 'con' : ''}" title="Cuentas en esta localidad">${n}</span>
+              ${ctx.admin ? `<button type="button" class="bk-editar" data-editar-banco="${b.id}" title="Modificar banco" aria-label="Modificar ${esc(b.nombre)}"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}
+            </li>`;
+          }).join('')}
+        </ul>`;
     }
 
     function abrirBanco(b, cuentaId) {
       bancoActual = b;
       const lista = cuentas.filter((c) => b && c.banco_id === b.id);
       cuentaActual = lista.find((c) => c.id === cuentaId) || lista[0] || null;
-      ctx.pMae.querySelectorAll('tr[data-banco]').forEach((tr) => tr.classList.toggle('actual', !!b && tr.dataset.banco === String(b.id)));
+      ctx.pMae.querySelectorAll('[data-banco]').forEach((li) => li.classList.toggle('actual', !!b && li.dataset.banco === String(b.id)));
       pintarDetalle();
     }
 
@@ -211,15 +209,22 @@
       const nCheques = v.cheque_inicial && v.cheque_final ? Number(v.cheque_final) - Number(v.cheque_inicial) + 1 : 0;
       const disponibles = Math.max(0, nCheques - Number(v.cheques_utilizados || 0));
       const { monto } = window.BANCOS.fmt;
+      const totalQ = lista.reduce((s, x) => s + (saldos[x.id] || 0) * (ctx.moneda(x.moneda_id)?.cambio || 1), 0);
+      const bajos = lista.filter((x) => saldos[x.id] < Number(x.saldo_minimo)).length;
       ctx.pDet.innerHTML = `
         <div class="tk-form ta-form bk-form-cuentas">
           <header class="tk-titulo">
             <span class="tk-icono"><i class="ti ti-building-bank" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>Cuentas bancarias de ${esc(ctx.localidad(ctx.sel.loc)?.codigo || '')}</small><h2>${b.codigo} · ${esc(b.nombre)}</h2></div>
+            <div class="tk-titulo-texto"><small>Cuentas bancarias de ${esc(ctx.localidad(ctx.sel.loc)?.codigo || '')} · ${esc(ctx.localidad(ctx.sel.loc)?.nombre_comercial || '')}</small><h2>${b.codigo} · ${esc(b.nombre)}</h2></div>
             <div class="tk-titulo-acciones">${ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nueva-cuenta"><i class="ti ti-plus" aria-hidden="true"></i> Nueva cuenta</button>' : ''}</div>
           </header>
           <div class="ta-det-grid bk-grid">
-            <div class="ta-col">
+            <div class="ta-col bk-col-cuentas">
+              <div class="bk-kpis">
+                <div><span>Cuentas</span><b>${lista.length}</b><small>${lista.filter((x) => x.activo).length} activas</small></div>
+                <div><span>Saldo total</span><b>Q ${monto(totalQ)}</b><small>Al cambio del día</small></div>
+                <div class="${bajos ? 'bk-alerta' : ''}"><span>Bajo su mínimo</span><b>${bajos}</b><small>${bajos ? 'Revisar disponibilidad' : 'Todas en su mínimo'}</small></div>
+              </div>
               <h3 class="ta-col-titulo"><i class="ti ti-list" aria-hidden="true"></i> Cuentas bancarias</h3>
               <div class="pc-lineas">
                 <table>
@@ -238,28 +243,30 @@
             <form class="ta-col bk-ficha" novalidate>
               <h3 class="ta-col-titulo"><i class="ti ${c ? 'ti-pencil' : 'ti-plus'}" aria-hidden="true"></i> ${c ? `Cuenta ${esc(c.numero)}` : 'Nueva cuenta bancaria'}</h3>
               <div class="bk-ficha-campos">
-                <label class="campo"><span>Cuenta bancaria *</span><input name="numero" value="${esc(v.numero || '')}" maxlength="30" ${dis}></label>
-                <label class="campo bk-ancho"><span>Nombre *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="120" placeholder="Ej. MAVISA PHARMACEUTICALS Q" ${dis}></label>
-                <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((m) => `<option value="${m.id}" ${v.moneda_id === m.id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
-                <label class="campo"><span>Saldo mínimo</span><input type="number" step="0.01" name="saldo_minimo" value="${v.saldo_minimo ?? 0}" ${dis}></label>
-                <label class="campo"><span>Saldo inicial</span><input type="number" step="0.01" name="saldo_inicial" value="${v.saldo_inicial ?? 0}" ${dis}></label>
-                <label class="campo"><span>Saldo inicial al</span><input type="date" name="fecha_saldo_inicial" value="${esc(v.fecha_saldo_inicial || '')}" ${dis}></label>
+                <label class="campo bk-c2"><span>Cuenta bancaria *</span><input name="numero" value="${esc(v.numero || '')}" maxlength="30" ${dis}></label>
+                <label class="campo bk-c2"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((m) => `<option value="${m.id}" ${v.moneda_id === m.id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
+                <label class="campo bk-c2"><span>Saldo mínimo</span><input type="number" step="0.01" name="saldo_minimo" value="${v.saldo_minimo ?? 0}" ${dis}></label>
+                <label class="campo bk-c6"><span>Nombre *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="120" placeholder="Ej. MAVISA PHARMACEUTICALS Q" ${dis}></label>
+                <label class="campo bk-c2"><span>Saldo inicial</span><input type="number" step="0.01" name="saldo_inicial" value="${v.saldo_inicial ?? 0}" ${dis}></label>
+                <label class="campo bk-c2"><span>Saldo inicial al</span><input type="date" name="fecha_saldo_inicial" value="${esc(v.fecha_saldo_inicial || '')}" ${dis}></label>
+                <label class="pc-check bk-c2 bk-activa"><input type="checkbox" name="activo" ${v.activo !== false ? 'checked' : ''} ${dis}> Cuenta activa</label>
+                <label class="campo bk-c3"><span>Cuenta contable</span><input list="bk-contables" name="cuenta" value="${esc(cc ? cc.codigo : '')}" placeholder="Código de la cuenta de movimiento" ${dis}>
+                  <small class="bk-nombre-cuenta" data-nombre-cuenta>${esc(cc ? cc.nombre : '')}</small></label>
+                <label class="campo bk-c3"><span>Formato de cheque (reporte)</span><input name="reporte" value="${esc(v.reporte || '')}" maxlength="60" ${dis}></label>
               </div>
               <fieldset class="bk-chequera">
                 <legend><i class="ti ti-writing" aria-hidden="true"></i> Chequera</legend>
                 <label class="campo"><span>Cheque inicial</span><input type="number" min="1" name="cheque_inicial" value="${v.cheque_inicial ?? ''}" ${dis}></label>
                 <label class="campo"><span>Cheque final</span><input type="number" min="1" name="cheque_final" value="${v.cheque_final ?? ''}" ${dis}></label>
+                <label class="campo"><span>Utilizados</span><input type="number" min="0" name="cheques_utilizados" value="${v.cheques_utilizados ?? 0}" ${dis}></label>
+                <label class="campo"><span>Mínimo</span><input type="number" min="0" name="minimo_cheques" value="${v.minimo_cheques ?? 0}" ${dis}></label>
                 <div class="ta-auto"><span>No. cheques</span><b data-ncheques>${nCheques}</b></div>
-                <label class="campo"><span>Cheques utilizados</span><input type="number" min="0" name="cheques_utilizados" value="${v.cheques_utilizados ?? 0}" ${dis}></label>
-                <label class="campo"><span>Número mínimo de cheques</span><input type="number" min="0" name="minimo_cheques" value="${v.minimo_cheques ?? 0}" ${dis}></label>
-                <div class="ta-auto ${disponibles <= Number(v.minimo_cheques || 0) && nCheques ? 'ts-alerta' : ''}"><span>Cheques disponibles</span><b data-disponibles>${disponibles}</b></div>
-                <label class="campo bk-ancho"><span>Formato de cheque (reporte)</span><input name="reporte" value="${esc(v.reporte || '')}" maxlength="60" ${dis}></label>
+                <div class="ta-auto ${disponibles <= Number(v.minimo_cheques || 0) && nCheques ? 'ts-alerta' : ''}"><span>Disponibles</span><b data-disponibles>${disponibles}</b></div>
               </fieldset>
-              <label class="campo"><span>Cuenta contable</span><input list="bk-contables" name="cuenta" value="${esc(cc ? cc.codigo : '')}" placeholder="Código de la cuenta de movimiento" ${dis}>
-                <small class="bk-nombre-cuenta" data-nombre-cuenta>${esc(cc ? cc.nombre : '')}</small></label>
-              <label class="pc-check"><input type="checkbox" name="activo" ${v.activo !== false ? 'checked' : ''} ${dis}> Activa</label>
-              <p class="modal-error tk-error" role="alert"></p>
-              ${ctx.admin ? `<div class="ta-boton">${c ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="eliminar-cuenta"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>' : ''}<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${c ? 'Guardar cambios' : 'Crear cuenta'}</button></div>` : ''}
+              <div class="bk-pie">
+                <p class="modal-error tk-error" role="alert"></p>
+                ${ctx.admin ? `<div class="ta-boton">${c ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="eliminar-cuenta"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>' : ''}<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${c ? 'Guardar cambios' : 'Crear cuenta'}</button></div>` : ''}
+              </div>
               <datalist id="bk-contables">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
             </form>
           </div>
@@ -323,6 +330,11 @@
       if (cambio === 'org' || cambio === 'loc') { if (cambio === 'org') ctx.filtros('', ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nuevo-banco"><i class="ti ti-plus" aria-hidden="true"></i> Banco</button>' : ''); cuentaActual = null; return consultar(); }
     });
     cont.addEventListener('input', (e) => {
+      if (e.target.matches('[data-buscar-banco]')) {
+        const q = e.target.value.trim().toLowerCase();
+        ctx.pMae.querySelectorAll('li[data-banco]').forEach((li) => { li.hidden = !!q && !li.dataset.texto.includes(q); });
+        return;
+      }
       const form = e.target.closest('.bk-ficha');
       if (!form) return;
       if (e.target.name === 'cuenta') {
@@ -339,7 +351,7 @@
     cont.addEventListener('click', async (e) => {
       const eb = e.target.closest('[data-editar-banco]');
       if (eb) return formBanco(ctx.bancos.find((b) => String(b.id) === eb.dataset.editarBanco));
-      const fb = e.target.closest('tr[data-banco]');
+      const fb = e.target.closest('li[data-banco]');
       if (fb) return abrirBanco(ctx.bancos.find((b) => String(b.id) === fb.dataset.banco));
       const fc = e.target.closest('tr[data-cuenta]');
       if (fc) { cuentaActual = cuentas.find((x) => String(x.id) === fc.dataset.cuenta); return pintarDetalle(); }
