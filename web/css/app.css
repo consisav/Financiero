@@ -546,7 +546,16 @@ p.vacio { color: var(--tenue); }
 .barra-guardar .modal-error { margin: 0; }
 
 /* Cuentas contables: encabezado de una línea, bloques compactos y ficha única */
-.cc-encabezado { padding: 12px 16px; }
+.cc-encabezado { padding: 8px 12px; margin-bottom: 14px; }
+.cc-contexto { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; font: inherit; font-size: 14px; color: var(--texto); background: var(--fondo); border: 1px solid var(--borde); border-radius: 999px; padding: 6px 14px; cursor: pointer; text-align: left; }
+.cc-contexto:hover { border-color: var(--m-t, var(--acento)); }
+.cc-contexto > .ti:first-child { color: var(--m-t, var(--acento)); font-size: 17px; }
+.cc-contexto span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-contexto b { font-weight: 700; }
+.cc-contexto .flecha { color: var(--tenue); transition: transform .15s; }
+.cc-contexto.abierto { background: var(--m-f, var(--acento-fondo)); border-color: var(--m-f, var(--acento-fondo)); }
+.cc-contexto.abierto .flecha { transform: rotate(180deg); }
+.cc-panel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--borde); }
 .cc-barra { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .cc-barra .selector-org select { max-width: 260px; }
 .cc-espacio { flex: 1; }

@@ -49,7 +49,7 @@
   window.PANTALLAS.cuentas = async function (cont, m) {
     const sb = window.FIN.sb;
     const editable = window.FIN.puedeEditarCatalogos();
-    const estado = { orgs: [], org: null, locs: [], loc: null, versiones: [], version: null, tipos: [], arbol: null };
+    const estado = { orgs: [], org: null, locs: [], loc: null, versiones: [], version: null, tipos: [], arbol: null, contexto: false };
 
     try {
       const [orgs, tipos] = await Promise.all([organizaciones(sb), sb.from('tipos_cuenta').select('id, codigo, descripcion, activo').order('codigo')]);
@@ -98,20 +98,30 @@
       const org = estado.orgs.find((o) => o.id === estado.org);
       const loc = locActual();
       const v = estado.version;
+      // Empresa, localidad y versión quedan ocultas tras el botón de contexto; a la vista solo Imprimir.
+      const abierto = estado.contexto || !loc || !v;
       pVer.innerHTML = `
         <div class="cc-barra">
+          <button type="button" class="cc-contexto ${abierto ? 'abierto' : ''}" data-accion="contexto" aria-expanded="${abierto}" title="Cambiar empresa, localidad o versión">
+            <i class="ti ti-building" aria-hidden="true"></i>
+            <span><b>${esc(org.nombre)}</b>${loc ? ` · ${esc(loc.codigo)} ${esc(loc.nombre_comercial)}` : ''}${v ? ` · Versión ${v.version}` : ''}<span id="cc-resumen"></span></span>
+            <i class="ti ti-chevron-down flecha" aria-hidden="true"></i>
+          </button>
+          <span class="cc-espacio"></span>
+          ${v ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
+        </div>
+        <div class="cc-panel" ${abierto ? '' : 'hidden'}>
           <label class="selector-org">Empresa <select data-org>${opcionesOrg(estado.orgs, estado.org)}</select></label>
-          <label class="selector-org">Localidad <select data-loc ${estado.locs.length ? "" : "disabled"}>
-            ${estado.locs.length ? estado.locs.map((l) => `<option value="${l.id}" ${l.id === estado.loc ? "selected" : ""}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join("") : "<option>Sin localidades</option>"}
+          <label class="selector-org">Localidad <select data-loc ${estado.locs.length ? '' : 'disabled'}>
+            ${estado.locs.length ? estado.locs.map((l) => `<option value="${l.id}" ${l.id === estado.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('') : '<option>Sin localidades</option>'}
           </select></label>
-          <label class="selector-org">Versión <select data-version ${estado.versiones.length ? "" : "disabled"}>
-            ${estado.versiones.length ? estado.versiones.map((x) => `<option value="${x.id}" ${v && x.id === v.id ? "selected" : ""}>${esc(textoVersion(x))}</option>`).join("") : "<option>Sin versiones</option>"}
+          <label class="selector-org">Versión <select data-version ${estado.versiones.length ? '' : 'disabled'}>
+            ${estado.versiones.length ? estado.versiones.map((x) => `<option value="${x.id}" ${v && x.id === v.id ? 'selected' : ''}>${esc(textoVersion(x))}</option>`).join('') : '<option>Sin versiones</option>'}
           </select></label>
-          ${editable && v ? `<button type="button" class="icono-editar" data-editar-version="${v.id}" aria-label="Modificar versión" title="Modificar versión"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ""}
-          ${editable && loc ? '<button type="button" class="boton secundario-sm" data-accion="nueva-version">+ Versión</button>' : ""}
+          ${editable && v ? `<button type="button" class="icono-editar" data-editar-version="${v.id}" aria-label="Modificar versión" title="Modificar versión"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}
+          ${editable && loc ? '<button type="button" class="boton secundario-sm" data-accion="nueva-version">+ Versión</button>' : ''}
           <span class="cc-espacio"></span>
           <span id="cc-cifras"></span>
-          ${v ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ""}
         </div>
         <div id="cc-plantilla"></div>
         ${!loc ? `<p class="vacio">${esc(org.nombre)} todavía no tiene localidades. Las cuentas contables pertenecen a una localidad: crea una en <a href="#/${m.id}/organizaciones">Catálogos · Organizaciones</a>.</p>`
@@ -132,6 +142,8 @@
         </div>` : "";
       const niveles = filas.reduce((n, f) => Math.max(n, f.nivel), 0);
       const vigentes = filas.filter((f) => f.vigente).length;
+      const resumen = pVer.querySelector('#cc-resumen');
+      if (resumen) resumen.textContent = ` · ${filas.length} cuentas`;
       caja.innerHTML = `
         <span class="rm-stats" role="list" aria-label="Resumen del catálogo">
           <span class="rm-stat" role="listitem"><i class="ti ti-list-tree" aria-hidden="true"></i><b>${filas.length}</b> cuentas</span>
@@ -211,6 +223,13 @@
     });
     pVer.addEventListener('click', (e) => {
       const accion = e.target.closest('[data-accion]');
+      if (accion && accion.dataset.accion === 'contexto') {
+        estado.contexto = accion.getAttribute('aria-expanded') !== 'true';
+        accion.setAttribute('aria-expanded', String(estado.contexto));
+        accion.classList.toggle('abierto', estado.contexto);
+        pVer.querySelector('.cc-panel').hidden = !estado.contexto;
+        return;
+      }
       if (accion && accion.dataset.accion === 'nueva-version') return formVersion();
       if (accion && accion.dataset.accion === 'cargar-estandar') {
         accion.disabled = true;
