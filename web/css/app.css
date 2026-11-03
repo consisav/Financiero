@@ -413,6 +413,16 @@ p.vacio { color: var(--tenue); }
 .rm-ayuda { margin: 0 0 12px; font-size: 13px; color: var(--suave); line-height: 1.5; }
 .rm-filtros { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .rm-filtros .buscar { margin: 0; max-width: 280px; }
+/* Franja compacta de cifras del rol */
+.rm-stats { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 4px; margin: 0 0 10px; padding: 4px; background: var(--fondo); border-radius: 999px; width: fit-content; max-width: 100%; }
+.rm-stat { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--suave); padding: 4px 12px; border-radius: 999px; white-space: nowrap; }
+.rm-stat + .rm-stat { border-left: 1px solid var(--borde); border-radius: 0; }
+.rm-stat .ti { font-size: 15px; color: var(--m-t, var(--acento)); }
+.rm-stat b { font-size: 14px; font-weight: 700; color: var(--texto); }
+.rm-stat.aviso { background: var(--ambar-f); color: var(--ambar-t); border-radius: 999px; border-left-color: transparent; }
+.rm-stat.aviso .ti, .rm-stat.aviso b { color: var(--ambar-t); }
+.rm-avance.mini { width: 56px; height: 5px; margin: 0 0 0 2px; display: inline-block; }
+
 /* Resumen, atajos y matriz plegable por módulo */
 .rm-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
 .rm-kpi { background: var(--fondo); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }

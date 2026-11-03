@@ -219,11 +219,12 @@
           </div>
         </div>
 
-        <div class="rm-kpis">
-          <div class="rm-kpi"><span>Usuarios activos</span><b>${activos}</b></div>
-          <div class="rm-kpi"><span>Pantallas con acceso</span><b>${conVer} <small>/ ${todos.length}</small></b></div>
-          <div class="rm-kpi"><span>Pueden modificar</span><b>${conModificar}</b></div>
-          <div class="rm-kpi ${excepciones ? 'aviso' : ''}"><span>${estado.modo === 'usuario' ? 'Excepciones del usuario' : 'Excepciones de usuarios'}</span><b>${excepciones}</b></div>
+        <div class="rm-stats" role="list" aria-label="Resumen del rol">
+          <span class="rm-stat" role="listitem" title="Usuarios activos con este rol"><i class="ti ti-users" aria-hidden="true"></i><b>${activos}</b> usuario${activos === 1 ? '' : 's'}</span>
+          <span class="rm-stat" role="listitem" title="Pantallas con permiso de ver"><i class="ti ti-layout-grid" aria-hidden="true"></i><b>${conVer}</b>/${todos.length} pantallas
+            <span class="rm-avance mini"><i style="width:${Math.round((conVer / todos.length) * 100)}%" class="${conVer === todos.length ? 'completo' : conVer ? 'parcial' : ''}"></i></span></span>
+          <span class="rm-stat" role="listitem" title="Pantallas donde puede modificar"><i class="ti ti-pencil" aria-hidden="true"></i><b>${conModificar}</b> modifica${conModificar === 1 ? '' : 'n'}</span>
+          <span class="rm-stat ${excepciones ? 'aviso' : ''}" role="listitem" title="${estado.modo === 'usuario' ? 'Excepciones de este usuario' : 'Excepciones de los usuarios del rol'}"><i class="ti ti-alert-triangle" aria-hidden="true"></i><b>${excepciones}</b> excepcion${excepciones === 1 ? '' : 'es'}</span>
         </div>
 
         <p class="rm-ayuda">${estado.modo === 'rol'
