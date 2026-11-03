@@ -385,6 +385,48 @@ p.vacio { color: var(--tenue); }
 .imagen-org.firma { padding-top: 16px; }
 .estado.vencida { background: var(--coral-f); color: var(--coral-t); }
 
+/* Roles módulos (diseño B) */
+.rm-grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 20px; align-items: start; }
+.rm-roles { position: sticky; top: 132px; max-height: calc(100vh - 150px); overflow-y: auto; margin-bottom: 0; }
+.rm-roles .buscar { max-width: none; }
+.rm-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.rm-rol {
+  width: 100%; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  font: inherit; font-size: 14px; text-align: left; color: var(--texto);
+  background: none; border: 1px solid transparent; border-radius: 10px; padding: 8px 10px; cursor: pointer;
+}
+.rm-rol:hover { background: var(--fondo); }
+.rm-rol.activo { background: var(--m-f); border-color: var(--m-f); color: var(--m-t); font-weight: 600; }
+.rm-rol.apagado { color: var(--tenue); }
+.rm-rol-cod { font-size: 12px; color: var(--tenue); font-weight: 600; }
+.rm-rol-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rm-rol-cuenta { min-width: 24px; text-align: center; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 7px; background: var(--fondo); color: var(--suave); }
+.rm-rol.activo .rm-rol-cuenta { background: var(--panel); color: var(--m-t); }
+.rm-derecha { min-width: 0; }
+.rm-desc { margin: 4px 0 0; font-size: 13px; color: var(--suave); }
+.segmentado { display: inline-flex; background: var(--fondo); border: 1px solid var(--borde); border-radius: 999px; padding: 3px; gap: 2px; }
+.segmentado button { font: inherit; font-size: 13px; font-weight: 600; color: var(--suave); background: none; border: 0; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.segmentado button.activo { background: var(--panel); color: var(--m-t, var(--acento)); box-shadow: 0 1px 3px rgba(15, 27, 45, .12); }
+.segmentado button:disabled { opacity: .5; cursor: not-allowed; }
+.rm-ayuda { margin: 0 0 12px; font-size: 13px; color: var(--suave); line-height: 1.5; }
+.rm-filtros { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.rm-filtros .buscar { margin: 0; max-width: 280px; }
+.rm-matriz { max-height: 520px; }
+.tabla.matriz th, .tabla.matriz td { padding: 8px 12px; }
+.tabla.matriz input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--m-t, var(--acento)); cursor: pointer; }
+.tabla.matriz tbody tr { cursor: default; }
+.tabla.matriz tr.grupo-matriz td { background: var(--fondo); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--m-t, var(--acento)); padding: 7px 12px; }
+.tabla.matriz td.excepcion { background: var(--ambar-f); box-shadow: inset 0 0 0 1px var(--ambar-t); }
+.excepcion-muestra { background: var(--ambar-f); color: var(--ambar-t); border: 1px solid var(--ambar-t); border-radius: 4px; padding: 0 5px; }
+.col-todo, .fila-todo { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; text-align: left; }
+.col-todo { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.col-todo:hover, .fila-todo:hover { color: var(--m-t, var(--acento)); text-decoration: underline; }
+.fila-todo { font-size: 14px; }
+.rm-guardar { justify-content: flex-end; }
+.rm-cambios { font-size: 13px; color: var(--tenue); margin-right: auto; }
+.rm-cambios.pendientes { color: var(--ambar-t); font-weight: 600; }
+.boton:disabled { opacity: .5; cursor: not-allowed; }
+
 /* Generar usuario y clave */
 .panel.generar { max-width: 760px; display: flex; flex-direction: column; gap: 16px; }
 .panel.generar .sub { margin: 0; }
@@ -560,6 +602,8 @@ p.vacio { color: var(--tenue); }
   .superior { padding: 0 16px; }
   .fecha { display: none; }
   .vista { padding: 24px 16px 40px; }
+  .rm-grid { grid-template-columns: 1fr; }
+  .rm-roles { position: static; max-height: 320px; }
   .menu-modulo { margin: -24px -16px 20px; padding: 6px 12px; top: 64px; }
   .menu-boton { font-size: 13px; padding: 4px 8px 4px 4px; gap: 6px; }
   .menu-icono { width: 24px; height: 24px; font-size: 14px; }
@@ -580,6 +624,7 @@ p.vacio { color: var(--tenue); }
   .datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bloque-cuerpo { grid-template-columns: 1fr; }
   .param-grid, .datos-con-firma { grid-template-columns: 1fr; }
+  .rm-grid { grid-template-columns: 230px minmax(0, 1fr); }
 }
 
 @media (max-width: 700px) {

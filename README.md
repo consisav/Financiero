@@ -44,6 +44,11 @@ En **Catálogos** de todos los módulos, el subgrupo **Iniciales** (antes de Geo
 - **Módulos** (`web/js/modulos.js`): maestro-detalle de módulos principales y sub-módulos
   (código, siglas, descripción, módulo mayor). Migración `20261102000010_modulos_del_sistema.sql`.
 
+- **Roles módulos** (`web/js/roles_modulos.js`): roles funcionales (Gerente, Contador, Auditor…), usuarios
+  asignados (desde, hasta, estado, asignado por) y matriz de accesos por pantalla (ver, crear,
+  modificar, anular, imprimir). Los permisos se heredan del rol; cada usuario puede tener
+  excepciones. Migración `20261102000011_roles_modulos.sql`.
+
 Migraciones: `20261102000006_usuarios_y_parametros.sql` y `20261102000007_generar_usuario_y_clave.sql`.
 
 ## Catálogos comunes: Geografía
