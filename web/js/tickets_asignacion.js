@@ -50,7 +50,7 @@
     };
 
     cont.innerHTML = `
-      <div class="ta-espacio">
+      <div class="ta-espacio ta-apilado">
         <section class="ta-filtros" id="ta-filtros"></section>
         <div class="ta-cuerpo">
           <section class="tk-bandeja ta-maestro" id="ta-maestro"></section>
@@ -213,6 +213,9 @@
             <div class="tk-titulo-texto"><small>${t.recurso_id ? 'Reasignar ticket' : 'Asignar ticket'}</small><h2>${esc(t.numero)}</h2></div>
             <div class="tk-marcas">${marcaEstado(t.estado)}${marcaPrioridad(t.prioridad)}</div>
           </header>
+          <div class="ta-det-grid">
+          <div class="ta-col">
+          <h3 class="ta-col-titulo"><i class="ti ti-file-description" aria-hidden="true"></i> Datos del ticket</h3>
           <dl class="tk-datos ta-datos">
             <div><dt><i class="ti ti-user" aria-hidden="true"></i> Solicitante</dt><dd>${esc(t.usuario || '')}</dd></div>
             <div><dt><i class="ti ti-clock" aria-hidden="true"></i> Fecha del ticket</dt><dd>${esc(fechaHora(t.fecha))}</dd></div>
@@ -222,7 +225,21 @@
             <div><dt><i class="ti ti-calendar-due" aria-hidden="true"></i> Entrega estimada</dt><dd class="${t.fecha_entrega && t.fecha_entrega < hoy() && t.estado < 6 ? 'ta-vencido' : ''}">${esc(fechaDia(t.fecha_entrega)) || '—'}</dd></div>
           </dl>
           <div class="ta-requerimiento"><span>Requerimiento</span><p>${esc(t.descripcion)}</p></div>
+          <div class="tk-historial ta-historial">
+            <span>Historial de asignaciones <small class="tk-tenue">${asignaciones.length || ''}</small></span>
+            ${asignaciones.length ? `<ol>
+              ${asignaciones.map((a, i) => `
+                <li>
+                  <span class="tk-punto-color ${i === 0 ? 'e3' : 'e1'}" aria-hidden="true"></span>
+                  <div><b>${esc(nombreUsuario(a.recurso_id) || 'Usuario')}</b>${i === 0 ? ' <span class="ta-vigente">vigente</span>' : ''}
+                    <small>${esc(fechaHora(a.fecha))} · asignó ${esc(a.asignado_por || '')}${a.fecha_entrega ? ` · entrega ${esc(fechaDia(a.fecha_entrega))}` : ''}</small>
+                    ${a.observaciones ? `<small class="ta-obs">${esc(a.observaciones)}</small>` : ''}</div>
+                </li>`).join('')}
+            </ol>` : '<p class="tk-tenue">El ticket todavía no tiene asignaciones.</p>'}
+          </div>
+          </div>
 
+          <div class="ta-col">
           <form class="ta-asignar-form" novalidate>
           <fieldset class="rp-seccion ta-asignar" ${dis}>
             <legend><i class="ti ti-user-check" aria-hidden="true"></i> ${t.recurso_id ? 'Reasignación' : 'Asignación'}</legend>
@@ -241,20 +258,9 @@
             </div>
           </fieldset>
           </form>
+          </div>
 
-          ${seccionProcesos(t)}
-
-          <div class="tk-historial ta-historial">
-            <span>Historial de asignaciones <small class="tk-tenue">${asignaciones.length || ''}</small></span>
-            ${asignaciones.length ? `<ol>
-              ${asignaciones.map((a, i) => `
-                <li>
-                  <span class="tk-punto-color ${i === 0 ? 'e3' : 'e1'}" aria-hidden="true"></span>
-                  <div><b>${esc(nombreUsuario(a.recurso_id) || 'Usuario')}</b>${i === 0 ? ' <span class="ta-vigente">vigente</span>' : ''}
-                    <small>${esc(fechaHora(a.fecha))} · asignó ${esc(a.asignado_por || '')}${a.fecha_entrega ? ` · entrega ${esc(fechaDia(a.fecha_entrega))}` : ''}</small>
-                    ${a.observaciones ? `<small class="ta-obs">${esc(a.observaciones)}</small>` : ''}</div>
-                </li>`).join('')}
-            </ol>` : '<p class="tk-tenue">El ticket todavía no tiene asignaciones.</p>'}
+          <div class="ta-col">${seccionProcesos(t)}</div>
           </div>
         </div>`;
     }
