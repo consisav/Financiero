@@ -70,6 +70,19 @@ window.MODULOS = [
           pantallas: [
             { id: 'presupuesto', nombre: 'Presupuesto', icono: 'ti-chart-bar', descripcion: 'Presupuestos por organización y localidad: tipo, frecuencia, período, estado y rubros con lo presupuestado y lo ejecutado.' }
           ]
+        },
+        {
+          subgrupo: 'Bancos',
+          icono: 'ti-building-bank',
+          pantallas: [
+            { id: 'cuentas-bancarias', nombre: 'Cuentas bancarias', icono: 'ti-building-bank', descripcion: 'Bancos del sistema y cuentas bancarias de cada organización y localidad.', separador: true },
+            { id: 'depositos', nombre: 'Depósitos multimoneda', icono: 'ti-cash-banknote', descripcion: 'Depósitos en cualquier moneda con sus facturas, recibos y detalle contable.', separador: true },
+            { id: 'notas-credito', nombre: 'Notas de crédito / transferencias', icono: 'ti-file-plus', descripcion: 'Notas de crédito y transferencias recibidas.' },
+            { id: 'notas-debito', nombre: 'Notas de débito / transferencias', icono: 'ti-file-minus', descripcion: 'Notas de débito y transferencias enviadas a proveedores.', separador: true },
+            { id: 'conciliacion-bancaria', nombre: 'Conciliación bancaria', icono: 'ti-scale', descripcion: 'Conciliación mensual de cada cuenta bancaria con el saldo del banco y el contable.' },
+            { id: 'disponibilidad-bancaria', nombre: 'Disponibilidad bancaria', icono: 'ti-chart-line', descripcion: 'Movimiento y disponibilidad de cada cuenta bancaria en un rango de fechas.', separador: true },
+            { id: 'disponibilidad-integrada', nombre: 'Disponibilidad integrada', icono: 'ti-chart-pie', descripcion: 'Disponibilidad consolidada de todas las cuentas de la organización, en quetzales.' }
+          ]
         }
       ],
       catalogos: [
@@ -114,7 +127,7 @@ window.MODULOS = [
       ]
     },
     opciones: {
-      registros: ['Movimientos bancarios'],
+      registros: [],
       mantenimientos: ['Períodos contables', 'Empresas', 'Parámetros contables'],
       procesos: ['Mayorización', 'Conciliación bancaria', 'Cierre de mes', 'Cierre de año'],
       reportes: ['Libro diario', 'Libro mayor', 'Balance general', 'Estado de resultados', 'Presupuesto vs. ejecutado'],
