@@ -76,7 +76,12 @@
     async function cargarVersiones(seleccion) {
       if (!estado.loc) { estado.versiones = []; estado.version = null; pintarVersiones(); montarArbol(); return; }
       const { data, error } = await sb.from('catalogos_cuentas').select('*').eq('localidad_id', estado.loc).order('version', { ascending: false });
-      if (error) { pVer.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
+      if (error) {
+        pVer.innerHTML = error.code === '42703'
+          ? '<p class="vacio">Falta instalar en Supabase el script <b>20261102000005_cuentas_por_localidad.sql</b>, que asigna el catálogo de cuentas a cada localidad. Ejecútalo en el SQL Editor y recarga esta página.</p>'
+          : `<p class="vacio">${esc(error.message)}</p>`;
+        return;
+      }
       estado.versiones = data;
       const previo = seleccion || (estado.version && estado.version.id);
       estado.version = data.find((v) => v.id === previo) || data.find((v) => v.activo) || data[0] || null;
