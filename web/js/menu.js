@@ -221,7 +221,7 @@ window.MODULOS = [
   },
   {
     id: 'facturacion',
-    corto: 'Facturación',
+    corto: 'Facturación/Ventas',
     color: 'verde',
     nombre: 'Facturación y ventas',
     icono: 'ti-receipt',
@@ -232,6 +232,22 @@ window.MODULOS = [
       mantenimientos: ['Series de documentos', 'Listas de precios', 'Descuentos'],
       procesos: ['Anulación de documentos', 'Antigüedad de saldos', 'Comisiones'],
       reportes: ['Ventas por período', 'Ventas por cliente', 'Cuentas por cobrar', 'Gráfica de ventas'],
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
+    }
+  },
+  {
+    id: 'compras',
+    corto: 'Compras',
+    color: 'cian',
+    nombre: 'Compras',
+    icono: 'ti-shopping-cart',
+    descripcion: 'Proveedores, órdenes de compra, facturas de compra y cuentas por pagar.',
+    opciones: {
+      catalogos: ['Proveedores', 'Productos y servicios de compra', 'Compradores', 'Condiciones de pago'],
+      registros: ['Solicitudes de compra', 'Órdenes de compra', 'Recepción de mercadería', 'Facturas de compra', 'Notas de crédito de proveedores'],
+      mantenimientos: ['Series de documentos', 'Listas de precios de proveedores'],
+      procesos: ['Aprobación de órdenes de compra', 'Anulación de documentos', 'Antigüedad de saldos'],
+      reportes: ['Compras por período', 'Compras por proveedor', 'Cuentas por pagar', 'Gráfica de compras'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },

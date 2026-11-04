@@ -29,6 +29,7 @@
   --pizarra-f: #e8edf2; --pizarra-t: #3f5266;
   --rosa-f: #fbe7f0; --rosa-t: #b0336f;
   --oliva-f: #eef1dc; --oliva-t: #5f6b1c;
+  --cian-f: #e1f3fb; --cian-t: #0b6f99;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -57,6 +58,7 @@
     --pizarra-f: #1f2a36; --pizarra-t: #a9bccf;
     --rosa-f: #3a1a2a; --rosa-t: #f08fbd;
     --oliva-f: #2a2f14; --oliva-t: #c3cf7a;
+    --cian-f: #10293a; --cian-t: #6cc3ea;
   }
 }
 
@@ -168,6 +170,7 @@ a { color: var(--acento); text-decoration: none; }
 [data-color=pizarra] { --m-f: var(--pizarra-f); --m-t: var(--pizarra-t); }
 [data-color=rosa] { --m-f: var(--rosa-f); --m-t: var(--rosa-t); }
 [data-color=oliva] { --m-f: var(--oliva-f); --m-t: var(--oliva-t); }
+[data-color=cian] { --m-f: var(--cian-f); --m-t: var(--cian-t); }
 
 .seccion { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); margin: 32px 0 12px; }
 
