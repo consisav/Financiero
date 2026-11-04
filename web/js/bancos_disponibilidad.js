@@ -1,7 +1,7 @@
 // Caja y Bancos · Bancos · Disponibilidad bancaria y Disponibilidad integrada, con el diseño de
 // los depósitos (encabezado en tarjetas y pestañas). Son consultas: no se modifican.
 //   Disponibilidad bancaria (empresa): la cuenta elegida con su saldo inicial, ingresos (depósitos
-//   y notas de crédito), egresos (notas de débito) y saldo final en un rango de fechas; pestañas
+//   y notas de crédito), egresos (notas de débito y cheques) y saldo final en un rango de fechas; pestañas
 //   con su movimiento y disponible acumulado, el resumen de todas las cuentas y los totales por
 //   tipo de documento.
 //   Disponibilidad integrada (organización de la empresa elegida): todas las cuentas de todas sus
@@ -10,8 +10,9 @@
 (function () {
   const { esc } = window.UI;
   const { montar, fmt, imprimir, pestanas: barraPestanas, activarPestana } = window.BANCOS;
-  const TIPOS = { DEPOSITO: 'Depósito', NOTA_CREDITO: 'Nota de crédito', NOTA_DEBITO: 'Nota de débito' };
-  const signo = (m) => m.tipo === 'NOTA_DEBITO' ? -Number(m.valor_cuenta) : Number(m.valor_cuenta);
+  const TIPOS = { DEPOSITO: 'Depósito', NOTA_CREDITO: 'Nota de crédito', NOTA_DEBITO: 'Nota de débito', CHEQUE: 'Cheque' };
+  const esEgreso = (t) => t === 'NOTA_DEBITO' || t === 'CHEQUE';
+  const signo = (m) => esEgreso(m.tipo) ? -Number(m.valor_cuenta) : Number(m.valor_cuenta);
   const diaAntes = (d) => { const x = new Date(`${d}T12:00:00Z`); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10); };
   const dato = (etq, val) => `<div class="bm-dato"><dt>${etq}</dt><dd>${val === '' || val == null ? '<span class="tk-tenue">—</span>' : val}</dd></div>`;
 
@@ -52,8 +53,8 @@
         // Los movimientos antes del saldo inicial de la cuenta no cuentan.
         const movs = (m.data || []).filter((x) => x.fecha >= cb.fecha_saldo_inicial);
         const inicial = f.desde <= cb.fecha_saldo_inicial ? Number(cb.saldo_inicial) : Number(ini.data || 0);
-        const ingresos = movs.filter((x) => x.tipo !== 'NOTA_DEBITO').reduce((s, x) => s + Number(x.valor_cuenta), 0);
-        const egresos = movs.filter((x) => x.tipo === 'NOTA_DEBITO').reduce((s, x) => s + Number(x.valor_cuenta), 0);
+        const ingresos = movs.filter((x) => !esEgreso(x.tipo)).reduce((s, x) => s + Number(x.valor_cuenta), 0);
+        const egresos = movs.filter((x) => esEgreso(x.tipo)).reduce((s, x) => s + Number(x.valor_cuenta), 0);
         return { cb, inicial, ingresos, egresos, final: inicial + ingresos - egresos, movs };
       }));
       actual = filas.find((r) => r.cb.id === actual?.cb.id) || filas[0] || null;
@@ -129,7 +130,7 @@
               <div class="bk-kpis bc-kpis">
                 <div><span>Saldo inicial</span><b>${fmt.monto(r.inicial)}</b><small>Al ${esc(fmt.fechaDia(diaAntes(f.desde)))}</small></div>
                 <div><span>Ingresos</span><b class="bd-ingreso">${fmt.monto(r.ingresos)}</b><small>Depósitos y notas de crédito</small></div>
-                <div><span>Egresos</span><b class="bd-egreso">${fmt.monto(r.egresos)}</b><small>Notas de débito</small></div>
+                <div><span>Egresos</span><b class="bd-egreso">${fmt.monto(r.egresos)}</b><small>Notas de débito y cheques</small></div>
                 <div><span>Variación</span><b>${fmt.monto(r.ingresos - r.egresos)}</b><small>Ingresos − egresos</small></div>
                 <div><span>Conciliados</span><b>${r.movs.filter((m) => m.conciliado).length} de ${r.movs.length}</b><small>${r.movs.filter((m) => !m.partida_id).length} sin partida</small></div>
               </div>
@@ -150,7 +151,7 @@
                 <tbody>
                   <tr class="pp-grupo"><td colspan="6">Saldo inicial</td><td class="num">${fmt.monto(r.inicial)}</td><td colspan="2"></td></tr>
                   ${r.movs.map((m) => { disp += signo(m); return `<tr><td>${m.folio}</td><td>${esc(TIPOS[m.tipo])}</td><td>${esc(m.numero_documento || '')}</td><td>${esc(fmt.fechaDia(m.fecha))}</td><td>${esc(m.tercero_nombre || m.deposito_por || '')}</td>
-                    <td class="num ${m.tipo === 'NOTA_DEBITO' ? 'bd-egreso' : 'bd-ingreso'}">${m.tipo === 'NOTA_DEBITO' ? '−' : ''}${fmt.monto(m.valor_cuenta)}</td><td class="num">${fmt.monto(disp)}</td>
+                    <td class="num ${esEgreso(m.tipo) ? 'bd-egreso' : 'bd-ingreso'}">${esEgreso(m.tipo) ? '−' : ''}${fmt.monto(m.valor_cuenta)}</td><td class="num">${fmt.monto(disp)}</td>
                     <td>${m.conciliado ? '<span class="pc-marca aprobada">Conciliado</span>' : m.partida_id ? '<span class="pc-marca pendiente">Contabilizado</span>' : '<span class="tk-tenue">Pendiente</span>'}</td><td class="ta-desc">${esc(m.descripcion || '')}</td></tr>`; }).join('')
                     || '<tr><td colspan="9" class="tk-vacio">Sin movimientos en el rango.</td></tr>'}
                 </tbody>
@@ -159,8 +160,7 @@
             </div>
             <div class="bm-panel" data-panel="TIPOS" ${pestana === 'TIPOS' ? '' : 'hidden'}>
               <div class="pc-lineas"><table><thead><tr><th>Tipo de documento</th><th class="num">Cantidad</th><th class="num">Valor ${esc(mon?.simbolo || '')}</th><th class="num">Valor Q</th><th class="num">Conciliados</th><th class="num">En circulación</th></tr></thead>
-                <tbody>${porTipo.map((x) => `<tr><td>${esc(TIPOS[x.t])}</td><td class="num">${x.n}</td><td class="num ${x.t === 'NOTA_DEBITO' ? 'bd-egreso' : 'bd-ingreso'}">${fmt.monto(x.valor)}</td><td class="num">${fmt.monto(x.q)}</td><td class="num">${x.conc}</td><td class="num">${x.n - x.conc}</td></tr>`).join('')}
-                <tr><td class="tk-tenue">Cheques</td><td class="num tk-tenue" colspan="5">Se agregan con el módulo de cheques</td></tr></tbody>
+                <tbody>${porTipo.map((x) => `<tr><td>${esc(TIPOS[x.t])}</td><td class="num">${x.n}</td><td class="num ${esEgreso(x.t) ? 'bd-egreso' : 'bd-ingreso'}">${fmt.monto(x.valor)}</td><td class="num">${fmt.monto(x.q)}</td><td class="num">${x.conc}</td><td class="num">${x.n - x.conc}</td></tr>`).join('')}</tbody>
                 <tfoot><tr><td class="pc-totales-lbl">Total</td><td class="num">${r.movs.length}</td><td class="num">${fmt.monto(r.ingresos - r.egresos)}</td><td colspan="3"></td></tr></tfoot></table></div>
             </div>
             <div class="bm-panel bm-listado" data-panel="CUENTAS" ${pestana === 'CUENTAS' ? '' : 'hidden'}></div>
@@ -171,7 +171,7 @@
 
     function reporte(modo) {
       const resumen = `<table><thead><tr><th>Cuenta</th><th>Banco</th><th>Moneda</th><th class="n">Saldo inicial</th><th class="n">Ingresos</th><th class="n">Egresos</th><th class="n">Saldo final</th></tr></thead><tbody>${filas.map((r) => `<tr><td>${esc(r.cb.numero)} · ${esc(r.cb.nombre)}</td><td>${esc(ctx.banco(r.cb.banco_id)?.nombre || '')}</td><td>${esc(ctx.moneda(r.cb.moneda_id)?.nombre || '')}</td><td class="n">${fmt.monto(r.inicial)}</td><td class="n">${fmt.monto(r.ingresos)}</td><td class="n">${fmt.monto(r.egresos)}</td><td class="n">${fmt.monto(r.final)}</td></tr>`).join('')}</tbody></table>`;
-      const detalle = modo === 'detalle' ? filas.map((r) => { let d = r.inicial; return `<h3>${esc(r.cb.numero)} · ${esc(r.cb.nombre)}</h3><table><thead><tr><th>No.</th><th>Tipo</th><th>Documento</th><th>Fecha</th><th class="n">Valor</th><th class="n">Disponible</th></tr></thead><tbody><tr class="s"><td colspan="5">Saldo inicial</td><td class="n">${fmt.monto(r.inicial)}</td></tr>${r.movs.map((m) => { d += signo(m); return `<tr><td>${m.folio}</td><td>${esc(TIPOS[m.tipo])}</td><td>${esc(m.numero_documento || '')}</td><td>${esc(fmt.fechaDia(m.fecha))}</td><td class="n">${m.tipo === 'NOTA_DEBITO' ? '−' : ''}${fmt.monto(m.valor_cuenta)}</td><td class="n">${fmt.monto(d)}</td></tr>`; }).join('')}</tbody></table>`; }).join('') : '';
+      const detalle = modo === 'detalle' ? filas.map((r) => { let d = r.inicial; return `<h3>${esc(r.cb.numero)} · ${esc(r.cb.nombre)}</h3><table><thead><tr><th>No.</th><th>Tipo</th><th>Documento</th><th>Fecha</th><th class="n">Valor</th><th class="n">Disponible</th></tr></thead><tbody><tr class="s"><td colspan="5">Saldo inicial</td><td class="n">${fmt.monto(r.inicial)}</td></tr>${r.movs.map((m) => { d += signo(m); return `<tr><td>${m.folio}</td><td>${esc(TIPOS[m.tipo])}</td><td>${esc(m.numero_documento || '')}</td><td>${esc(fmt.fechaDia(m.fecha))}</td><td class="n">${esEgreso(m.tipo) ? '−' : ''}${fmt.monto(m.valor_cuenta)}</td><td class="n">${fmt.monto(d)}</td></tr>`; }).join('')}</tbody></table>`; }).join('') : '';
       imprimir('Disponibilidad bancaria', `<h1>Disponibilidad bancaria</h1><h2>${esc(empresa())} · movimiento y disponibilidad de bancos · ${esc(fmt.fechaDia(f.desde))} al ${esc(fmt.fechaDia(f.hasta))}</h2>${resumen}${detalle}`);
     }
 

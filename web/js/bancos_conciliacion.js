@@ -12,7 +12,9 @@
   const { esc } = window.UI;
   const { montar, fmt, imprimir, adjunto, pestanas: barraPestanas, activarPestana } = window.BANCOS;
   const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-  const TIPOS = { DEPOSITO: 'Depósito', NOTA_CREDITO: 'Nota de crédito', NOTA_DEBITO: 'Nota de débito' };
+  const TIPOS = { DEPOSITO: 'Depósito', NOTA_CREDITO: 'Nota de crédito', NOTA_DEBITO: 'Nota de débito', CHEQUE: 'Cheque' };
+  // Documentos que salen de la cuenta.
+  const egreso = (m) => m.tipo === 'NOTA_DEBITO' || m.tipo === 'CHEQUE';
   const IMAGEN = { que: 'del estado de cuenta', ayuda: 'Estado de cuenta del banco del mes (imagen o PDF, hasta 10 MB)' };
 
   window.PANTALLAS = window.PANTALLAS || {};
@@ -126,10 +128,12 @@
         fila('Depósitos emitidos', delMes.filter((m) => m.tipo === 'DEPOSITO')),
         fila('Notas de crédito', delMes.filter((m) => m.tipo === 'NOTA_CREDITO')),
         fila('Notas de débito', delMes.filter((m) => m.tipo === 'NOTA_DEBITO')),
+        fila('Cheques emitidos', delMes.filter((m) => m.tipo === 'CHEQUE')),
         fila('Conciliados', movs.filter((m) => m.conciliado)),
         fila('Depósitos en circulación', movs.filter((m) => !m.conciliado && m.tipo === 'DEPOSITO')),
         fila('Notas de crédito en circulación', movs.filter((m) => !m.conciliado && m.tipo === 'NOTA_CREDITO')),
-        fila('Notas de débito en circulación', movs.filter((m) => !m.conciliado && m.tipo === 'NOTA_DEBITO'))
+        fila('Notas de débito en circulación', movs.filter((m) => !m.conciliado && m.tipo === 'NOTA_DEBITO')),
+        fila('Cheques en circulación', movs.filter((m) => !m.conciliado && m.tipo === 'CHEQUE'))
       ];
     }
 
@@ -148,7 +152,7 @@
       const contaQ = saldoContable;
       const contaMl = local(cb) ? contaQ : fmt.redondear(contaQ / t);
       const conciliados = movs.filter((m) => m.conciliado).length;
-      const circulacion = movs.filter((m) => !m.conciliado).reduce((s, m) => s + (m.tipo === 'NOTA_DEBITO' ? -1 : 1) * Number(m.valor_ml), 0);
+      const circulacion = movs.filter((m) => !m.conciliado).reduce((s, m) => s + (egreso(m) ? -1 : 1) * Number(m.valor_ml), 0);
       const res = resumen();
       const marca = !conc ? '<span class="pc-marca pendiente">Sin generar</span>' : cerrada() ? '<span class="pc-marca definitiva"><i class="ti ti-lock" aria-hidden="true"></i> Cerrada</span>' : '<span class="pc-marca aprobada">Abierta</span>';
       ctx.pDet.innerHTML = `
@@ -219,12 +223,11 @@
             </div>
             <div class="bm-panel" data-panel="MOVIMIENTOS" ${pestana === 'MOVIMIENTOS' ? '' : 'hidden'}>
               <div class="pc-lineas"><table><thead><tr><th>Conciliado</th><th>Tipo</th><th>Folio</th><th>Documento</th><th>Fecha</th><th>Cliente / proveedor</th><th class="num">Valor</th><th class="num">Valor Q</th></tr></thead>
-                <tbody>${movs.map((m) => `<tr class="${m.fecha < iniMes() ? 'bc-anterior' : ''}"><td><input type="checkbox" data-conciliar="${m.id}" ${m.conciliado ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Conciliado"></td><td>${esc(TIPOS[m.tipo])}</td><td>${m.folio}</td><td>${esc(m.numero_documento || '')}</td><td>${esc(fmt.fechaDia(m.fecha))}</td><td>${esc(m.tercero_nombre || m.deposito_por || '')}</td><td class="num ${m.tipo === 'NOTA_DEBITO' ? 'pc-rojo' : ''}">${m.tipo === 'NOTA_DEBITO' ? '−' : ''}${fmt.monto(m.valor_cuenta)}</td><td class="num">${fmt.monto(m.valor_ml)}</td></tr>`).join('') || '<tr><td colspan="8" class="tk-vacio">Sin movimientos en el mes ni en circulación.</td></tr>'}</tbody></table></div>
+                <tbody>${movs.map((m) => `<tr class="${m.fecha < iniMes() ? 'bc-anterior' : ''}"><td><input type="checkbox" data-conciliar="${m.id}" ${m.conciliado ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Conciliado"></td><td>${esc(TIPOS[m.tipo])}</td><td>${m.folio}</td><td>${esc(m.numero_documento || '')}</td><td>${esc(fmt.fechaDia(m.fecha))}</td><td>${esc(m.tercero_nombre || m.deposito_por || '')}</td><td class="num ${egreso(m) ? 'pc-rojo' : ''}">${egreso(m) ? '−' : ''}${fmt.monto(m.valor_cuenta)}</td><td class="num">${fmt.monto(m.valor_ml)}</td></tr>`).join('') || '<tr><td colspan="8" class="tk-vacio">Sin movimientos en el mes ni en circulación.</td></tr>'}</tbody></table></div>
             </div>
             <div class="bm-panel" data-panel="RESUMEN" ${pestana === 'RESUMEN' ? '' : 'hidden'}>
               <div class="pc-lineas"><table><thead><tr><th></th><th class="num">Cantidad</th><th class="num">Valor Q</th><th class="num">En la cuenta ${esc(mon?.simbolo || '')}</th></tr></thead>
-                <tbody>${res.map((r) => `<tr><td>${esc(r.txt)}</td><td class="num">${r.n}</td><td class="num">${fmt.monto(r.q)}</td><td class="num">${fmt.monto(r.ml)}</td></tr>`).join('')}
-                <tr><td class="tk-tenue">Cheques emitidos, cobrados, anulados y en circulación</td><td class="num tk-tenue" colspan="3">Se agregan con el módulo de cheques</td></tr></tbody></table></div>
+                <tbody>${res.map((r) => `<tr><td>${esc(r.txt)}</td><td class="num">${r.n}</td><td class="num">${fmt.monto(r.q)}</td><td class="num">${fmt.monto(r.ml)}</td></tr>`).join('')}</tbody></table></div>
             </div>
             <div class="bm-panel" data-panel="DIFERENCIAS" ${pestana === 'DIFERENCIAS' ? '' : 'hidden'}>
               <div class="pc-lineas"><table><thead><tr><th>Descripción</th><th class="num">Valor real Q</th><th class="num">Valor conta Q</th><th class="num">Diferencia</th><th>${ed ? '<button type="button" class="rp-enlace" data-accion="diferencia"><i class="ti ti-plus" aria-hidden="true"></i> Agregar</button>' : ''}</th></tr></thead>

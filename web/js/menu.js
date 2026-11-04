@@ -190,10 +190,20 @@ window.MODULOS = [
             { id: 'disponibilidad-integrada', nombre: 'Disponibilidad integrada', icono: 'ti-chart-pie', descripcion: 'Disponibilidad consolidada de todas las cuentas de la organización, en quetzales.' }
           ]
         }
+      ],
+      cheques: [
+        {
+          subgrupo: 'Cheques',
+          icono: 'ti-writing',
+          pantallas: [
+            { id: 'solicitud-de-cheques', nombre: 'Solicitud de cheques', icono: 'ti-file-dollar', descripcion: 'Requisición de cheques: beneficiario, monto y motivo del pago, con su aprobación y seguimiento hasta la emisión.' },
+            { id: 'emision-de-cheques', nombre: 'Emisión de cheques', icono: 'ti-writing', descripcion: 'Cheques de cada cuenta bancaria con el número de su chequera, beneficiario, detalle contable, facturas pagadas e impresión.' }
+          ]
+        }
       ]
     },
     opciones: {
-      cheques: ['Chequeras', 'Emisión de cheques', 'Anulación de cheques', 'Cheques en circulación'],
+      cheques: ['Chequeras', 'Anulación de cheques', 'Cheques en circulación'],
       cajas: ['Cajas chicas', 'Liquidación de caja chica', 'Arqueo de caja']
     }
   },

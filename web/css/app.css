@@ -1910,3 +1910,63 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cm-mes footer .boton:disabled { cursor: not-allowed; opacity: .5; }
 @media (max-width: 1300px) { .cm-filtros { grid-template-columns: repeat(3, minmax(0, 1fr)); } .cm-regla { grid-column: 1 / -1; } .cm-meses { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 800px) { .cm-filtros, .cm-meses { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Cheques · Emisión de cheques ---------- */
+.bm-checks { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; }
+.bm-checks .pc-check { padding-bottom: 8px; font-size: 12.5px; }
+.bm-checks .bm-codbanco { margin-left: auto; flex: 0 1 150px; }
+.bm-modo-cheque { padding-right: 6px; font-size: 12px; cursor: pointer; }
+.bk-cheques [data-cheque-num] { font-size: 15px !important; font-weight: 700; text-align: center; color: var(--acento) !important; }
+
+/* ---------- Cheques · Solicitud de cheques ---------- */
+.bs-cabecera { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px; }
+.bs-cabecera > section { min-width: 0; }
+.bs-tipo { grid-column: span 3; display: flex; flex-direction: column; gap: 6px; padding: 8px 12px; border-radius: var(--radio); border: 1px solid color-mix(in srgb, var(--acento) 28%, var(--borde)); background: color-mix(in srgb, var(--acento-fondo) 60%, var(--panel)); }
+.bs-tipo select { font-size: 15px !important; font-weight: 700; color: var(--acento); }
+.bs-empresa { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1px 8px; align-items: baseline; padding-top: 5px; border-top: 1px dashed color-mix(in srgb, var(--acento) 25%, var(--borde)); }
+.bs-empresa small, .bs-req-num span, .bs-estado span, .bs-req-campos span { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.bs-empresa b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-req { grid-column: span 5; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, .9fr); gap: 10px; align-items: end; padding: 8px 12px; border-radius: var(--radio); border: 1px solid var(--borde); background: var(--panel); }
+.bs-req-num, .bs-estado { display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; }
+.bs-req-num b { font-size: 22px; color: var(--acento); font-variant-numeric: tabular-nums; }
+.bs-estado .pc-marca { align-self: flex-start; font-size: 12.5px; padding: 4px 12px; }
+.bs-importe { grid-column: span 4; padding: 8px 12px; gap: 6px 10px; }
+.bs-importe .bm-ml b { font-size: 18px; }
+.bs-benef { grid-column: span 4; }
+.bs-sol { grid-column: span 5; }
+.bs-control { grid-column: span 3; }
+.bs-control dl { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.bs-campos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 10px; }
+.bs-campos .campo { gap: 3px; font-size: 12px; }
+.bs-c2 { grid-column: span 2; }
+.bs-c3 { grid-column: span 3; }
+.bs-c4 { grid-column: 1 / -1; }
+.bs-solicitar { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 14px; align-content: center; padding: 14px; border-radius: var(--radio); background: color-mix(in srgb, var(--ambar-f) 45%, var(--panel)); border: 1px solid var(--borde); }
+.bs-solicitar[hidden] { display: none !important; }
+.bs-requisicion { display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; border-radius: var(--radio); background: color-mix(in srgb, var(--acento-fondo) 75%, var(--panel)); border: 1px solid color-mix(in srgb, var(--acento) 30%, var(--borde)); }
+.bs-req-campos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 14px; }
+.bs-req-campos div { display: flex; flex-direction: column; gap: 4px; }
+.bs-req-campos b { font-size: 16px; padding: 6px 10px; border-radius: 8px; background: var(--panel); border: 1px solid var(--borde); }
+.bs-req-grande { font-size: 22px !important; color: var(--acento); text-align: center; letter-spacing: .08em; }
+.bs-requisicion p { margin: 0; font-size: 12px; color: var(--suave); display: flex; gap: 6px; align-items: center; }
+.bs-accion { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; text-align: center; }
+.bs-accion small { font-size: 12px; color: var(--suave); }
+.bs-solicitar-btn { font-size: 17px !important; font-weight: 800; letter-spacing: .04em; padding: 14px 34px !important; display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; }
+.bs-avance { list-style: none; margin: 0; padding: 0; display: flex; gap: 10px; width: 100%; }
+.bs-avance li { flex: 1; display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--borde); color: var(--tenue); text-align: left; min-width: 0; }
+.bs-avance li .ti { font-size: 20px; }
+.bs-avance li div { display: flex; flex-direction: column; min-width: 0; }
+.bs-avance li b { font-size: 13px; }
+.bs-avance li small { font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+.bs-avance li.hecho { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--borde)); background: color-mix(in srgb, var(--verde-f) 60%, var(--panel)); }
+.bs-avance li.mal { color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, var(--borde)); background: color-mix(in srgb, var(--error) 8%, var(--panel)); }
+.bs-ayuda ol { margin: 0; padding: 8px 8px 8px 28px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--texto); }
+@media (max-width: 1500px) {
+  .bs-tipo { grid-column: span 4; } .bs-req { grid-column: span 8; } .bs-importe { grid-column: span 6; }
+  .bs-benef, .bs-sol { grid-column: span 6; } .bs-control { grid-column: span 6; }
+  .bk-solicitudes .bm-form { overflow: auto; }
+}
+@media (max-width: 900px) {
+  .bs-cabecera > section { grid-column: 1 / -1 !important; }
+  .bs-solicitar { grid-template-columns: minmax(0, 1fr); }
+}

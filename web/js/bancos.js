@@ -19,7 +19,7 @@
   const seleccion = { org: null, loc: null };
 
   // Arma la pantalla y devuelve sus piezas y datos comunes.
-  function montar(cont, { titulo, icono, clase = '' }) {
+  function montar(cont, { titulo, icono, clase = '', grupo = 'Bancos' }) {
     const sb = window.FIN.sb;
     const yo = window.FIN.perfil();
     const ctx = { sb, yo, admin: window.FIN.puedeEditarCatalogos(), superAdmin: window.FIN.esSuperAdmin(), organizaciones: [], localidades: [], monedas: [], bancos: [], sel: seleccion };
@@ -38,6 +38,7 @@
     ctx.pDet = cont.querySelector('.bk-detalle');
     ctx.titulo = titulo;
     ctx.icono = icono;
+    ctx.grupo = grupo;
 
     ctx.ajustarAlto = function () {
       if (!ctx.espacio.isConnected) return window.removeEventListener('resize', ctx.ajustarAlto);
@@ -87,7 +88,7 @@
     ctx.filtros = function (extra = '', acciones = '') {
       const grupos = ctx.organizaciones.map((o) => ({ o, locs: ctx.localidades.filter((x) => x.organizacion_id === o.id) })).filter((g) => g.locs.length);
       ctx.pFil.innerHTML = `
-        <div class="ta-titulo"><span class="tk-icono"><i class="ti ${ctx.icono}" aria-hidden="true"></i></span><div><small>Bancos</small><h2>${esc(ctx.titulo)}</h2></div></div>
+        <div class="ta-titulo"><span class="tk-icono"><i class="ti ${ctx.icono}" aria-hidden="true"></i></span><div><small>${esc(ctx.grupo)}</small><h2>${esc(ctx.titulo)}</h2></div></div>
         <label class="campo bk-empresa"><span>Empresa</span><select name="loc">${grupos.map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.locs.map((x) => `<option value="${x.id}" ${seleccion.loc === x.id ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</optgroup>`).join('') || '<option value="">Sin localidades</option>'}</select></label>
         ${extra}
         <div class="oc-extra">${acciones}</div>`;
