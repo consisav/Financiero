@@ -243,9 +243,30 @@ window.MODULOS = [
     nombre: 'Compras',
     icono: 'ti-shopping-cart',
     descripcion: 'Proveedores, órdenes de compra, facturas de compra y cuentas por pagar.',
+    subgrupos: {
+      catalogos: [
+        {
+          subgrupo: 'Proveedores',
+          icono: 'ti-truck',
+          pantallas: [
+            { id: 'proveedores', nombre: 'Proveedores', icono: 'ti-truck', descripcion: 'Proveedores de la empresa: datos fiscales y de contacto, tipo, régimen ISR, datos contables y datos de pago.' },
+            { id: 'bodegas', nombre: 'Bodegas', icono: 'ti-building-warehouse', descripcion: 'Bodegas generales y sub-bodegas: permisos, encargado, tipo de precio y definiciones contables por bodega.' }
+          ]
+        }
+      ],
+      registros: [
+        {
+          subgrupo: 'Compras',
+          icono: 'ti-file-invoice',
+          pantallas: [
+            { id: 'facturas-compra', nombre: 'Facturas de compra', icono: 'ti-file-invoice', descripcion: 'Ingreso de la compra: documento, proveedor, desglose fiscal, retención, detalle, detalle contable, contraseña de pago y pagos.' }
+          ]
+        }
+      ]
+    },
     opciones: {
-      catalogos: ['Proveedores', 'Productos y servicios de compra', 'Compradores', 'Condiciones de pago'],
-      registros: ['Solicitudes de compra', 'Órdenes de compra', 'Recepción de mercadería', 'Facturas de compra', 'Notas de crédito de proveedores'],
+      catalogos: ['Productos y servicios de compra', 'Compradores', 'Condiciones de pago'],
+      registros: ['Solicitudes de compra', 'Órdenes de compra', 'Recepción de mercadería', 'Notas de crédito de proveedores'],
       mantenimientos: ['Series de documentos', 'Listas de precios de proveedores'],
       procesos: ['Aprobación de órdenes de compra', 'Anulación de documentos', 'Antigüedad de saldos'],
       reportes: ['Compras por período', 'Compras por proveedor', 'Cuentas por pagar', 'Gráfica de compras'],
