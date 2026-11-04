@@ -22,7 +22,7 @@
     const ed = window.FIN.puedeEditarCatalogos();
     let filas = [];
     let buscar = '';
-    cont.innerHTML = `<div class="cg-espacio"><section class="panel cg-panel"></section></div>`;
+    cont.innerHTML = `<div class="cg-espacio"><section class="panel cg-panel cl-clasico"></section></div>`;
     const panel = cont.querySelector('.cg-panel');
     const loc = () => localidades?.find((l) => l.id === seleccion.loc);
 
@@ -47,9 +47,10 @@
       const vis = filas.filter((x) => !q || [x.codigo, ...cfg.columnas.map((c) => x[c.k])].some((v) => String(v ?? '').toLowerCase().includes(q)));
       const n = cambiadas().length;
       panel.innerHTML = `
+        <div class="cl-banda">${esc(cfg.titulo)}</div>
         <header class="cg-cab">
           <span class="tk-icono"><i class="ti ${cfg.icono}" aria-hidden="true"></i></span>
-          <div class="cg-titulo"><small>${esc(cfg.grupo || 'Compras · Registros')}</small><h2>${esc(cfg.titulo)} <small>${filas.length}</small></h2><p>${esc(cfg.descripcion)}</p></div>
+          <div class="cg-titulo"><small>${esc(cfg.grupo || 'Compras · Registros')} · ${filas.length} registros</small><p>${esc(cfg.descripcion)}</p></div>
           ${cfg.local ? `<label class="campo cg-empresa"><span>Empresa</span><select data-empresa>${organizaciones.map((o) => ({ o, ls: localidades.filter((l) => l.organizacion_id === o.id) })).filter((g) => g.ls.length).map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.ls.map((l) => `<option value="${l.id}" ${l.id === seleccion.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('')}</optgroup>`).join('')}</select></label>` : ''}
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar…" value="${esc(buscar)}" aria-label="Buscar"></label>
           ${ed ? `<button type="button" class="boton secundario-sm" data-accion="agregar"><i class="ti ti-plus" aria-hidden="true"></i> Agregar</button>
@@ -156,7 +157,7 @@
   const sumaDias = (fecha, dias) => { const d = new Date(`${fecha}T12:00:00`); d.setDate(d.getDate() + Number(dias || 0)); return d.toISOString().slice(0, 10); };
 
   window.PANTALLAS['contrasenas-pago'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Contraseñas de pago', icono: 'ti-key', clase: 'bk-contrasenas', grupo: 'Compras · Registros' });
+    const ctx = montar(cont, { titulo: 'Contraseñas de pago', icono: 'ti-key', clase: 'bk-movimientos bk-contrasenas', grupo: 'Compras · Registros' });
     const { sb, yo } = ctx;
     const [anio, mes] = fmt.hoy().split('-');
     const f = { estado: 'TODAS', desde: `${anio}-${String(Number(mes) - 1 || 1).padStart(2, '0')}-01`, hasta: fmt.hoy() };
@@ -166,6 +167,7 @@
     let actual = null;
     let docs = [];
     let editando = false;
+    let pestana = 'DOCS';
     let buscar = '';
     const proveedor = (id) => proveedores.find((p) => p.id === id);
     const provTxt = (p) => `${p.codigo} · ${p.nombre_comercial}${p.nit ? ` · ${p.nit}` : ''}`;
@@ -180,8 +182,7 @@
         <label class="campo"><span>Recepción desde</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Recepción hasta</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>`,
         `<button type="button" class="boton secundario-sm" data-accion="lista"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir lista</button>
-         ${ctx.admin ? `<button type="button" class="boton secundario-sm" data-accion="liquidar-todas" title="Liquida las contraseñas autorizadas cuyas compras ya están pagadas"><i class="ti ti-checks" aria-hidden="true"></i> Liquidar contraseñas</button>
-         <button type="button" class="boton primario-sm" data-accion="nueva"><i class="ti ti-plus" aria-hidden="true"></i> Nueva recepción</button>` : ''}`);
+         ${ctx.admin ? `<button type="button" class="boton primario-sm" data-accion="nueva"><i class="ti ti-plus" aria-hidden="true"></i> Nueva recepción</button>` : ''}`);
     }
     async function iniciar() {
       if (!(await ctx.cargarBase())) return;
@@ -249,64 +250,80 @@
     function pintarDetalle(v0) {
       const k = actual;
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-key'); return; }
-      if (!k && !editable()) { ctx.pDet.innerHTML = ctx.vacio('Elige una recepción.', 'ti-key'); return; }
       const ed = editable();
       const dis = ed ? '' : 'disabled';
+      const sinRecepcion = !k && !ed;
+      const tab = sinRecepcion ? 'LISTA' : pestana;
       const v = v0 || (k ? { ...k } : { proveedor_id: null, tipo_compra: 'CRÉDITO', dias_credito: 0, fecha_pago: fmt.hoy(), observaciones: '' });
       const p = proveedor(v.proveedor_id);
       const usadas = docs.map((d) => d.compra_id).filter(Boolean);
       const opciones = disponibles(v.proveedor_id, usadas);
       const sinCompra = docs.filter((d) => d.documento && !d.compra_id).length;
+      const boton = (accion, icono, texto, clase = 'secundario-sm') => `<button type="button" class="boton ${clase}" data-accion="${accion}"><i class="ti ${icono}" aria-hidden="true"></i> ${texto}</button>`;
       ctx.pDet.innerHTML = `
-        <form class="tk-form ta-form bm-form ck-form" novalidate>
+        <form class="tk-form ta-form bm-form ck-form cl-clasico" novalidate>
+          <div class="cl-banda cl-amarilla">Recepción de facturas</div>
+          ${sinRecepcion ? `<p class="ck-elige"><i class="ti ti-hand-click" aria-hidden="true"></i> Elige una recepción del listado${ctx.admin ? ' o crea una con «Nueva recepción»' : ''}.</p>` : `
           <div class="ck-cab">
             <section class="ck-recepcion">
-              <div class="ck-num"><span>Recepción</span><b>${k ? k.numero : 'Nueva'}</b></div>
-              <div class="ck-dato"><span>Fecha</span><b>${k ? esc(fmt.fechaHora(k.fecha)) : esc(fmt.fechaHora(new Date()))}</b></div>
-              <div class="ck-dato"><span>Usuario</span><b>${esc(k ? k.usuario || '' : (yo.usuario || '').toUpperCase())}</b></div>
-              <div class="ck-dato"><span>Estado</span>${marca(k ? k.estado : 'PENDIENTE')}</div>
-              <label class="campo ck-prov"><span>Proveedor *</span><input list="ck-proveedores" name="proveedor" value="${esc(p ? provTxt(p) : v.proveedor_nombre || '')}" placeholder="Código, NIT o nombre del proveedor" ${dis}></label>
-              <label class="campo"><span>Tipo de compra</span><select name="tipo_compra" ${dis}>${[['INMEDIATO', 'Inmediato'], ['CRÉDITO', 'Crédito']].map(([x, t]) => `<option value="${x}" ${v.tipo_compra === x ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-              <label class="campo"><span>Días de crédito</span><input type="number" min="0" max="365" name="dias_credito" value="${esc(String(v.dias_credito ?? 0))}" ${dis || (v.tipo_compra === 'INMEDIATO' ? 'disabled' : '')}></label>
-              <label class="campo"><span>Fecha estimada de pago</span><input type="date" name="fecha_pago" value="${esc(v.fecha_pago || '')}" ${dis}></label>
+              <div class="ck-linea ck-l1">
+                <div class="ck-par ck-num"><span>Recepción</span><b>${k ? k.numero : 'Nueva'}</b></div>
+                <div class="ck-par"><span>Fecha</span><b>${k ? esc(fmt.fechaHora(k.fecha)) : esc(fmt.fechaHora(new Date()))}</b></div>
+                <div class="ck-par"><span>Usr</span><b>${esc(k ? k.usuario || '' : (yo.usuario || '').toUpperCase())}</b></div>
+                <div class="ck-par"><span>Estado</span>${marca(k ? k.estado : 'PENDIENTE')}</div>
+              </div>
+              <div class="ck-linea ck-l2">
+                <label class="campo ck-prov"><span>Proveedor *</span><input list="ck-proveedores" name="proveedor" value="${esc(p ? provTxt(p) : v.proveedor_nombre || '')}" placeholder="Código, NIT o nombre del proveedor" ${dis}></label>
+                <label class="campo"><span>Tipo compra</span><select name="tipo_compra" ${dis}>${[['INMEDIATO', 'Inmediato'], ['CRÉDITO', 'Crédito']].map(([x, t]) => `<option value="${x}" ${v.tipo_compra === x ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+                <label class="campo ck-dias"><span>Días</span><input type="number" min="0" max="365" name="dias_credito" value="${esc(String(v.dias_credito ?? 0))}" ${dis || (v.tipo_compra === 'INMEDIATO' ? 'disabled' : '')}></label>
+                <label class="campo"><span>Fecha estimada pago</span><input type="date" name="fecha_pago" value="${esc(v.fecha_pago || '')}" ${dis}></label>
+              </div>
               <label class="campo ck-obs"><span>Observaciones</span><input name="observaciones" value="${esc(v.observaciones || '')}" maxlength="200" ${dis}></label>
             </section>
             <div class="ck-acciones">
-              ${!ed && ctx.admin && k?.estado === 'PENDIENTE' ? '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
-              ${ed ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${k ? 'Guardar' : 'Registrar recepción'}</button><button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>` : ''}
-              ${k && !ed && k.estado !== 'ANULADA' ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir contraseña</button>' : ''}
-              ${k && !ed && ctx.admin && k.estado === 'PENDIENTE' ? '<button type="button" class="boton secundario-sm" data-accion="AUTORIZAR"><i class="ti ti-circle-check" aria-hidden="true"></i> Autorizar</button>' : ''}
-              ${k && !ed && ctx.admin && k.estado === 'AUTORIZADA' ? '<button type="button" class="boton secundario-sm" data-accion="LIQUIDAR"><i class="ti ti-checks" aria-hidden="true"></i> Liquidar</button>' : ''}
-              ${k && !ed && ctx.admin && ['AUTORIZADA', 'LIQUIDADA'].includes(k.estado) ? '<button type="button" class="boton secundario-sm" data-accion="REABRIR"><i class="ti ti-lock-open" aria-hidden="true"></i> Reabrir</button>' : ''}
-              ${k && !ed && ctx.admin && ['PENDIENTE', 'AUTORIZADA'].includes(k.estado) ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="ANULAR"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>' : ''}
+              ${!ed && ctx.admin && k?.estado === 'PENDIENTE' ? boton('modificar', 'ti-pencil', 'Modificar', 'primario-sm') : ''}
+              ${ed ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${k ? 'Guardar' : 'Registrar recepción'}</button>${boton('cancelar', 'ti-x', 'Cancelar')}` : ''}
+              ${k && !ed && k.estado !== 'ANULADA' ? boton('imprimir', 'ti-printer', 'Imprimir contraseña') : ''}
+              ${!ed && ctx.admin ? `<button type="button" class="boton secundario-sm" data-accion="liquidar-todas" title="Liquida las contraseñas autorizadas cuyas compras ya están pagadas"><i class="ti ti-checks" aria-hidden="true"></i> Liquidar contraseñas</button>` : ''}
+              ${k && !ed && ctx.admin ? `<div class="ck-estado">
+                ${k.estado === 'PENDIENTE' ? boton('AUTORIZAR', 'ti-circle-check', 'Autorizar') : ''}
+                ${k.estado === 'AUTORIZADA' ? boton('LIQUIDAR', 'ti-check', 'Liquidar esta') : ''}
+                ${['AUTORIZADA', 'LIQUIDADA'].includes(k.estado) ? boton('REABRIR', 'ti-lock-open', 'Reabrir') : ''}
+                ${['PENDIENTE', 'AUTORIZADA'].includes(k.estado) ? boton('ANULAR', 'ti-ban', 'Anular', 'secundario-sm rp-peligro') : ''}</div>` : ''}
             </div>
-          </div>
+          </div>`}
           <p class="modal-error tk-error" role="alert"></p>
           ${k?.estado === 'ANULADA' ? `<p class="tk-aviso bm-anulado"><i class="ti ti-ban" aria-hidden="true"></i> Anulada por ${esc(k.anulado_por || '')} · ${esc(fmt.fechaHora(k.anulado_en))}: ${esc(k.motivo_anulacion || '')}</p>` : ''}
           ${k && (k.autorizado_por || k.liquidado_por) ? `<p class="cc-ingreso"><i class="ti ti-shield-check" aria-hidden="true"></i>${k.autorizado_por ? ` Autorizó ${esc(k.autorizado_por)} · ${esc(fmt.fechaHora(k.autorizado_en))}` : ''}${k.liquidado_por ? ` · Liquidó ${esc(k.liquidado_por)} · ${esc(fmt.fechaHora(k.liquidado_en))}` : ''}</p>` : ''}
-          <section class="ck-docs">
-            <header class="ck-docs-cab">
-              <h3 class="ta-col-titulo"><i class="ti ti-files" aria-hidden="true"></i> Detalle de documentos recibidos <small>${docs.length}</small></h3>
-              ${sinCompra ? `<span class="pc-marca pendiente"><i class="ti ti-alert-triangle" aria-hidden="true"></i> ${sinCompra} sin compra registrada: se enlazan solos al registrar la compra</span>` : ''}
-              ${ed ? `<span class="ck-esp"></span><button type="button" class="boton secundario-sm" data-accion="pendientes" ${v.proveedor_id ? '' : 'disabled'}><i class="ti ti-download" aria-hidden="true"></i> Traer compras pendientes del proveedor</button><button type="button" class="boton secundario-sm" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Documento</button>` : ''}
-            </header>
-            <div class="pc-lineas"><table>
-              <thead><tr><th class="pc-n">#</th><th>Compra registrada</th><th>Serie docto.</th><th>No. docto.</th><th>Fecha</th><th class="num">Valor</th><th></th></tr></thead>
-              <tbody>${docs.map((d, i) => { const c = compra(d.compra_id); const fija = !!d.compra_id; return `<tr data-doc="${i}">
-                <td class="pc-n">${i + 1}</td>
-                <td class="ck-compra">${ed ? `<select data-d="compra_id" aria-label="Compra"><option value="">— Documento aún sin registrar —</option>${[...(c ? [c] : []), ...opciones.filter((o) => o.id !== d.compra_id && !usadas.includes(o.id))].map((o) => `<option value="${o.id}" ${o.id === d.compra_id ? 'selected' : ''}>Compra ${o.numero} · ${esc(docTxt(o))} · ${fmt.monto(o.neto)}</option>`).join('')}</select>`
-                  : c ? `<a href="#/compras/facturas-compra" class="pc-tipo">Compra ${c.numero}</a>` : d.compra_id ? '<span class="pc-tipo">Registrada</span>' : '<span class="tk-tenue">Sin registrar</span>'}</td>
-                <td><input data-d="serie" value="${esc(d.serie || '')}" maxlength="20" ${ed && !fija ? '' : 'disabled'} aria-label="Serie"></td>
-                <td><input data-d="documento" value="${esc(d.documento || '')}" maxlength="40" ${ed && !fija ? '' : 'disabled'} aria-label="Número de documento"></td>
-                <td><input type="date" data-d="fecha" value="${esc(d.fecha || '')}" ${ed && !fija ? '' : 'disabled'} aria-label="Fecha"></td>
-                <td class="num"><input type="number" step="0.01" min="0" data-d="valor" value="${d.valor || ''}" ${ed && !fija ? '' : 'disabled'} aria-label="Valor"></td>
-                <td>${ed ? `<button type="button" class="icono-boton" data-quitar="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('')
-                || `<tr><td colspan="7" class="tk-vacio">${ed ? 'Trae las compras pendientes del proveedor o agrega los documentos recibidos.' : 'Sin documentos.'}</td></tr>`}</tbody>
-              <tfoot><tr><td colspan="5">Valor</td><td class="num" data-total>${fmt.monto(total())}</td><td></td></tr></tfoot>
-            </table></div>
+          <section class="bm-pestanas ck-pestanas">
+            <div class="bm-tabs-barra"><div class="rp-pestanas" role="tablist">
+              ${sinRecepcion ? '' : `<button type="button" role="tab" data-pestana="DOCS" class="${tab === 'DOCS' ? 'activa' : ''}" aria-selected="${tab === 'DOCS'}"><i class="ti ti-files" aria-hidden="true"></i> Documentos recibidos${docs.length ? ` <b>${docs.length}</b>` : ''}</button>`}
+              <button type="button" role="tab" data-pestana="LISTA" class="${tab === 'LISTA' ? 'activa' : ''}" aria-selected="${tab === 'LISTA'}"><i class="ti ti-list-search" aria-hidden="true"></i> Listado de recepciones${lista.length ? ` <b>${lista.length}</b>` : ''}</button>
+            </div>
+            ${ed && tab === 'DOCS' ? `<div class="ck-docs-acc"><button type="button" class="boton secundario-sm" data-accion="pendientes" ${v.proveedor_id ? '' : 'disabled'}><i class="ti ti-download" aria-hidden="true"></i> Traer compras pendientes del proveedor</button>${boton('linea', 'ti-plus', 'Documento')}</div>` : ''}</div>
+            <div class="bm-panel ck-docs" data-panel="DOCS" ${tab === 'DOCS' ? '' : 'hidden'}>
+              <h3 class="cl-subtitulo">Detalle de documentos recibidos</h3>
+              ${sinCompra ? `<p class="ck-aviso"><span class="pc-marca pendiente"><i class="ti ti-alert-triangle" aria-hidden="true"></i> ${sinCompra} sin compra registrada: se enlazan solos al registrar la compra</span></p>` : ''}
+              <div class="pc-lineas"><table>
+                <thead><tr><th class="pc-n">#</th><th class="ck-serie">Serie docto.</th><th>No. docto.</th><th class="ck-fecha">Fecha</th><th class="num ck-valor">Valor</th><th>Compra</th><th></th></tr></thead>
+                <tbody>${docs.map((d, i) => { const c = compra(d.compra_id); const fija = !!d.compra_id; return `<tr data-doc="${i}">
+                  <td class="pc-n">${i + 1}</td>
+                  <td class="ck-serie"><input data-d="serie" value="${esc(d.serie || '')}" maxlength="20" ${ed && !fija ? '' : 'disabled'} aria-label="Serie"></td>
+                  <td><input data-d="documento" value="${esc(d.documento || '')}" maxlength="40" ${ed && !fija ? '' : 'disabled'} aria-label="Número de documento"></td>
+                  <td class="ck-fecha"><input type="date" data-d="fecha" value="${esc(d.fecha || '')}" ${ed && !fija ? '' : 'disabled'} aria-label="Fecha"></td>
+                  <td class="num ck-valor"><input type="number" step="0.01" min="0" data-d="valor" value="${d.valor || ''}" ${ed && !fija ? '' : 'disabled'} aria-label="Valor"></td>
+                  <td class="ck-compra">${ed ? `<select data-d="compra_id" aria-label="Compra"><option value="">— Documento aún sin registrar —</option>${[...(c ? [c] : []), ...opciones.filter((o) => o.id !== d.compra_id && !usadas.includes(o.id))].map((o) => `<option value="${o.id}" ${o.id === d.compra_id ? 'selected' : ''}>Compra ${o.numero} · ${esc(docTxt(o))} · ${fmt.monto(o.neto)}</option>`).join('')}</select>`
+                    : c ? `<a href="#/compras/facturas-compra" class="pc-tipo">Compra ${c.numero}</a> <span class="tk-tenue">${esc(docTxt(c))}</span>` : d.compra_id ? '<span class="pc-tipo">Registrada</span>' : '<span class="tk-tenue">Sin registrar</span>'}</td>
+                  <td>${ed ? `<button type="button" class="icono-boton" data-quitar="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('')
+                  || `<tr><td colspan="7" class="tk-vacio">${ed ? 'Trae las compras pendientes del proveedor o agrega los documentos recibidos.' : 'Sin documentos.'}</td></tr>`}</tbody>
+                <tfoot><tr><td colspan="4" class="num">Valor</td><td class="num ck-valor" data-total>${fmt.monto(total())}</td><td colspan="2"></td></tr></tfoot>
+              </table></div>
+            </div>
+            <div class="bm-panel bm-listado" data-panel="LISTA" ${tab === 'LISTA' ? '' : 'hidden'}></div>
           </section>
           <datalist id="ck-proveedores">${proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
         </form>`;
+      ctx.pDet.querySelector('[data-panel=LISTA]').appendChild(ctx.pMae);
     }
 
     function leerDocs() {
@@ -431,12 +448,14 @@
     cont.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-buscar]')) e.preventDefault(); });
     cont.addEventListener('click', (e) => {
       const fila = e.target.closest('tr[data-id]');
-      if (fila && ctx.pMae.contains(fila)) return abrir(lista.find((k) => String(k.id) === fila.dataset.id));
+      if (fila && ctx.pMae.contains(fila)) { pestana = 'DOCS'; return abrir(lista.find((k) => String(k.id) === fila.dataset.id)); }
+      const tab = e.target.closest('[data-pestana]');
+      if (tab) { pestana = tab.dataset.pestana; return ctx.pDet.querySelector('.ck-form [name=proveedor]') ? repintar() : pintarDetalle(); }
       const q = e.target.closest('[data-quitar]');
       if (q) { leerDocs(); docs.splice(Number(q.dataset.quitar), 1); return repintar(); }
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (!a) return;
-      if (a === 'nueva') { actual = null; editando = true; docs = []; ctx.pMae.querySelectorAll('tr.actual').forEach((tr) => tr.classList.remove('actual')); pintarDetalle(); return ctx.pDet.querySelector('[name=proveedor]')?.focus(); }
+      if (a === 'nueva') { actual = null; editando = true; docs = []; pestana = 'DOCS'; ctx.pMae.querySelectorAll('tr.actual').forEach((tr) => tr.classList.remove('actual')); pintarDetalle(); return ctx.pDet.querySelector('[name=proveedor]')?.focus(); }
       if (a === 'modificar') { editando = true; return pintarDetalle(); }
       if (a === 'cancelar') return actual ? abrir(actual) : abrir(lista[0] || null);
       if (a === 'linea') { leerDocs(); docs.push({ serie: '', documento: '', fecha: fmt.hoy(), valor: 0, compra_id: null }); repintar(); const ins = ctx.pDet.querySelectorAll('[data-d=documento]'); return ins[ins.length - 1]?.focus(); }

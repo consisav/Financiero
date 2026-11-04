@@ -193,7 +193,7 @@
       const num = (name, etq, extra = '', step = '0.01') => `<label class="campo ${extra}"><span>${etq}</span><input type="number" step="${step}" min="0" name="${name}" value="${esc(String(v[name] ?? 0))}" ${dis}></label>`;
       const cxp = contable(v.cuenta_pagar_id);
       ctx.pDet.innerHTML = `
-        <form class="tk-form ta-form bm-form cf-form" novalidate>
+        <form class="tk-form ta-form bm-form cf-form cl-clasico" novalidate>
           <header class="tk-titulo bm-titulo cf-titulo">
             <span class="tk-icono"><i class="ti ti-file-invoice" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto"><small>${c ? `Compra ${c.numero} · ${esc(td?.nombre || c.tipo_dte || '')} ${esc(docTxt(c))}` : 'Nueva factura de compra'}</small><h2>${esc(v.proveedor_nombre || (c ? '' : 'Elige el proveedor'))}</h2></div>
@@ -235,7 +235,7 @@
                 <label class="campo cf-c2"><span>Tipo de operación</span><select name="tipo_operacion" ${dis}>${OPERACIONES.map((x) => `<option ${v.tipo_operacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
                 <label class="campo cf-c2"><span>Bodega</span><select name="bodega_id" ${dis}><option value="">—</option>${bodegas.filter((b) => b.estado === 'ACTIVO' || b.id === v.bodega_id).map((b) => `<option value="${b.id}" ${b.id === v.bodega_id ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}</select></label>
                 <label class="campo cf-c4"><span>Rubro</span><select name="rubro_id" ${dis}><option value="">—</option>${rubros.filter((r) => r.activo || r.id === v.rubro_id).map((r) => `<option value="${r.id}" ${r.id === v.rubro_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
-                <label class="campo cf-c4"><span>Descripción</span><textarea name="descripcion" rows="2" maxlength="300" ${dis}>${esc(v.descripcion || '')}</textarea></label>
+                <label class="campo cf-c4"><span>Descripción</span><textarea name="descripcion" rows="1" maxlength="300" ${dis}>${esc(v.descripcion || '')}</textarea></label>
               </div>
             </section>
             <section class="cf-totales">

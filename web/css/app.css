@@ -30,6 +30,8 @@
   --rosa-f: #fbe7f0; --rosa-t: #b0336f;
   --oliva-f: #eef1dc; --oliva-t: #5f6b1c;
   --cian-f: #e1f3fb; --cian-t: #0b6f99;
+  /* Estilo clásico (como el sistema anterior): títulos en rojo oscuro, bloques en azul claro */
+  --cl-rojo: #8b1a1a; --cl-azul: #e1eefb; --cl-azul-borde: #a9cbee; --cl-amarillo: #fff7c4; --cl-amarillo-borde: #e2cd6a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,6 +61,7 @@
     --rosa-f: #3a1a2a; --rosa-t: #f08fbd;
     --oliva-f: #2a2f14; --oliva-t: #c3cf7a;
     --cian-f: #10293a; --cian-t: #6cc3ea;
+    --cl-rojo: #f2a3a3; --cl-azul: #15283f; --cl-azul-borde: #2c4c72; --cl-amarillo: #37321a; --cl-amarillo-borde: #6b5e26;
   }
 }
 
@@ -2448,3 +2451,91 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cpr-img-acc .boton { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .cpr-img-acc small { color: var(--tenue); font-size: 11.5px; }
 @media (max-width: 1100px) { .cpr-dos { grid-template-columns: minmax(0, 1fr); } .cpr-imagen { flex-direction: column; } }
+
+/* ---------- Estilo clásico de Compras (franjas de título, rojo oscuro y azul claro) ---------- */
+.cl-banda { text-align: center; padding: 7px 14px; border-radius: var(--radio); border: 1px solid var(--cl-azul-borde); background: var(--cl-azul); color: var(--cl-rojo); font-size: 17px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.cl-banda.cl-amarilla { background: var(--cl-amarillo); border-color: var(--cl-amarillo-borde); }
+.cl-subtitulo { margin: 2px 0 0; text-align: center; color: var(--cl-rojo); font-size: 14px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.cl-clasico .ta-col-titulo, .cl-clasico .cc-fiscal legend { color: var(--cl-rojo); }
+.cl-clasico .bm-bloque, .cl-clasico .bs-tipo { background: var(--cl-azul); border-color: var(--cl-azul-borde); }
+.cl-clasico .bm-bloque :is(input, select, textarea):not(:disabled), .cl-clasico .bs-tipo :is(input, select):not(:disabled) { background: var(--panel); }
+.cl-clasico .pc-lineas th { color: var(--cl-rojo); }
+
+/* Listas editables: franja arriba, encabezado en una línea y filas compactas */
+.cg-panel.cl-clasico { width: min(1040px, 100%); gap: 8px; padding: 12px 16px; }
+.cl-clasico .cg-cab { gap: 10px; }
+.cl-clasico .cg-cab .tk-icono { width: 30px; height: 30px; }
+.cl-clasico .cg-titulo small { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 700; color: var(--suave); }
+.cl-clasico .cg-titulo p { font-size: 12px; }
+.cl-clasico.cg-panel .cg-tabla td { padding: 1px 6px; }
+.cl-clasico.cg-panel .cg-tabla input, .cl-clasico.cg-panel .cg-tabla select { padding: 3px 7px; font-size: 12.5px; }
+.cl-clasico.cg-panel .cg-tabla th { padding: 5px 8px; }
+.cl-clasico.cg-panel .cg-tabla { max-height: calc(100vh - 300px); }
+
+/* Contraseñas de pago (recepción de facturas) */
+.bk-contrasenas.bk-movimientos .bk-filtros { grid-template-columns: auto minmax(220px, 1.2fr) repeat(3, minmax(120px, .7fr)) auto; }
+.ck-form.cl-clasico { gap: 8px; }
+.ck-elige { margin: 6px 0 0; color: var(--suave); display: flex; align-items: center; gap: 6px; }
+.cl-clasico .ck-cab { grid-template-columns: minmax(0, 1fr) 210px; gap: 10px; }
+.cl-clasico .ck-recepcion { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 14px; background: var(--cl-azul); border-color: var(--cl-azul-borde); }
+.ck-linea { display: grid; gap: 8px 14px; align-items: end; }
+.ck-l1 { grid-template-columns: auto minmax(0, 1.3fr) minmax(0, .6fr) minmax(0, .7fr); align-items: center; }
+.ck-l2 { grid-template-columns: minmax(0, 2.4fr) minmax(0, .8fr) 86px minmax(0, .9fr); }
+.ck-par { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.ck-par span { font-size: 15px; font-weight: 800; color: var(--cl-rojo); white-space: nowrap; }
+.ck-par b { font-size: 15px; padding: 3px 10px; border-radius: 6px; background: var(--panel); border: 1px solid var(--cl-azul-borde); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.ck-par.ck-num span { font-size: 19px; }
+.ck-par.ck-num b { font-size: 19px; color: var(--acento); min-width: 70px; text-align: center; border-right: 1px solid var(--cl-azul-borde); padding-right: 10px; }
+.cl-clasico .ck-num { grid-row: auto; border-right: 0; padding-right: 0; display: flex; flex-direction: row; }
+.ck-par .pc-marca { font-size: 12px; padding: 3px 10px; }
+.ck-l2 .campo span, .ck-obs span { font-size: 12.5px; font-weight: 700; color: var(--cl-rojo); }
+.ck-prov input { font-size: 14px !important; font-weight: 700; }
+.ck-dias input { text-align: right; }
+.cl-clasico .ck-obs { grid-column: auto; }
+.cl-clasico .ck-acciones { min-width: 0; justify-content: flex-start; gap: 6px; }
+.cl-clasico .ck-acciones > .boton { justify-content: center; font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: .03em; padding: 8px 10px; }
+.ck-estado { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding-top: 4px; border-top: 1px dashed var(--borde); }
+.ck-estado .boton { justify-content: center; font-size: 12px; padding: 6px 8px; }
+.ck-pestanas { min-height: 260px; }
+.ck-docs-acc { display: flex; gap: 6px; }
+.ck-docs-acc .boton { display: inline-flex; align-items: center; gap: 6px; }
+.ck-aviso { margin: 0; text-align: center; }
+.ck-docs .pc-lineas { flex: 1; }
+.ck-serie { width: 150px; }
+.ck-fecha { width: 160px; }
+.ck-valor { width: 150px; }
+.cl-clasico .ck-compra { width: 34%; }
+.ck-docs tfoot td.num { text-align: right; }
+.bk-contrasenas .bm-listado .bk-maestro { border: 0; box-shadow: none; }
+@media (max-width: 1500px) { .ck-l2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .ck-l2 .ck-prov { grid-column: 1 / -1; } .ck-l1 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .cl-clasico .ck-cab { grid-template-columns: minmax(0, 1fr); } .cl-clasico .ck-acciones { flex-direction: row; flex-wrap: wrap; } }
+
+/* Facturas de compra: encabezado compacto para que las pestañas se vean sin desplazarse */
+.cf-form.cl-clasico { gap: 6px; padding: 8px 12px 10px; }
+.cf-form.cl-clasico .cf-titulo h2 { font-size: 17px !important; }
+.cf-form.cl-clasico .cf-cabecera { gap: 6px; }
+.cf-form.cl-clasico .cf-cabecera > section { padding: 6px 10px 8px; gap: 4px; }
+.cf-form.cl-clasico .cf-g { gap: 3px 8px; }
+.cf-form.cl-clasico .cf-g .campo { gap: 1px; font-size: 11.5px; }
+.cf-form.cl-clasico .cf-g .campo :is(input, select, textarea) { padding: 4px 8px; font-size: 12.5px; }
+.cf-form.cl-clasico .cf-g .campo textarea { min-height: 30px; resize: vertical; }
+.cf-form.cl-clasico .cf-ayuda { min-height: 0; font-size: 10.5px; }
+.cf-form.cl-clasico .cf-check { padding-bottom: 4px; font-size: 12px; }
+.cf-form.cl-clasico .cf-doc .bs-req-num b { font-size: 17px; }
+.cf-form.cl-clasico .cf-doc select[name=tipo_documento_id] { font-size: 13px !important; }
+.cf-form.cl-clasico .cf-fiscal { grid-column: 1 / span 9; }
+.cf-form.cl-clasico .cf-totales { grid-column: 10 / span 3; grid-row: 1; padding: 6px 10px; gap: 5px; background: color-mix(in srgb, var(--borde) 45%, var(--fondo)); border-color: var(--borde); }
+.cf-form.cl-clasico .cf-ret { grid-column: 10 / span 3; grid-row: 2; }
+.cf-form.cl-clasico .cf-cifras { gap: 3px; }
+.cf-form.cl-clasico .cf-cifras div { padding: 2px 8px; }
+.cf-form.cl-clasico .cf-cifras dd { font-size: 14px; }
+.cf-form.cl-clasico .cf-cifras dd input { width: 120px; padding: 2px 6px; font-size: 13px; }
+.cf-form.cl-clasico .cf-ret { background: color-mix(in srgb, #f39b5a 14%, var(--panel)); border-color: color-mix(in srgb, #f39b5a 50%, var(--borde)); }
+.cf-form.cl-clasico .cf-ret .ta-col-titulo { color: var(--ambar-t); }
+.cf-form.cl-clasico .cc-calc { padding: 2px 8px; }
+.cf-form.cl-clasico .bm-pestanas { min-height: 230px; }
+@media (max-width: 1500px) {
+  .cf-form.cl-clasico .cf-fiscal { grid-column: 1 / span 8; } .cf-form.cl-clasico .cf-totales { grid-column: 9 / span 4; grid-row: 1; }
+  .cf-form.cl-clasico .cf-ret { grid-column: 9 / span 4; grid-row: 2; } .cf-form.cl-clasico .cf-doc, .cf-form.cl-clasico .cf-prov { grid-column: span 8; }
+}
+@media (max-width: 1100px) { .cf-form.cl-clasico .cf-cabecera > section { grid-column: 1 / -1 !important; grid-row: auto !important; } }
