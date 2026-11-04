@@ -1970,3 +1970,19 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
   .bs-cabecera > section { grid-column: 1 / -1 !important; }
   .bs-solicitar { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- Backup · organización y localidad en una línea, contenido del respaldo ---------- */
+.bu-linea { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.bu-contenido { margin: 0; padding: 0; border: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-width: 0; }
+.bu-contenido legend { padding: 0 0 4px; font-size: 12px; color: var(--suave); }
+.bu-opcion { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--fondo); cursor: pointer; min-width: 0; transition: border-color .15s, background .15s; }
+.bu-opcion:hover { border-color: color-mix(in srgb, var(--acento) 45%, var(--borde)); }
+.bu-opcion input { margin: 0; accent-color: var(--acento); flex: none; }
+.bu-opcion .ti { font-size: 18px; color: var(--tenue); flex: none; }
+.bu-opcion span { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.bu-opcion b { font-size: 13px; }
+.bu-opcion small { font-size: 11px; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bu-opcion.marcada { border-color: color-mix(in srgb, var(--acento) 55%, var(--borde)); background: var(--acento-fondo); }
+.bu-opcion.marcada .ti, .bu-opcion.marcada b { color: var(--acento); }
+.bu-opcion:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--acento-fondo); }
+@media (max-width: 700px) { .bu-linea, .bu-contenido { grid-template-columns: minmax(0, 1fr); } }
