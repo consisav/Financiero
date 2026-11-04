@@ -2539,3 +2539,101 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
   .cf-form.cl-clasico .cf-ret { grid-column: 9 / span 4; grid-row: 2; } .cf-form.cl-clasico .cf-doc, .cf-form.cl-clasico .cf-prov { grid-column: span 8; }
 }
 @media (max-width: 1100px) { .cf-form.cl-clasico .cf-cabecera > section { grid-column: 1 / -1 !important; grid-row: auto !important; } }
+
+/* ---------- Productos y servicios: todo en un bloque, sin desplazamientos ---------- */
+.bk-espacio.bk-productos.cp-lado .ta-cuerpo { grid-template-columns: minmax(0, .78fr) minmax(0, 1.42fr); gap: 10px; }
+.bk-productos.cp-lado .bk-detalle { overflow: hidden; }
+.bk-productos .cc-tabla td, .bk-productos .cc-tabla th { padding: 5px 8px; }
+.bk-productos .cc-cab { padding: 8px 12px 6px; }
+.cpr-compacto { flex: 1; min-height: 0; overflow: hidden; gap: 6px; padding: 8px 12px 10px; }
+.cpr-titulo { gap: 8px; }
+.cpr-titulo .tk-icono { width: 30px; height: 30px; }
+.cpr-titulo .tk-titulo-texto small { font-size: 11px; }
+.cpr-titulo .tk-titulo-texto h2 { font-size: 15px; line-height: 1.2; }
+.cpr-titulo .boton { padding: 5px 12px; }
+.cpr-bloque { padding: 6px 10px 7px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--panel); }
+.cpr-g { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px 8px; align-items: end; }
+.cpr-c2 { grid-column: span 2; } .cpr-c3 { grid-column: span 3; } .cpr-c4 { grid-column: span 4; } .cpr-c6 { grid-column: span 6; }
+.cpr-compacto .campo { gap: 1px; font-size: 11px; min-width: 0; }
+.cpr-compacto .campo span { font-weight: 600; color: var(--suave); }
+.cpr-compacto .campo :is(input, select) { padding: 3px 7px; font-size: 12.5px; height: 28px; }
+.cpr-compacto .cpr-chk { font-size: 12px; padding-bottom: 5px; white-space: nowrap; }
+.cpr-compacto .cpr-chk input { width: 15px; height: 15px; accent-color: var(--acento); }
+.cpr-compacto .cpr-costo input { text-align: right; font-weight: 700; }
+.cpr-tira { display: grid; grid-template-columns: auto auto repeat(2, minmax(70px, 1fr)) auto repeat(3, minmax(60px, 1fr)); gap: 4px 10px; align-items: end; }
+.cpr-tit { display: inline-flex; align-items: center; gap: 4px; padding-bottom: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--m-t, var(--acento)); white-space: nowrap; }
+.cpr-sep { padding-left: 12px; border-left: 1px solid var(--borde); }
+.cpr-tira input[type=number] { text-align: right; }
+.cpr-compacto .cp-tabs { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+.cpr-compacto .cp-tabs .rp-pestanas button { padding: 4px 10px; font-size: 12.5px; }
+.cpr-compacto .cp-panel { flex: 1; min-height: 0; padding: 2px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.cpr-compacto .cp-panel[hidden] { display: none; }
+.cpr-compacto .cp-panel .pc-lineas { flex: 1; min-height: 0; max-height: none; overflow: auto; }
+.cpr-compacto .pc-lineas td { padding: 1px 6px; }
+.cpr-compacto .pc-lineas th { padding: 4px 8px; }
+.cpr-compacto .pc-lineas input { padding: 3px 7px; font-size: 12.5px; }
+.cpr-compacto .cp-agregar { padding: 4px 10px; }
+.cpr-compacto .cpr-imagen { flex: 1; min-height: 0; }
+.cpr-compacto .cpr-marco { width: 200px; height: 130px; }
+.cpr-compacto .cpr-control { margin: 0; font-size: 11px; }
+@media (max-width: 1500px) {
+  .bk-espacio.bk-productos.cp-lado .ta-cuerpo { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); }
+  .cpr-c6 { grid-column: span 12; } .cpr-c3 { grid-column: span 6; } .cpr-c4 { grid-column: span 6; } .cpr-c2 { grid-column: span 3; }
+  .cpr-tira { grid-template-columns: auto auto repeat(2, minmax(0, 1fr)); } .cpr-sep { padding-left: 0; border-left: 0; }
+}
+@media (max-width: 1100px) { .bk-productos.cp-lado .bk-detalle, .cpr-compacto { overflow: auto; } }
+
+/* ---------- Facturas de compra: todo en un bloque, sin desplazamientos ---------- */
+.cf-compras .bk-detalle { overflow: hidden; }
+.cf-form.cf-compacto { overflow: hidden; gap: 5px; padding: 6px 12px 8px; }
+.cf-compacto .cf-titulo { gap: 8px; }
+.cf-compacto .cf-titulo .tk-icono { width: 28px; height: 28px; }
+.cf-compacto .cf-titulo small { font-size: 11px; }
+.cf-compacto .cf-titulo h2 { font-size: 15px !important; line-height: 1.2; }
+.cf-compacto .cf-titulo .boton { padding: 5px 12px; }
+.cf-compacto .cf-contra { display: flex; align-items: center; gap: 6px; min-height: 0; font-size: 12px; color: var(--suave); margin-left: auto; padding: 0 8px; }
+.cf-compacto .cf-contra b { font-size: 14px; }
+.cf-compacto .cf-contra .icono-boton { width: 26px; height: 26px; }
+.cf-compacto .cf-contra .boton { padding: 3px 10px; }
+.cf-compacto .cf-cabecera { gap: 5px; }
+.cf-compacto .cf-cabecera > section { padding: 5px 9px 6px; gap: 3px; }
+.cfx { display: grid; gap: 3px 7px; align-items: end; }
+.cfx2 { grid-column: span 2; } .cfx3 { grid-column: span 3; } .cfx4 { grid-column: span 4; }
+.cfx.cfx2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-column: auto; }
+.cfx.cfx4 { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-column: auto; }
+.cfx.cfx6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.cfx.cfx8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.cfx-fila { grid-column: 1 / -1; }
+.cf-compacto .campo { gap: 1px; font-size: 10.5px; min-width: 0; }
+.cf-compacto .campo > span { font-weight: 600; color: var(--suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cf-compacto .campo :is(input, select) { height: 26px; padding: 2px 7px !important; font-size: 12.5px !important; }
+.cf-compacto .cf-doc select[name=tipo_documento_id], .cf-compacto .cf-doc select[name=mes_presentacion], .cf-compacto select[name=dias_credito] { font-weight: 700; }
+.cf-pista { font-style: normal; font-weight: 500; color: var(--tenue); }
+.cf-numero b { display: flex; align-items: center; height: 26px; font-size: 16px; color: var(--acento); font-variant-numeric: tabular-nums; }
+.cf-checks { display: flex; flex-direction: column; gap: 2px; justify-content: flex-end; padding-bottom: 1px; }
+.cf-checks .pc-check { font-size: 11.5px; white-space: nowrap; }
+.cf-compacto .pc-check input { width: 14px; height: 14px; accent-color: var(--acento); }
+.cf-tit { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--cl-rojo); }
+.cf-ret-chk { margin-left: auto; text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--texto); }
+.cf-inguat .pc-check { font-size: 10.5px; font-weight: 600; color: var(--suave); }
+.cf-compacto .cc-calc { height: 26px; padding: 0 8px; justify-content: center; flex-direction: row; align-items: center; gap: 6px; }
+.cf-compacto .cc-calc span { font-size: 10px; }
+.cf-compacto .cc-calc b { font-size: 12.5px; }
+.cf-compacto .cf-totales { gap: 3px; padding: 5px 9px; }
+.cf-compacto .cf-cifras { gap: 2px; }
+.cf-compacto .cf-cifras div { padding: 1px 8px; min-height: 24px; }
+.cf-compacto .cf-cifras dt { font-size: 10.5px; }
+.cf-compacto .cf-cifras dd { font-size: 13.5px; }
+.cf-compacto .cf-cifras dd input { width: 112px; height: 22px; padding: 1px 6px; font-size: 12.5px; }
+.cf-compacto .cf-cifras .cf-total dd input { font-size: 14px; }
+.cf-compacto .bm-pestanas { flex: 1 1 auto; min-height: 0; gap: 4px; }
+.cf-compacto .bm-tabs-barra .rp-pestanas button { padding: 4px 10px; font-size: 12.5px; }
+.cf-compacto .bm-panel { min-height: 0; }
+.cf-compacto .bm-panel .pc-lineas { flex: 1; min-height: 0; overflow: auto; }
+.cf-compacto .pc-lineas td { padding: 1px 6px; }
+.cf-compacto .pc-lineas th { padding: 4px 8px; }
+.cf-compacto .pc-lineas input, .cf-compacto .pc-lineas select { padding: 3px 7px; font-size: 12.5px; }
+.cf-compacto .bm-transaccion { gap: 6px; }
+.cf-compacto .cf-acc .boton, .cf-compacto .bm-transaccion .boton { padding: 4px 10px; }
+@media (max-width: 1500px) { .cfx.cfx8 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .cf-compras .bk-detalle, .cf-form.cf-compacto { overflow: auto; } .cfx.cfx6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cfx3 { grid-column: span 2; } }

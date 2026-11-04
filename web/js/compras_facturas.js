@@ -193,11 +193,12 @@
       const num = (name, etq, extra = '', step = '0.01') => `<label class="campo ${extra}"><span>${etq}</span><input type="number" step="${step}" min="0" name="${name}" value="${esc(String(v[name] ?? 0))}" ${dis}></label>`;
       const cxp = contable(v.cuenta_pagar_id);
       ctx.pDet.innerHTML = `
-        <form class="tk-form ta-form bm-form cf-form cl-clasico" novalidate>
+        <form class="tk-form ta-form bm-form cf-form cl-clasico cf-compacto" novalidate>
           <header class="tk-titulo bm-titulo cf-titulo">
             <span class="tk-icono"><i class="ti ti-file-invoice" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto"><small>${c ? `Compra ${c.numero} · ${esc(td?.nombre || c.tipo_dte || '')} ${esc(docTxt(c))}` : 'Nueva factura de compra'}</small><h2>${esc(v.proveedor_nombre || (c ? '' : 'Elige el proveedor'))}</h2></div>
             <div class="tk-marcas">${c ? marca(ESTADO_PAGO(c)) : ''}${c?.partida_id ? '<span class="pc-marca definitiva"><i class="ti ti-check" aria-hidden="true"></i> Contabilizada</span>' : ''}${modificando ? '<span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}</div>
+            <div class="cf-contra" title="Contraseña de pago">${c?.contrasena ? `<i class="ti ti-key" aria-hidden="true"></i> Contraseña <b>${c.contrasena}</b><small>${esc(fmt.fechaDia(c.contrasena_fecha))}</small><a class="icono-boton" href="#/compras/contrasenas-pago" title="Abrir en Contraseñas de pago" aria-label="Abrir en Contraseñas de pago"><i class="ti ti-external-link" aria-hidden="true"></i></a><button type="button" class="icono-boton" data-accion="imprimir-contrasena" title="Imprimir contraseña" aria-label="Imprimir contraseña"><i class="ti ti-printer" aria-hidden="true"></i></button>` : c ? `<span class="tk-tenue"><i class="ti ti-key" aria-hidden="true"></i> Sin contraseña</span>${consulta && ctx.admin && c.estado === 'ACTIVA' ? '<button type="button" class="boton secundario-sm" data-accion="contrasena">Crear</button>' : ''}` : ''}</div>
             <div class="tk-titulo-acciones">
               ${consulta && ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>' : ''}
               ${consulta ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
@@ -211,35 +212,32 @@
 
           <div class="cf-cabecera">
             <section class="bs-tipo cf-doc">
-              <div class="cf-g cf-g4">
-                <label class="campo cf-c2"><span>Tipo de documento</span><select name="tipo_documento_id" ${dis}>${tiposDoc.filter((t) => t.activo || t.id === v.tipo_documento_id).map((t) => `<option value="${t.id}" ${t.id === v.tipo_documento_id ? 'selected' : ''}>${t.codigo} · ${esc(t.nombre)}</option>`).join('')}</select><small class="cf-ayuda">${td ? (td.calculo_iva === 'NORMAL' ? 'IVA incluido en el total' : td.calculo_iva === 'SIN IVA' ? 'Sin IVA' : 'IVA de importación') : ''}${td?.es_recibo ? ' · recibo' : ''}</small></label>
-                <label class="campo"><span>Presentación</span><select name="mes_presentacion" ${dis}>${MESES.map((m, i) => `<option value="${i + 1}" ${Number(v.mes_presentacion) === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
+              <div class="cfx cfx6">
+                <label class="campo cfx3" title="${td ? (td.calculo_iva === 'NORMAL' ? 'IVA incluido en el total' : td.calculo_iva === 'SIN IVA' ? 'Sin IVA' : 'IVA de importación') : ''}${td?.es_recibo ? ' · recibo' : ''}"><span>Tipo de documento <em class="cf-pista">${td ? (td.calculo_iva === 'NORMAL' ? '· IVA incluido' : td.calculo_iva === 'SIN IVA' ? '· sin IVA' : '· IVA importación') : ''}</em></span><select name="tipo_documento_id" ${dis}>${tiposDoc.filter((t) => t.activo || t.id === v.tipo_documento_id).map((t) => `<option value="${t.id}" ${t.id === v.tipo_documento_id ? 'selected' : ''}>${t.codigo} · ${esc(t.nombre)}</option>`).join('')}</select></label>
+                <label class="campo cfx2"><span>Presentación</span><select name="mes_presentacion" ${dis}>${MESES.map((m, i) => `<option value="${i + 1}" ${Number(v.mes_presentacion) === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
                 <label class="campo"><span>Año</span><input type="number" name="anio_presentacion" min="1900" max="2999" value="${esc(String(v.anio_presentacion || ''))}" ${dis}></label>
-                <div class="bs-req-num"><span>Compra</span><b>${c ? c.numero : 'Auto'}</b></div>
+                <div class="campo cf-numero"><span>Compra</span><b>${c ? c.numero : 'Auto'}</b></div>
                 <label class="campo"><span># Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
-                <label class="campo cf-c2"><span># Documento *</span><input name="documento" value="${esc(v.documento || '')}" maxlength="40" ${dis}></label>
-                <label class="campo"><span>Fecha *</span><input type="date" name="fecha_documento" value="${esc(v.fecha_documento || '')}" ${dis}></label>
-                <label class="campo"><span>Días de crédito</span><select name="dias_credito" ${dis || (v.pago_inmediato ? 'disabled' : '')}>${[...new Set([...DIAS, Number(v.dias_credito) || 0])].sort((a, b) => a - b).map((d) => `<option value="${d}" ${Number(v.dias_credito) === d ? 'selected' : ''}>${d ? `${d} DÍAS` : 'INMEDIATO'}</option>`).join('')}</select></label>
-                <label class="campo"><span>Fecha de pago</span><input type="date" name="fecha_vencimiento" value="${esc(v.fecha_vencimiento || '')}" ${dis}></label>
-                <label class="pc-check cf-check"><input type="checkbox" name="pago_inmediato" ${v.pago_inmediato ? 'checked' : ''} ${dis}> Pago inmediato</label>
-                <div class="campo cf-c2"><span>Contraseña de pago</span><div class="cf-contra">${c?.contrasena ? `<b>${c.contrasena}</b><small>${esc(fmt.fechaDia(c.contrasena_fecha))}</small>` : '<span class="tk-tenue">Sin contraseña</span>'}${consulta && ctx.admin && c.estado === 'ACTIVA' && !c.contrasena ? '<button type="button" class="boton secundario-sm" data-accion="contrasena"><i class="ti ti-key" aria-hidden="true"></i> Crear</button>' : ''}${c?.contrasena ? '<a class="icono-boton" href="#/compras/contrasenas-pago" title="Abrir en Contraseñas de pago" aria-label="Abrir en Contraseñas de pago"><i class="ti ti-external-link" aria-hidden="true"></i></a>' : ''}${c?.contrasena ? '<button type="button" class="icono-boton" data-accion="imprimir-contrasena" title="Imprimir contraseña" aria-label="Imprimir contraseña"><i class="ti ti-printer" aria-hidden="true"></i></button>' : ''}</div></div>
-                <label class="pc-check cf-check cf-c2"><input type="checkbox" name="factura_original" ${v.factura_original ? 'checked' : ''} ${dis}> Factura original recibida</label>
+                <label class="campo cfx2"><span># Documento *</span><input name="documento" value="${esc(v.documento || '')}" maxlength="40" ${dis}></label>
+                <label class="campo cfx2"><span>Fecha *</span><input type="date" name="fecha_documento" value="${esc(v.fecha_documento || '')}" ${dis}></label>
+                <label class="campo cfx2"><span>Días de crédito</span><select name="dias_credito" ${dis || (v.pago_inmediato ? 'disabled' : '')}>${[...new Set([...DIAS, Number(v.dias_credito) || 0])].sort((a, b) => a - b).map((d) => `<option value="${d}" ${Number(v.dias_credito) === d ? 'selected' : ''}>${d ? `${d} DÍAS` : 'INMEDIATO'}</option>`).join('')}</select></label>
+                <label class="campo cfx2"><span>Fecha de pago</span><input type="date" name="fecha_vencimiento" value="${esc(v.fecha_vencimiento || '')}" ${dis}></label>
+                <div class="cf-checks cfx2"><label class="pc-check"><input type="checkbox" name="pago_inmediato" ${v.pago_inmediato ? 'checked' : ''} ${dis}> Pago inmediato</label><label class="pc-check" title="Factura original recibida"><input type="checkbox" name="factura_original" ${v.factura_original ? 'checked' : ''} ${dis}> Original recibida</label></div>
               </div>
             </section>
             <section class="bm-bloque cf-prov">
-              <h3 class="ta-col-titulo"><i class="ti ti-truck" aria-hidden="true"></i> Proveedor</h3>
-              <div class="cf-g cf-g4">
-                <label class="campo cf-c4"><span>Proveedor * <small class="tk-tenue">(código, NIT o nombre)</small></span><input list="cf-proveedores" name="proveedor" value="${esc(p ? provTxt(p) : v.proveedor_nombre ? [v.proveedor_codigo, v.proveedor_nombre, v.nit].filter(Boolean).join(' · ') : '')}" placeholder="Escribe para buscar en el catálogo" ${dis}></label>
-                <label class="campo cf-c2"><span>Régimen ISR</span><select name="regimen_isr_id" ${dis}><option value="">—</option>${regimenes.map((r) => `<option value="${r.id}" ${r.id === v.regimen_isr_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
-                <label class="campo cf-c2"><span>Clasificación</span><select name="clasificacion_id" ${dis}>${clasificaciones.filter((x) => x.activo || x.id === v.clasificacion_id).map((x) => `<option value="${x.id}" ${x.id === v.clasificacion_id ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select><small class="cf-ayuda">${cl ? `${cl.aplica_iva ? 'Aplica IVA' : 'No aplica IVA'} · ${cl.libro_compras ? 'libro de compras' : 'fuera del libro'}` : ''}</small></label>
-                <label class="campo cf-c2"><span>Tipo de operación</span><select name="tipo_operacion" ${dis}>${OPERACIONES.map((x) => `<option ${v.tipo_operacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                <label class="campo cf-c2"><span>Bodega</span><select name="bodega_id" ${dis}><option value="">—</option>${bodegas.filter((b) => b.estado === 'ACTIVO' || b.id === v.bodega_id).map((b) => `<option value="${b.id}" ${b.id === v.bodega_id ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}</select></label>
-                <label class="campo cf-c4"><span>Rubro</span><select name="rubro_id" ${dis}><option value="">—</option>${rubros.filter((r) => r.activo || r.id === v.rubro_id).map((r) => `<option value="${r.id}" ${r.id === v.rubro_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
-                <label class="campo cf-c4"><span>Descripción</span><textarea name="descripcion" rows="1" maxlength="300" ${dis}>${esc(v.descripcion || '')}</textarea></label>
+              <div class="cfx cfx4">
+                <label class="campo cfx4"><span>Proveedor * <em class="cf-pista">código, NIT o nombre</em></span><input list="cf-proveedores" name="proveedor" value="${esc(p ? provTxt(p) : v.proveedor_nombre ? [v.proveedor_codigo, v.proveedor_nombre, v.nit].filter(Boolean).join(' · ') : '')}" placeholder="Escribe para buscar en el catálogo" ${dis}></label>
+                <label class="campo cfx2"><span>Régimen ISR</span><select name="regimen_isr_id" ${dis}><option value="">—</option>${regimenes.map((r) => `<option value="${r.id}" ${r.id === v.regimen_isr_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
+                <label class="campo cfx2" title="${cl ? `${cl.aplica_iva ? 'Aplica IVA' : 'No aplica IVA'} · ${cl.libro_compras ? 'libro de compras' : 'fuera del libro'}` : ''}"><span>Clasificación <em class="cf-pista">${cl ? (cl.aplica_iva ? '· aplica IVA' : '· sin IVA') : ''}</em></span><select name="clasificacion_id" ${dis}>${clasificaciones.filter((x) => x.activo || x.id === v.clasificacion_id).map((x) => `<option value="${x.id}" ${x.id === v.clasificacion_id ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select></label>
+                <label class="campo cfx2"><span>Tipo de operación</span><select name="tipo_operacion" ${dis}>${OPERACIONES.map((x) => `<option ${v.tipo_operacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                <label class="campo cfx2"><span>Bodega</span><select name="bodega_id" ${dis}><option value="">—</option>${bodegas.filter((b) => b.estado === 'ACTIVO' || b.id === v.bodega_id).map((b) => `<option value="${b.id}" ${b.id === v.bodega_id ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}</select></label>
+                <label class="campo cfx2"><span>Rubro</span><select name="rubro_id" ${dis}><option value="">—</option>${rubros.filter((r) => r.activo || r.id === v.rubro_id).map((r) => `<option value="${r.id}" ${r.id === v.rubro_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
+                <label class="campo cfx2"><span>Descripción</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="300" ${dis}></label>
               </div>
             </section>
             <section class="cf-totales">
-              <div class="cf-g cf-g2">
+              <div class="cfx cfx2">
                 <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((m) => `<option value="${m.id}" ${v.moneda_id === m.id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
                 <label class="campo"><span>Cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
               </div>
@@ -253,24 +251,22 @@
               </dl>
             </section>
             <section class="bm-bloque cf-fiscal">
-              <h3 class="ta-col-titulo"><i class="ti ti-receipt-tax" aria-hidden="true"></i> Desglose fiscal</h3>
-              <div class="cf-g cf-g6">
+              <div class="cfx cfx8">
+                <span class="cf-tit cfx-fila"><i class="ti ti-receipt-tax" aria-hidden="true"></i> Desglose fiscal</span>
                 ${num('galones_super', 'Súper (gal)', '', '0.001')}${num('galones_regular', 'Regular (gal)', '', '0.001')}${num('galones_diesel', 'Diésel (gal)', '', '0.001')}
                 <div class="cc-calc"><span>IDP</span><b data-calc="idp">${fmt.monto(k.idp)}</b></div>
                 ${num('exento', 'Exento')}${num('no_deducible', 'G. N. D.')}
                 ${num('iva_especial', 'IVA especial')}${num('isr_especial', 'ISR especial')}
-                <label class="pc-check cf-check"><input type="checkbox" name="aplica_inguat" ${v.aplica_inguat ? 'checked' : ''} ${dis}> Aplica INGUAT</label>
-                <label class="campo"><span>INGUAT</span><input type="number" step="0.01" min="0" name="inguat" value="${esc(String(v.inguat ?? 0))}" ${dis || (v.aplica_inguat ? '' : 'disabled')}></label>
-                ${num('turismo_itp', 'Turismo ITP')}${num('valor_cuenta_ajena', 'Valor cta. ajena')}
+                <div class="campo cf-inguat"><label class="pc-check"><input type="checkbox" name="aplica_inguat" ${v.aplica_inguat ? 'checked' : ''} ${dis}> INGUAT</label><input type="number" step="0.01" min="0" name="inguat" value="${esc(String(v.inguat ?? 0))}" ${dis || (v.aplica_inguat ? '' : 'disabled')} aria-label="INGUAT"></div>
+                ${num('turismo_itp', 'Turismo ITP')}${num('valor_cuenta_ajena', 'Cta. ajena')}
                 ${num('iva_importacion', 'IVA importación')}${num('dai', 'DAI (arancel)')}
-                <div class="cc-calc cf-c2 ${k.afecto < 0 ? 'cc-mal' : ''}" data-calc-caja="afecto"><span>Afecto a IVA</span><b data-calc="afecto">${fmt.monto(k.afecto)}</b></div>
+                <div class="cc-calc cfx2 ${k.afecto < 0 ? 'cc-mal' : ''}" data-calc-caja="afecto"><span>Afecto a IVA</span><b data-calc="afecto">${fmt.monto(k.afecto)}</b></div>
               </div>
             </section>
             <section class="bm-bloque cf-ret">
-              <h3 class="ta-col-titulo"><i class="ti ti-receipt-2" aria-hidden="true"></i> Retención</h3>
-              <label class="pc-check"><input type="checkbox" name="retencion" ${v.retencion ? 'checked' : ''} ${dis}> ¿Retención?</label>
-              <div class="cf-g cf-g2">
-                <label class="campo cf-c2"><span># Formulario</span><input name="retencion_formulario" value="${esc(v.retencion_formulario || '')}" maxlength="30" ${dis || (v.retencion ? '' : 'disabled')}></label>
+              <div class="cfx cfx2">
+                <span class="cf-tit cfx-fila"><i class="ti ti-receipt-2" aria-hidden="true"></i> Retención <label class="pc-check cf-ret-chk"><input type="checkbox" name="retencion" ${v.retencion ? 'checked' : ''} ${dis}> ¿Retención?</label></span>
+                <label class="campo cfx2"><span># Formulario</span><input name="retencion_formulario" value="${esc(v.retencion_formulario || '')}" maxlength="30" ${dis || (v.retencion ? '' : 'disabled')}></label>
                 <label class="campo"><span>Valor</span><input type="number" step="0.01" min="0" name="retencion_valor" value="${esc(String(v.retencion_valor ?? 0))}" ${dis || (v.retencion ? '' : 'disabled')}></label>
                 <label class="campo"><span>Fecha</span><input type="date" name="retencion_fecha" value="${esc(v.retencion_fecha || '')}" ${dis || (v.retencion ? '' : 'disabled')}></label>
               </div>
