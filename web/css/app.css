@@ -25,6 +25,7 @@
   --violeta-f: #efecfd;  --violeta-t: #5b4bc4;
   --coral-f: #fcebe5;    --coral-t: #b44a24;
   --turquesa-f: #e0f4f4; --turquesa-t: #0e7c7b;
+  --indigo-f: #e6e8fb; --indigo-t: #3b45b5;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,6 +50,7 @@
     --violeta-f: #262246;  --violeta-t: #ab9ff0;
     --coral-f: #3a2018;    --coral-t: #ef9673;
     --turquesa-f: #12302f; --turquesa-t: #62c9c6;
+    --indigo-f: #1d2147; --indigo-t: #9aa3f5;
   }
 }
 
@@ -156,6 +158,7 @@ a { color: var(--acento); text-decoration: none; }
 [data-color=violeta] { --m-f: var(--violeta-f); --m-t: var(--violeta-t); }
 [data-color=coral] { --m-f: var(--coral-f); --m-t: var(--coral-t); }
 [data-color=turquesa] { --m-f: var(--turquesa-f); --m-t: var(--turquesa-t); }
+[data-color=indigo] { --m-f: var(--indigo-f); --m-t: var(--indigo-t); }
 
 .seccion { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); margin: 32px 0 12px; }
 

@@ -241,7 +241,7 @@
             <span class="ficha-icono"><i class="ti ${m.icono}" aria-hidden="true"></i></span>
             <h2>${esc(m.nombre)}</h2>
             <p>${esc(m.descripcion)}</p>
-            <div class="chips">${GRUPOS.slice(0, 5).map((g) => `<span class="chip">${esc(g.nombre)}</span>`).join('')}</div>
+            <div class="chips">${gruposDe(m).slice(0, 5).map((g) => `<span class="chip">${esc(g.nombre)}</span>`).join('')}</div>
             <div class="tarjeta-pie">
               <span>${cuenta(m)} opciones · ${permisos[m.id].puede_editar ? 'Edición' : 'Solo lectura'}</span>
               <i class="ti ti-arrow-right" aria-hidden="true"></i>
@@ -251,20 +251,20 @@
     marcarActivo('');
   }
 
-  // Barra fija con los 6 grupos del módulo; cada grupo despliega sus subgrupos y opciones al tocarlo.
+  // Barra fija con los grupos del módulo; cada grupo despliega sus subgrupos y opciones al tocarlo.
   // "actual" es la pantalla abierta: se marca su grupo y se abre su subgrupo dentro del desplegable.
   function menuModulo(m, actual) {
     const grupoDe = (g) => subgruposDe(m, g.id).some((s) => contiene(s, actual));
     return `
       <nav class="menu-modulo" data-color="${m.color}" aria-label="Menú de ${esc(m.corto)}">
-        ${GRUPOS.map((g) => `
+        ${gruposDe(m).map((g) => `
           <div class="menu-item">
             <button type="button" class="menu-boton ${actual && grupoDe(g) ? 'actual' : ''}" data-menu="${g.id}" aria-expanded="false" aria-haspopup="true">
               <span class="menu-icono"><i class="ti ${g.icono}" aria-hidden="true"></i></span>${esc(g.nombre)}<i class="ti ti-chevron-down flecha" aria-hidden="true"></i>
             </button>
             <div class="menu-panel" data-panel="${g.id}" hidden>
               ${subgruposDe(m, g.id).map((s) => `
-                <details class="subgrupo" name="sub-${m.id}-${g.id}" ${contiene(s, actual) ? 'open' : ''}>
+                <details class="subgrupo" name="sub-${m.id}-${g.id}" ${contiene(s, actual) || subgruposDe(m, g.id).length === 1 ? 'open' : ''}>
                   <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
                   ${listaOpciones(m, s.pantallas, actual)}
                 </details>`).join('')}
@@ -300,7 +300,7 @@
 
   function modulo(m) {
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>${esc(m.nombre)}</span>`;
-    const accesos = GRUPOS.flatMap((g) => subgruposDe(m, g.id).flatMap((s) => hojas(s).map(({ p, ruta }) => ({ g, ruta, p }))));
+    const accesos = gruposDe(m).flatMap((g) => subgruposDe(m, g.id).flatMap((s) => hojas(s).map(({ p, ruta }) => ({ g, ruta, p }))));
     vista.innerHTML = `
       ${menuModulo(m, null)}
       <div class="titulo" data-color="${m.color}">
@@ -340,6 +340,9 @@
   document.addEventListener('click', (e) => { if (!e.target.closest('.menu-modulo')) cerrarMenus(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMenus(); });
 
+  // Grupos del menú: los propios del módulo (p. ej. Caja y Bancos) o los 6 generales.
+  const gruposDe = (m) => m.grupos || GRUPOS;
+
   // Subgrupos desplegables de un grupo: los comunes (solo en Catálogos) y los propios del módulo.
   function subgruposDe(m, grupo) {
     return [...(grupo === 'catalogos' ? CATALOGOS_COMUNES : []), ...((m.subgrupos || {})[grupo] || [])];
@@ -355,7 +358,7 @@
   function pantalla(m, p, extra) {
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
       <a href="#/${m.id}">${esc(m.corto)}</a><i class="ti ti-chevron-right" aria-hidden="true"></i>
-      <span>${esc((GRUPOS.find((g) => subgruposDe(m, g.id).some((sg) => contiene(sg, p))) || GRUPOS[0]).nombre)} · ${esc(p.nombre)}</span>`;
+      <span>${esc((gruposDe(m).find((g) => subgruposDe(m, g.id).some((sg) => contiene(sg, p))) || gruposDe(m)[0]).nombre)} · ${esc(p.nombre)}</span>`;
     // Las pantallas de catálogos no llevan título: el nombre ya está en la ruta de arriba.
     vista.innerHTML = `
       ${menuModulo(m, p)}
@@ -373,7 +376,11 @@
     if (id === 'usuarios' && visibles().length) { location.replace(`#/${visibles()[0].id}/usuarios`); return; }
     {
       const m = visibles().find((x) => x.id === id);
-      const p = m && sub && GRUPOS.flatMap((g) => subgruposDe(m, g.id)).flatMap((s) => hojas(s).map((h) => h.p)).find((x) => x.id === sub);
+      const pantallasDe = (x) => gruposDe(x).flatMap((g) => subgruposDe(x, g.id)).flatMap((s) => hojas(s).map((h) => h.p));
+      const p = m && sub && pantallasDe(m).find((x) => x.id === sub);
+      // Una pantalla que cambió de módulo (p. ej. Bancos, de Contabilidad a Caja y Bancos) se abre en el nuevo.
+      const otro = m && sub && !p && visibles().find((x) => pantallasDe(x).some((q) => q.id === sub));
+      if (otro) { location.replace(`#/${otro.id}/${sub}${extra ? `/${extra}` : ''}`); return; }
       if (m && p) pantalla(m, p, extra);
       else if (m) modulo(m);
       else inicio();
