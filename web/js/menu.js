@@ -99,6 +99,15 @@ window.MODULOS = [
     icono: 'ti-calculator',
     descripcion: 'Plan de cuentas, partidas, presupuesto y estados financieros.',
     subgrupos: {
+      procesos: [
+        {
+          subgrupo: 'Cierres',
+          icono: 'ti-calendar-check',
+          pantallas: [
+            { id: 'cierre-de-mes', nombre: 'Cierre de mes', icono: 'ti-calendar-check', descripcion: 'Cierra o reabre cada mes de la empresa; con el mes cerrado sus partidas ya no se modifican.' }
+          ]
+        }
+      ],
       registros: [
         {
           subgrupo: 'Partidas',
@@ -149,7 +158,7 @@ window.MODULOS = [
     opciones: {
       registros: [],
       mantenimientos: ['Períodos contables', 'Empresas', 'Parámetros contables'],
-      procesos: ['Mayorización', 'Cierre de mes', 'Cierre de año'],
+      procesos: ['Mayorización', 'Cierre de año'],
       reportes: ['Libro diario', 'Libro mayor', 'Balance general', 'Estado de resultados', 'Presupuesto vs. ejecutado'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }

@@ -1,12 +1,12 @@
-// Contabilidad · Registros · Partidas contables (administración de pólizas), con el diseño de
-// Tickets · Asignación:
-//   Arriba, los parámetros: organización y localidad (cada partida pertenece a una de ellas),
-//   año, mes, tipo de partida y estado.
-//   Maestro: las partidas de esa empresa y período.
-//   Detalle: encabezado (período, número del mes y anual, tipo, moneda y tipo de cambio,
-//   descripción; fecha y usuario automáticos), líneas (cuenta de movimiento, concepto, debe o
-//   haber y centro de costo) con sus totales y la diferencia, justificación y las acciones:
-//   registrar o guardar, aprobar, hacer definitiva, anular, copiar, imprimir y eliminar.
+// Contabilidad · Registros · Partidas contables (administración de pólizas), en una sola pantalla:
+//   Izquierda: parámetros (empresa agrupada por organización, año, mes, tipo y estado), el estado
+//   del mes (abierto o cerrado), los totales y las partidas de esa empresa y período.
+//   Derecha: la partida elegida en tarjetas (período y póliza, moneda, control con aprobación y
+//   definitiva), tipo, descripción y clasificación, y en pestañas el detalle contable (cuenta de
+//   movimiento, concepto, debe o haber y centro de costo, con totales y cuadre), el soporte
+//   (justificación) y los procesos (transacciones, liquidaciones e impresión).
+//   Una partida registrada se abre en consulta; «Modificar» la habilita solo si el mes no está
+//   cerrado (Contabilidad · Procesos · Cierre de mes) y la partida está vigente y no es definitiva.
 (function () {
   const { esc } = window.UI;
 
@@ -28,6 +28,11 @@
     { id: 'compras', texto: 'Liquidar compras', icono: 'ti-shopping-cart', modulo: 'Compras' },
     { id: 'caja', texto: 'Liquidar caja chica', icono: 'ti-cash', modulo: 'Caja chica' }
   ];
+  const PESTANAS = [
+    { id: 'detalle', texto: 'Detalle contable', icono: 'ti-list-details' },
+    { id: 'soporte', texto: 'Soporte y justificación', icono: 'ti-file-description' },
+    { id: 'procesos', texto: 'Procesos e impresión', icono: 'ti-settings-automation' }
+  ];
 
   window.PANTALLAS = window.PANTALLAS || {};
   window.PANTALLAS['partidas-contables'] = function (cont) {
@@ -46,20 +51,23 @@
     let buscar = '';
     let siguiente = null;   // número que tendría la partida nueva (Obtener póliza)
     let modoImpresion = 'general';
+    let modo = 'ver';       // partida registrada: 'ver' o 'editar' (con «Modificar»)
+    let pestana = 'detalle';
+    let cierre = null;      // cierre del mes elegido (null = abierto)
     const catalogos = {};   // cuentas por versión del catálogo
     const centrosLoc = {};  // centros de costo por localidad
     const [anioHoy, mesHoy] = hoy().split('-').map(Number);
     const f = { org: yo.organizacion_id || null, loc: yo.localidad_id || null, anio: anioHoy, mes: mesHoy, tipo: 0, estado: 'todas' };
 
     cont.innerHTML = `
-      <div class="ta-espacio ta-apilado pc-espacio">
-        <section class="ta-filtros pc-filtros" id="pc-filtros"></section>
-        <div class="ta-cuerpo">
-          <section class="tk-bandeja ta-maestro" id="pc-maestro"></section>
-          <section class="tk-detalle ta-detalle" id="pc-detalle"></section>
-        </div>
+      <div class="pq-espacio">
+        <aside class="pq-lista">
+          <div class="pq-filtros" id="pc-filtros"></div>
+          <div class="pq-bandeja" id="pc-maestro"></div>
+        </aside>
+        <section class="pq-detalle" id="pc-detalle"></section>
       </div>`;
-    const espacio = cont.querySelector('.ta-espacio');
+    const espacio = cont.querySelector('.pq-espacio');
     const pFil = cont.querySelector('#pc-filtros');
     const pMae = cont.querySelector('#pc-maestro');
     const pDet = cont.querySelector('#pc-detalle');
@@ -68,15 +76,20 @@
     const organizacion = (id) => organizaciones.find((o) => o.id === id);
     const tipo = (id) => tipos.find((t) => t.id === id);
     const moneda = (id) => monedas.find((m) => m.id === id);
-    const editable = () => admin && (!actual || (!actual.definitiva && actual.estado === 'VIGENTE'));
+    const cerrado = () => !!(cierre && cierre.cerrado);
+    const vigente = (p) => p && !p.definitiva && p.estado === 'VIGENTE';
+    // Se puede modificar si y solo si el mes no está cerrado y la partida sigue vigente.
+    const puedeModificar = (p) => admin && !cerrado() && vigente(p);
+    const editable = () => admin && !cerrado() && (!actual || (modo === 'editar' && vigente(actual)));
+    const nombreMes = () => `${MESES[f.mes - 1]} ${f.anio}`;
 
     function ajustarAlto() {
       if (!espacio.isConnected) return window.removeEventListener('resize', ajustarAlto);
       const arriba = espacio.getBoundingClientRect().top + window.scrollY;
-      const alto = Math.max(640, window.innerHeight - arriba - 16);
-      espacio.style.setProperty('--tk-alto', `${alto}px`);
+      const alto = Math.max(560, window.innerHeight - arriba - 14);
+      espacio.style.setProperty('--pq-alto', `${alto}px`);
       const sobra = document.documentElement.scrollHeight - window.innerHeight;
-      if (sobra > 0 && alto - sobra >= 640) espacio.style.setProperty('--tk-alto', `${alto - sobra}px`);
+      if (sobra > 0 && alto - sobra >= 560) espacio.style.setProperty('--pq-alto', `${alto - sobra}px`);
     }
     window.addEventListener('resize', ajustarAlto);
 
@@ -99,6 +112,7 @@
       localidades = l.data || [];
       tipos = t.data || [];
       monedas = (m.data || []).map((x) => ({ ...x, cambio: x.iso === 'GTQ' ? 1 : Number((tc.data || []).find((c) => c.moneda_id === x.id)?.valor_venta || 1) }));
+      if (localidad(f.loc)) f.org = localidad(f.loc).organizacion_id;
       if (!f.org) f.org = organizaciones[0]?.id || null;
       if (!f.loc || localidad(f.loc)?.organizacion_id !== f.org) f.loc = localidades.find((x) => x.organizacion_id === f.org)?.id || null;
       pintarFiltros();
@@ -136,19 +150,19 @@
 
     // ---------- Parámetros ----------
     function pintarFiltros() {
-      const locs = localidades.filter((x) => x.organizacion_id === f.org);
+      const grupos = organizaciones.map((o) => ({ o, locs: localidades.filter((x) => x.organizacion_id === o.id) })).filter((g) => g.locs.length);
       const anios = []; for (let a = anioHoy + 1; a >= anioHoy - 6; a--) anios.push(a);
       pFil.innerHTML = `
-        <div class="ta-titulo"><span class="tk-icono"><i class="ti ti-notebook" aria-hidden="true"></i></span><div><small>Registros</small><h2>Partidas contables</h2></div></div>
-        <label class="campo"><span>Organización</span><select name="org">${organizaciones.map((o) => `<option value="${o.id}" ${f.org === o.id ? 'selected' : ''}>${o.codigo} · ${esc(o.nombre)}</option>`).join('')}</select></label>
-        <label class="campo"><span>Localidad (empresa)</span><select name="loc">${locs.map((x) => `<option value="${x.id}" ${f.loc === x.id ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('') || '<option value="">Sin localidades</option>'}</select></label>
+        <div class="pq-marca-titulo"><span class="tk-icono"><i class="ti ti-notebook" aria-hidden="true"></i></span><div><small>Registros</small><h2>Partidas contables</h2></div></div>
+        <label class="campo pq-c2"><span>Empresa</span><select name="loc">${grupos.map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.locs.map((x) => `<option value="${x.id}" ${f.loc === x.id ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</optgroup>`).join('') || '<option value="">Sin localidades</option>'}</select></label>
         <label class="campo"><span>Año</span><select name="anio">${anios.map((a) => `<option ${f.anio === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
         <label class="campo"><span>Mes</span><select name="mes">${MESES.map((n, i) => `<option value="${i + 1}" ${f.mes === i + 1 ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${n}</option>`).join('')}</select></label>
-        <label class="campo"><span>Tipo de partida</span><select name="tipo"><option value="0">Todos</option>${tipos.map((t) => `<option value="${t.id}" ${f.tipo === t.id ? 'selected' : ''}>${esc(t.siglas)} · ${esc(t.nombre)}</option>`).join('')}</select></label>
+        <label class="campo"><span>Tipo</span><select name="tipo"><option value="0">Todos</option>${tipos.map((t) => `<option value="${t.id}" ${f.tipo === t.id ? 'selected' : ''}>${esc(t.siglas)} · ${esc(t.nombre)}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option value="${e.valor}" ${f.estado === e.valor ? 'selected' : ''}>${esc(e.texto)}</option>`).join('')}</select></label>`;
     }
 
     async function consultar() {
+      cierre = null;
       if (!f.loc) { partidas = []; pintarMaestro(); return abrir(null); }
       let q = sb.from('partidas').select('*').eq('organizacion_id', f.org).eq('localidad_id', f.loc).eq('anio', f.anio).eq('mes', f.mes).order('numero', { ascending: false });
       if (f.tipo) q = q.eq('tipo_partida_id', f.tipo);
@@ -156,8 +170,13 @@
       if (f.estado === 'aprobadas') q = q.eq('estado', 'VIGENTE').eq('aprobada', true).eq('definitiva', false);
       if (f.estado === 'definitivas') q = q.eq('definitiva', true);
       if (f.estado === 'anuladas') q = q.eq('estado', 'ANULADA');
-      const { data, error } = await q;
+      const [{ data, error }, c] = await Promise.all([
+        q,
+        sb.from('cierres_mes').select('*').eq('localidad_id', f.loc).eq('anio', f.anio).eq('mes', f.mes).limit(1)
+      ]);
       if (error) { pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
+      // Sin el script 50 el mes se toma como abierto.
+      cierre = c.error ? null : c.data?.[0] || null;
       partidas = data;
       if (actual && !partidas.some((p) => p.id === actual.id)) actual = null;
       pintarMaestro();
@@ -167,43 +186,39 @@
     // ---------- Maestro ----------
     const marcas = (p) => p.estado === 'ANULADA' ? '<span class="pc-marca anulada">Anulada</span>'
       : `${p.definitiva ? '<span class="pc-marca definitiva"><i class="ti ti-lock" aria-hidden="true"></i> Definitiva</span>' : p.aprobada ? '<span class="pc-marca aprobada"><i class="ti ti-check" aria-hidden="true"></i> Aprobada</span>' : '<span class="pc-marca pendiente">Por aprobar</span>'}${Number(p.total_debe) !== Number(p.total_haber) ? '<span class="pc-marca descuadrada">Descuadrada</span>' : ''}`;
+    const franja = (p) => p.estado === 'ANULADA' ? 'e1' : p.definitiva ? 'e7' : p.aprobada ? 'e6' : 'e4';
 
     function pintarMaestro() {
       const q = buscar.trim().toLowerCase();
-      const filas = partidas.filter((p) => !q || [p.numero, p.numero_anual, p.descripcion, p.usuario, tipo(p.tipo_partida_id)?.nombre, tipo(p.tipo_partida_id)?.siglas]
+      const filas = partidas.filter((p) => !q || [`${p.mes}-${p.numero}`, p.numero_anual, p.descripcion, p.usuario, tipo(p.tipo_partida_id)?.nombre, tipo(p.tipo_partida_id)?.siglas]
         .some((v) => String(v || '').toLowerCase().includes(q)));
       const vig = partidas.filter((p) => p.estado === 'VIGENTE');
-      const loc = localidad(f.loc);
+      const porAprobar = vig.filter((p) => !p.aprobada).length;
       pMae.innerHTML = `
-        <header class="tk-bandeja-cab tg-cab">
-          <h2>Partidas <small>${esc(loc ? `${loc.codigo} · ${MESES[f.mes - 1]} ${f.anio}` : '')} · ${partidas.length}</small></h2>
-          <div class="ta-totales pc-resumen"><span class="ta-total"><b>${monto(vig.reduce((s, p) => s + Number(p.total_debe), 0))}</b> debe</span><span class="ta-total"><b>${monto(vig.reduce((s, p) => s + Number(p.total_haber), 0))}</b> haber</span><span class="ta-total sin"><b>${vig.filter((p) => !p.aprobada).length}</b> por aprobar</span></div>
-          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar partida, descripción, tipo…" value="${esc(buscar)}" aria-label="Buscar partidas"></label>
-          ${admin && f.loc ? '<button type="button" class="boton primario-sm" data-accion="nueva"><i class="ti ti-plus" aria-hidden="true"></i> Nueva partida</button>' : ''}
-        </header>
-        <div class="ta-tabla">
-          <table>
-            <thead><tr><th>Partida</th><th>Anual</th><th>Fecha</th><th>Tipo</th><th>Descripción</th><th class="num">Debe</th><th class="num">Haber</th><th>Estado</th><th>Usuario</th><th><span class="oculto">Acciones</span></th></tr></thead>
-            <tbody>
-              ${filas.map((p) => `
-                <tr class="${actual && actual.id === p.id ? 'actual' : ''} ${p.estado === 'ANULADA' ? 'pc-anulada' : ''}" data-partida="${p.id}" tabindex="0">
-                  <td class="fuerte"><i class="tk-franja-celda ${p.estado === 'ANULADA' ? 'e1' : p.definitiva ? 'e7' : p.aprobada ? 'e6' : 'e4'}" aria-hidden="true"></i>${String(p.mes).padStart(2, '0')}-${p.numero}</td>
-                  <td>${p.numero_anual}</td>
-                  <td>${esc(fechaCorta(p.fecha))}</td>
-                  <td><span class="pc-tipo" title="${esc(tipo(p.tipo_partida_id)?.nombre || '')}">${esc(tipo(p.tipo_partida_id)?.siglas || '')}</span></td>
-                  <td class="ta-desc" title="${esc(p.descripcion)}">${esc(p.descripcion)}</td>
-                  <td class="num">${monto(p.total_debe)}</td>
-                  <td class="num">${monto(p.total_haber)}</td>
-                  <td><span class="pc-marcas">${marcas(p)}</span></td>
-                  <td>${esc(p.usuario || '')}</td>
-                  <td class="tk-acciones">
-                    <button type="button" class="tk-accion-btn" data-modificar="${p.id}" title="${admin && !p.definitiva && p.estado === 'VIGENTE' ? 'Modificar' : 'Ver'} la partida"><i class="ti ${admin && !p.definitiva && p.estado === 'VIGENTE' ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i> ${admin && !p.definitiva && p.estado === 'VIGENTE' ? 'Modificar' : 'Ver'}</button>
-                    <button type="button" class="tk-accion-btn peligro" data-eliminar="${p.id}" ${superAdmin && !p.definitiva ? '' : 'disabled'} title="${!superAdmin ? 'Solo el Super Administrador puede eliminar partidas' : p.definitiva ? 'Una partida definitiva no se elimina' : 'Eliminar la partida'}"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>
-                  </td>
-                </tr>`).join('') || `<tr><td colspan="10" class="tk-vacio"><i class="ti ti-notebook" aria-hidden="true"></i>${partidas.length ? 'Ninguna partida coincide con la búsqueda.' : `No hay partidas en ${MESES[f.mes - 1]} ${f.anio} para esta empresa.`}</td></tr>`}
-            </tbody>
-          </table>
-        </div>`;
+        <div class="pq-mes ${cerrado() ? 'cerrado' : 'abierto'}">
+          <i class="ti ${cerrado() ? 'ti-lock' : 'ti-lock-open'}" aria-hidden="true"></i>
+          <div><b>${esc(nombreMes())} · ${cerrado() ? 'Mes cerrado' : 'Mes abierto'}</b>
+          <small>${cerrado() ? `Cerrado por ${esc(cierre.cerrado_por || '')} el ${esc(fechaCorta(cierre.cerrado_en))}: solo consulta e impresión` : 'Las partidas se registran y modifican'}</small></div>
+        </div>
+        <div class="pq-kpis">
+          <div><span>Debe</span><b>${monto(vig.reduce((s, p) => s + Number(p.total_debe), 0))}</b></div>
+          <div><span>Haber</span><b>${monto(vig.reduce((s, p) => s + Number(p.total_haber), 0))}</b></div>
+          <div class="${porAprobar ? 'pend' : ''}"><span>Por aprobar</span><b>${porAprobar}</b></div>
+        </div>
+        <div class="pq-buscar-fila">
+          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar partida, descripción…" value="${esc(buscar)}" aria-label="Buscar partidas"></label>
+          ${admin && f.loc ? `<button type="button" class="boton primario-sm" data-accion="nueva" ${cerrado() ? 'disabled title="El mes está cerrado"' : 'title="Registrar una partida nueva en este mes"'}><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>` : ''}
+        </div>
+        <div class="pq-cuenta-lista"><span>${partidas.length} partida${partidas.length === 1 ? '' : 's'}</span>${q ? `<span>${filas.length} coinciden</span>` : ''}</div>
+        <ul class="pq-items" role="listbox" aria-label="Partidas del mes">
+          ${filas.map((p) => `
+            <li class="${actual && actual.id === p.id ? 'actual' : ''} ${p.estado === 'ANULADA' ? 'anulada' : ''}" data-partida="${p.id}" tabindex="0" role="option" aria-selected="${!!actual && actual.id === p.id}">
+              <i class="tk-franja-celda ${franja(p)}" aria-hidden="true"></i>
+              <div class="pq-item-cab"><b>${String(p.mes).padStart(2, '0')}-${p.numero}</b><span class="pc-tipo" title="${esc(tipo(p.tipo_partida_id)?.nombre || '')}">${esc(tipo(p.tipo_partida_id)?.siglas || '')}</span><small>anual ${p.numero_anual}</small><time>${esc(fechaCorta(p.fecha))}</time></div>
+              <p title="${esc(p.descripcion)}">${esc(p.descripcion)}</p>
+              <div class="pq-item-pie"><span class="pc-marcas">${marcas(p)}</span><b>${monto(p.total_debe)}</b></div>
+            </li>`).join('') || `<li class="pq-vacio"><i class="ti ti-notebook" aria-hidden="true"></i>${partidas.length ? 'Ninguna partida coincide con la búsqueda.' : `No hay partidas en ${esc(nombreMes())} para esta empresa.`}</li>`}
+        </ul>`;
     }
 
     // ---------- Detalle ----------
@@ -211,6 +226,7 @@
       actual = p;
       siguiente = null;
       copia = desde;
+      modo = 'ver';
       if (p) {
         const { data } = await sb.from('partida_lineas').select('*').eq('partida_id', p.id).order('linea');
         lineas = (data || []).map((l) => ({ cuenta_id: l.cuenta_id, centro_id: l.centro_id, concepto: l.concepto || '', debe: Number(l.debe), haber: Number(l.haber) }));
@@ -218,7 +234,11 @@
         lineas = [nuevaLinea(), nuevaLinea()];
       }
       await pintarDetalle();
-      pMae.querySelectorAll('tr[data-partida]').forEach((tr) => tr.classList.toggle('actual', !!p && tr.dataset.partida === String(p.id)));
+      pMae.querySelectorAll('li[data-partida]').forEach((li) => {
+        const si = !!p && li.dataset.partida === String(p.id);
+        li.classList.toggle('actual', si);
+        li.setAttribute('aria-selected', si);
+      });
     }
     const nuevaLinea = () => ({ cuenta_id: null, centro_id: null, concepto: '', debe: 0, haber: 0 });
 
@@ -226,9 +246,46 @@
     let centros = [];
     let catalogoNuevo = null;
 
+    // Motivo por el que una partida registrada no se puede modificar.
+    function motivoBloqueo(p) {
+      if (!admin) return 'Solo un administrador modifica partidas';
+      if (cerrado()) return `El mes de ${nombreMes()} está cerrado`;
+      if (p.estado === 'ANULADA') return 'La partida está anulada';
+      if (p.definitiva) return 'La partida es definitiva';
+      return '';
+    }
+
+    function acciones(p, ed) {
+      if (!p) {
+        return ed ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Registrar partida</button>' : '';
+      }
+      if (modo === 'editar' && ed) {
+        return `<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Cancelar</button>
+          <button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar cambios</button>`;
+      }
+      const bloqueo = motivoBloqueo(p);
+      const procesar = puedeModificar(p);
+      return `
+        <button type="button" class="boton primario-sm" data-accion="modificar" ${bloqueo ? `disabled title="${esc(bloqueo)}: no se modifica"` : 'title="Habilitar la edición de la partida"'}><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>
+        <button type="button" class="boton secundario-sm" data-accion="copiar" ${admin && !cerrado() ? '' : 'disabled'} title="${cerrado() ? 'El mes está cerrado' : 'Crear una partida nueva con este encabezado y estas líneas'}"><i class="ti ti-copy" aria-hidden="true"></i> Replicar</button>
+        ${procesar ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>' : ''}
+        ${superAdmin ? `<button type="button" class="boton secundario-sm rp-peligro" data-accion="eliminar" ${!p.definitiva && !cerrado() ? '' : 'disabled'} title="${p.definitiva ? 'Una partida definitiva no se elimina' : cerrado() ? 'El mes está cerrado' : 'Eliminar la partida'}"><i class="ti ti-trash" aria-hidden="true"></i></button>` : ''}
+        <span class="pc-imprimir">
+          <button type="button" class="boton secundario-sm" data-imprimir title="Imprimir la partida"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
+          <select class="boton secundario-sm pq-modo-imp" name="impresion" aria-label="Tipo de impresión">
+            <option value="general" ${modoImpresion === 'general' ? 'selected' : ''}>Póliza general</option>
+            <option value="centros" ${modoImpresion === 'centros' ? 'selected' : ''}>Por centro de costo</option>
+          </select>
+        </span>`;
+    }
+
     async function pintarDetalle() {
       const p = actual;
-      if (!f.loc) { pDet.innerHTML = '<div class="tk-vacio ta-elige"><i class="ti ti-building" aria-hidden="true"></i>Elige la organización y la localidad.</div>'; return; }
+      if (!f.loc) { pDet.innerHTML = '<div class="tk-vacio ta-elige"><i class="ti ti-building" aria-hidden="true"></i>Elige la empresa.</div>'; return; }
+      if (!p && !copia && (!admin || cerrado())) {
+        pDet.innerHTML = `<div class="tk-vacio ta-elige"><i class="ti ${cerrado() ? 'ti-lock' : 'ti-notebook'}" aria-hidden="true"></i>${cerrado() ? `El mes de ${esc(nombreMes())} está cerrado: no se registran partidas nuevas.` : 'Elige una partida de la lista.'}</div>`;
+        return;
+      }
       catalogoNuevo = p ? null : await catalogoActivo(f.loc);
       [cuentas, centros] = await Promise.all([cuentasDe(p ? p.catalogo_id : catalogoNuevo?.id), centrosDe(p ? p.localidad_id : f.loc)]);
       const ed = editable();
@@ -241,94 +298,109 @@
       const loc = localidad(p ? p.localidad_id : f.loc);
       const movimiento = cuentas.filter((c) => c.movimiento);
       const clasif = base.clasificacion || CLASIFICACIONES[0];
-      const procesar = admin && p && p.estado === 'VIGENTE' && !p.definitiva;
+      const procesar = !!p && puedeModificar(p) && modo === 'ver';
+      const estadoTxt = p ? (modo === 'editar' ? 'En modificación' : 'Consulta') : copia ? 'Réplica sin registrar' : 'Sin registrar';
       pDet.innerHTML = `
-        <form class="tk-form ta-form pc-form" novalidate>
-          <header class="tk-titulo">
+        <form class="pq-form ${ed ? 'editando' : 'consulta'}" novalidate>
+          <header class="pq-titulo">
             <span class="tk-icono"><i class="ti ti-file-invoice" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto">
               <small>Administración de pólizas · ${esc(org ? org.nombre : '')}</small>
               <h2>${p ? `Partida ${String(p.mes).padStart(2, '0')}-${p.numero} <span class="pc-anual">anual ${p.numero_anual}</span>` : copia ? 'Réplica de partida' : 'Nueva partida'}</h2>
             </div>
-            <div class="tk-marcas">${p ? marcas(p) : '<span class="pc-marca pendiente">Sin registrar</span>'}</div>
-            <div class="tk-titulo-acciones">
-              ${procesar ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>' : ''}
-              ${ed ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${p ? 'Guardar cambios' : 'Registrar partida'}</button>` : ''}
-            </div>
+            <div class="pc-marcas">${p ? marcas(p) : ''}<span class="pc-marca ${ed ? 'editando' : 'consulta'}">${estadoTxt}</span>${cerrado() ? '<span class="pc-marca cerrado"><i class="ti ti-lock" aria-hidden="true"></i> Mes cerrado</span>' : ''}</div>
+            <div class="pq-acciones">${acciones(p, ed)}</div>
           </header>
           <p class="modal-error tk-error" role="alert"></p>
-          ${!p && !catalogoNuevo ? '<p class="tk-aviso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Esta empresa no tiene un catálogo de cuentas activo: créalo en Catálogos · Cuentas y CC · Cuentas contables.</p>' : ''}
-          ${p && p.estado === 'ANULADA' ? `<p class="tk-aviso"><i class="ti ti-ban" aria-hidden="true"></i> Anulada por ${esc(p.anulada_por || '')} el ${esc(fechaHora(p.anulada_en))}: ${esc(p.motivo_anulacion || '')}</p>` : ''}
+          ${!p && !catalogoNuevo ? '<p class="tk-aviso pq-aviso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Esta empresa no tiene un catálogo de cuentas activo: créalo en Catálogos · Cuentas y CC · Cuentas contables.</p>' : ''}
+          ${p && p.estado === 'ANULADA' ? `<p class="tk-aviso pq-aviso"><i class="ti ti-ban" aria-hidden="true"></i> Anulada por ${esc(p.anulada_por || '')} el ${esc(fechaHora(p.anulada_en))}: ${esc(p.motivo_anulacion || '')}</p>` : ''}
 
-          <div class="pc-encabezado">
-            <div class="pc-periodo">
-              <div><span>Empresa</span><b class="pc-empresa" title="${esc(loc ? loc.nombre_comercial : '')}">${esc(loc ? `${loc.codigo} · ${loc.nombre_comercial}` : '')}</b></div>
-              <div><span>Año</span><b>${p ? p.anio : f.anio}</b></div>
-              <div><span>Mes</span><b>${MESES[(p ? p.mes : f.mes) - 1]}</b></div>
-              <div class="pc-poliza"><span>Póliza</span><b data-poliza>${p ? p.numero : siguiente ? siguiente.numero : '—'}</b>${p ? '' : '<button type="button" class="rp-enlace" data-accion="obtener" title="Ver el número que tendrá la partida al registrarla">Obtener póliza</button>'}</div>
-              <div><span>Póliza anual</span><b data-anual>${p ? p.numero_anual : siguiente ? siguiente.anual : '—'}</b></div>
+          <div class="pq-cabecera">
+            <div class="pq-tarjeta pq-periodo">
+              <div class="pq-empresa"><small>Empresa</small><b title="${esc(loc ? loc.nombre_comercial : '')}">${esc(loc ? `${loc.codigo} · ${loc.nombre_comercial}` : '')}</b></div>
+              <div class="pq-cifras">
+                <div><span>Año</span><b>${p ? p.anio : f.anio}</b></div>
+                <div><span>Mes</span><b>${MESES[(p ? p.mes : f.mes) - 1]}</b></div>
+                <div class="pq-poliza"><span>Póliza</span><b data-poliza>${p ? p.numero : siguiente ? siguiente.numero : '—'}</b>${p ? '' : '<button type="button" class="rp-enlace" data-accion="obtener" title="Ver el número que tendrá la partida al registrarla">Obtener</button>'}</div>
+                <div><span>Póliza anual</span><b data-anual>${p ? p.numero_anual : siguiente ? siguiente.anual : '—'}</b></div>
+              </div>
             </div>
-            <label class="campo"><span>Moneda</span>
-              <select name="moneda_id" ${dis}>${monedas.map((m) => `<option value="${m.id}" ${mon && mon.id === m.id ? 'selected' : ''}>${esc(m.nombre)} (${esc(m.simbolo)})</option>`).join('')}</select></label>
-            <label class="campo"><span>Valor cambio</span><input type="number" name="tipo_cambio" step="any" min="0" value="${esc(String(base.tipo_cambio ?? mon?.cambio ?? 1))}" ${dis}></label>
-            <div class="ta-auto pc-auto"><span>Fecha · usuario</span><b ${p ? '' : 'data-reloj'}>${esc(fechaHora(p ? p.fecha : new Date()))}</b><small>${esc(p ? p.usuario || '' : (yo.usuario || '').toUpperCase())}</small></div>
-            <div class="ta-auto pc-auto"><span>Estado · tipo</span><b class="${p && p.estado === 'ANULADA' ? 'pc-rojo' : ''}">${p ? esc(p.estado) : 'VIGENTE'}</b><small>${p ? esc(p.origen) : 'MANUAL'}</small></div>
+            <div class="pq-tarjeta pq-moneda">
+              <label class="campo"><span>Moneda</span>
+                <select name="moneda_id" ${dis}>${monedas.map((m) => `<option value="${m.id}" ${mon && mon.id === m.id ? 'selected' : ''}>${esc(m.nombre)} (${esc(m.simbolo)})</option>`).join('')}</select></label>
+              <label class="campo"><span>Valor cambio</span><input type="number" name="tipo_cambio" step="any" min="0" value="${esc(String(base.tipo_cambio ?? mon?.cambio ?? 1))}" ${dis}></label>
+            </div>
+            <div class="pq-tarjeta pq-control">
+              <dl>
+                <div><dt>Fecha y hora</dt><dd ${p ? '' : 'data-reloj'}>${esc(fechaHora(p ? p.fecha : new Date()))}</dd></div>
+                <div><dt>Usuario</dt><dd>${esc(p ? p.usuario || '' : (yo.usuario || '').toUpperCase())}</dd></div>
+                <div><dt>Estado · origen</dt><dd class="${p && p.estado === 'ANULADA' ? 'pc-rojo' : ''}">${p ? esc(p.estado) : 'VIGENTE'} <small>${p ? esc(p.origen) : 'MANUAL'}</small></dd></div>
+              </dl>
+              <div class="pq-checks">
+                <label class="pc-check" title="${p ? 'Aprobar requiere que la partida esté cuadrada (debe = haber)' : 'Registra la partida para poder aprobarla'}">
+                  <input type="checkbox" data-check="aprobada" ${p && p.aprobada ? 'checked' : ''} ${procesar ? '' : 'disabled'}> Aprobada
+                  <small>${p && p.aprobada ? `${esc(p.aprobada_por || '')} · ${esc(fechaCorta(p.aprobada_en))}` : ''}</small></label>
+                <label class="pc-check" title="Una partida definitiva ya no se modifica, anula ni elimina">
+                  <input type="checkbox" data-check="definitiva" ${p && p.definitiva ? 'checked' : ''} ${procesar && p.aprobada ? '' : 'disabled'}> Definitiva
+                  <small>${p && p.definitiva ? `${esc(p.definitiva_por || '')} · ${esc(fechaCorta(p.definitiva_en))}` : ''}</small></label>
+              </div>
+            </div>
           </div>
 
-          <div class="pc-encabezado pc-fila2">
+          <div class="pq-fila">
             <label class="campo"><span>Tipo de partida (transacción) *</span>
               <select name="tipo_partida_id" ${dis}><option value="">Seleccionar…</option>${tipos.map((t) => `<option value="${t.id}" ${tp && tp.id === t.id ? 'selected' : ''}>${t.codigo} · ${esc(t.siglas)} · ${esc(t.nombre)}</option>`).join('')}</select></label>
-            <label class="campo pc-desc"><span>Descripción *</span><input name="descripcion" value="${esc(base.descripcion || '')}" maxlength="300" placeholder="Concepto general de la partida" ${dis}></label>
+            <label class="campo"><span>Descripción *</span><input name="descripcion" value="${esc(base.descripcion || '')}" maxlength="300" placeholder="Concepto general de la partida" ${dis}></label>
             <label class="campo"><span>Clasificación</span>
               <select name="clasificacion" ${dis}>${CLASIFICACIONES.map((c) => `<option ${clasif === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
           </div>
 
-          <div class="pc-banda">
-            <label class="pc-check" title="${p ? 'Aprobar requiere que la partida esté cuadrada (debe = haber)' : 'Registra la partida para poder aprobarla'}">
-              <input type="checkbox" data-check="aprobada" ${p && p.aprobada ? 'checked' : ''} ${procesar ? '' : 'disabled'}> Aprobada</label>
-            <span class="pc-banda-dato"><span>Aprobado por</span><b>${p && p.aprobada ? esc(p.aprobada_por || '') : '—'}</b><b>${p && p.aprobada ? esc(fechaCorta(p.aprobada_en)) : ''}</b></span>
-            <label class="pc-check" title="Una partida definitiva ya no se modifica, anula ni elimina">
-              <input type="checkbox" data-check="definitiva" ${p && p.definitiva ? 'checked' : ''} ${procesar && p.aprobada ? '' : 'disabled'}> Definitiva</label>
-            ${p && p.definitiva ? `<span class="pc-banda-dato"><span>Por</span><b>${esc(p.definitiva_por || '')}</b><b>${esc(fechaCorta(p.definitiva_en))}</b></span>` : ''}
-            <span class="pc-banda-sep"></span>
-            <label class="pc-generar" title="Genera las líneas de la partida a partir de una transacción de otro módulo"><span>Generar transacción</span><input disabled placeholder="Próximamente"></label>
-            <button type="button" class="boton secundario-sm" data-proximamente="Transacciones" title="Transacciones de los módulos (facturación, compras, bancos…): se habilitan cuando existan esos módulos"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transacciones</button>
-            <button type="button" class="boton secundario-sm" data-accion="copiar" ${p && admin ? '' : 'disabled'} title="Crear una partida nueva con este encabezado y estas líneas"><i class="ti ti-copy" aria-hidden="true"></i> Replicar</button>
-          </div>
-
-          <section class="pc-detalle">
-            <div class="pc-detalle-cab">
-              <h3 class="ta-col-titulo"><i class="ti ti-list-details" aria-hidden="true"></i> Detalle de la partida <small class="tk-tenue">${movimiento.length} cuentas de movimiento disponibles</small></h3>
-              ${ed ? '<button type="button" class="rp-enlace" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Agregar línea</button>' : ''}
-            </div>
-            <div class="pc-lineas">
-              <table>
-                <thead><tr><th class="pc-n">#</th><th class="pc-cta">Cuenta</th><th>Nombre de la cuenta</th><th>Concepto</th><th class="num">Debe</th><th class="num">Haber</th><th class="pc-cc">Centro de costo</th><th>Nombre del centro</th><th></th></tr></thead>
-                <tbody>${lineas.map((l, i) => filaLinea(l, i, ed)).join('')}</tbody>
-                <tfoot><tr><td colspan="4" class="pc-totales-lbl">Totales <span data-estado-cuadre></span></td><td class="num" data-total="debe"></td><td class="num" data-total="haber"></td><td colspan="3" data-diferencia></td></tr></tfoot>
-              </table>
-            </div>
-            <datalist id="pc-cuentas">${movimiento.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>
-            <datalist id="pc-centros">${centros.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>
-          </section>
-
-          <div class="pc-pie">
-            <label class="campo pc-justificacion"><span>Justificación</span><textarea name="justificacion" rows="2" placeholder="Soporte o motivo de la partida (documentos, autorizaciones…)" ${dis}>${esc(base.justificacion || '')}</textarea></label>
-            <div class="pc-liquidar">
-              <span>Liquidaciones</span>
-              <div>${LIQUIDACIONES.map((l) => `<button type="button" class="boton secundario-sm" data-proximamente="${esc(l.texto)}" data-modulo="${esc(l.modulo)}" title="Genera la partida automática con los movimientos de ${esc(l.modulo)}: se habilita cuando exista ese módulo"><i class="ti ${l.icono}" aria-hidden="true"></i> ${esc(l.texto)}</button>`).join('')}</div>
-            </div>
-            <div class="pc-impresion">
-              <span>Impresión</span>
-              <div class="pc-radios" role="radiogroup" aria-label="Tipo de impresión">
-                <label><input type="radio" name="impresion" value="general" ${modoImpresion === 'general' ? 'checked' : ''}> Póliza general</label>
-                <label><input type="radio" name="impresion" value="centros" ${modoImpresion === 'centros' ? 'checked' : ''}> Integración por centro de costo</label>
+          <div class="pq-pestanas">
+            <div class="pq-tabs-barra">
+              <div class="rp-pestanas" role="tablist">${PESTANAS.map((t) => `<button type="button" role="tab" data-pestana="${t.id}" class="${pestana === t.id ? 'activa' : ''}" aria-selected="${pestana === t.id}"><i class="ti ${t.icono}" aria-hidden="true"></i> ${esc(t.texto)}${t.id === 'detalle' ? ` <b data-n-lineas>${lineas.length}</b>` : ''}</button>`).join('')}</div>
+              <div class="pq-tabs-der">
+                <span class="tk-tenue">${movimiento.length} cuentas de movimiento</span>
+                <span data-diferencia></span>
+                ${ed ? '<button type="button" class="boton secundario-sm" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Agregar línea</button>' : ''}
               </div>
-              <button type="button" class="boton primario-sm" data-imprimir ${p ? '' : 'disabled'}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
+            </div>
+            <div class="pq-panel" data-panel="detalle" ${pestana === 'detalle' ? '' : 'hidden'}>
+              <div class="pc-lineas">
+                <table>
+                  <thead><tr><th class="pc-n">#</th><th class="pc-cta">Cuenta</th><th>Nombre de la cuenta</th><th>Concepto</th><th class="num">Debe</th><th class="num">Haber</th><th class="pc-cc">Centro de costo</th><th>Nombre del centro</th><th class="pq-x"></th></tr></thead>
+                  <tbody>${lineas.map((l, i) => filaLinea(l, i, ed)).join('')}</tbody>
+                  <tfoot><tr><td colspan="4" class="pc-totales-lbl">Totales</td><td class="num" data-total="debe"></td><td class="num" data-total="haber"></td><td colspan="3"></td></tr></tfoot>
+                </table>
+              </div>
+              <datalist id="pc-cuentas">${movimiento.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>
+              <datalist id="pc-centros">${centros.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>
+            </div>
+            <div class="pq-panel" data-panel="soporte" ${pestana === 'soporte' ? '' : 'hidden'}>
+              <label class="campo pq-justificacion"><span>Justificación</span><textarea name="justificacion" placeholder="Soporte o motivo de la partida (documentos, autorizaciones…)" ${dis}>${esc(base.justificacion || '')}</textarea></label>
+            </div>
+            <div class="pq-panel pq-procesos" data-panel="procesos" ${pestana === 'procesos' ? '' : 'hidden'}>
+              <div class="pq-tarjeta">
+                <h3 class="ta-col-titulo"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transacciones</h3>
+                <label class="campo pc-generar" title="Genera las líneas de la partida a partir de una transacción de otro módulo"><span>Generar transacción</span><input disabled placeholder="Próximamente"></label>
+                <button type="button" class="boton secundario-sm" data-proximamente="Transacciones" title="Transacciones de los módulos (facturación, compras, bancos…): se habilitan cuando existan esos módulos"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transacciones</button>
+              </div>
+              <div class="pq-tarjeta">
+                <h3 class="ta-col-titulo"><i class="ti ti-receipt-2" aria-hidden="true"></i> Liquidaciones</h3>
+                <div class="pq-botones">${LIQUIDACIONES.map((l) => `<button type="button" class="boton secundario-sm" data-proximamente="${esc(l.texto)}" data-modulo="${esc(l.modulo)}" title="Genera la partida automática con los movimientos de ${esc(l.modulo)}: se habilita cuando exista ese módulo"><i class="ti ${l.icono}" aria-hidden="true"></i> ${esc(l.texto)}</button>`).join('')}</div>
+              </div>
+              <div class="pq-tarjeta">
+                <h3 class="ta-col-titulo"><i class="ti ti-printer" aria-hidden="true"></i> Impresión</h3>
+                <div class="pc-radios" role="radiogroup" aria-label="Tipo de impresión">
+                  <label><input type="radio" name="impresion" value="general" ${modoImpresion === 'general' ? 'checked' : ''}> Póliza general</label>
+                  <label><input type="radio" name="impresion" value="centros" ${modoImpresion === 'centros' ? 'checked' : ''}> Integración por centro de costo</label>
+                </div>
+                <button type="button" class="boton primario-sm" data-imprimir ${p ? '' : 'disabled'}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
+              </div>
             </div>
           </div>
         </form>`;
       totalizar();
+      ajustarAlto();
     }
 
     function filaLinea(l, i, ed) {
@@ -338,14 +410,14 @@
       return `
         <tr data-linea="${i}">
           <td class="pc-n">${i + 1}</td>
-          <td class="pc-cta"><input list="pc-cuentas" data-campo="cuenta" value="${esc(c ? c.codigo : '')}" placeholder="Código" ${dis} aria-label="Cuenta de la línea ${i + 1}"></td>
+          <td class="pc-cta"><input list="pc-cuentas" data-campo="cuenta" value="${esc(c ? c.codigo : '')}" placeholder="${ed ? 'Código' : ''}" ${dis} aria-label="Cuenta de la línea ${i + 1}"></td>
           <td class="pc-nombre" data-nombre-cuenta>${esc(c ? c.nombre : '')}</td>
           <td><input data-campo="concepto" value="${esc(l.concepto)}" maxlength="200" ${dis} aria-label="Concepto de la línea ${i + 1}"></td>
           <td class="num"><input type="number" step="0.01" min="0" data-campo="debe" value="${l.debe ? l.debe : ''}" ${dis} aria-label="Debe de la línea ${i + 1}"></td>
           <td class="num"><input type="number" step="0.01" min="0" data-campo="haber" value="${l.haber ? l.haber : ''}" ${dis} aria-label="Haber de la línea ${i + 1}"></td>
-          <td class="pc-cc"><input list="pc-centros" data-campo="centro" value="${esc(cc ? cc.codigo : '')}" placeholder="Código" ${dis} aria-label="Centro de costo de la línea ${i + 1}"></td>
+          <td class="pc-cc"><input list="pc-centros" data-campo="centro" value="${esc(cc ? cc.codigo : '')}" placeholder="${ed ? 'Código' : ''}" ${dis} aria-label="Centro de costo de la línea ${i + 1}"></td>
           <td class="pc-nombre" data-nombre-centro>${esc(cc ? cc.nombre : '')}</td>
-          <td>${ed ? `<button type="button" class="icono-boton" data-quitar-linea="${i}" aria-label="Quitar la línea ${i + 1}"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td>
+          <td class="pq-x">${ed ? `<button type="button" class="icono-boton" data-quitar-linea="${i}" aria-label="Quitar la línea ${i + 1}"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td>
         </tr>`;
     }
 
@@ -357,6 +429,8 @@
       if (!td) return;
       td.textContent = monto(d);
       pDet.querySelector('[data-total=haber]').textContent = monto(h);
+      const n = pDet.querySelector('[data-n-lineas]');
+      if (n) n.textContent = lineas.length;
       const cuadra = dif === 0 && d > 0;
       pDet.querySelector('[data-diferencia]').innerHTML = cuadra
         ? '<span class="pc-cuadre ok"><i class="ti ti-circle-check" aria-hidden="true"></i> Cuadrada</span>'
@@ -377,13 +451,15 @@
 
     async function guardar(form) {
       const error = form.querySelector('.modal-error');
+      if (!editable()) { error.textContent = cerrado() ? `El mes de ${nombreMes()} está cerrado: la partida no se modifica.` : 'La partida no se puede modificar.'; return; }
       const e = encabezado(form);
       const validas = lineas.filter((l) => l.cuenta_id || l.debe || l.haber);
+      const ir = (t) => { pestana = t; activarPestana(t); };
       if (!e.tipo_partida_id) { error.textContent = 'Elige el tipo de partida.'; return; }
       if (!e.descripcion) { error.textContent = 'Escribe la descripción de la partida.'; form.elements.descripcion.focus(); return; }
-      if (!validas.length) { error.textContent = 'Agrega al menos una línea con su cuenta y su monto.'; return; }
+      if (!validas.length) { ir('detalle'); error.textContent = 'Agrega al menos una línea con su cuenta y su monto.'; return; }
       const mala = validas.findIndex((l) => !l.cuenta_id || !(Number(l.debe) > 0 || Number(l.haber) > 0) || (Number(l.debe) > 0 && Number(l.haber) > 0));
-      if (mala >= 0) { error.textContent = `Revisa la línea ${lineas.indexOf(validas[mala]) + 1}: necesita una cuenta de movimiento y un monto en el debe o en el haber (no en ambos).`; return; }
+      if (mala >= 0) { ir('detalle'); error.textContent = `Revisa la línea ${lineas.indexOf(validas[mala]) + 1}: necesita una cuenta de movimiento y un monto en el debe o en el haber (no en ambos).`; return; }
       const boton = form.querySelector('[type=submit]');
       boton.disabled = true;
       error.textContent = '';
@@ -447,16 +523,16 @@
     }
 
     // ---------- Impresión ----------
-    function imprimir(modo) {
+    function imprimir(modoImp) {
       const p = actual;
       const org = organizacion(p.organizacion_id);
       const loc = localidad(p.localidad_id);
       const tp = tipo(p.tipo_partida_id);
       const mon = moneda(p.moneda_id);
       const filas = lineas.map((l, i) => ({ ...l, n: i + 1, cuenta: cuentas.find((c) => c.id === l.cuenta_id), centro: centros.find((c) => c.id === l.centro_id) }));
-      const fila = (l) => `<tr><td>${l.n}</td><td>${esc(l.cuenta?.codigo || '')}</td><td>${esc(l.cuenta?.nombre || '')}</td><td>${esc(l.concepto || '')}</td><td class="n">${l.debe ? monto(l.debe) : ''}</td><td class="n">${l.haber ? monto(l.haber) : ''}</td>${modo === 'general' ? `<td>${esc(l.centro ? `${l.centro.codigo} ${l.centro.nombre}` : '')}</td>` : ''}</tr>`;
+      const fila = (l) => `<tr><td>${l.n}</td><td>${esc(l.cuenta?.codigo || '')}</td><td>${esc(l.cuenta?.nombre || '')}</td><td>${esc(l.concepto || '')}</td><td class="n">${l.debe ? monto(l.debe) : ''}</td><td class="n">${l.haber ? monto(l.haber) : ''}</td>${modoImp === 'general' ? `<td>${esc(l.centro ? `${l.centro.codigo} ${l.centro.nombre}` : '')}</td>` : ''}</tr>`;
       let cuerpo;
-      if (modo === 'centros') {
+      if (modoImp === 'centros') {
         const grupos = {};
         filas.forEach((l) => { const k = l.centro ? `${l.centro.codigo} · ${l.centro.nombre}` : 'Sin centro de costo'; (grupos[k] = grupos[k] || []).push(l); });
         cuerpo = Object.entries(grupos).map(([k, ls]) => `<tr class="g"><td colspan="6">${esc(k)}</td></tr>${ls.map(fila).join('')}<tr class="s"><td colspan="4">Subtotal</td><td class="n">${monto(ls.reduce((s, l) => s + Number(l.debe), 0))}</td><td class="n">${monto(ls.reduce((s, l) => s + Number(l.haber), 0))}</td></tr>`).join('');
@@ -470,17 +546,22 @@
         tr.g td{background:#f3f3f3;font-weight:bold}tr.s td{font-weight:bold}tfoot td{font-weight:bold;background:#eee}.firmas{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:60px;text-align:center}.firmas div{border-top:1px solid #333;padding-top:4px}
         @media print{body{margin:10mm}}</style></head><body>
         <h1>${esc(org?.nombre || '')} · ${esc(loc ? `${loc.codigo} ${loc.nombre_comercial}` : '')}</h1>
-        <h2>Partida contable ${String(p.mes).padStart(2, '0')}-${p.numero} · póliza anual ${p.numero_anual}${modo === 'centros' ? ' · integrada por centro de costo' : ''}${p.estado === 'ANULADA' ? ' · ANULADA' : ''}</h2>
+        <h2>Partida contable ${String(p.mes).padStart(2, '0')}-${p.numero} · póliza anual ${p.numero_anual}${modoImp === 'centros' ? ' · integrada por centro de costo' : ''}${p.estado === 'ANULADA' ? ' · ANULADA' : ''}</h2>
         <div class="cab"><div><b>Período</b>${MESES[p.mes - 1]} ${p.anio}</div><div><b>Fecha</b>${esc(fechaHora(p.fecha))}</div><div><b>Tipo</b>${esc(tp ? `${tp.siglas} · ${tp.nombre}` : '')}</div><div><b>Moneda</b>${esc(mon ? mon.nombre : '')} · TC ${esc(String(p.tipo_cambio))}</div>
           <div style="grid-column:1/-1"><b>Descripción</b>${esc(p.descripcion)}</div>${p.justificacion ? `<div style="grid-column:1/-1"><b>Justificación</b>${esc(p.justificacion)}</div>` : ''}</div>
-        <table><thead><tr><th>#</th><th>Cuenta</th><th>Nombre</th><th>Concepto</th><th class="n">Debe</th><th class="n">Haber</th>${modo === 'general' ? '<th>Centro de costo</th>' : ''}</tr></thead><tbody>${cuerpo}</tbody>
-        <tfoot><tr><td colspan="4">Totales</td><td class="n">${monto(p.total_debe)}</td><td class="n">${monto(p.total_haber)}</td>${modo === 'general' ? '<td></td>' : ''}</tr></tfoot></table>
+        <table><thead><tr><th>#</th><th>Cuenta</th><th>Nombre</th><th>Concepto</th><th class="n">Debe</th><th class="n">Haber</th>${modoImp === 'general' ? '<th>Centro de costo</th>' : ''}</tr></thead><tbody>${cuerpo}</tbody>
+        <tfoot><tr><td colspan="4">Totales</td><td class="n">${monto(p.total_debe)}</td><td class="n">${monto(p.total_haber)}</td>${modoImp === 'general' ? '<td></td>' : ''}</tr></tfoot></table>
         <div class="firmas"><div>Elaboró: ${esc(p.usuario || '')}</div><div>Revisó</div><div>Aprobó: ${esc(p.aprobada_por || '')}</div></div>
         <script>window.onload=()=>window.print()<\/script></body></html>`);
       v.document.close();
     }
 
     // ---------- Eventos ----------
+    function activarPestana(id) {
+      pDet.querySelectorAll('[data-pestana]').forEach((x) => { x.classList.toggle('activa', x.dataset.pestana === id); x.setAttribute('aria-selected', x.dataset.pestana === id); });
+      pDet.querySelectorAll('[data-panel]').forEach((x) => { x.hidden = x.dataset.panel !== id; });
+    }
+
     function leerLinea(tr) {
       const i = Number(tr.dataset.linea);
       const l = lineas[i];
@@ -520,18 +601,17 @@
       if (e.target.closest('#pc-filtros')) {
         const n = e.target.name;
         const val = e.target.value;
-        if (n === 'org') { f.org = Number(val); f.loc = localidades.find((x) => x.organizacion_id === f.org)?.id || null; pintarFiltros(); }
-        else if (n === 'loc') f.loc = val ? Number(val) : null;
+        if (n === 'loc') { f.loc = val ? Number(val) : null; f.org = localidad(f.loc)?.organizacion_id ?? f.org; }
         else if (n === 'estado') f.estado = val;
         else f[n] = Number(val);
         actual = null;
         return consultar();
       }
-      if (e.target.name === 'tipo_partida_id') {
-        const t = tipo(Number(e.target.value));
-        pDet.querySelector('[data-clasificacion]').innerHTML = t ? `Clasificación: ${esc(t.clasificacion)}` : '&nbsp;';
+      if (e.target.name === 'impresion') {
+        modoImpresion = e.target.value;
+        pDet.querySelectorAll('[name=impresion]').forEach((x) => { if (x.type === 'radio') x.checked = x.value === modoImpresion; else x.value = modoImpresion; });
+        return;
       }
-      if (e.target.name === 'impresion') { modoImpresion = e.target.value; return; }
       const ck = e.target.closest('[data-check]');
       if (ck) {
         const accion = ck.dataset.check === 'aprobada' ? (ck.checked ? 'APROBAR' : 'DESAPROBAR') : 'DEFINITIVA';
@@ -552,39 +632,49 @@
         else pDet.querySelector(`tr[data-linea="${Number(tr.dataset.linea) + 1}"] [data-campo=cuenta]`)?.focus();
         return;
       }
-      const fila = e.target.closest('tr[data-partida]');
-      if (fila && e.target === fila && e.key === 'Enter') abrir(partidas.find((p) => String(p.id) === fila.dataset.partida));
+      const li = e.target.closest('li[data-partida]');
+      if (li && e.target === li && e.key === 'Enter') abrir(partidas.find((p) => String(p.id) === li.dataset.partida));
+      if (li && e.target === li && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+        e.preventDefault();
+        (e.key === 'ArrowDown' ? li.nextElementSibling : li.previousElementSibling)?.focus();
+      }
     });
     function agregarLinea() {
-      const form = pDet.querySelector('.pc-form');
-      const tbody = form.querySelector('.pc-lineas tbody');
+      const tbody = pDet.querySelector('.pc-lineas tbody');
       lineas.push(nuevaLinea());
       tbody.insertAdjacentHTML('beforeend', filaLinea(lineas[lineas.length - 1], lineas.length - 1, true));
       const ult = tbody.lastElementChild;
       ult.scrollIntoView({ block: 'nearest' });
       ult.querySelector('[data-campo=cuenta]').focus();
+      totalizar();
     }
     cont.addEventListener('click', async (e) => {
-      const bm = e.target.closest('[data-modificar]');
-      if (bm) { await abrir(partidas.find((p) => String(p.id) === bm.dataset.modificar)); return pDet.querySelector('[name=descripcion]')?.focus(); }
-      const be = e.target.closest('[data-eliminar]');
-      if (be) { actual = partidas.find((p) => String(p.id) === be.dataset.eliminar); return cambiarEstado('ELIMINAR'); }
-      const fila = e.target.closest('tr[data-partida]');
-      if (fila) return abrir(partidas.find((p) => String(p.id) === fila.dataset.partida));
+      const li = e.target.closest('li[data-partida]');
+      if (li) return abrir(partidas.find((p) => String(p.id) === li.dataset.partida));
+      const tab = e.target.closest('[data-pestana]');
+      if (tab) { pestana = tab.dataset.pestana; return activarPestana(pestana); }
       const ac = e.target.closest('[data-accion]');
       if (ac) {
         const a = ac.dataset.accion;
-        if (a === 'nueva') return abrir(null);
+        if (a === 'nueva') { pestana = 'detalle'; await abrir(null); return pDet.querySelector('[name=descripcion]')?.focus(); }
         if (a === 'obtener') return obtenerPoliza();
-        if (a === 'linea') return agregarLinea();
+        if (a === 'linea') { if (pestana !== 'detalle') { pestana = 'detalle'; activarPestana(pestana); } return agregarLinea(); }
+        if (a === 'modificar') {
+          if (!puedeModificar(actual)) return;
+          modo = 'editar';
+          await pintarDetalle();
+          return pDet.querySelector('[name=descripcion]')?.focus();
+        }
+        if (a === 'cancelar') return abrir(actual);
+        if (a === 'eliminar') return cambiarEstado('ELIMINAR');
         if (a === 'copiar') {
-          const form = pDet.querySelector('.pc-form');
+          const form = pDet.querySelector('.pq-form');
           const base = { ...encabezado(form) };
           const ls = lineas.map((l) => ({ ...l }));
           await abrir(null, base);
           lineas = ls;
           await pintarDetalle();
-          return window.FIN.aviso(`Copia lista para ${MESES[f.mes - 1]} ${f.anio}: revisa y presiona «Registrar partida»`);
+          return window.FIN.aviso(`Copia lista para ${nombreMes()}: revisa y presiona «Registrar partida»`);
         }
         return cambiarEstado({ anular: 'ANULAR', aprobar: 'APROBAR', desaprobar: 'DESAPROBAR', definitiva: 'DEFINITIVA' }[a]);
       }
@@ -602,7 +692,7 @@
       }
     });
     cont.addEventListener('submit', (e) => {
-      if (!e.target.matches('.pc-form')) return;
+      if (!e.target.matches('.pq-form')) return;
       e.preventDefault();
       guardar(e.target);
     });
