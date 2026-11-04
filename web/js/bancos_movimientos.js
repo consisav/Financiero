@@ -235,7 +235,7 @@
           sb.from('movimiento_documentos').select('*').eq('movimiento_id', d.id).order('id'),
           sb.from('movimiento_lineas').select('*').eq('movimiento_id', d.id).order('linea')
         ]);
-        documentos = (a.data || []).map((x) => ({ tipo: x.tipo, serie: x.serie || '', numero: x.numero, tercero: x.tercero || '', nombre: x.nombre || '', valor: Number(x.valor), abono: Number(x.abono || 0), fecha: x.fecha || '', estado: x.estado || '', contrato: x.contrato || '' }));
+        documentos = (a.data || []).map((x) => ({ tipo: x.tipo, serie: x.serie || '', numero: x.numero, tercero: x.tercero || '', nombre: x.nombre || '', valor: Number(x.valor), abono: Number(x.abono || 0), fecha: x.fecha || '', estado: x.estado || '', contrato: x.contrato || '', compra_id: x.compra_id || null }));
         lineas = (b.data || []).map((x) => ({ cuenta_id: x.cuenta_id, centro_id: x.centro_id, debe: Number(x.debe), haber: Number(x.haber) }));
       }
       pintarDetalle();
@@ -572,7 +572,7 @@
           const r = await sb.from('movimiento_documentos').insert(docsV.map((x) => ({
             movimiento_id: id, tipo: x.tipo, serie: x.serie || null, numero: x.numero, tercero: x.tercero || null, nombre: x.nombre || null,
             valor: x.valor || 0, valor_ml: fmt.redondear((x.valor || 0) * v.tipo_cambio), abono: x.abono || 0, abono_ml: fmt.redondear((x.abono || 0) * v.tipo_cambio),
-            fecha: x.fecha || null, estado: x.estado || null, contrato: x.contrato || null
+            fecha: x.fecha || null, estado: x.estado || null, contrato: x.contrato || null, ...(x.compra_id ? { compra_id: x.compra_id } : {})
           })));
           if (r.error) throw r.error;
         }

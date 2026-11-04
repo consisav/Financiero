@@ -1986,3 +1986,121 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bu-opcion.marcada .ti, .bu-opcion.marcada b { color: var(--acento); }
 .bu-opcion:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--acento-fondo); }
 @media (max-width: 700px) { .bu-linea, .bu-contenido { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Cheques · Generación cheques y Generación transferencias ---------- */
+.bk-generacion { --bg-t: var(--acento); --bg-f: var(--acento-fondo); }
+.bg-transferencias { --bg-t: var(--violeta-t); --bg-f: var(--violeta-f); }
+.bk-generacion .ta-titulo .tk-icono { background: var(--bg-f); color: var(--bg-t); }
+.bk-generacion .ta-filtros { grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(130px, .7fr) minmax(130px, .7fr) minmax(0, .9fr) auto; }
+.bk-generacion .ta-cuerpo { grid-template-rows: minmax(0, 1fr) minmax(0, auto); gap: 10px; }
+.bk-generacion .bk-maestro { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.bk-generacion .bk-detalle { background: none; border: 0; box-shadow: none; overflow: visible; }
+.bg-cab { padding: 10px 14px 8px; flex-wrap: wrap; }
+.bg-cab h2 { color: var(--bg-t); }
+.bg-kpis { display: flex; flex-wrap: wrap; gap: 6px; }
+.bg-kpis span { display: flex; flex-direction: column; align-items: flex-end; min-width: 92px; padding: 4px 12px; border-radius: 10px; background: var(--fondo); border: 1px solid var(--borde); line-height: 1.2; }
+.bg-kpis small { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.bg-kpis b { font-size: 14px; font-variant-numeric: tabular-nums; color: var(--texto); white-space: nowrap; }
+.bg-kpis span.activo { background: var(--bg-f); border-color: color-mix(in srgb, var(--bg-t) 35%, var(--borde)); }
+.bg-kpis span.activo b { color: var(--bg-t); }
+.bg-kpis span.mal { background: color-mix(in srgb, var(--error) 9%, var(--panel)); border-color: color-mix(in srgb, var(--error) 40%, var(--borde)); }
+.bg-kpis span.mal b { color: var(--error); }
+.bg-tabla td, .bg-tabla th { padding: 6px 9px; }
+.bg-tabla tbody tr { cursor: pointer; }
+.bg-tabla tbody tr:hover td { background: var(--fondo); }
+.bg-tabla th.bg-bonif { background: color-mix(in srgb, #f5d94a 22%, var(--fondo)); }
+.bg-tabla th.bg-pend { background: color-mix(in srgb, #f39b5a 24%, var(--fondo)); }
+.bg-tabla td.bg-bonif { background: color-mix(in srgb, #f5d94a 11%, var(--panel)); }
+.bg-tabla td.bg-pend { background: color-mix(in srgb, #f39b5a 13%, var(--panel)); }
+.bg-tabla td.bg-pend b { font-variant-numeric: tabular-nums; }
+.bg-ml { display: block; font-size: 10.5px; color: var(--tenue); }
+.bg-marca { width: 34px; text-align: center !important; }
+.bg-marca input { width: 16px; height: 16px; margin: 0; accent-color: var(--bg-t); cursor: pointer; }
+.bg-tabla tbody tr.marcada td { background: color-mix(in srgb, var(--bg-f) 70%, var(--panel)); }
+.bg-tabla tbody tr.marcada td.bg-bonif, .bg-tabla tbody tr.marcada td.bg-pend { background: color-mix(in srgb, var(--bg-f) 55%, color-mix(in srgb, #f39b5a 10%, var(--panel))); }
+.bg-tabla tbody tr.actual td:first-child { box-shadow: inset 3px 0 0 var(--bg-t); }
+.bg-tabla tbody tr.bloqueada td { color: var(--tenue); }
+.bg-prov { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.bg-num { background: var(--bg-t) !important; color: #fff !important; font-weight: 700; }
+.bg-aviso { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--ambar-t); }
+.bg-abajo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1.25fr); gap: 10px; align-items: stretch; }
+.bg-abajo > .bm-bloque { grid-column: auto; min-height: 0; }
+.bg-datos { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px 10px; }
+.bg-contable .pc-lineas { max-height: 190px; overflow: auto; }
+.bg-contable td, .bg-contable th { padding: 4px 8px; font-size: 12px; }
+.bg-generar { border-color: color-mix(in srgb, var(--bg-t) 35%, var(--borde)); background: color-mix(in srgb, var(--bg-f) 35%, var(--panel)); }
+.bg-generar .ta-col-titulo { color: var(--bg-t); }
+.bg-campos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; }
+.bg-campos .campo { gap: 3px; font-size: 12px; }
+.bg-campos .campo input, .bg-campos .campo select { padding: 6px 9px; font-size: 13px; }
+.bg-c2 { grid-column: span 2; }
+.bg-c3 { grid-column: 1 / -1; }
+.bg-chequera { display: flex; flex-direction: column; justify-content: flex-end; padding: 4px 10px; border-radius: 10px; background: var(--panel); border: 1px dashed color-mix(in srgb, var(--bg-t) 40%, var(--borde)); line-height: 1.25; }
+.bg-chequera small { font-size: 10.5px; color: var(--tenue); }
+.bg-chequera small:first-child { font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.bg-chequera b { font-size: 15px; color: var(--bg-t); font-variant-numeric: tabular-nums; }
+.bg-opciones { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 2px; }
+.bg-opciones .pc-check { font-weight: 600; font-size: 12.5px; }
+.bg-opciones .pc-check input { accent-color: var(--bg-t); }
+.bg-accion { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 6px; border-top: 1px dashed color-mix(in srgb, var(--bg-t) 30%, var(--borde)); }
+.bg-benef { display: flex; flex-direction: column; min-width: 0; }
+.bg-benef small { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.bg-benef b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bg-boton { font-size: 14px !important; font-weight: 800; padding: 9px 18px !important; display: inline-flex; align-items: center; gap: 8px; background: var(--bg-t) !important; border-color: var(--bg-t) !important; white-space: nowrap; }
+.bg-generar .tk-error:empty { display: none; }
+.bg-mensajes { display: flex; flex-direction: column; gap: 4px; min-height: 56px; padding: 6px 10px; border-radius: 10px; background: var(--panel); border: 1px solid var(--borde); font-size: 12.5px; }
+.bg-mensajes-tit { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.bg-mensajes p { margin: 0; color: var(--suave); }
+.bg-mensajes ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; max-height: 96px; overflow: auto; }
+.bg-mensajes li { display: flex; gap: 6px; align-items: flex-start; }
+.bg-mensajes li .ti { margin-top: 2px; }
+.bg-mensajes li.ok .ti { color: var(--ok); }
+.bg-mensajes li.mal { color: var(--error); }
+.bg-mensajes li.info .ti { color: var(--ambar-t); }
+.bg-despues { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 4px; }
+.bg-despues .boton { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+@media (max-width: 1500px) {
+  .bg-abajo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .bg-generar { grid-column: 1 / -1 !important; }
+}
+@media (max-width: 1100px) {
+  .bk-generacion .ta-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bk-generacion .ta-cuerpo { grid-template-rows: 420px auto; }
+  .bg-abajo { grid-template-columns: minmax(0, 1fr); }
+  .bg-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Cheques · Facturas de compra por pagar ---------- */
+.bc-cabecera { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px; }
+.bc-cabecera > section { min-width: 0; }
+.bc-doc { grid-column: span 4; }
+.bc-doc-campos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 10px; align-items: end; }
+.bc-doc-campos .campo { gap: 3px; font-size: 12px; }
+.bc-doc-campos .bs-req-num b { font-size: 20px; }
+.bc-prov { grid-column: span 4; }
+.bc-importe { grid-column: span 4; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; padding: 8px 12px; }
+.bc-importe input { font-size: 14px !important; padding: 6px 9px !important; }
+.bc-importe .bc-total input { font-size: 16px !important; font-weight: 700; }
+.bc-importe .bc-bonif input { background: color-mix(in srgb, #f5d94a 14%, var(--panel)); }
+.bc-saldos { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.bc-saldos div { display: flex; flex-direction: column; align-items: flex-end; padding: 4px 10px; border-radius: 10px; background: var(--fondo); }
+.bc-saldos span { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.bc-saldos b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.bc-saldos .bc-pend { background: color-mix(in srgb, #f39b5a 16%, var(--panel)); }
+.bc-saldos .bc-pend b { color: var(--ambar-t); }
+.bc-pago { grid-column: span 5; }
+.bc-control { grid-column: span 3; }
+.bc-control dl { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.bc-formas { display: flex; gap: 18px; }
+.bc-formas .pc-check { font-weight: 600; }
+.bc-formas .pc-check input { accent-color: var(--acento); }
+.bc-transaccion { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.bc-transaccion .campo { gap: 3px; font-size: 12px; flex: 0 1 300px; }
+.bc-transaccion .bc-desc { flex: 1 1 260px; }
+.bc-cxp { font-size: 11px; color: var(--tenue); min-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1500px) {
+  .bc-doc, .bc-prov { grid-column: span 6; } .bc-importe { grid-column: span 7; }
+  .bc-pago { grid-column: span 5; } .bc-control { grid-column: 1 / -1; }
+  .bk-compras .bm-form { overflow: auto; }
+}
+@media (max-width: 900px) { .bc-cabecera > section { grid-column: 1 / -1 !important; } }
