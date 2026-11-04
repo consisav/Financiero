@@ -180,6 +180,8 @@
 
   function traducirError(err) {
     const t = (err && err.message) || '';
+    if (/organizaciones_anterior_key/.test(t)) return 'Ese código de organización anterior ya está asignado a otra organización.';
+    if (/localidades_anterior_key/.test(t)) return 'Ese código de empresa anterior ya está asignado a otra empresa de la organización.';
     if (/duplicate key|unique/i.test(t)) return 'Ya existe un registro con ese código.';
     if (/row-level security/i.test(t)) return 'Tu rol no tiene permiso para guardar en este catálogo.';
     if (/violates foreign key/i.test(t)) return 'Revisa los valores seleccionados.';

@@ -93,6 +93,7 @@
             ${auditoria(o, editable, 'org')}
             <div class="datos">
               ${dato('Organización', `${o.codigo} · ${esc(o.nombre)}`)}
+              ${dato('Organización anterior', esc(o.organizacion_anterior))}
               ${dato('Representante legal', esc(o.representante_legal))}
               ${dato('Teléfonos', esc(o.telefonos))}
               ${dato('Correos', esc(o.correos))}
@@ -121,6 +122,7 @@
         valores,
         campos: [
           { nombre: 'nombre', etiqueta: 'Organización', requerido: true, ancho: 'completo' },
+          { nombre: 'organizacion_anterior', etiqueta: 'Organización anterior', placeholder: 'Código en el sistema anterior (migración)' },
           { nombre: 'representante_legal', etiqueta: 'Representante legal' },
           { nombre: 'telefonos', etiqueta: 'Teléfonos', placeholder: '2219-3093' },
           { nombre: 'correos', etiqueta: 'Correos', placeholder: 'contacto@empresa.com', ancho: 'completo' },
@@ -184,6 +186,7 @@
             ${auditoria(l, editable, 'loc')}
             <div class="datos">
               ${dato('Localidad', `${esc(l.codigo)} · ${esc(l.nombre_comercial)}`)}
+              ${dato('Empresa anterior', esc(l.empresa_anterior))}
               ${dato('Razón social', esc(l.razon_social))}
               ${dato('NIT', esc(l.nit))}
               ${dato('Teléfonos', esc(l.telefonos))}
@@ -206,6 +209,7 @@
         campos: [
           { nombre: 'nombre_comercial', etiqueta: 'Nombre comercial', requerido: true, ancho: 'completo' },
           { nombre: 'razon_social', etiqueta: 'Razón social', ancho: 'completo' },
+          { nombre: 'empresa_anterior', etiqueta: 'Empresa anterior', placeholder: 'Código en el sistema anterior (migración)' },
           { nombre: 'nit', etiqueta: 'NIT', placeholder: '1234567-8' },
           { nombre: 'telefonos', etiqueta: 'Teléfonos' },
           { nombre: 'correos', etiqueta: 'Correos', ancho: 'completo' },
