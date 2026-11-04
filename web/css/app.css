@@ -1732,3 +1732,24 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .marca-eslogan + .marca-texto { padding-left: 12px; border-left: 1px solid var(--borde); }
 @media (max-width: 1300px) { .marca-eslogan { height: 38px; max-width: 200px; } }
 @media (max-width: 900px) { .marca-eslogan { display: none; } .marca-eslogan + .marca-texto { padding-left: 0; border-left: 0; } }
+
+/* ---------- Administración · Procesos · Backup ---------- */
+.bu-espacio { display: flex; flex-direction: column; }
+.bu-form { gap: 12px; }
+.bu-tarjetas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.bu-tarjetas .bm-bloque { gap: 8px; padding: 10px 14px 12px; }
+.bu-tarjetas .campo { gap: 4px; font-size: 12px; }
+.bu-control { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; }
+.bu-control .bm-dato dd b { font-size: 14px; }
+.bu-control .bm-dato dd small { display: block; margin: 0; }
+.bu-control [data-reloj] { font-variant-numeric: tabular-nums; color: var(--acento); }
+.bu-nota { margin: 0; font-size: 12px; color: var(--tenue); display: flex; gap: 6px; align-items: flex-start; line-height: 1.4; }
+.bu-carpeta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--suave); }
+.bu-carpeta .boton { display: inline-flex; align-items: center; gap: 6px; }
+.bu-carpeta b { color: var(--ok); }
+.bu-progreso { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--fondo); font-size: 13px; }
+.bu-progreso[hidden] { display: none; }
+.bu-barra { height: 10px; border-radius: 999px; background: var(--borde); overflow: hidden; }
+.bu-barra i { display: block; height: 100%; border-radius: 999px; background: var(--acento); transition: width .2s; }
+.bu-historial .pc-lineas { max-height: 46vh; }
+@media (max-width: 1200px) { .bu-tarjetas { grid-template-columns: minmax(0, 1fr); } }

@@ -60,6 +60,15 @@ window.MODULOS = [
     // Tickets va como grupo propio, después de Catálogos y antes de Registros.
     grupos: [window.GRUPOS[0], { id: 'tickets', nombre: 'Tickets', icono: 'ti-ticket' }, ...window.GRUPOS.slice(1)],
     subgrupos: {
+      procesos: [
+        {
+          subgrupo: 'Procesos',
+          icono: 'ti-settings-automation',
+          pantallas: [
+            { id: 'backup', nombre: 'Backup', icono: 'ti-database-export', descripcion: 'Respaldo de la información por organización y localidad en un archivo, en la carpeta o ruta indicada.' }
+          ]
+        }
+      ],
       tickets: [
         {
           subgrupo: 'Tickets',
