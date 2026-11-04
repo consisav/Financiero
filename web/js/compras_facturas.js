@@ -53,7 +53,7 @@
         <label class="campo"><span>Estado</span><select name="estado">${['TODAS', 'POR PAGAR', 'PAGADAS', 'ANULADAS'].map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
         <label class="campo"><span>Fecha desde</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha hasta</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>`,
-        ctx.admin ? '<button type="button" class="boton primario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nueva compra</button>' : '');
+        '<div class="cf-barra" data-barra></div>');
     }
 
     async function iniciar() {
@@ -178,7 +178,7 @@
 
     function pintarDetalle(v0) {
       const c = actual;
-      if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-file-invoice'); return; }
+      if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-file-invoice'); pintarBarra(null, {}, null, false, false); return; }
       const ed = editable();
       const dis = ed ? '' : 'disabled';
       const v = v0 || (c ? { ...c } : nuevoValor());
@@ -193,20 +193,7 @@
       const num = (name, etq, extra = '', step = '0.01') => `<label class="campo ${extra}"><span>${etq}</span><input type="number" step="${step}" min="0" name="${name}" value="${esc(String(v[name] ?? 0))}" ${dis}></label>`;
       const cxp = contable(v.cuenta_pagar_id);
       ctx.pDet.innerHTML = `
-        <form class="tk-form ta-form bm-form cf-form cl-clasico cf-compacto" novalidate>
-          <header class="tk-titulo bm-titulo cf-titulo">
-            <span class="tk-icono"><i class="ti ti-file-invoice" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>${c ? `Compra ${c.numero} · ${esc(td?.nombre || c.tipo_dte || '')} ${esc(docTxt(c))}` : 'Nueva factura de compra'}</small><h2>${esc(v.proveedor_nombre || (c ? '' : 'Elige el proveedor'))}</h2></div>
-            <div class="tk-marcas">${c ? marca(ESTADO_PAGO(c)) : ''}${c?.partida_id ? '<span class="pc-marca definitiva"><i class="ti ti-check" aria-hidden="true"></i> Contabilizada</span>' : ''}${modificando ? '<span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}</div>
-            <div class="cf-contra" title="Contraseña de pago">${c?.contrasena ? `<i class="ti ti-key" aria-hidden="true"></i> Contraseña <b>${c.contrasena}</b><small>${esc(fmt.fechaDia(c.contrasena_fecha))}</small><a class="icono-boton" href="#/compras/contrasenas-pago" title="Abrir en Contraseñas de pago" aria-label="Abrir en Contraseñas de pago"><i class="ti ti-external-link" aria-hidden="true"></i></a><button type="button" class="icono-boton" data-accion="imprimir-contrasena" title="Imprimir contraseña" aria-label="Imprimir contraseña"><i class="ti ti-printer" aria-hidden="true"></i></button>` : c ? `<span class="tk-tenue"><i class="ti ti-key" aria-hidden="true"></i> Sin contraseña</span>${consulta && ctx.admin && c.estado === 'ACTIVA' ? '<button type="button" class="boton secundario-sm" data-accion="contrasena">Crear</button>' : ''}` : ''}</div>
-            <div class="tk-titulo-acciones">
-              ${consulta && ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>' : ''}
-              ${consulta ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
-              ${consulta && ctx.admin && c.estado === 'ACTIVA' ? '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
-              ${modificando || (!c && compras.length) ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
-              ${ed ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${c ? 'Guardar cambios' : 'Registrar compra'}</button>` : ''}
-            </div>
-          </header>
+        <form id="cf-form" class="tk-form ta-form bm-form cf-form cl-clasico cf-compacto" novalidate>
           <p class="modal-error tk-error" role="alert"></p>
           ${c?.estado === 'ANULADA' ? `<p class="tk-aviso bm-anulado"><i class="ti ti-ban" aria-hidden="true"></i> Anulada por ${esc(c.anulado_por || '')} · ${esc(fmt.fechaHora(c.anulado_en))}: ${esc(c.motivo_anulacion || '')}</p>` : ''}
 
@@ -227,12 +214,12 @@
             </section>
             <section class="bm-bloque cf-prov">
               <div class="cfx cfx4">
-                <label class="campo cfx4"><span>Proveedor * <em class="cf-pista">código, NIT o nombre</em></span><input list="cf-proveedores" name="proveedor" value="${esc(p ? provTxt(p) : v.proveedor_nombre ? [v.proveedor_codigo, v.proveedor_nombre, v.nit].filter(Boolean).join(' · ') : '')}" placeholder="Escribe para buscar en el catálogo" ${dis}></label>
+                <label class="campo cfx3"><span>Proveedor * <em class="cf-pista">código, NIT o nombre</em></span><input list="cf-proveedores" name="proveedor" value="${esc(p ? provTxt(p) : v.proveedor_nombre ? [v.proveedor_codigo, v.proveedor_nombre, v.nit].filter(Boolean).join(' · ') : '')}" placeholder="Escribe para buscar en el catálogo" ${dis}></label>
+                <label class="campo"><span>Bodega</span><select name="bodega_id" ${dis}><option value="">—</option>${bodegas.filter((b) => b.estado === 'ACTIVO' || b.id === v.bodega_id).map((b) => `<option value="${b.id}" ${b.id === v.bodega_id ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}</select></label>
                 <label class="campo cfx2"><span>Régimen ISR</span><select name="regimen_isr_id" ${dis}><option value="">—</option>${regimenes.map((r) => `<option value="${r.id}" ${r.id === v.regimen_isr_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
                 <label class="campo cfx2" title="${cl ? `${cl.aplica_iva ? 'Aplica IVA' : 'No aplica IVA'} · ${cl.libro_compras ? 'libro de compras' : 'fuera del libro'}` : ''}"><span>Clasificación <em class="cf-pista">${cl ? (cl.aplica_iva ? '· aplica IVA' : '· sin IVA') : ''}</em></span><select name="clasificacion_id" ${dis}>${clasificaciones.filter((x) => x.activo || x.id === v.clasificacion_id).map((x) => `<option value="${x.id}" ${x.id === v.clasificacion_id ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select></label>
-                <label class="campo cfx2"><span>Tipo de operación</span><select name="tipo_operacion" ${dis}>${OPERACIONES.map((x) => `<option ${v.tipo_operacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                <label class="campo cfx2"><span>Bodega</span><select name="bodega_id" ${dis}><option value="">—</option>${bodegas.filter((b) => b.estado === 'ACTIVO' || b.id === v.bodega_id).map((b) => `<option value="${b.id}" ${b.id === v.bodega_id ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}</select></label>
-                <label class="campo cfx2"><span>Rubro</span><select name="rubro_id" ${dis}><option value="">—</option>${rubros.filter((r) => r.activo || r.id === v.rubro_id).map((r) => `<option value="${r.id}" ${r.id === v.rubro_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
+                <label class="campo"><span>Tipo de operación</span><select name="tipo_operacion" ${dis}>${OPERACIONES.map((x) => `<option ${v.tipo_operacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                <label class="campo"><span>Rubro</span><select name="rubro_id" ${dis}><option value="">—</option>${rubros.filter((r) => r.activo || r.id === v.rubro_id).map((r) => `<option value="${r.id}" ${r.id === v.rubro_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
                 <label class="campo cfx2"><span>Descripción</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="300" ${dis}></label>
               </div>
             </section>
@@ -343,7 +330,27 @@
           <datalist id="cf-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
         </form>`;
       ctx.pDet.querySelector('[data-panel=LISTADO]').appendChild(ctx.pMae);
+      pintarBarra(c, v, td, ed, consulta);
       totalizar();
+    }
+
+    // Barra de arriba: qué compra es, su estado y contraseña, y sus botones (ocupan el lugar del título).
+    function pintarBarra(c, v, td, ed, consulta) {
+      const b = ctx.pFil.querySelector('[data-barra]');
+      if (!b) return;
+      if (!c && !ed) { b.innerHTML = ''; return; }
+      b.innerHTML = `
+        <div class="cf-quien">${c ? `<small>Compra ${c.numero} · ${esc(td?.nombre || c.tipo_dte || '')} ${esc(docTxt(c))}</small><b title="${esc(v.proveedor_nombre || '')}">${esc(v.proveedor_nombre || '')}</b>` : '<small>Nueva compra</small><b>Elige el proveedor</b>'}</div>
+        <div class="cf-marcas">${c ? marca(ESTADO_PAGO(c)) : ''}${c?.partida_id ? '<span class="pc-marca definitiva" title="Contabilizada"><i class="ti ti-check" aria-hidden="true"></i> Partida</span>' : ''}${modificando ? '<span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}
+          ${c?.contrasena ? `<span class="cf-contra" title="Contraseña de pago ${c.contrasena} · ${esc(fmt.fechaDia(c.contrasena_fecha))}"><i class="ti ti-key" aria-hidden="true"></i> <b>${c.contrasena}</b><a class="icono-boton" href="#/compras/contrasenas-pago" title="Abrir en Contraseñas de pago" aria-label="Abrir en Contraseñas de pago"><i class="ti ti-external-link" aria-hidden="true"></i></a><button type="button" class="icono-boton" data-accion="imprimir-contrasena" title="Imprimir contraseña" aria-label="Imprimir contraseña"><i class="ti ti-printer" aria-hidden="true"></i></button></span>`
+            : c && consulta && ctx.admin && c.estado === 'ACTIVA' ? '<button type="button" class="boton secundario-sm" data-accion="contrasena" title="Crear la contraseña de pago"><i class="ti ti-key" aria-hidden="true"></i> Contraseña</button>' : ''}</div>
+        <div class="cf-botones">
+          ${consulta && ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>' : ''}
+          ${consulta ? '<button type="button" class="icono-boton cf-imprimir" data-accion="imprimir" title="Imprimir la compra" aria-label="Imprimir la compra"><i class="ti ti-printer" aria-hidden="true"></i></button>' : ''}
+          ${consulta && ctx.admin && c.estado === 'ACTIVA' ? '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
+          ${modificando || (!c && compras.length) ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
+          ${ed ? `<button type="submit" form="cf-form" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${c ? 'Guardar' : 'Registrar compra'}</button>` : ''}
+        </div>`;
     }
 
     function filaLinea(l, i, dis) {
@@ -536,7 +543,7 @@
       if (!v.cuenta_pagar_id) v.cuenta_pagar_id = ls.find((l) => l.haber)?.cuenta_id || null;
       delete v._cxp; delete v._prov;
       error.textContent = '';
-      const boton = form.querySelector('[type=submit]');
+      const boton = document.querySelector('[type=submit][form=cf-form]');
       if (boton) boton.disabled = true;
       try {
         let id = actual?.id;

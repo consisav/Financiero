@@ -2637,3 +2637,34 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-compacto .cf-acc .boton, .cf-compacto .bm-transaccion .boton { padding: 4px 10px; }
 @media (max-width: 1500px) { .cfx.cfx8 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 1100px) { .cf-compras .bk-detalle, .cf-form.cf-compacto { overflow: auto; } .cfx.cfx6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cfx3 { grid-column: span 2; } }
+
+/* ---------- Facturas de compra: sin título, la barra de arriba lleva la compra y sus botones ---------- */
+.cf-compras .bk-filtros { grid-template-columns: auto minmax(170px, .9fr) minmax(120px, .6fr) minmax(130px, .6fr) minmax(130px, .6fr) minmax(0, 3fr); gap: 8px; padding: 8px 14px; }
+.cf-compras .bk-filtros .campo { gap: 2px; font-size: 11.5px; }
+.cf-compras .bk-filtros .campo :is(input, select) { height: 32px; padding: 4px 9px; font-size: 13px; }
+.cf-compras .bk-filtros .ta-titulo h2 { font-size: 16px; }
+.cf-compras .oc-extra { min-width: 0; }
+.cf-barra { display: flex; align-items: center; gap: 10px; min-width: 0; width: 100%; padding-left: 10px; border-left: 1px solid var(--borde); }
+.cf-barra:empty { display: none; }
+.cf-quien { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.2; }
+.cf-quien small { font-size: 11px; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cf-quien b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cf-marcas { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.cf-marcas .cf-contra { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 999px; background: var(--acento-fondo); color: var(--acento); font-size: 12px; }
+.cf-marcas .cf-contra b { font-size: 13px; }
+.cf-marcas .icono-boton { width: 24px; height: 24px; }
+.cf-marcas .boton, .cf-botones .boton { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; white-space: nowrap; }
+.cf-botones { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.cf-botones .cf-imprimir { width: 32px; height: 32px; }
+
+/* Los bloques de arriba en tres filas */
+.cf-form.cf-compacto { padding-top: 6px; }
+.cf-form.cf-compacto > .tk-error:empty { display: none; }
+.cf-compacto .cf-cifras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 4px; }
+.cf-compacto .cf-cifras div { flex-direction: column; align-items: stretch; justify-content: center; gap: 0; padding: 1px 7px; min-height: 0; }
+.cf-compacto .cf-cifras dt { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cf-compacto .cf-cifras dd { font-size: 13px; line-height: 1.25; }
+.cf-compacto .cf-cifras dd input { width: 100%; height: 20px; padding: 0 5px; font-size: 13px; }
+.cf-compacto .cf-cifras .cf-total dd input { font-size: 13.5px; }
+.cf-compacto .bm-pestanas { flex: 1 1 0; }
+@media (max-width: 1500px) { .cf-compras .bk-filtros { grid-template-columns: auto repeat(4, minmax(0, 1fr)); } .cf-compras .oc-extra { grid-column: 1 / -1; } .cf-barra { border-left: 0; padding-left: 0; } }
