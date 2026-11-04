@@ -375,10 +375,12 @@
   // Grupos del menú: los propios del módulo (p. ej. Caja y Bancos) o los 6 generales.
   const gruposDe = (m) => m.grupos || GRUPOS;
 
-  // Subgrupos desplegables de un grupo: los comunes (solo en Catálogos) y los propios del módulo.
+  // Subgrupos desplegables de un grupo: los comunes (solo en Catálogos del módulo con «comunes»,
+  // Administración) y los propios del módulo.
   function subgruposDe(m, grupo) {
-    return [...(grupo === 'catalogos' ? CATALOGOS_COMUNES : []), ...((m.subgrupos || {})[grupo] || [])];
+    return [...(grupo === 'catalogos' && m.comunes ? CATALOGOS_COMUNES : []), ...((m.subgrupos || {})[grupo] || [])];
   }
+  const pantallasDe = (m) => gruposDe(m).flatMap((g) => subgruposDe(m, g.id)).flatMap((s) => hojas(s).map((h) => h.p));
 
   // Pantallas de un subgrupo con su ruta, también las de sus subgrupos anidados.
   function hojas(s, ruta = s.subgrupo) {
@@ -404,13 +406,17 @@
   function rutear() {
     if (!perfil || !perfil.activo) return;
     const [id, sub, extra] = location.hash.replace(/^#\/?/, '').split('/');
-    // El enlace "Usuarios" de la barra lateral abre Catálogos · Iniciales · Usuarios del primer módulo.
-    if (id === 'usuarios' && visibles().length) { location.replace(`#/${visibles()[0].id}/usuarios`); return; }
+    // El enlace "Usuarios" de la barra lateral abre Catálogos · Usuarios del módulo que lo tiene (Administración).
+    if (id === 'usuarios' && visibles().length) {
+      const con = visibles().find((x) => pantallasDe(x).some((q) => q.id === 'usuarios')) || visibles()[0];
+      location.replace(`#/${con.id}/usuarios`);
+      return;
+    }
     {
       const m = visibles().find((x) => x.id === id);
-      const pantallasDe = (x) => gruposDe(x).flatMap((g) => subgruposDe(x, g.id)).flatMap((s) => hojas(s).map((h) => h.p));
       const p = m && sub && pantallasDe(m).find((x) => x.id === sub);
-      // Una pantalla que cambió de módulo (p. ej. Bancos, de Contabilidad a Caja y Bancos) se abre en el nuevo.
+      // Una pantalla que cambió de módulo (p. ej. Bancos a Caja y Bancos, Tickets y Usuarios a
+      // Administración) se abre en el nuevo.
       const otro = m && sub && !p && visibles().find((x) => pantallasDe(x).some((q) => q.id === sub));
       if (otro) { location.replace(`#/${otro.id}/${sub}${extra ? `/${extra}` : ''}`); return; }
       if (m && p) pantalla(m, p, extra);

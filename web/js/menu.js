@@ -9,8 +9,9 @@ window.GRUPOS = [
   { id: 'ayuda', nombre: 'Ayuda', icono: 'ti-help' }
 ];
 
-// Subgrupos desplegables de Catálogos. Los comunes aparecen en todos los módulos;
-// cada módulo puede agregar los suyos en "subgrupos.catalogos". "separador: true" dibuja una línea
+// Subgrupos desplegables de Catálogos. Los comunes (usuarios, módulos, parámetros, geografía) solo
+// aparecen en el módulo con "comunes: true" (Administración); cada módulo agrega los suyos en
+// "subgrupos.catalogos". "separador: true" dibuja una línea
 // debajo de la opción. Una opción con "subgrupo" y "pantallas" es un subgrupo anidado.
 window.CATALOGOS_COMUNES = [
   {
@@ -54,7 +55,24 @@ window.MODULOS = [
     color: 'pizarra',
     nombre: 'Administración',
     icono: 'ti-briefcase',
-    descripcion: 'Departamentos, puestos, solicitudes, órdenes de compra y contratos.',
+    descripcion: 'Usuarios, módulos, parámetros, tickets, solicitudes, órdenes de compra y contratos.',
+    comunes: true,
+    // Tickets va como grupo propio, después de Catálogos y antes de Registros.
+    grupos: [window.GRUPOS[0], { id: 'tickets', nombre: 'Tickets', icono: 'ti-ticket' }, ...window.GRUPOS.slice(1)],
+    subgrupos: {
+      tickets: [
+        {
+          subgrupo: 'Tickets',
+          icono: 'ti-ticket',
+          pantallas: [
+            { id: 'tickets-generacion', nombre: 'Generación', icono: 'ti-ticket', descripcion: 'Creación de tickets de solicitud o soporte.' },
+            { id: 'tickets-asignacion', nombre: 'Asignación', icono: 'ti-user-check', descripcion: 'Asignación de cada ticket a su responsable.' },
+            { id: 'tickets-seguimiento', nombre: 'Seguimiento', icono: 'ti-progress-check', descripcion: 'Estado y avance de los tickets hasta su cierre.' },
+            { id: 'tickets-cierre', nombre: 'Cierre', icono: 'ti-circle-check', descripcion: 'Cierre de los tickets resueltos.' }
+          ]
+        }
+      ]
+    },
     opciones: {
       catalogos: ['Departamentos', 'Puestos', 'Proveedores'],
       registros: ['Solicitudes', 'Órdenes de compra', 'Contratos'],
@@ -115,16 +133,6 @@ window.MODULOS = [
             { id: 'replicacion-empresa', nombre: 'Empresa y parámetros', icono: 'ti-building-cog', descripcion: 'Replica la empresa y sus parámetros generales en otra organización o localidad.' },
             { id: 'replicacion-nomenclatura', nombre: 'Nomenclatura', icono: 'ti-list-tree', descripcion: 'Replica el catálogo de cuentas contables en otra organización o localidad.' },
             { id: 'replicacion-centros', nombre: 'Centros de costos', icono: 'ti-hierarchy-2', descripcion: 'Replica la estructura de centros de costo en otra organización o localidad.' }
-          ]
-        },
-        {
-          subgrupo: 'Tickets',
-          icono: 'ti-ticket',
-          pantallas: [
-            { id: 'tickets-generacion', nombre: 'Generación', icono: 'ti-ticket', descripcion: 'Creación de tickets de solicitud o soporte.' },
-            { id: 'tickets-asignacion', nombre: 'Asignación', icono: 'ti-user-check', descripcion: 'Asignación de cada ticket a su responsable.' },
-            { id: 'tickets-seguimiento', nombre: 'Seguimiento', icono: 'ti-progress-check', descripcion: 'Estado y avance de los tickets hasta su cierre.' },
-            { id: 'tickets-cierre', nombre: 'Cierre', icono: 'ti-circle-check', descripcion: 'Cierre de los tickets resueltos.' }
           ]
         }
       ]

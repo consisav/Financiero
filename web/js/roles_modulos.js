@@ -7,7 +7,7 @@
     { id: 'ver', nombre: 'Ver' }, { id: 'crear', nombre: 'Crear' }, { id: 'modificar', nombre: 'Modificar' },
     { id: 'anular', nombre: 'Anular' }, { id: 'imprimir', nombre: 'Imprimir' }
   ];
-  const GRUPO_NOMBRE = { catalogos: 'Catálogos', registros: 'Registros', mantenimientos: 'Mantenimientos', procesos: 'Procesos', reportes: 'Reportes y gráficas', ayuda: 'Ayuda', bancos: 'Bancos', cheques: 'Cheques', cajas: 'Cajas' };
+  const GRUPO_NOMBRE = { catalogos: 'Catálogos', registros: 'Registros', mantenimientos: 'Mantenimientos', procesos: 'Procesos', reportes: 'Reportes y gráficas', ayuda: 'Ayuda', bancos: 'Bancos', cheques: 'Cheques', cajas: 'Cajas', tickets: 'Tickets' };
   const ESTADOS = ['ACTIVO', 'SUSPENDIDO', 'FINALIZADO'];
   const vacio = () => ({ ver: false, crear: false, modificar: false, anular: false, imprimir: false });
   const estadoAsig = (e) => `<span class="estado ${e === 'ACTIVO' ? 'activo' : e === 'SUSPENDIDO' ? 'vencida' : 'inactivo'}">${e.charAt(0) + e.slice(1).toLowerCase()}</span>`;
