@@ -166,6 +166,8 @@
       sb.from('roles').select('*')
     ]);
     permisos = Object.fromEntries((pm || []).map((x) => [x.modulo, x]));
+    // Un módulo nuevo sin permisos propios todavía (falta su script) usa los del módulo que indica "hereda".
+    MODULOS.forEach((m) => { if (m.hereda && !permisos[m.id] && permisos[m.hereda]) permisos[m.id] = permisos[m.hereda]; });
     roles = (rs || []).sort((a, b) => (a.orden ?? 99) - (b.orden ?? 99) || a.nombre.localeCompare(b.nombre));
 
     $('acceso').hidden = true;

@@ -239,6 +239,7 @@ window.MODULOS = [
     id: 'compras',
     corto: 'Compras',
     color: 'cian',
+    hereda: 'facturacion',
     nombre: 'Compras',
     icono: 'ti-shopping-cart',
     descripcion: 'Proveedores, órdenes de compra, facturas de compra y cuentas por pagar.',
