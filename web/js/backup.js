@@ -6,8 +6,9 @@
 //   archivo se guarda ahí; en otros navegadores se descarga) y la ruta como referencia.
 //   «Generar backup» lee cada tabla en páginas (respaldo_tablas / respaldo_datos), arma el archivo,
 //   lo guarda y registra el respaldo en el historial.
-//   Contenido: Aplicativo (los archivos de la página: index.html, estilos y programas, leídos del
-//   sitio publicado), Base de datos (las tablas) o Todo (ambos en el mismo archivo).
+//   Contenido: Base de datos (respaldo SQL leído de Supabase: un INSERT por tabla que se restaura en
+//   el SQL Editor), Aplicativo (los archivos de la página: index.html, estilos y programas, en JSON
+//   comprimido) o Todo (los dos archivos).
 (function () {
   const { esc } = window.UI;
   const POR_PAGINA = 1000;
@@ -37,6 +38,9 @@
     ];
     const marcado = (k) => k === 'todo' ? contenido.app && contenido.bd : contenido[k];
     const tipoArchivo = (n) => /^backup_aplicativo_/.test(n) ? 'Aplicativo' : /^backup_todo_/.test(n) ? 'Todo' : 'Base de datos';
+    // Página de respaldos del proyecto en el panel de Supabase.
+    const proyecto = (window.FIN_CONFIG?.supabaseUrl || window.CONFIG?.supabaseUrl || '').match(/https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] || '';
+    const panelBackups = proyecto ? `https://supabase.com/dashboard/project/${proyecto}/database/backups/scheduled` : 'https://supabase.com/dashboard/projects';
     const sel = { org: yo.organizacion_id ? String(yo.organizacion_id) : '', loc: yo.localidad_id ? String(yo.localidad_id) : '' };
     const puedeCarpeta = typeof window.showDirectoryPicker === 'function';
     const puedeComprimir = typeof window.CompressionStream === 'function';
@@ -100,9 +104,10 @@
                 <div class="bu-control">
                   <div class="bm-dato"><dt>Usuario</dt><dd><b>${esc((yo.usuario || '').toUpperCase())}</b><small>${esc(yo.nombre || yo.correo || '')}</small></dd></div>
                   <div class="bm-dato"><dt>Fecha y hora</dt><dd><b data-reloj>${esc(fechaHora(new Date()))}</b><small>Hora de Guatemala</small></dd></div>
-                  <div class="bm-dato"><dt>Formato</dt><dd><b>JSON${puedeComprimir ? ' comprimido (.json.gz)' : ' (.json)'}</b><small>Una sección por tabla</small></dd></div>
+                  <div class="bm-dato"><dt>Formato</dt><dd>${contenido.bd ? `<b>Base de datos: SQL${puedeComprimir && comprimirArchivo ? ' (.sql.gz)' : ' (.sql)'}</b>` : ''}${contenido.app ? `<b>Aplicativo: JSON${puedeComprimir && comprimirArchivo ? ' comprimido (.json.gz)' : ' (.json)'}</b>` : ''}<small>${contenido.app && contenido.bd ? 'Dos archivos, uno por cada contenido' : contenido.bd ? 'Se restaura en el SQL Editor de Supabase' : 'Página, estilos y programas'}</small></dd></div>
                 </div>
-                ${puedeComprimir ? `<label class="pc-check"><input type="checkbox" name="comprimir" ${comprimirArchivo ? 'checked' : ''}> Comprimir el archivo</label>` : ''}
+                <div class="bu-supabase">${puedeComprimir ? `<label class="pc-check"><input type="checkbox" name="comprimir" ${comprimirArchivo ? 'checked' : ''}> Comprimir los archivos</label>` : ''}
+                  ${contenido.bd ? `<a class="boton secundario-sm" href="${panelBackups}" target="_blank" rel="noopener" title="Respaldos automáticos del proyecto CONSISAV / Financiero en Supabase"><i class="ti ti-external-link" aria-hidden="true"></i> Backups en Supabase</a>` : ''}</div>
               </section>
 
               <section class="bm-bloque">
@@ -142,8 +147,8 @@
 
     // Archivos del aplicativo: index.html y los estilos y programas propios que carga (los del
     // mismo sitio); las librerías externas (CDN) se anotan con su dirección.
-    async function leerAplicativo(hasta) {
-      progreso(1, 'Leyendo el aplicativo…');
+    async function leerAplicativo(desde, hasta) {
+      progreso(desde + 1, 'Leyendo el aplicativo…');
       const raiz = new URL('./', location.href);
       const leer = async (ruta) => {
         const r = await fetch(new URL(ruta, raiz), { cache: 'no-store' });
@@ -165,9 +170,39 @@
       for (const ruta of unicas) {
         archivos[ruta] = await leer(ruta);
         n += 1;
-        progreso(1 + n / unicas.length * (hasta - 1), `Leyendo el aplicativo · <b>${esc(ruta)}</b> · ${n} de ${unicas.length} archivos`);
+        progreso(desde + 1 + n / unicas.length * (hasta - desde - 1), `Leyendo el aplicativo · <b>${esc(ruta)}</b> · ${n} de ${unicas.length} archivos`);
       }
       return { origen: raiz.href, archivos, librerias };
+    }
+
+    const empacar = async (texto, tipo, comprimir) => {
+      const blob = new Blob([texto], { type: tipo });
+      return comprimir ? new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).blob() : blob;
+    };
+    // Respaldo SQL: se restaura pegándolo en el SQL Editor de Supabase. Sin disparadores mientras se
+    // carga (session_replication_role) y sin duplicar lo que ya exista (on conflict do nothing).
+    function cabeceraSql(inicio, o, l, tablas, ruta) {
+      return [
+        '-- Backup de la base de datos · Financiero CONSISAV (Supabase)',
+        `-- Generado: ${fechaHora(inicio)} (hora de Guatemala) · usuario ${(yo.usuario || '').toUpperCase()}`,
+        `-- Organización: ${o ? `${o.codigo} · ${o.nombre}` : 'TODAS'} · Localidad: ${l ? `${l.codigo} · ${l.nombre_comercial}` : 'TODAS'}`,
+        `-- Tablas: ${tablas.length}${ruta ? ` · ruta ${ruta}` : ''}`,
+        '-- Restaurar: abrir el SQL Editor del proyecto en Supabase, pegar este archivo y ejecutarlo.',
+        '-- La estructura (tablas y funciones) se crea con los scripts de supabase/migrations.',
+        '',
+        'begin;',
+        'set session_replication_role = replica;',
+        ''
+      ].join('\n');
+    }
+    function insertSql(tabla, filas, general) {
+      if (!filas.length) return `\n-- ${tabla}: sin registros\n`;
+      const lineas = [`\n-- ${tabla}: ${filas.length} registros${general ? ' (tabla general)' : ''}`];
+      for (let i = 0; i < filas.length; i += 500) {
+        const json = JSON.stringify(filas.slice(i, i + 500)).replace(/'/g, "''");
+        lineas.push(`insert into public."${tabla}" overriding system value select * from jsonb_populate_recordset(null::public."${tabla}", '${json}'::jsonb) on conflict do nothing;`);
+      }
+      return `${lineas.join('\n')}\n`;
     }
 
     async function generar(form) {
@@ -187,17 +222,21 @@
       boton.disabled = true;
       const inicio = new Date();
       try {
-        let tablas = [];
-        const datos = {};
-        const aplicativo = contenido.app ? await leerAplicativo(contenido.bd ? 10 : 90) : null;
+        const o = pOrg ? org(pOrg) : null;
+        const l = pLoc ? loc(pLoc) : null;
+        const alcance = `${o ? `org${o.codigo}` : 'TODAS'}_${l ? `loc${l.codigo}` : 'TODAS'}`;
+        const gz = comprimir ? '.gz' : '';
+        const archivos = [];
+        // a) Base de datos: respaldo SQL leído de Supabase.
         if (contenido.bd) {
-          const base = contenido.app ? 10 : 0;
-          progreso(base + 1, 'Revisando las tablas…');
+          const tope = contenido.app ? 80 : 92;
+          progreso(1, 'Conectando con Supabase: revisando las tablas…');
           const r1 = await sb.rpc('respaldo_tablas', { p_org: pOrg, p_loc: pLoc });
           if (r1.error) throw r1.error;
-          tablas = r1.data;
-          const total = tablas.reduce((s, t) => s + Number(t.filas), 0) || 1;
+          const tablas = r1.data;
+          const total = tablas.reduce((t, x) => t + Number(x.filas), 0) || 1;
           let leidas = 0;
+          const partes = [cabeceraSql(inicio, o, l, tablas, ruta)];
           for (const t of tablas) {
             const filas = [];
             for (let desde = 0; desde < Number(t.filas); desde += POR_PAGINA) {
@@ -205,52 +244,52 @@
               if (e2) throw e2;
               filas.push(...data);
               leidas += data.length;
-              progreso(base + 3 + leidas / total * (87 - base), `Leyendo <b>${esc(t.tabla)}</b> · ${leidas.toLocaleString('es-GT')} de ${total.toLocaleString('es-GT')} registros`);
+              progreso(2 + leidas / total * (tope - 2), `Supabase · leyendo <b>${esc(t.tabla)}</b> · ${leidas.toLocaleString('es-GT')} de ${total.toLocaleString('es-GT')} registros`);
               if (data.length < POR_PAGINA) break;
             }
-            datos[t.tabla] = { filas: filas.length, general: t.general, datos: filas };
+            partes.push(insertSql(t.tabla, filas, t.general));
           }
+          partes.push('\nset session_replication_role = origin;\ncommit;\n');
+          archivos.push({ nombre: `backup_bd_${alcance}_${sello(inicio)}.sql${gz}`, blob: await empacar(partes.join(''), 'application/sql', comprimir), tablas: tablas.length, registros: leidas, que: `${tablas.length} tablas · ${leidas.toLocaleString('es-GT')} registros` });
         }
-        const o = pOrg ? org(pOrg) : null;
-        const l = pLoc ? loc(pLoc) : null;
-        const tipo = contenido.app && contenido.bd ? 'todo' : contenido.app ? 'aplicativo' : 'bd';
-        const respaldo = {
-          sistema: 'Financiero CONSISAV', formato: 1, contenido: { todo: 'TODO', aplicativo: 'APLICATIVO', bd: 'BASE DE DATOS' }[tipo], generado: inicio.toISOString(), generado_local: fechaHora(inicio),
-          usuario: (yo.usuario || '').toUpperCase(),
-          organizacion: o ? { id: o.id, codigo: o.codigo, nombre: o.nombre } : 'TODAS',
-          localidad: l ? { id: l.id, codigo: l.codigo, nombre: l.nombre_comercial } : 'TODAS',
-          ruta: ruta || null,
-          ...(aplicativo ? { aplicativo } : {}),
-          ...(contenido.bd ? { tablas: datos } : {})
-        };
-        progreso(92, 'Armando el archivo…');
-        let blob = new Blob([JSON.stringify(respaldo)], { type: 'application/json' });
-        if (comprimir) blob = await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).blob();
-        const alcance = contenido.bd ? `${o ? `org${o.codigo}` : 'TODAS'}_${l ? `loc${l.codigo}` : 'TODAS'}_` : '';
-        const nombre = `backup_${tipo === 'bd' ? '' : `${tipo}_`}${alcance}${sello(inicio)}.json${comprimir ? '.gz' : ''}`;
-        progreso(96, `Guardando <b>${esc(nombre)}</b>…`);
+        // b) Aplicativo: JSON comprimido con los archivos de la página.
+        if (contenido.app) {
+          const desde = contenido.bd ? 80 : 0;
+          const aplicativo = await leerAplicativo(desde, contenido.bd ? 92 : 92);
+          const respaldo = {
+            sistema: 'Financiero CONSISAV', formato: 1, contenido: 'APLICATIVO', generado: inicio.toISOString(), generado_local: fechaHora(inicio),
+            usuario: (yo.usuario || '').toUpperCase(), ruta: ruta || null, aplicativo
+          };
+          const n = Object.keys(aplicativo.archivos).length;
+          archivos.push({ nombre: `backup_aplicativo_${sello(inicio)}.json${gz}`, blob: await empacar(JSON.stringify(respaldo), 'application/json', comprimir), tablas: 0, registros: 0, que: `${n} archivos del aplicativo` });
+        }
         let destino = ruta;
-        if (carpeta) {
-          const archivo = await carpeta.getFileHandle(nombre, { create: true });
-          const w = await archivo.createWritable();
-          await w.write(blob);
-          await w.close();
-          destino = ruta || carpeta.name;
-        } else {
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = nombre;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+        const hechos = [];
+        for (const [i, x] of archivos.entries()) {
+          progreso(94 + i * 3, `Guardando <b>${esc(x.nombre)}</b>…`);
+          if (carpeta) {
+            const archivo = await carpeta.getFileHandle(x.nombre, { create: true });
+            const w = await archivo.createWritable();
+            await w.write(x.blob);
+            await w.close();
+            destino = ruta || carpeta.name;
+          } else {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(x.blob);
+            a.download = x.nombre;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+            if (i < archivos.length - 1) await new Promise((r) => setTimeout(r, 700));
+          }
+          const { error: e3 } = await sb.from('respaldos').insert({ organizacion_id: pOrg, localidad_id: pLoc, archivo: x.nombre, ruta: destino || null, tablas: x.tablas, registros: x.registros, bytes: x.blob.size });
+          hechos.push(`<b>${esc(x.nombre)}</b> · ${x.que} · ${tamano(x.blob.size)}${e3 ? ' · <span class="pc-rojo">no se pudo registrar en el historial</span>' : ''}`);
         }
-        const registros = Object.values(datos).reduce((s, t) => s + t.filas, 0);
-        const { error: e3 } = await sb.from('respaldos').insert({ organizacion_id: pOrg, localidad_id: pLoc, archivo: nombre, ruta: destino || null, tablas: tablas.length, registros, bytes: blob.size });
         await cargarHistorial();
         pintar();
-        progreso(100, `<i class="ti ti-circle-check" aria-hidden="true"></i> Backup generado: <b>${esc(nombre)}</b>${aplicativo ? ` · ${Object.keys(aplicativo.archivos).length} archivos del aplicativo` : ''}${contenido.bd ? ` · ${tablas.length} tablas · ${registros.toLocaleString('es-GT')} registros` : ''} · ${tamano(blob.size)}${carpeta ? ` · en la carpeta ${esc(carpeta.name)}` : ' · descargado'}${e3 ? ' · <span class="pc-rojo">no se pudo registrar en el historial</span>' : ''}`);
-        window.FIN.aviso('Backup generado');
+        progreso(100, `<i class="ti ti-circle-check" aria-hidden="true"></i> ${archivos.length > 1 ? 'Se generaron dos archivos' : 'Backup generado'}${carpeta ? ` en la carpeta ${esc(carpeta.name)}` : ' (descargado)'}:<br>${hechos.join('<br>')}`);
+        window.FIN.aviso(archivos.length > 1 ? 'Backups generados' : 'Backup generado');
       } catch (err) {
         const msg = err?.name === 'NotAllowedError' ? 'El navegador no dio permiso para escribir en la carpeta: elígela de nuevo.' : /respaldo_/.test(err?.message || '') && /function|schema cache/.test(err?.message || '') ? 'Falta instalar el script 49 (backup) en Supabase.' : window.UI.traducirError(err);
         progreso(0, '');
@@ -266,7 +305,7 @@
     cont.addEventListener('change', (e) => {
       if (e.target.name === 'org') { sel.org = e.target.value; sel.loc = ''; return pintar(); }
       if (e.target.name === 'loc') { sel.loc = e.target.value; return pintar(); }
-      if (e.target.name === 'comprimir') comprimirArchivo = e.target.checked;
+      if (e.target.name === 'comprimir') { comprimirArchivo = e.target.checked; return pintar(); }
       if (e.target.name === 'contenido') {
         const k = e.target.value;
         if (k === 'todo') { contenido.app = e.target.checked; contenido.bd = e.target.checked; } else contenido[k] = e.target.checked;
