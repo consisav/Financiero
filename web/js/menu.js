@@ -49,6 +49,22 @@ window.CATALOGOS_COMUNES = [
 
 window.MODULOS = [
   {
+    id: 'administracion',
+    corto: 'Administración',
+    color: 'pizarra',
+    nombre: 'Administración',
+    icono: 'ti-briefcase',
+    descripcion: 'Departamentos, puestos, solicitudes, órdenes de compra y contratos.',
+    opciones: {
+      catalogos: ['Departamentos', 'Puestos', 'Proveedores'],
+      registros: ['Solicitudes', 'Órdenes de compra', 'Contratos'],
+      mantenimientos: ['Parámetros administrativos', 'Niveles de aprobación'],
+      procesos: ['Aprobaciones', 'Cierre administrativo'],
+      reportes: ['Gastos por departamento', 'Órdenes de compra por período', 'Contratos vigentes'],
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
+    }
+  },
+  {
     id: 'contabilidad',
     corto: 'Contabilidad',
     color: 'azul',
@@ -172,6 +188,22 @@ window.MODULOS = [
     }
   },
   {
+    id: 'presupuesto-flujo',
+    corto: 'Presupuesto y Flujo',
+    color: 'rosa',
+    nombre: 'Presupuesto y flujo de efectivo',
+    icono: 'ti-report-money',
+    descripcion: 'Proyección de ingresos y egresos, flujo de efectivo y comparativo contra lo ejecutado.',
+    opciones: {
+      catalogos: ['Rubros de flujo', 'Escenarios'],
+      registros: ['Presupuesto de flujo', 'Proyección de ingresos', 'Proyección de egresos'],
+      mantenimientos: ['Períodos de proyección'],
+      procesos: ['Cálculo del flujo proyectado', 'Comparativo real vs. proyectado'],
+      reportes: ['Flujo de efectivo', 'Presupuesto vs. ejecutado', 'Gráfica de flujo'],
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
+    }
+  },
+  {
     id: 'inventarios',
     corto: 'Inventarios',
     color: 'ambar',
@@ -184,6 +216,22 @@ window.MODULOS = [
       mantenimientos: ['Mínimos y máximos', 'Costos', 'Ubicaciones'],
       procesos: ['Toma física', 'Recalcular costo promedio', 'Cierre de inventario'],
       reportes: ['Existencias', 'Kardex por producto', 'Valuación de inventario', 'Rotación'],
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
+    }
+  },
+  {
+    id: 'activos-fijos',
+    corto: 'Activos Fijos',
+    color: 'oliva',
+    nombre: 'Activos fijos',
+    icono: 'ti-building-warehouse',
+    descripcion: 'Registro de activos, depreciación, traslados y bajas.',
+    opciones: {
+      catalogos: ['Tipos de activo', 'Ubicaciones', 'Responsables', 'Métodos de depreciación'],
+      registros: ['Altas de activos', 'Bajas', 'Traslados', 'Revaluaciones'],
+      mantenimientos: ['Vidas útiles', 'Porcentajes de depreciación'],
+      procesos: ['Depreciación mensual', 'Cierre de activos'],
+      reportes: ['Inventario de activos', 'Depreciación acumulada', 'Activos por ubicación'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },
