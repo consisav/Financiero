@@ -192,12 +192,13 @@
     pintarMarca();
   }
 
-  // Logo de la organización del usuario (lo más grande que permite la barra superior) y, a la par,
-  // el nombre de su localidad. Sin logo, o si la imagen no carga, se muestran las iniciales.
+  // Logo de la organización del usuario (lo más grande que permite la barra superior), después su
+  // eslogan y, a la par, el nombre de su localidad. Sin logo, o si la imagen no carga, se muestran
+  // las iniciales; sin eslogan, ese espacio no aparece.
   async function pintarMarca() {
     const caja = $('marca-empresa');
     const [o, l] = await Promise.all([
-      perfil.organizacion_id ? sb.from('organizaciones').select('codigo, nombre, logo_ruta').eq('id', perfil.organizacion_id).maybeSingle() : { data: null },
+      perfil.organizacion_id ? sb.from('organizaciones').select('codigo, nombre, logo_ruta, eslogan_ruta').eq('id', perfil.organizacion_id).maybeSingle() : { data: null },
       perfil.localidad_id ? sb.from('localidades').select('codigo, nombre_comercial').eq('id', perfil.localidad_id).maybeSingle() : { data: null }
     ]);
     const org = o.data;
@@ -207,13 +208,18 @@
     const base = org ? org.nombre : nombre;
     const palabras = base.split(/\s+/).filter((x) => x.length > 2);
     const iniciales = esc((palabras.length > 1 ? palabras.slice(0, 2).map((x) => x[0]).join('') : base.slice(0, 2)).toUpperCase());
-    const logo = org && org.logo_ruta ? sb.storage.from('organizaciones').getPublicUrl(org.logo_ruta).data.publicUrl : null;
+    const url = (ruta) => ruta ? sb.storage.from('organizaciones').getPublicUrl(ruta).data.publicUrl : null;
+    const logo = url(org && org.logo_ruta);
+    const eslogan = url(org && org.eslogan_ruta);
     caja.innerHTML = `
       ${logo ? `<img class="marca-logo" src="${esc(logo)}" alt="Logo de ${esc(org.nombre)}">` : ''}
       <span class="marca-iniciales" ${logo ? 'hidden' : ''}>${iniciales}</span>
+      ${eslogan ? `<img class="marca-eslogan" src="${esc(eslogan)}" alt="Eslogan de ${esc(org.nombre)}">` : ''}
       <span class="marca-texto"><b title="${esc(nombre)}">${esc(nombre)}</b><small>${esc([loc && loc.codigo, org && org.nombre].filter(Boolean).join(' · '))}</small></span>`;
     const img = caja.querySelector('.marca-logo');
     if (img) img.addEventListener('error', () => { img.remove(); caja.querySelector('.marca-iniciales').hidden = false; });
+    const esl = caja.querySelector('.marca-eslogan');
+    if (esl) esl.addEventListener('error', () => esl.remove());
     caja.hidden = false;
   }
 
