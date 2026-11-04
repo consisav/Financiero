@@ -191,6 +191,7 @@
       const valorMl = fmt.redondear(Number(v.valor || 0) * Number(v.tipo_cambio || 1));
       const tiposOperacion = [...new Set(transacciones.map((t) => t.tipo_operacion).filter(Boolean))];
       if (!pestanas().some((p) => p.id === pestana)) pestana = 'CONTABLE';
+      varios = !!v.clientes_varios;
       const cuenta = (tipo) => documentos.filter((x) => x.tipo === tipo).length;
       const marca = d ? (d.estado === 'ANULADO' ? '<span class="pc-marca anulada">Anulado</span>' : '<span class="pc-marca aprobada">Activo</span>') : '<span class="pc-marca pendiente">Sin registrar</span>';
       const dato = (etq, val, extra = '') => `<div class="bm-dato ${extra}"><dt>${etq}</dt><dd>${val || '<span class="tk-tenue">—</span>'}</dd></div>`;
@@ -292,11 +293,15 @@
       NOTA: [['numero', 'Número'], ['tercero', 'Código', 'corto'], ['nombre', 'Nombre', 'ancho'], ['valor', 'Valor', 'num'], ['fecha', 'Fecha', 'fecha'], ['estado', 'Estado']],
     };
     COLUMNAS.OTRO = COLUMNAS.NOTA;
+    let varios = false;     // «Clientes varios» del documento abierto
+    const columnas = (tipo) => tipo === 'FACTURA' && varios
+      ? [COLUMNAS.FACTURA[0], ['tercero', 'Cliente', 'corto'], ...COLUMNAS.FACTURA.slice(1)]
+      : COLUMNAS[tipo];
     const sumaCampo = (ls, c) => fmt.redondear(ls.reduce((s, x) => s + Number(x[c] || 0), 0));
     const totalCols = { FACTURA: ['valor', 'valor_ml', 'abono', 'abono_ml'], RECIBO: ['valor'], NOTA: ['valor'], OTRO: ['valor'] };
 
     function panelDocumentos(tipo, dis) {
-      const cols = COLUMNAS[tipo];
+      const cols = columnas(tipo);
       const filas = documentos.map((x, i) => [x, i]).filter(([x]) => x.tipo === tipo);
       return `
         <div class="bm-panel" data-panel="${tipo}" ${pestana === tipo ? '' : 'hidden'}>
@@ -309,12 +314,12 @@
     function filaDocumento(x, i, dis) {
       const celda = ([c, , k]) => {
         if (k === 'auto') return `<td class="num bm-auto" data-auto="${c}">${fmt.monto(x[c === 'valor_ml' ? 'valor' : 'abono'] * tcActual())}</td>`;
-        if (k === 'num') return `<td class="num"><input type="number" step="0.01" min="0" data-campo="${c}" value="${x[c] || ''}" ${dis} aria-label="${c}"></td>`;
+        if (k === 'num') return `<td class="num"><input type="number" step="0.01" min="0" data-campo="${c}" value="${x[c] || ''}" ${c === 'abono' && x.abono && x.abono !== x.valor ? 'data-manual="1"' : ''} ${dis} aria-label="${c}"></td>`;
         if (k === 'fecha') return `<td><input type="date" data-campo="${c}" value="${esc(x[c])}" ${dis} aria-label="Fecha"></td>`;
         if (k === 'estado') return `<td><select data-campo="${c}" ${dis}>${['EMITIDO', 'APLICADO', 'ANULADO'].map((e) => `<option ${(x[c] || 'EMITIDO') === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>`;
         return `<td class="${k === 'corto' ? 'bm-codigo' : ''}"><input data-campo="${c}" value="${esc(x[c] || '')}" maxlength="${k === 'ancho' ? 150 : 40}" ${dis} aria-label="${c}"></td>`;
       };
-      return `<tr data-docfila="${i}">${COLUMNAS[x.tipo].map(celda).join('')}
+      return `<tr data-docfila="${i}">${columnas(x.tipo).map(celda).join('')}
         <td>${dis ? '' : `<button type="button" class="icono-boton" data-quitar-doc="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>`}</td></tr>`;
     }
     function filaLinea(l, i, dis) {
@@ -429,6 +434,9 @@
       const v = leerEncabezado(form);
       if (!v.valor || v.valor <= 0) { error.textContent = 'Escribe el valor del documento.'; return; }
       if (!v.fecha) { error.textContent = 'Escribe la fecha del documento.'; return; }
+      if (!v.descripcion.trim() && documentos.some((x) => x.numero)) {
+        v.descripcion = documentos.filter((x) => x.numero).map((x) => [x.serie, x.numero].filter(Boolean).join('-')).join(' ').slice(0, 250);
+      }
       const malas = lineas.filter((l) => (l.debe || l.haber || l.codigo) && !l.cuenta_id);
       if (malas.length && !contabilizado()) { pestana = 'CONTABLE'; error.textContent = 'Hay líneas del detalle contable sin una cuenta de movimiento válida: corrígelas o quítalas.'; return; }
       if (lineas.some((l) => l.centro_codigo && !l.centro_id) && !contabilizado()) { error.textContent = 'Hay líneas con un centro de costo que no es de movimiento: corrígelo o déjalo vacío.'; return; }
@@ -475,7 +483,19 @@
     async function procesar(accion) {
       let motivo = null;
       if (accion === 'ANULAR') { motivo = prompt(`Motivo de la anulación del ${cfg.nombre.toLowerCase()} folio ${actual.folio}:`); if (motivo === null) return; }
-      if (accion === 'PARTIDA' && !confirm(`¿Generar la partida contable del ${cfg.nombre.toLowerCase()} folio ${actual.folio}? Después ya no se cambia su detalle contable.`)) return;
+      if (accion === 'PARTIDA') {
+        const e = ctx.pDet.querySelector('.modal-error');
+        const d = fmt.redondear(lineas.reduce((t, l) => t + Number(l.debe || 0), 0));
+        const h = fmt.redondear(lineas.reduce((t, l) => t + Number(l.haber || 0), 0));
+        const ml = fmt.redondear(actual.valor_ml);
+        const aviso = (txt) => { pestana = 'CONTABLE'; ctx.pDet.querySelector('[data-pestana=CONTABLE]')?.click(); if (e) e.textContent = txt; };
+        if (!lineas.length) return aviso('Arma y guarda el detalle contable antes de generar la partida.');
+        if (d !== h) return aviso(`El detalle contable no cuadra: debe ${fmt.monto(d)} y haber ${fmt.monto(h)}.`);
+        if (d !== ml) return aviso(`El detalle contable (${fmt.monto(d)}) no coincide con el valor en quetzales (${fmt.monto(ml)}).`);
+        const aplicado = fmt.redondear(documentos.reduce((t, x) => t + Number(x.tipo === 'FACTURA' ? x.abono : x.valor) || 0, 0));
+        const nota = documentos.length && aplicado !== fmt.redondear(actual.valor) ? `\n\nAtención: lo aplicado en documentos (${fmt.monto(aplicado)}) no es igual al valor (${fmt.monto(actual.valor)}).` : '';
+        if (!confirm(`¿Generar la partida contable del ${cfg.nombre.toLowerCase()} folio ${actual.folio} por Q ${fmt.monto(ml)}? Después ya no se cambia su detalle contable.${nota}`)) return;
+      }
       if (accion === 'ELIMINAR' && !confirm(`¿Eliminar el ${cfg.nombre.toLowerCase()} folio ${actual.folio}? No se puede deshacer.`)) return;
       const { data, error } = await sb.rpc('procesar_movimiento_bancario', { p_id: actual.id, p_accion: accion, p_motivo: motivo });
       if (error) {
@@ -491,17 +511,36 @@
     function imprimirDocumento() {
       const d = actual;
       const cb = cuentaBancaria(d.cuenta_bancaria_id);
-      const loc = ctx.localidad(d.localidad_id);
+      const banco = ctx.banco(cb?.banco_id);
+      const mon = ctx.moneda(d.moneda_id);
+      const tc = Number(d.tipo_cambio || 1);
+      const n = (x) => fmt.monto(x);
+      const tabla = (tipo) => {
+        const ls = documentos.filter((x) => x.tipo === tipo);
+        if (!ls.length) return '';
+        const cols = columnas(tipo);
+        const valorDe = (x, c) => c === 'valor_ml' ? x.valor * tc : c === 'abono_ml' ? x.abono * tc : x[c];
+        const esNum = (k) => k === 'num' || k === 'auto';
+        return `<h3>${esc(TITULO_DOC[tipo](cfg))}</h3><table><thead><tr>${cols.map(([, t, k]) => `<th class="${esNum(k) ? 'n' : ''}">${t}</th>`).join('')}</tr></thead>
+          <tbody>${ls.map((x) => `<tr>${cols.map(([c, , k]) => `<td class="${esNum(k) ? 'n' : ''}">${esNum(k) ? n(valorDe(x, c)) : k === 'fecha' ? esc(fmt.fechaDia(x[c])) : esc(x[c] || '')}</td>`).join('')}</tr>`).join('')}</tbody>
+          <tfoot><tr>${cols.map(([c, , k], i) => totalCols[tipo].includes(c) ? `<td class="n">${n(ls.reduce((t, x) => t + Number(valorDe(x, c) || 0), 0))}</td>` : `<td>${i === 0 ? 'Totales' : ''}</td>`).join('')}</tr></tfoot></table>`;
+      };
       imprimir(`${cfg.nombre} ${d.folio}`, `
-        <h1>${esc(loc ? `${loc.codigo} ${loc.nombre_comercial}` : '')}</h1>
-        <h2>${esc(cfg.nombre)} folio ${d.folio}${d.estado === 'ANULADO' ? ' · ANULADO' : ''}${d.partida_id ? ` · partida ${esc(nombrePartida(d.partida_id))}` : ''}</h2>
-        <div class="cab"><div><b>Cuenta bancaria</b>${esc(ctx.nombreCuentaBancaria(cb))}</div><div><b>${esc(cfg.etiquetaNumero)}</b>${esc(d.numero_documento || '')}</div><div><b>Fecha</b>${esc(fmt.fechaDia(d.fecha))}</div>
-          <div><b>Valor</b>${esc(ctx.moneda(d.moneda_id)?.simbolo || '')} ${fmt.monto(d.valor)} · Q ${fmt.monto(d.valor_ml)}</div>
-          <div><b>${esc(cfg.etiquetaTercero)}</b>${esc([d.tercero_codigo, d.tercero_nombre].filter(Boolean).join(' · '))}</div><div><b>Tipo de operación</b>${esc(d.tipo_operacion || '')}</div><div><b>Operador</b>${esc(d.usuario || '')} · ${esc(fmt.fechaHora(d.fecha_operacion))}</div>
+        <h1>${esc(cfg.titulo)}</h1>
+        <h2>${esc(empresaDe(d))} · folio ${d.folio}${d.estado === 'ANULADO' ? ' · ANULADO' : ''}${d.partida_id ? ` · póliza ${esc(nombrePartida(d.partida_id))}` : ''}</h2>
+        <div class="cab">
+          <div><b>Banco</b>${esc(banco ? `${banco.codigo} · ${banco.nombre}` : '')}</div><div><b>Cuenta bancaria</b>${esc(cb ? `${cb.numero} · ${cb.nombre}` : '')}</div>
+          <div><b>${esc(cfg.etiquetaNumero)}</b>${esc(d.numero_documento || '')}</div><div><b>Fecha</b>${esc(fmt.fechaDia(d.fecha))}</div>
+          <div><b>Valor</b>${esc(mon?.simbolo || '')} ${n(d.valor)}</div><div><b>Valor en quetzales</b>Q ${n(d.valor_ml)}</div>
+          <div><b>Moneda · cambio</b>${esc(mon?.nombre || '')} · ${tc}</div><div><b>Tipo de operación</b>${esc(d.tipo_operacion || '')}${d.caja_chica ? ' · CAJA CHICA' : ''}</div>
+          <div><b>${esc(cfg.etiquetaTercero)}</b>${d.clientes_varios ? 'CLIENTES VARIOS' : esc([d.tercero_codigo, d.tercero_nombre].filter(Boolean).join(' · '))}</div>
+          ${cfg.tipo === 'DEPOSITO' ? `<div><b>Depositó</b>${esc(d.deposito_por || '')}</div>` : ''}
+          <div><b>Operador</b>${esc(d.usuario || '')} · ${esc(fmt.fechaHora(d.fecha_operacion))}</div>
+          ${d.anulado_en ? `<div><b>Anulado</b>${esc(d.anulado_por || '')} · ${esc(fmt.fechaHora(d.anulado_en))} · ${esc(d.motivo_anulacion || '')}</div>` : ''}
           ${d.descripcion ? `<div style="grid-column:1/-1"><b>Descripción</b>${esc(d.descripcion)}</div>` : ''}</div>
-        ${documentos.length ? `<h3>${esc(cfg.tituloDocs)}</h3><table><thead><tr><th>Tipo</th><th>Número</th><th>Código</th><th>Nombre</th><th class="n">Valor</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>${documentos.map((x) => `<tr><td>${esc(x.tipo)}</td><td>${esc(x.numero)}</td><td>${esc(x.tercero)}</td><td>${esc(x.nombre)}</td><td class="n">${fmt.monto(x.valor)}</td><td>${esc(fmt.fechaDia(x.fecha))}</td><td>${esc(x.estado)}</td></tr>`).join('')}</tbody></table>` : ''}
-        ${lineas.length ? `<h3>Detalle contable</h3><table><thead><tr><th>Línea</th><th>Cuenta</th><th>Nombre</th><th class="n">Debe</th><th class="n">Haber</th></tr></thead><tbody>${lineas.map((l, i) => { const c = contable(l.cuenta_id); return `<tr><td>${i + 1}</td><td>${esc(c?.codigo || '')}</td><td>${esc(c?.nombre || '')}</td><td class="n">${l.debe ? fmt.monto(l.debe) : ''}</td><td class="n">${l.haber ? fmt.monto(l.haber) : ''}</td></tr>`; }).join('')}</tbody>
-          <tfoot><tr><td colspan="3">Totales</td><td class="n">${fmt.monto(lineas.reduce((s, l) => s + l.debe, 0))}</td><td class="n">${fmt.monto(lineas.reduce((s, l) => s + l.haber, 0))}</td></tr></tfoot></table>` : ''}
+        ${cfg.documentos.map(tabla).join('')}
+        ${lineas.length ? `<h3>Detalle contable</h3><table><thead><tr><th>Línea</th><th>Cuenta</th><th>Nombre</th><th class="n">Debe</th><th class="n">Haber</th><th>Centro</th><th>Nombre del centro</th></tr></thead><tbody>${lineas.map((l, i) => { const c = contable(l.cuenta_id); const cc = centros.find((x) => x.id === l.centro_id); return `<tr><td>${i + 1}</td><td>${esc(c?.codigo || '')}</td><td>${esc(c?.nombre || '')}</td><td class="n">${l.debe ? n(l.debe) : ''}</td><td class="n">${l.haber ? n(l.haber) : ''}</td><td>${esc(cc?.codigo || '')}</td><td>${esc(cc?.nombre || '')}</td></tr>`; }).join('')}</tbody>
+          <tfoot><tr><td colspan="3">Totales</td><td class="n">${n(lineas.reduce((t, l) => t + l.debe, 0))}</td><td class="n">${n(lineas.reduce((t, l) => t + l.haber, 0))}</td><td colspan="2"></td></tr></tfoot></table>` : ''}
         <div class="firmas"><div>Elaboró: ${esc(d.usuario || '')}</div><div>Revisó</div><div>Autorizó</div></div>`);
     }
 
@@ -530,6 +569,7 @@
           form.querySelector('[data-banco-nombre]').textContent = b?.nombre || '';
         }
       }
+      if (e.target.name === 'clientes_varios') return repintar();
       if (e.target.name === 'moneda_id') form.elements.tipo_cambio.value = ctx.moneda(Number(e.target.value))?.cambio || 1;
       if (['cuenta_bancaria_id', 'moneda_id', 'tipo_cambio', 'valor'].includes(e.target.name)) {
         const v = leerEncabezado(form);
@@ -552,6 +592,12 @@
         const tr = e.target.closest('tr[data-linea]');
         if (e.target.dataset.campo === 'debe' && e.target.value) tr.querySelector('[data-campo=haber]').value = '';
         if (e.target.dataset.campo === 'haber' && e.target.value) tr.querySelector('[data-campo=debe]').value = '';
+      }
+      if (e.target.closest('tr[data-docfila]')) {
+        const tr = e.target.closest('tr[data-docfila]');
+        const abono = tr.querySelector('[data-campo=abono]');
+        if (abono && e.target.dataset.campo === 'abono') abono.dataset.manual = e.target.value ? '1' : '';
+        if (abono && e.target.dataset.campo === 'valor' && !abono.dataset.manual) abono.value = e.target.value;
       }
       if (e.target.closest('tr[data-linea], tr[data-docfila]')) { leerFilas(); totalizar(); }
       if (['valor', 'tipo_cambio'].includes(e.target.name)) {
@@ -584,7 +630,16 @@
         if (a === 'anular') return procesar('ANULAR');
         if (a === 'partida') return procesar('PARTIDA');
         if (a === 'contabilizar') return contabilizar();
-        if (a === 'documento') { leerFilas(); const t = ac.dataset.tipo || cfg.documentos[0]; documentos.push({ tipo: t, serie: '', numero: '', tercero: '', nombre: '', valor: 0, abono: 0, fecha: '', estado: t === 'RECIBO' ? 'EMITIDO' : '', contrato: '' }); pestana = t; return repintar(); }
+        if (a === 'documento') {
+          leerFilas();
+          const t = ac.dataset.tipo || cfg.documentos[0];
+          const h = leerEncabezado(ctx.pDet.querySelector('.bm-form'));
+          const propio = !(t === 'FACTURA' && h.clientes_varios);
+          documentos.push({ tipo: t, serie: '', numero: '', tercero: propio ? h.tercero_codigo || '' : '', nombre: propio ? h.tercero_nombre || '' : '', valor: 0, abono: 0, fecha: t === 'FACTURA' ? '' : h.fecha, estado: t === 'RECIBO' ? 'EMITIDO' : '', contrato: '' });
+          pestana = t;
+          repintar();
+          return ctx.pDet.querySelector(`[data-panel=${t}] tr[data-docfila="${documentos.length - 1}"] [data-campo=${t === 'RECIBO' ? 'serie' : 'numero'}]`)?.focus();
+        }
         if (a === 'linea') { leerFilas(); lineas.push({ cuenta_id: null, codigo: '', centro_id: null, debe: 0, haber: 0 }); return repintar(); }
       }
       const qd = e.target.closest('[data-quitar-doc]');
