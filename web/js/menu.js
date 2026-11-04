@@ -203,11 +203,20 @@ window.MODULOS = [
             { id: 'facturas-de-compra', nombre: 'Facturas de compra por pagar', icono: 'ti-file-invoice', descripcion: 'Facturas y recibos de compra: proveedor, importe, bonificaciones, notas, forma de pago y detalle contable.' }
           ]
         }
+      ],
+      cajas: [
+        {
+          subgrupo: 'Cajas',
+          icono: 'ti-cash-register',
+          pantallas: [
+            { id: 'cajas-chicas', nombre: 'Cajas chicas', icono: 'ti-cash-register', descripcion: 'Selección de la caja a operar y su administración: subcajas por mes, anticipo, adelanto y liquidación, documentos con su desglose fiscal, detalle contable y póliza.' }
+          ]
+        }
       ]
     },
     opciones: {
       cheques: ['Chequeras', 'Anulación de cheques', 'Cheques en circulación'],
-      cajas: ['Cajas chicas', 'Liquidación de caja chica', 'Arqueo de caja']
+      cajas: ['Arqueo de caja']
     }
   },
   {
