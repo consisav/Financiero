@@ -2405,3 +2405,46 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ck-compra select { font-weight: 600; }
 @media (max-width: 1500px) { .ck-recepcion { grid-template-columns: auto repeat(3, minmax(0, 1fr)); } .ck-prov, .ck-obs { grid-column: 2 / -1; } }
 @media (max-width: 1100px) { .ck-cab { grid-template-columns: minmax(0, 1fr); } .ck-acciones { flex-direction: row; flex-wrap: wrap; } }
+
+/* ---------- Ventas · Catálogos ---------- */
+.cg-empresa { gap: 3px; font-size: 12px; min-width: 240px; }
+.cg-empresa select { padding: 6px 9px; font-size: 13px; }
+.cg-num { text-align: right; font-variant-numeric: tabular-nums; }
+.bk-vendedores.cp-lado .bk-filtros, .bk-productos.cp-lado .bk-filtros { grid-template-columns: auto minmax(220px, 1.3fr) repeat(3, minmax(120px, .7fr)) auto; }
+.bk-vendedores.cp-lado .bk-filtros { grid-template-columns: auto minmax(220px, 1.3fr) minmax(120px, .6fr) 1fr; }
+.cv-com .campo { grid-column: span 2; }
+.cv-com input { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Clasificaciones y tipos: dos listas editables, una arriba y otra abajo */
+.bk-clasif-tipos .bk-filtros { grid-template-columns: auto minmax(240px, 420px) 1fr; }
+.bk-espacio.bk-clasif-tipos .ta-cuerpo { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.bk-clasif-tipos .bk-maestro, .bk-clasif-tipos .bk-detalle { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.cy-caja { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px 14px 12px; }
+.cy-cab { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cy-cab .ta-col-titulo { font-size: 13px; }
+.cy-cab .ta-col-titulo small { font-weight: 600; color: var(--suave); letter-spacing: 0; }
+.cy-cab .boton { display: inline-flex; align-items: center; gap: 6px; }
+.cy-ayuda { flex: 1; font-size: 12px; color: var(--tenue); }
+.cy-cuerpo { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.cy-cuerpo .cg-tabla { flex: 1; max-height: none; }
+.cy-caja .cg-error:empty { display: none; }
+.cy-cta { min-width: 180px; }
+.cy-cta input { margin-bottom: 1px; }
+.cy-cta small { display: block; font-size: 10.5px; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 8px; }
+.cg-tabla tr.cy-elegida td { background: var(--acento-fondo); }
+.cg-tabla tr.cy-elegida td:first-child { box-shadow: inset 3px 0 0 var(--acento); }
+.cg-tabla tbody tr[data-fila] { cursor: default; }
+.bk-clasif-tipos [data-caja=clasif] tbody tr[data-fila] { cursor: pointer; }
+
+/* Productos y servicios */
+.cpr-dos { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 8px; }
+.cpr-dos .bm-bloque { grid-column: auto; }
+.cpr-check { padding-bottom: 4px; }
+.cpr-check input { accent-color: var(--acento); }
+.cpr-imagen { display: flex; gap: 14px; align-items: flex-start; }
+.cpr-marco { width: 240px; height: 180px; border: 1px dashed var(--borde); border-radius: var(--radio); display: flex; align-items: center; justify-content: center; background: var(--fondo); overflow: hidden; }
+.cpr-marco img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.cpr-img-acc { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.cpr-img-acc .boton { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.cpr-img-acc small { color: var(--tenue); font-size: 11.5px; }
+@media (max-width: 1100px) { .cpr-dos { grid-template-columns: minmax(0, 1fr); } .cpr-imagen { flex-direction: column; } }

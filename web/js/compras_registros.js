@@ -13,6 +13,10 @@
   const { montar, fmt, imprimir } = window.BANCOS;
 
   // ===================== Catálogos en lista editable =====================
+  // cfg.local: el catálogo es de cada localidad (lleva el selector de empresa). cfg.grupo y
+  // cfg.script: el texto de arriba del título y el script que lo instala.
+  const seleccion = { loc: null };
+  let localidades = null, organizaciones = [];
   function catalogo(cont, cfg) {
     const sb = window.FIN.sb;
     const ed = window.FIN.puedeEditarCatalogos();
@@ -20,10 +24,18 @@
     let buscar = '';
     cont.innerHTML = `<div class="cg-espacio"><section class="panel cg-panel"></section></div>`;
     const panel = cont.querySelector('.cg-panel');
+    const loc = () => localidades?.find((l) => l.id === seleccion.loc);
 
     async function cargar() {
-      const { data, error } = await sb.from(cfg.tabla).select('*').order('codigo');
-      if (error) { panel.innerHTML = `<p class="vacio">${/does not exist|schema cache/.test(error.message) ? 'Falta instalar el script 58 (clasificaciones, tipos de documento y contraseñas de pago) en Supabase.' : esc(error.message)}</p>`; return; }
+      if (cfg.local && !localidades) {
+        const [o, l] = await Promise.all([sb.from('organizaciones').select('id, codigo, nombre').eq('activo', true).order('codigo'), sb.from('localidades').select('id, codigo, nombre_comercial, organizacion_id').eq('activo', true).order('organizacion_id').order('correlativo')]);
+        organizaciones = o.data || []; localidades = l.data || [];
+      }
+      if (cfg.local && !loc()) seleccion.loc = (localidades.find((l) => l.id === window.FIN.perfil().localidad_id) || localidades[0])?.id || null;
+      let q = sb.from(cfg.tabla).select('*').order('codigo');
+      if (cfg.local) q = q.eq('localidad_id', seleccion.loc || 0);
+      const { data, error } = await q;
+      if (error) { panel.innerHTML = `<p class="vacio">${/does not exist|schema cache/.test(error.message) ? `Falta instalar el script ${cfg.script || '58 (clasificaciones, tipos de documento y contraseñas de pago)'} en Supabase.` : esc(error.message)}</p>`; return; }
       filas = (data || []).map((x) => ({ ...x, _orig: JSON.stringify(datos(x)) }));
       pintar();
     }
@@ -37,7 +49,8 @@
       panel.innerHTML = `
         <header class="cg-cab">
           <span class="tk-icono"><i class="ti ${cfg.icono}" aria-hidden="true"></i></span>
-          <div class="cg-titulo"><small>Compras · Registros</small><h2>${esc(cfg.titulo)} <small>${filas.length}</small></h2><p>${esc(cfg.descripcion)}</p></div>
+          <div class="cg-titulo"><small>${esc(cfg.grupo || 'Compras · Registros')}</small><h2>${esc(cfg.titulo)} <small>${filas.length}</small></h2><p>${esc(cfg.descripcion)}</p></div>
+          ${cfg.local ? `<label class="campo cg-empresa"><span>Empresa</span><select data-empresa>${organizaciones.map((o) => ({ o, ls: localidades.filter((l) => l.organizacion_id === o.id) })).filter((g) => g.ls.length).map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.ls.map((l) => `<option value="${l.id}" ${l.id === seleccion.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('')}</optgroup>`).join('')}</select></label>` : ''}
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar…" value="${esc(buscar)}" aria-label="Buscar"></label>
           ${ed ? `<button type="button" class="boton secundario-sm" data-accion="agregar"><i class="ti ti-plus" aria-hidden="true"></i> Agregar</button>
             <button type="button" class="boton primario-sm" data-accion="guardar" ${n ? '' : 'disabled'}><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar cambios${n ? ` (${n})` : ''}</button>` : ''}
@@ -48,6 +61,7 @@
           <tbody>${vis.map((x) => { const i = filas.indexOf(x); return `<tr data-fila="${i}" class="${!x.id ? 'cg-nueva' : JSON.stringify(datos(x)) !== x._orig ? 'cg-cambio' : ''} ${x.activo === false ? 'cg-inactiva' : ''}">
             <td class="cg-cod">${x.codigo ?? '<span class="tk-tenue">Nuevo</span>'}</td>
             ${cfg.columnas.map((c) => `<td class="${c.tipo === 'check' ? 'cg-chk' : ''}">${c.tipo === 'check' ? `<input type="checkbox" data-k="${c.k}" ${x[c.k] ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`
+              : c.tipo === 'numero' ? `<input type="number" step="0.01" min="0" ${c.maximo ? `max="${c.maximo}"` : ''} data-k="${c.k}" value="${esc(String(x[c.k] ?? 0))}" class="cg-num" ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`
               : c.tipo === 'select' ? `<select data-k="${c.k}" ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">${c.opciones.map(([v, t]) => `<option value="${v}" ${x[c.k] === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`
               : `<input data-k="${c.k}" value="${esc(x[c.k] ?? '')}" maxlength="${c.max || 120}" ${c.k === 'siglas' ? 'class="cg-siglas"' : ''} ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`}</td>`).join('')}
             <td class="cg-chk"><input type="checkbox" data-k="activo" ${x.activo !== false ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Activo"></td></tr>`; }).join('')
@@ -70,8 +84,10 @@
       let siguiente = Math.max(0, ...filas.map((x) => x.codigo || 0));
       for (const x of lista) {
         const v = datos(x);
-        cfg.columnas.forEach((c) => { if (c.tipo !== 'check' && c.tipo !== 'select') v[c.k] = String(v[c.k] ?? '').trim() || null; });
-        const r = x.id ? await sb.from(cfg.tabla).update(v).eq('id', x.id) : await sb.from(cfg.tabla).insert({ ...v, codigo: ++siguiente });
+        cfg.columnas.forEach((c) => { if (c.tipo === 'numero') v[c.k] = Number(v[c.k]) || 0; else if (c.tipo !== 'check' && c.tipo !== 'select') v[c.k] = String(v[c.k] ?? '').trim() || null; });
+        if (cfg.local && x.id) { delete v.organizacion_id; delete v.localidad_id; }
+        const nueva = { ...v, codigo: ++siguiente, ...(cfg.local ? { organizacion_id: loc()?.organizacion_id, localidad_id: seleccion.loc } : {}) };
+        const r = x.id ? await sb.from(cfg.tabla).update(v).eq('id', x.id) : await sb.from(cfg.tabla).insert(nueva);
         if (r.error) { error.textContent = window.UI.traducirError(r.error); return cargarConservando(); }
       }
       window.FIN.aviso(`${lista.length} cambio(s) guardado(s)`);
@@ -90,6 +106,10 @@
       tr.classList.toggle('cg-cambio', !!filas[Number(tr.dataset.fila)].id);
     });
     panel.addEventListener('change', (e) => {
+      if (e.target.matches('[data-empresa]')) {
+        if (cambiadas().length && !confirm('Hay cambios sin guardar en esta empresa. ¿Cambiar de empresa y descartarlos?')) { e.target.value = String(seleccion.loc); return; }
+        seleccion.loc = Number(e.target.value); buscar = ''; return cargar();
+      }
       const tr = e.target.closest('tr[data-fila]');
       if (!tr) return;
       const x = filas[Number(tr.dataset.fila)];
@@ -105,6 +125,7 @@
     cargar();
   }
 
+  window.CATALOGO_GRID = catalogo;
   window.PANTALLAS = window.PANTALLAS || {};
   window.PANTALLAS['clasificaciones-compra'] = (cont) => catalogo(cont, {
     tabla: 'clasificaciones_compra', titulo: 'Clasificaciones compras', icono: 'ti-tags', codigo: 'Clasificación',

@@ -226,8 +226,30 @@ window.MODULOS = [
     nombre: 'Facturación y ventas',
     icono: 'ti-receipt',
     descripcion: 'Clientes, cotizaciones, facturas y cuentas por cobrar.',
+    subgrupos: {
+      catalogos: [
+        {
+          subgrupo: 'Ventas',
+          icono: 'ti-user-dollar',
+          pantallas: [
+            { id: 'vendedores', nombre: 'Vendedores', icono: 'ti-user-dollar', descripcion: 'Vendedores de la empresa: contacto, comisiones (general, crédito y contado), siglas y usuario del sistema.' }
+          ]
+        },
+        {
+          subgrupo: 'Productos',
+          icono: 'ti-package',
+          pantallas: [
+            { id: 'clasificaciones-y-tipos', nombre: 'Clasificaciones y tipos', icono: 'ti-category', descripcion: 'Clasificaciones de productos y servicios con su cuenta, y los tipos de productos de cada clasificación.' },
+            { id: 'tipos-de-medida', nombre: 'Tipos de medida', icono: 'ti-ruler-measure', descripcion: 'Unidades de medida de los productos.' },
+            { id: 'tipos-de-precio', nombre: 'Tipos de precio', icono: 'ti-currency-dollar', descripcion: 'Listas de precio: % de utilidad, % de descuento, factor y estado.' },
+            { id: 'presentaciones-productos', nombre: 'Presentación productos', icono: 'ti-box', descripcion: 'Presentaciones en que vienen los productos.', separador: true },
+            { id: 'productos-y-servicios', nombre: 'Productos y servicios', icono: 'ti-package', descripcion: 'Definición de artículos: clasificación y tipo, proveedor, presentación, medida, punto mínimo, costo, ubicación, bodega, precios e imagen.' }
+          ]
+        }
+      ]
+    },
     opciones: {
-      catalogos: ['Clientes', 'Productos y servicios', 'Vendedores', 'Formas de pago'],
+      catalogos: ['Clientes', 'Formas de pago'],
       registros: ['Cotizaciones', 'Pedidos', 'Facturas', 'Notas de crédito', 'Cobros'],
       mantenimientos: ['Series de documentos', 'Listas de precios', 'Descuentos'],
       procesos: ['Anulación de documentos', 'Antigüedad de saldos', 'Comisiones'],
