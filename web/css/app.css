@@ -1628,3 +1628,55 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
   .bm-control { grid-column: 1 / -1; }
   .bk-movimientos .bm-form { overflow: auto; }
 }
+
+/* ---------- Bancos · Depósitos v3: cabecera compacta, control con imagen y modo consulta ---------- */
+.bk-movimientos .bm-form { gap: 8px; padding: 10px 14px 12px; }
+.bm-titulo { gap: 10px; }
+.bm-titulo .tk-titulo-texto small { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 600; }
+.bm-titulo .tk-titulo-texto h2 { font-size: 17px; }
+.bm-anulado { margin: 0; }
+.bm-cabecera { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto auto; gap: 8px; }
+.bm-cabecera .bm-banco { grid-column: 1 / span 6; grid-row: 1; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, .75fr); padding: 8px 12px; }
+.bm-cabecera .bm-importe { grid-column: 7 / span 3; grid-row: 1; padding: 8px 12px; gap: 10px; }
+.bm-cabecera .bm-control { grid-column: 10 / span 3; grid-row: 1 / span 2; }
+.bm-cabecera .bm-datos { grid-column: 1 / span 4; grid-row: 2; }
+.bm-cabecera .bm-tercero { grid-column: 5 / span 5; grid-row: 2; }
+.bm-cabecera .bm-campos { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 10px; }
+.bm-c4 { grid-column: 1 / -1; }
+.bm-cabecera .bm-bloque { padding: 7px 12px 9px; gap: 5px; }
+.bm-importe input { font-size: 20px !important; padding: 6px 10px !important; }
+.bm-ml { padding: 6px 10px; }
+.bm-ml b { font-size: 20px; }
+.bm-banco-id .bk-cod { width: 32px; height: 32px; font-size: 13px; }
+.bm-banco-id b { font-size: 14px; }
+.bm-control dl { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px 10px; }
+.bm-control .bm-dato dd small { display: block; margin: 0; }
+.bm-comprobante { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px dashed var(--borde); border-radius: var(--radio); background: var(--fondo); min-height: 52px; }
+.bm-comprobante.con { border-style: solid; background: var(--panel); }
+.bm-miniatura { width: 52px; height: 52px; padding: 0; border: 1px solid var(--borde); border-radius: 8px; overflow: hidden; background: var(--fondo); cursor: zoom-in; display: grid; place-items: center; color: var(--error); font-size: 26px; }
+.bm-miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bm-comprobante-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.bm-comprobante-txt small { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.bm-comprobante-txt b { font-size: 12.5px; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-comprobante-txt span { font-size: 11px; }
+.bm-cambiar { cursor: pointer; }
+.bm-adjuntar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--acento); }
+.bm-adjuntar > i { font-size: 26px; }
+.bm-adjuntar span { display: flex; flex-direction: column; line-height: 1.3; }
+.bm-adjuntar b { font-size: 13px; }
+.bm-adjuntar small { font-size: 11px; color: var(--tenue); }
+.bm-adjuntar:hover b { text-decoration: underline; }
+.bm-sin-imagen { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tenue); }
+.bm-sin-imagen i { font-size: 18px; }
+.bm-control .bm-flujo { margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; padding: 0; }
+/* En consulta los campos se leen como texto: sin apariencia de deshabilitados. */
+.bm-form :is(input, select):disabled { color: var(--texto); -webkit-text-fill-color: var(--texto); opacity: 1; background: var(--fondo); cursor: default; }
+.bm-form .bm-cta select:disabled, .bm-form .bm-num input:disabled { color: var(--acento); -webkit-text-fill-color: var(--acento); }
+.bm-cabecera.editando .bm-banco { box-shadow: 0 0 0 2px color-mix(in srgb, var(--acento) 18%, transparent); }
+@media (max-width: 1400px) {
+  .bm-cabecera .bm-banco { grid-column: 1 / -1; grid-row: auto; }
+  .bm-cabecera .bm-importe { grid-column: 1 / span 6; grid-row: auto; }
+  .bm-cabecera .bm-control { grid-column: 7 / span 6; grid-row: auto / span 2; }
+  .bm-cabecera .bm-datos, .bm-cabecera .bm-tercero { grid-column: 1 / span 6; grid-row: auto; }
+}
+.bm-cabecera .bm-campos .bm-c3 { grid-column: span 3; }

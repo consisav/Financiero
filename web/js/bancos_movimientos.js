@@ -55,7 +55,11 @@
 
     const cuentaBancaria = (id) => cuentas.find((c) => c.id === id);
     const contable = (id) => contables.find((c) => c.id === id);
-    const editable = () => ctx.admin && (!actual || actual.estado === 'ACTIVO');
+    let modificando = false;        // un documento guardado se edita solo después de «Modificar»
+    let comprobanteNuevo = null;    // archivo elegido, se sube al guardar
+    let quitarComprobante = false;  // quitar la imagen guardada al guardar
+    const BUCKET = 'bancos';
+    const editable = () => ctx.admin && (!actual || (actual.estado === 'ACTIVO' && modificando));
     const contabilizado = () => !!actual?.partida_id;
 
     function pintarFiltros() {
@@ -104,7 +108,7 @@
       }
       if (actual && !docs.some((d) => d.id === actual.id)) actual = null;
       pintarMaestro();
-      await abrir(actual ? docs.find((d) => d.id === actual.id) : docs[0] || null);
+      await abrir(actual ? docs.find((d) => d.id === actual.id) : docs[0] || null, modificando);
     }
 
     // Organización y localidad del documento (o las elegidas, si es nuevo).
@@ -154,8 +158,11 @@
         </div>`;
     }
 
-    async function abrir(d) {
+    async function abrir(d, editar = false) {
       actual = d;
+      modificando = !!d && editar && ctx.admin && d.estado === 'ACTIVO';
+      comprobanteNuevo = null;
+      quitarComprobante = false;
       documentos = [];
       lineas = [];
       if (d) {
@@ -195,28 +202,33 @@
       const cuenta = (tipo) => documentos.filter((x) => x.tipo === tipo).length;
       const marca = d ? (d.estado === 'ANULADO' ? '<span class="pc-marca anulada">Anulado</span>' : '<span class="pc-marca aprobada">Activo</span>') : '<span class="pc-marca pendiente">Sin registrar</span>';
       const dato = (etq, val, extra = '') => `<div class="bm-dato ${extra}"><dt>${etq}</dt><dd>${val || '<span class="tk-tenue">—</span>'}</dd></div>`;
+      const puede = ctx.admin && d && d.estado === 'ACTIVO' && !modificando;
+      const conImagen = comprobanteNuevo || (d?.comprobante_ruta && !quitarComprobante);
+      const nombreImagen = comprobanteNuevo ? comprobanteNuevo.name : d?.comprobante_nombre || '';
+      const esPdf = comprobanteNuevo ? comprobanteNuevo.type === 'application/pdf' : d?.comprobante_tipo === 'application/pdf';
       ctx.pDet.innerHTML = `
         <form class="tk-form ta-form bm-form" novalidate>
-          <header class="tk-titulo">
-            <span class="tk-icono"><i class="ti ${cfg.icono}" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>${esc(cfg.titulo)}</small><h2>${d ? `${esc(cfg.nombre)} folio ${d.folio}` : `${cfg.tipo === 'DEPOSITO' ? 'Nuevo' : 'Nueva'} ${esc(cfg.nombre.toLowerCase())}`}</h2></div>
-            <div class="tk-marcas">${marca}${d?.partida_id ? `<span class="pc-marca definitiva"><i class="ti ti-notebook" aria-hidden="true"></i> Partida ${esc(nombrePartida(d.partida_id))}</span>` : ''}${d?.conciliado ? '<span class="pc-marca aprobada">Conciliado</span>' : ''}</div>
+          <header class="tk-titulo bm-titulo">
+            <div class="tk-titulo-texto"><small>${esc(cfg.titulo)} · ${esc(empresaDe(d))}</small><h2>${d ? `${esc(cfg.nombre)} folio ${d.folio}` : `${cfg.tipo === 'DEPOSITO' ? 'Nuevo' : 'Nueva'} ${esc(cfg.nombre.toLowerCase())}`}</h2></div>
+            <div class="tk-marcas">${marca}${modificando ? '<span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}${d?.partida_id ? `<span class="pc-marca definitiva"><i class="ti ti-notebook" aria-hidden="true"></i> Partida ${esc(nombrePartida(d.partida_id))}</span>` : ''}${d?.conciliado ? '<span class="pc-marca aprobada">Conciliado</span>' : ''}</div>
             <div class="tk-titulo-acciones">
-              ${ctx.admin && d ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>' : ''}
+              ${ctx.admin && d && !modificando ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>' : ''}
               ${cfg.liquidaciones && ed ? cfg.liquidaciones.map((l) => `<button type="button" class="boton secundario-sm" data-proximamente="${esc(l.texto)}" data-modulo="${esc(l.modulo)}" title="Se habilita cuando exista el módulo de ${esc(l.modulo)}"><i class="ti ${l.icono}" aria-hidden="true"></i> ${esc(l.texto)}</button>`).join('') : ''}
-              ${d ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
-              ${d && ed ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>' : ''}
-              ${d && ctx.superAdmin && !d.partida_id ? `<button type="button" class="boton secundario-sm rp-peligro" data-eliminar="${d.id}"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>` : ''}
-              ${d && ed && !contabilizado() ? '<button type="button" class="boton secundario-sm" data-accion="partida" title="Genera la partida contable con el detalle contable"><i class="ti ti-notebook" aria-hidden="true"></i> Generar partida</button>' : ''}
+              ${d && !modificando ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
+              ${puede ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>' : ''}
+              ${d && ctx.superAdmin && !d.partida_id && !modificando ? `<button type="button" class="boton secundario-sm rp-peligro" data-eliminar="${d.id}"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>` : ''}
+              ${puede && !contabilizado() ? '<button type="button" class="boton secundario-sm" data-accion="partida" title="Genera la partida contable con el detalle contable"><i class="ti ti-notebook" aria-hidden="true"></i> Generar partida</button>' : ''}
+              ${puede ? '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
+              ${modificando ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
               ${ed ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${d ? 'Guardar cambios' : 'Registrar'}</button>` : ''}
             </div>
           </header>
           <p class="modal-error tk-error" role="alert"></p>
+          ${d && d.estado === 'ANULADO' ? `<p class="tk-aviso bm-anulado"><i class="ti ti-ban" aria-hidden="true"></i> Anulado por ${esc(d.anulado_por || '')} el ${esc(fmt.fechaHora(d.anulado_en))}: ${esc(d.motivo_anulacion || '')}</p>` : ''}
 
-          <div class="bm-cabecera">
+          <div class="bm-cabecera ${ed ? 'editando' : 'consulta'}">
             <section class="bm-banco">
-              <div class="bm-empresa"><small>Empresa</small><b>${esc(empresaDe(d))}</b></div>
-              <div class="bm-banco-id"><span class="bk-cod" data-banco-cod>${banco?.codigo ?? ''}</span><div><small>Banco</small><b data-banco-nombre>${esc(banco?.nombre || '')}</b></div></div>
+              <div class="bm-banco-id"><span class="bk-cod" data-banco-cod>${banco?.codigo ?? ''}</span><div><small>Banco</small><b data-banco-nombre title="${esc(banco?.nombre || '')}">${esc(banco?.nombre || '')}</b></div></div>
               <label class="campo bm-cta"><span>Cuenta bancaria *</span><select name="cuenta_bancaria_id" ${disC}>${cuentas.filter((c) => c.activo || c.id === v.cuenta_bancaria_id).map((c) => `<option value="${c.id}" ${v.cuenta_bancaria_id === c.id ? 'selected' : ''}>${esc(c.numero)} · ${esc(c.nombre)}</option>`).join('')}</select></label>
               <label class="campo bm-num"><span>${esc(cfg.etiquetaNumero)}</span><input name="numero_documento" value="${esc(v.numero_documento || '')}" maxlength="40" ${dis}></label>
             </section>
@@ -225,38 +237,48 @@
               <div class="bm-ml"><span>Valor en quetzales</span><b data-valor-ml>Q ${fmt.monto(valorMl)}</b></div>
             </section>
 
-            <section class="bm-bloque">
-              <h3 class="ta-col-titulo"><i class="ti ti-calendar-dollar" aria-hidden="true"></i> Datos ${cfg.tipo === 'DEPOSITO' ? 'del depósito' : 'de la nota'}</h3>
-              <div class="bm-campos">
-                <label class="campo"><span>Fecha *</span><input type="date" name="fecha" value="${esc(v.fecha)}" ${disC}></label>
-                <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((m) => `<option value="${m.id}" ${v.moneda_id === m.id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
-                <label class="campo"><span>Valor cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
-                <label class="campo bm-c2"><span>Tipo de operación</span><input list="bm-operaciones" name="tipo_operacion" value="${esc(v.tipo_operacion || '')}" maxlength="40" ${dis}><datalist id="bm-operaciones">${tiposOperacion.map((t) => `<option value="${esc(t)}">`).join('')}</datalist></label>
-                <label class="pc-check bm-check"><input type="checkbox" name="caja_chica" ${v.caja_chica ? 'checked' : ''} ${dis}> Caja chica</label>
-              </div>
-            </section>
-            <section class="bm-bloque">
-              <h3 class="ta-col-titulo"><i class="ti ti-user" aria-hidden="true"></i> ${esc(cfg.etiquetaTercero)} y descripción</h3>
-              <div class="bm-campos">
-                ${cfg.terceros.length > 1 ? `<div class="pc-radios bm-radios bm-c3">${cfg.terceros.map((t) => `<label><input type="radio" name="tipo_tercero" value="${t.valor}" ${v.tipo_tercero === t.valor ? 'checked' : ''} ${dis}> ${esc(t.texto)}</label>`).join('')}</div>` : `<input type="hidden" name="tipo_tercero" value="${cfg.terceros[0].valor}">`}
-                <label class="campo"><span>Código</span><input name="tercero_codigo" value="${esc(v.tercero_codigo || '')}" maxlength="20" ${dis}></label>
-                <label class="campo bm-c2"><span>${esc(cfg.etiquetaTercero)} (nombre)</span><input name="tercero_nombre" value="${esc(v.tercero_nombre || '')}" maxlength="150" ${dis}></label>
-                ${cfg.tipo === 'DEPOSITO' ? `<label class="campo bm-c2"><span>Depositó</span><input name="deposito_por" value="${esc(v.deposito_por || '')}" maxlength="120" placeholder="Persona que hizo el depósito" ${dis}></label>
-                <label class="pc-check bm-check"><input type="checkbox" name="clientes_varios" ${v.clientes_varios ? 'checked' : ''} ${dis}> Clientes varios</label>` : ''}
-                <label class="campo bm-c3"><span>Descripción</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="250" placeholder="${cfg.tipo === 'DEPOSITO' ? 'Ej. FE-7074 FE-7075' : 'Concepto de la nota o transferencia'}" ${dis}></label>
-              </div>
-            </section>
             <section class="bm-bloque bm-control">
               <h3 class="ta-col-titulo"><i class="ti ti-shield-check" aria-hidden="true"></i> Control</h3>
               <dl>
                 ${dato('Folio', d ? `<b>${d.folio}</b>` : 'Automático')}
                 ${dato('Estado', d ? esc(d.estado) : 'Sin registrar')}
-                ${dato('Operador', `<span ${d ? '' : 'data-reloj'}>${esc(d ? d.usuario || '' : (ctx.yo.usuario || '').toUpperCase())}</span> <small>${esc(fmt.fechaHora(d ? d.fecha_operacion : new Date()))}</small>`, 'bm-c2')}
-                ${dato('Actualiza', d?.modificado_en ? `${esc(d.modificado_por_nombre || '')} <small>${esc(fmt.fechaHora(d.modificado_en))}</small>` : '', 'bm-c2')}
                 ${dato('Póliza', d?.partida_id ? `<b>${esc(nombrePartida(d.partida_id))}</b>` : '')}
+                ${dato('Operador', `<span ${d ? '' : 'data-reloj'}>${esc(d ? d.usuario || '' : (ctx.yo.usuario || '').toUpperCase())}</span> <small>${esc(fmt.fechaHora(d ? d.fecha_operacion : new Date()))}</small>`)}
+                ${dato('Actualiza', d?.modificado_en ? `${esc(d.modificado_por_nombre || '')} <small>${esc(fmt.fechaHora(d.modificado_en))}</small>` : '')}
                 ${dato('Fecha anula', d?.anulado_en ? `${esc(fmt.fechaHora(d.anulado_en))}<small title="${esc(d.motivo_anulacion || '')}">${esc(d.anulado_por || '')}</small>` : '')}
               </dl>
-              <button type="button" class="boton secundario-sm bm-flujo" data-proximamente="Ir a flujo de caja" data-modulo="Flujo de caja"><i class="ti ti-arrows-right-left" aria-hidden="true"></i> Ir a flujo de caja</button>
+              <div class="bm-comprobante ${conImagen ? 'con' : ''}">
+                ${conImagen ? `
+                  <button type="button" class="bm-miniatura" data-accion="ver-comprobante" title="Ver ${esc(nombreImagen)}">${esPdf ? '<i class="ti ti-file-type-pdf" aria-hidden="true"></i>' : '<img data-comprobante-img alt="">'}</button>
+                  <div class="bm-comprobante-txt"><small>Imagen del ${cfg.tipo === 'DEPOSITO' ? 'depósito' : 'documento'}</small><b title="${esc(nombreImagen)}">${esc(nombreImagen)}</b>${comprobanteNuevo ? '<span class="tk-tenue">Se sube al guardar</span>' : ''}</div>
+                  ${ed ? `<label class="rp-enlace bm-cambiar">Cambiar<input type="file" accept="image/*,application/pdf" data-comprobante hidden></label><button type="button" class="icono-boton" data-accion="quitar-comprobante" aria-label="Quitar la imagen"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}`
+                : ed ? `<label class="bm-adjuntar"><i class="ti ti-photo-plus" aria-hidden="true"></i><span><b>Adjuntar imagen del ${cfg.tipo === 'DEPOSITO' ? 'depósito' : 'documento'}</b><small>Foto o escaneo de la boleta (imagen o PDF, hasta 10 MB)</small></span><input type="file" accept="image/*,application/pdf" data-comprobante hidden></label>`
+                : `<span class="bm-sin-imagen"><i class="ti ti-photo-off" aria-hidden="true"></i> Sin imagen adjunta${puede ? ' · usa «Modificar» para adjuntarla' : ''}</span>`}
+              </div>
+              <button type="button" class="rp-enlace bm-flujo" data-proximamente="Ir a flujo de caja" data-modulo="Flujo de caja"><i class="ti ti-arrows-right-left" aria-hidden="true"></i> Ir a flujo de caja</button>
+            </section>
+
+            <section class="bm-bloque bm-datos">
+              <h3 class="ta-col-titulo"><i class="ti ti-calendar-dollar" aria-hidden="true"></i> Datos ${cfg.tipo === 'DEPOSITO' ? 'del depósito' : 'de la nota'}</h3>
+              <div class="bm-campos">
+                <label class="campo"><span>Fecha *</span><input type="date" name="fecha" value="${esc(v.fecha)}" ${disC}></label>
+                <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((m) => `<option value="${m.id}" ${v.moneda_id === m.id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
+                <label class="campo"><span>Valor cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
+                <label class="pc-check bm-check"><input type="checkbox" name="caja_chica" ${v.caja_chica ? 'checked' : ''} ${dis}> Caja chica</label>
+                <label class="campo bm-c2"><span>Tipo de operación</span><input list="bm-operaciones" name="tipo_operacion" value="${esc(v.tipo_operacion || '')}" maxlength="40" ${dis}><datalist id="bm-operaciones">${tiposOperacion.map((t) => `<option value="${esc(t)}">`).join('')}</datalist></label>
+                <label class="campo bm-c2"><span>Descripción</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="250" placeholder="${cfg.tipo === 'DEPOSITO' ? 'Ej. FE-7074 FE-7075' : 'Concepto de la nota o transferencia'}" ${dis}></label>
+              </div>
+            </section>
+            <section class="bm-bloque bm-tercero">
+              <h3 class="ta-col-titulo"><i class="ti ti-user" aria-hidden="true"></i> ${esc(cfg.etiquetaTercero)}</h3>
+              <div class="bm-campos">
+                <label class="campo"><span>Código</span><input name="tercero_codigo" value="${esc(v.tercero_codigo || '')}" maxlength="20" ${dis}></label>
+                <label class="campo bm-c3"><span>${esc(cfg.etiquetaTercero)} (nombre)</span><input name="tercero_nombre" value="${esc(v.tercero_nombre || '')}" maxlength="150" ${dis}></label>
+                ${cfg.tipo === 'DEPOSITO' ? `<label class="campo bm-c3"><span>Depositó</span><input name="deposito_por" value="${esc(v.deposito_por || '')}" maxlength="120" placeholder="Persona que hizo el depósito" ${dis}></label>
+                <label class="pc-check bm-check"><input type="checkbox" name="clientes_varios" ${v.clientes_varios ? 'checked' : ''} ${dis}> Clientes varios</label>`
+                : cfg.terceros.length > 1 ? `<div class="pc-radios bm-radios bm-c4">${cfg.terceros.map((t) => `<label><input type="radio" name="tipo_tercero" value="${t.valor}" ${v.tipo_tercero === t.valor ? 'checked' : ''} ${dis}> ${esc(t.texto)}</label>`).join('')}</div>` : ''}
+                ${cfg.terceros.length > 1 && cfg.tipo === 'DEPOSITO' ? '' : cfg.terceros.length > 1 ? '' : `<input type="hidden" name="tipo_tercero" value="${cfg.terceros[0].valor}">`}
+              </div>
             </section>
           </div>
 
@@ -284,6 +306,38 @@
         </form>`;
       ctx.pDet.querySelector('[data-panel=LISTADO]').appendChild(ctx.pMae);
       totalizar();
+      miniatura();
+    }
+
+    async function miniatura() {
+      const img = ctx.pDet.querySelector('[data-comprobante-img]');
+      if (!img) return;
+      if (comprobanteNuevo) { img.src = URL.createObjectURL(comprobanteNuevo); return; }
+      const { data } = await sb.storage.from(BUCKET).createSignedUrl(actual.comprobante_ruta, 600);
+      if (data?.signedUrl && img.isConnected) img.src = data.signedUrl;
+    }
+    async function verComprobante() {
+      if (comprobanteNuevo) return window.open(URL.createObjectURL(comprobanteNuevo), '_blank');
+      const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(actual.comprobante_ruta, 600);
+      if (error || !data?.signedUrl) return window.FIN.aviso('No se pudo abrir la imagen del documento');
+      window.open(data.signedUrl, '_blank');
+    }
+    // Sube la imagen elegida o quita la guardada, después de guardar el documento.
+    async function guardarComprobante(id, anterior) {
+      if (comprobanteNuevo) {
+        const limpio = comprobanteNuevo.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').slice(-80);
+        const ruta = `${ctx.sel.loc}/${id}/${Date.now()}-${limpio}`;
+        const up = await sb.storage.from(BUCKET).upload(ruta, comprobanteNuevo, { contentType: comprobanteNuevo.type || 'application/octet-stream' });
+        if (up.error) return false;
+        const r = await sb.from('movimientos_bancarios').update({ comprobante_ruta: ruta, comprobante_nombre: comprobanteNuevo.name, comprobante_tipo: comprobanteNuevo.type || null }).eq('id', id);
+        if (r.error) { await sb.storage.from(BUCKET).remove([ruta]); return false; }
+        if (anterior) await sb.storage.from(BUCKET).remove([anterior]);
+      } else if (quitarComprobante && anterior) {
+        const r = await sb.from('movimientos_bancarios').update({ comprobante_ruta: null, comprobante_nombre: null, comprobante_tipo: null }).eq('id', id);
+        if (r.error) return false;
+        await sb.storage.from(BUCKET).remove([anterior]);
+      }
+      return true;
     }
 
     // Columnas de cada tipo de documento aplicado.
@@ -399,6 +453,7 @@
     }
     function repintar() {
       const form = ctx.pDet.querySelector('.bm-form');
+      if (!form) return;
       leerFilas();
       pintarDetalle({ ...(actual || {}), ...leerEncabezado(form) });
     }
@@ -470,8 +525,10 @@
           const ls = lineas.filter((l) => l.cuenta_id && (l.debe || l.haber));
           if (ls.length) { const r = await sb.from('movimiento_lineas').insert(ls.map((l, i) => ({ movimiento_id: id, linea: i + 1, cuenta_id: l.cuenta_id, centro_id: l.centro_id || null, debe: l.debe || 0, haber: l.haber || 0 }))); if (r.error) throw r.error; }
         }
-        window.FIN.aviso(actual ? `${cfg.nombre} guardado` : `${cfg.nombre} registrado`);
+        const okImagen = await guardarComprobante(id, actual?.comprobante_ruta);
+        window.FIN.aviso(`${actual ? `${cfg.nombre} guardado` : `${cfg.nombre} registrado`}${okImagen ? '' : ' · la imagen no se pudo subir'}`);
         actual = { id };
+        modificando = false;
         await consultar();
       } catch (err) {
         error.textContent = /column .* does not exist|schema cache/.test(err.message || '') ? 'Falta instalar el script 43 (detalle de depósitos) en Supabase.' : window.UI.traducirError(err);
@@ -557,6 +614,15 @@
         actual = null;
         return consultar();
       }
+      if (e.target.matches('[data-comprobante]')) {
+        const archivo = e.target.files[0];
+        if (!archivo) return;
+        if (!/^image\//.test(archivo.type) && archivo.type !== 'application/pdf') return window.FIN.aviso('Adjunta una imagen o un PDF');
+        if (archivo.size > 10 * 1024 * 1024) return window.FIN.aviso('La imagen pasa de 10 MB');
+        comprobanteNuevo = archivo;
+        quitarComprobante = false;
+        return repintar();
+      }
       const form = e.target.closest('.bm-form');
       if (!form) return;
       if (e.target.name === 'cuenta_bancaria_id') {
@@ -615,7 +681,7 @@
         return;
       }
       const bm = e.target.closest('[data-modificar]');
-      if (bm) { await abrir(docs.find((d) => String(d.id) === bm.dataset.modificar)); return ctx.pDet.querySelector('[name=numero_documento]')?.focus(); }
+      if (bm) { await abrir(docs.find((d) => String(d.id) === bm.dataset.modificar), true); return ctx.pDet.querySelector('[name=numero_documento]')?.focus(); }
       const be = e.target.closest('[data-eliminar]');
       if (be) { actual = docs.find((d) => String(d.id) === be.dataset.eliminar); return procesar('ELIMINAR'); }
       const fila = e.target.closest('tr[data-doc]');
@@ -626,6 +692,10 @@
       if (ac) {
         const a = ac.dataset.accion;
         if (a === 'nuevo') return abrir(null);
+        if (a === 'modificar') { modificando = true; repintar(); return ctx.pDet.querySelector('[name=numero_documento]')?.focus(); }
+        if (a === 'cancelar') return abrir(actual);
+        if (a === 'ver-comprobante') return verComprobante();
+        if (a === 'quitar-comprobante') { if (comprobanteNuevo) comprobanteNuevo = null; else quitarComprobante = true; return repintar(); }
         if (a === 'imprimir') return imprimirDocumento();
         if (a === 'anular') return procesar('ANULAR');
         if (a === 'partida') return procesar('PARTIDA');

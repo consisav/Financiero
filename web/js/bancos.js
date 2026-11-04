@@ -70,6 +70,7 @@
       ctx.monedas = (m.data || []).map((x) => ({ ...x, cambio: x.iso === 'GTQ' ? 1 : Number((tc.data || []).find((c) => c.moneda_id === x.id)?.valor_venta || 1) }));
       ctx.bancos = b.data || [];
       if (!seleccion.org) seleccion.org = ctx.organizaciones[0]?.id || null;
+      if (ctx.localidad(seleccion.loc)) seleccion.org = ctx.localidad(seleccion.loc).organizacion_id;
       if (!ctx.localidades.some((x) => x.id === seleccion.loc && x.organizacion_id === seleccion.org)) {
         seleccion.loc = ctx.localidades.find((x) => x.organizacion_id === seleccion.org)?.id || null;
       }
@@ -81,13 +82,13 @@
     ctx.banco = (id) => ctx.bancos.find((x) => x.id === id);
     ctx.localidad = (id) => ctx.localidades.find((x) => x.id === id);
 
-    // Selects de organización y localidad (con más parámetros si la pantalla los necesita).
+    // Selector de empresa (localidad), agrupado por organización: la organización ya no se elige
+    // aparte, sale de la localidad (con más parámetros si la pantalla los necesita).
     ctx.filtros = function (extra = '', acciones = '') {
-      const locs = ctx.localidades.filter((x) => x.organizacion_id === seleccion.org);
+      const grupos = ctx.organizaciones.map((o) => ({ o, locs: ctx.localidades.filter((x) => x.organizacion_id === o.id) })).filter((g) => g.locs.length);
       ctx.pFil.innerHTML = `
         <div class="ta-titulo"><span class="tk-icono"><i class="ti ${ctx.icono}" aria-hidden="true"></i></span><div><small>Bancos</small><h2>${esc(ctx.titulo)}</h2></div></div>
-        <label class="campo"><span>Organización</span><select name="org">${ctx.organizaciones.map((o) => `<option value="${o.id}" ${seleccion.org === o.id ? 'selected' : ''}>${o.codigo} · ${esc(o.nombre)}</option>`).join('')}</select></label>
-        <label class="campo"><span>Localidad (empresa)</span><select name="loc">${locs.map((x) => `<option value="${x.id}" ${seleccion.loc === x.id ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('') || '<option value="">Sin localidades</option>'}</select></label>
+        <label class="campo bk-empresa"><span>Empresa</span><select name="loc">${grupos.map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.locs.map((x) => `<option value="${x.id}" ${seleccion.loc === x.id ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</optgroup>`).join('') || '<option value="">Sin localidades</option>'}</select></label>
         ${extra}
         <div class="oc-extra">${acciones}</div>`;
     };
@@ -98,7 +99,12 @@
         seleccion.loc = ctx.localidades.find((x) => x.organizacion_id === seleccion.org)?.id || null;
         return 'org';
       }
-      if (e.target.name === 'loc') { seleccion.loc = e.target.value ? Number(e.target.value) : null; return 'loc'; }
+      if (e.target.name === 'loc') {
+        seleccion.loc = e.target.value ? Number(e.target.value) : null;
+        const org = ctx.localidad(seleccion.loc)?.organizacion_id ?? seleccion.org;
+        if (org !== seleccion.org) { seleccion.org = org; return 'org'; }
+        return 'loc';
+      }
       return 'otro';
     };
 
