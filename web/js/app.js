@@ -189,6 +189,32 @@
     $('avatar').textContent = nombre.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0].toUpperCase()).join('');
     const hoy = new Date().toLocaleDateString('es-GT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     $('fecha').textContent = hoy.charAt(0).toUpperCase() + hoy.slice(1);
+    pintarMarca();
+  }
+
+  // Logo de la organización del usuario (lo más grande que permite la barra superior) y, a la par,
+  // el nombre de su localidad. Sin logo, o si la imagen no carga, se muestran las iniciales.
+  async function pintarMarca() {
+    const caja = $('marca-empresa');
+    const [o, l] = await Promise.all([
+      perfil.organizacion_id ? sb.from('organizaciones').select('codigo, nombre, logo_ruta').eq('id', perfil.organizacion_id).maybeSingle() : { data: null },
+      perfil.localidad_id ? sb.from('localidades').select('codigo, nombre_comercial').eq('id', perfil.localidad_id).maybeSingle() : { data: null }
+    ]);
+    const org = o.data;
+    const loc = l.data;
+    if (!org && !loc) { caja.hidden = true; return; }
+    const nombre = loc ? loc.nombre_comercial : org.nombre;
+    const base = org ? org.nombre : nombre;
+    const palabras = base.split(/\s+/).filter((x) => x.length > 2);
+    const iniciales = esc((palabras.length > 1 ? palabras.slice(0, 2).map((x) => x[0]).join('') : base.slice(0, 2)).toUpperCase());
+    const logo = org && org.logo_ruta ? sb.storage.from('organizaciones').getPublicUrl(org.logo_ruta).data.publicUrl : null;
+    caja.innerHTML = `
+      ${logo ? `<img class="marca-logo" src="${esc(logo)}" alt="Logo de ${esc(org.nombre)}">` : ''}
+      <span class="marca-iniciales" ${logo ? 'hidden' : ''}>${iniciales}</span>
+      <span class="marca-texto"><b title="${esc(nombre)}">${esc(nombre)}</b><small>${esc([loc && loc.codigo, org && org.nombre].filter(Boolean).join(' · '))}</small></span>`;
+    const img = caja.querySelector('.marca-logo');
+    if (img) img.addEventListener('error', () => { img.remove(); caja.querySelector('.marca-iniciales').hidden = false; });
+    caja.hidden = false;
   }
 
   function marcarActivo(ruta) {

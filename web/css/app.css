@@ -220,7 +220,7 @@ a { color: var(--acento); text-decoration: none; }
 
 /* ---------- Menú fijo del módulo (6 grupos con desplegable) ---------- */
 .menu-modulo {
-  position: sticky; top: 64px; z-index: 6;
+  position: sticky; top: 76px; z-index: 6;
   display: flex; gap: 4px; flex-wrap: wrap;
   margin: -32px -32px 24px; padding: 8px 32px;
   background: var(--panel); border-bottom: 1px solid var(--borde);
@@ -1708,4 +1708,22 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-integ .bi-barra small { font-size: 11px; }
 @media (max-width: 1400px) {
   .bm-cabecera .bc-saldos { grid-column: 1 / span 6; grid-row: auto; }
+}
+
+/* ---------- Barra superior: logo de la organización y localidad del usuario ---------- */
+.superior { height: 76px; }
+.marca-empresa { display: flex; align-items: center; gap: 12px; height: 100%; padding-right: 18px; margin-right: 4px; border-right: 1px solid var(--borde); flex: none; max-width: 46%; }
+.marca-empresa[hidden] { display: none; }
+.marca-logo { height: 62px; max-width: 240px; width: auto; object-fit: contain; display: block; }
+.marca-iniciales { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 14px; background: var(--acento-fondo); color: var(--acento); font-size: 20px; font-weight: 800; letter-spacing: .02em; flex: none; }
+.marca-iniciales[hidden] { display: none; }
+.marca-texto { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.marca-texto b { font-size: 17px; font-weight: 700; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.marca-texto small { font-size: 12px; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 900px) {
+  .superior { height: 64px; }
+  .marca-logo { height: 44px; max-width: 140px; }
+  .marca-iniciales { width: 44px; height: 44px; font-size: 16px; }
+  .marca-texto small, .migas { display: none; }
+  .marca-empresa { border-right: 0; max-width: none; flex: 1; }
 }
