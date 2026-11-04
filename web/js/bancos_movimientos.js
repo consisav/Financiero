@@ -15,21 +15,24 @@
   const CONFIG = {
     depositos: {
       tipo: 'DEPOSITO', titulo: 'Depósitos multimoneda', icono: 'ti-cash-banknote', nombre: 'Depósito', plural: 'depósitos', etiquetaNumero: 'Número de depósito',
-      terceros: [{ valor: 'CLIENTE', texto: 'Cliente' }], etiquetaTercero: 'Depositó / cliente', documentos: ['FACTURA', 'RECIBO'], tituloDocs: 'Facturas y recibos depositados'
+      terceros: [{ valor: 'CLIENTE', texto: 'Cliente' }], etiquetaTercero: 'Cliente', documentos: ['FACTURA', 'RECIBO'], tituloDocs: 'Facturas y recibos depositados',
+      varios: true, etiquetaPor: 'Depositó', ayudaPor: 'Persona que hizo el depósito', queImagen: 'del depósito', ayudaImagen: 'Foto o escaneo de la boleta (imagen o PDF, hasta 10 MB)'
     },
     'notas-credito': {
       tipo: 'NOTA_CREDITO', titulo: 'Notas de crédito / transferencias', icono: 'ti-file-plus', nombre: 'Nota de crédito', plural: 'notas de crédito', etiquetaNumero: 'Número de nota',
-      terceros: [{ valor: 'CLIENTE', texto: 'Cliente' }, { valor: 'CLIENTES VARIOS', texto: 'Clientes varios' }], etiquetaTercero: 'Cliente', documentos: ['FACTURA', 'NOTA'], tituloDocs: 'Facturas y notas'
+      terceros: [{ valor: 'CLIENTE', texto: 'Cliente' }, { valor: 'CLIENTES VARIOS', texto: 'Clientes varios' }], etiquetaTercero: 'Cliente', documentos: ['FACTURA', 'RECIBO'], tituloDocs: 'Facturas y recibos',
+      varios: true, etiquetaPor: 'Ordenante', ayudaPor: 'Quien hizo la transferencia o la nota', queImagen: 'de la nota', ayudaImagen: 'Comprobante de la nota o transferencia (imagen o PDF, hasta 10 MB)'
     },
     'notas-debito': {
       tipo: 'NOTA_DEBITO', titulo: 'Notas de débito / transferencias', icono: 'ti-file-minus', nombre: 'Nota de débito', plural: 'notas de débito', etiquetaNumero: 'Número de nota',
       terceros: [{ valor: 'PROVEEDOR PRODUCTOS', texto: 'Proveedor de productos' }, { valor: 'PROVEEDOR SERVICIOS', texto: 'Proveedor de servicios' }], etiquetaTercero: 'Proveedor', documentos: ['NOTA', 'FACTURA', 'OTRO'], tituloDocs: 'Notas y documentos',
+      radios: true, etiquetaPor: 'Beneficiario', ayudaPor: 'A quién se pagó o transfirió', queImagen: 'de la nota', ayudaImagen: 'Comprobante de la nota o transferencia (imagen o PDF, hasta 10 MB)',
       liquidaciones: [{ texto: 'Liquidar caja chica', icono: 'ti-cash', modulo: 'Caja chica' }, { texto: 'Liquidar compras', icono: 'ti-shopping-cart', modulo: 'Compras' }]
     }
   };
   const IVA = 0.12;
   const TITULO_DOC = {
-    FACTURA: (cfg) => cfg.tipo === 'DEPOSITO' ? 'Facturas de liquidación' : 'Facturas',
+    FACTURA: (cfg) => cfg.tipo === 'NOTA_DEBITO' ? 'Facturas de proveedor' : 'Facturas de liquidación',
     RECIBO: () => 'Recibos físicos',
     NOTA: () => 'Notas',
     OTRO: () => 'Otros documentos'
@@ -58,7 +61,6 @@
     let modificando = false;        // un documento guardado se edita solo después de «Modificar»
     let comprobanteNuevo = null;    // archivo elegido, se sube al guardar
     let quitarComprobante = false;  // quitar la imagen guardada al guardar
-    const BUCKET = 'bancos';
     const editable = () => ctx.admin && (!actual || (actual.estado === 'ACTIVO' && modificando));
     const contabilizado = () => !!actual?.partida_id;
 
@@ -198,14 +200,11 @@
       const valorMl = fmt.redondear(Number(v.valor || 0) * Number(v.tipo_cambio || 1));
       const tiposOperacion = [...new Set(transacciones.map((t) => t.tipo_operacion).filter(Boolean))];
       if (!pestanas().some((p) => p.id === pestana)) pestana = 'CONTABLE';
-      varios = !!v.clientes_varios;
+      varios = !!v.clientes_varios || v.tipo_tercero === 'CLIENTES VARIOS';
       const cuenta = (tipo) => documentos.filter((x) => x.tipo === tipo).length;
       const marca = d ? (d.estado === 'ANULADO' ? '<span class="pc-marca anulada">Anulado</span>' : '<span class="pc-marca aprobada">Activo</span>') : '<span class="pc-marca pendiente">Sin registrar</span>';
       const dato = (etq, val, extra = '') => `<div class="bm-dato ${extra}"><dt>${etq}</dt><dd>${val || '<span class="tk-tenue">—</span>'}</dd></div>`;
       const puede = ctx.admin && d && d.estado === 'ACTIVO' && !modificando;
-      const conImagen = comprobanteNuevo || (d?.comprobante_ruta && !quitarComprobante);
-      const nombreImagen = comprobanteNuevo ? comprobanteNuevo.name : d?.comprobante_nombre || '';
-      const esPdf = comprobanteNuevo ? comprobanteNuevo.type === 'application/pdf' : d?.comprobante_tipo === 'application/pdf';
       ctx.pDet.innerHTML = `
         <form class="tk-form ta-form bm-form" novalidate>
           <header class="tk-titulo bm-titulo">
@@ -247,14 +246,7 @@
                 ${dato('Actualiza', d?.modificado_en ? `${esc(d.modificado_por_nombre || '')} <small>${esc(fmt.fechaHora(d.modificado_en))}</small>` : '')}
                 ${dato('Fecha anula', d?.anulado_en ? `${esc(fmt.fechaHora(d.anulado_en))}<small title="${esc(d.motivo_anulacion || '')}">${esc(d.anulado_por || '')}</small>` : '')}
               </dl>
-              <div class="bm-comprobante ${conImagen ? 'con' : ''}">
-                ${conImagen ? `
-                  <button type="button" class="bm-miniatura" data-accion="ver-comprobante" title="Ver ${esc(nombreImagen)}">${esPdf ? '<i class="ti ti-file-type-pdf" aria-hidden="true"></i>' : '<img data-comprobante-img alt="">'}</button>
-                  <div class="bm-comprobante-txt"><small>Imagen del ${cfg.tipo === 'DEPOSITO' ? 'depósito' : 'documento'}</small><b title="${esc(nombreImagen)}">${esc(nombreImagen)}</b>${comprobanteNuevo ? '<span class="tk-tenue">Se sube al guardar</span>' : ''}</div>
-                  ${ed ? `<label class="rp-enlace bm-cambiar">Cambiar<input type="file" accept="image/*,application/pdf" data-comprobante hidden></label><button type="button" class="icono-boton" data-accion="quitar-comprobante" aria-label="Quitar la imagen"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}`
-                : ed ? `<label class="bm-adjuntar"><i class="ti ti-photo-plus" aria-hidden="true"></i><span><b>Adjuntar imagen del ${cfg.tipo === 'DEPOSITO' ? 'depósito' : 'documento'}</b><small>Foto o escaneo de la boleta (imagen o PDF, hasta 10 MB)</small></span><input type="file" accept="image/*,application/pdf" data-comprobante hidden></label>`
-                : `<span class="bm-sin-imagen"><i class="ti ti-photo-off" aria-hidden="true"></i> Sin imagen adjunta${puede ? ' · usa «Modificar» para adjuntarla' : ''}</span>`}
-              </div>
+              ${window.BANCOS.adjunto.html(adjuntoActual({ ed, puede }))}
               <button type="button" class="rp-enlace bm-flujo" data-proximamente="Ir a flujo de caja" data-modulo="Flujo de caja"><i class="ti ti-arrows-right-left" aria-hidden="true"></i> Ir a flujo de caja</button>
             </section>
 
@@ -274,10 +266,9 @@
               <div class="bm-campos">
                 <label class="campo"><span>Código</span><input name="tercero_codigo" value="${esc(v.tercero_codigo || '')}" maxlength="20" ${dis}></label>
                 <label class="campo bm-c3"><span>${esc(cfg.etiquetaTercero)} (nombre)</span><input name="tercero_nombre" value="${esc(v.tercero_nombre || '')}" maxlength="150" ${dis}></label>
-                ${cfg.tipo === 'DEPOSITO' ? `<label class="campo bm-c3"><span>Depositó</span><input name="deposito_por" value="${esc(v.deposito_por || '')}" maxlength="120" placeholder="Persona que hizo el depósito" ${dis}></label>
-                <label class="pc-check bm-check"><input type="checkbox" name="clientes_varios" ${v.clientes_varios ? 'checked' : ''} ${dis}> Clientes varios</label>`
-                : cfg.terceros.length > 1 ? `<div class="pc-radios bm-radios bm-c4">${cfg.terceros.map((t) => `<label><input type="radio" name="tipo_tercero" value="${t.valor}" ${v.tipo_tercero === t.valor ? 'checked' : ''} ${dis}> ${esc(t.texto)}</label>`).join('')}</div>` : ''}
-                ${cfg.terceros.length > 1 && cfg.tipo === 'DEPOSITO' ? '' : cfg.terceros.length > 1 ? '' : `<input type="hidden" name="tipo_tercero" value="${cfg.terceros[0].valor}">`}
+                <label class="campo bm-c3"><span>${esc(cfg.etiquetaPor)}</span><input name="deposito_por" value="${esc(v.deposito_por || '')}" maxlength="120" placeholder="${esc(cfg.ayudaPor)}" ${dis}></label>
+                ${cfg.varios ? `<label class="pc-check bm-check"><input type="checkbox" name="clientes_varios" ${v.clientes_varios || v.tipo_tercero === 'CLIENTES VARIOS' ? 'checked' : ''} ${dis}> Clientes varios</label>` : ''}
+                ${cfg.radios ? `<div class="pc-radios bm-radios bm-c4">${cfg.terceros.map((t) => `<label><input type="radio" name="tipo_tercero" value="${t.valor}" ${v.tipo_tercero === t.valor ? 'checked' : ''} ${dis}> ${esc(t.texto)}</label>`).join('')}</div>` : `<input type="hidden" name="tipo_tercero" value="${cfg.terceros[0].valor}">`}
               </div>
             </section>
           </div>
@@ -309,36 +300,11 @@
       miniatura();
     }
 
-    async function miniatura() {
-      const img = ctx.pDet.querySelector('[data-comprobante-img]');
-      if (!img) return;
-      if (comprobanteNuevo) { img.src = URL.createObjectURL(comprobanteNuevo); return; }
-      const { data } = await sb.storage.from(BUCKET).createSignedUrl(actual.comprobante_ruta, 600);
-      if (data?.signedUrl && img.isConnected) img.src = data.signedUrl;
-    }
-    async function verComprobante() {
-      if (comprobanteNuevo) return window.open(URL.createObjectURL(comprobanteNuevo), '_blank');
-      const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(actual.comprobante_ruta, 600);
-      if (error || !data?.signedUrl) return window.FIN.aviso('No se pudo abrir la imagen del documento');
-      window.open(data.signedUrl, '_blank');
-    }
-    // Sube la imagen elegida o quita la guardada, después de guardar el documento.
-    async function guardarComprobante(id, anterior) {
-      if (comprobanteNuevo) {
-        const limpio = comprobanteNuevo.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').slice(-80);
-        const ruta = `${ctx.sel.loc}/${id}/${Date.now()}-${limpio}`;
-        const up = await sb.storage.from(BUCKET).upload(ruta, comprobanteNuevo, { contentType: comprobanteNuevo.type || 'application/octet-stream' });
-        if (up.error) return false;
-        const r = await sb.from('movimientos_bancarios').update({ comprobante_ruta: ruta, comprobante_nombre: comprobanteNuevo.name, comprobante_tipo: comprobanteNuevo.type || null }).eq('id', id);
-        if (r.error) { await sb.storage.from(BUCKET).remove([ruta]); return false; }
-        if (anterior) await sb.storage.from(BUCKET).remove([anterior]);
-      } else if (quitarComprobante && anterior) {
-        const r = await sb.from('movimientos_bancarios').update({ comprobante_ruta: null, comprobante_nombre: null, comprobante_tipo: null }).eq('id', id);
-        if (r.error) return false;
-        await sb.storage.from(BUCKET).remove([anterior]);
-      }
-      return true;
-    }
+    // Imagen del documento abierto para la ayuda común de adjuntos.
+    const adjuntoActual = (extra = {}) => ({ nuevo: comprobanteNuevo, ruta: actual?.comprobante_ruta, nombre: actual?.comprobante_nombre, tipo: actual?.comprobante_tipo, quitar: quitarComprobante, que: cfg.queImagen, ayuda: cfg.ayudaImagen, ...extra });
+    const miniatura = () => window.BANCOS.adjunto.miniatura(ctx.pDet, adjuntoActual());
+    const verComprobante = () => window.BANCOS.adjunto.ver(adjuntoActual());
+    const guardarComprobante = (id, anterior) => window.BANCOS.adjunto.guardar({ tabla: 'movimientos_bancarios', id, carpeta: `${ctx.sel.loc}/${id}`, nuevo: comprobanteNuevo, quitar: quitarComprobante, anterior });
 
     // Columnas de cada tipo de documento aplicado.
     const COLUMNAS = {
@@ -421,10 +387,11 @@
       return {
         cuenta_bancaria_id: Number(el.cuenta_bancaria_id.value), numero_documento: el.numero_documento.value.trim() || null, fecha: el.fecha.value,
         moneda_id: Number(el.moneda_id.value), tipo_cambio: Number(el.tipo_cambio.value) || 1, valor: fmt.redondear(el.valor.value),
-        descripcion: el.descripcion.value, tipo_tercero: form.querySelector('[name=tipo_tercero]:checked')?.value || el.tipo_tercero.value,
+        descripcion: el.descripcion.value,
+        tipo_tercero: form.querySelector('[name=tipo_tercero]:checked')?.value || (el.clientes_varios?.checked && cfg.terceros.some((t) => t.valor === 'CLIENTES VARIOS') ? 'CLIENTES VARIOS' : cfg.terceros[0].valor),
         tercero_codigo: el.tercero_codigo.value.trim() || null, tercero_nombre: el.tercero_nombre.value.trim().toUpperCase() || null,
         tipo_operacion: el.tipo_operacion.value.trim() || null, transaccion_id: el.transaccion_id.value ? Number(el.transaccion_id.value) : null,
-        caja_chica: el.caja_chica.checked, clientes_varios: !!el.clientes_varios?.checked, deposito_por: el.deposito_por ? el.deposito_por.value.trim().toUpperCase() || null : null
+        caja_chica: el.caja_chica.checked, clientes_varios: !!el.clientes_varios?.checked, deposito_por: el.deposito_por.value.trim().toUpperCase() || null
       };
     }
     function leerFilas() {
@@ -591,7 +558,7 @@
           <div><b>Valor</b>${esc(mon?.simbolo || '')} ${n(d.valor)}</div><div><b>Valor en quetzales</b>Q ${n(d.valor_ml)}</div>
           <div><b>Moneda · cambio</b>${esc(mon?.nombre || '')} · ${tc}</div><div><b>Tipo de operación</b>${esc(d.tipo_operacion || '')}${d.caja_chica ? ' · CAJA CHICA' : ''}</div>
           <div><b>${esc(cfg.etiquetaTercero)}</b>${d.clientes_varios ? 'CLIENTES VARIOS' : esc([d.tercero_codigo, d.tercero_nombre].filter(Boolean).join(' · '))}</div>
-          ${cfg.tipo === 'DEPOSITO' ? `<div><b>Depositó</b>${esc(d.deposito_por || '')}</div>` : ''}
+          <div><b>${esc(cfg.etiquetaPor)}</b>${esc(d.deposito_por || '')}</div>
           <div><b>Operador</b>${esc(d.usuario || '')} · ${esc(fmt.fechaHora(d.fecha_operacion))}</div>
           ${d.anulado_en ? `<div><b>Anulado</b>${esc(d.anulado_por || '')} · ${esc(fmt.fechaHora(d.anulado_en))} · ${esc(d.motivo_anulacion || '')}</div>` : ''}
           ${d.descripcion ? `<div style="grid-column:1/-1"><b>Descripción</b>${esc(d.descripcion)}</div>` : ''}</div>
@@ -617,8 +584,8 @@
       if (e.target.matches('[data-comprobante]')) {
         const archivo = e.target.files[0];
         if (!archivo) return;
-        if (!/^image\//.test(archivo.type) && archivo.type !== 'application/pdf') return window.FIN.aviso('Adjunta una imagen o un PDF');
-        if (archivo.size > 10 * 1024 * 1024) return window.FIN.aviso('La imagen pasa de 10 MB');
+        const malo = window.BANCOS.adjunto.validar(archivo);
+        if (malo) return window.FIN.aviso(malo);
         comprobanteNuevo = archivo;
         quitarComprobante = false;
         return repintar();

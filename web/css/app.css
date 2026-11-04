@@ -1680,3 +1680,23 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
   .bm-cabecera .bm-datos, .bm-cabecera .bm-tercero { grid-column: 1 / span 6; grid-row: auto; }
 }
 .bm-cabecera .bm-campos .bm-c3 { grid-column: span 3; }
+
+/* ---------- Bancos · Conciliación y disponibilidades con el diseño de los depósitos ---------- */
+.bm-cabecera .bc-saldos { grid-column: 1 / span 9; grid-row: 2; }
+.bm-periodo { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-bottom: 4px; }
+.bm-periodo small { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); }
+.bm-periodo b { font-size: 15px; color: var(--acento); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bc-kpis { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.bc-kpis > div { padding: 6px 12px; }
+.bc-kpis b { font-size: 15px; }
+.bc-kpis .bc-cuadra b { color: var(--ok); }
+.bc-campos { margin-top: 2px; }
+.bd-final b { color: var(--acento); }
+.bd-final.bajo b { color: var(--error); }
+.bk-disp .bm-importe .bm-ml, .bk-integ .bm-importe .bm-ml { text-align: left; }
+.bk-integ .bi-localidades { padding: 10px 4px; overflow-y: auto; }
+.bk-integ .bi-barra { grid-template-columns: minmax(220px, 340px) minmax(0, 1fr) auto; }
+.bk-integ .bi-barra small { font-size: 11px; }
+@media (max-width: 1400px) {
+  .bm-cabecera .bc-saldos { grid-column: 1 / span 6; grid-row: auto; }
+}

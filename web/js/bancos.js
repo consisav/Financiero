@@ -140,7 +140,70 @@
     v.document.close();
   }
 
-  window.BANCOS = { montar, fmt, imprimir };
+  // Imagen adjunta de un documento bancario (boleta del depósito, estado de cuenta…) en el bucket
+  // privado «bancos». «o» describe el adjunto: { nuevo: File elegido, ruta, nombre, tipo (guardados),
+  // quitar, ed (se puede cambiar), que (de qué es la imagen), ayuda, puede (se puede modificar) }.
+  const BUCKET = 'bancos';
+  const adjunto = {
+    validar(archivo) {
+      if (!/^image\//.test(archivo.type) && archivo.type !== 'application/pdf') return 'Adjunta una imagen o un PDF';
+      if (archivo.size > 10 * 1024 * 1024) return 'La imagen pasa de 10 MB';
+      return null;
+    },
+    html(o) {
+      const con = o.nuevo || (o.ruta && !o.quitar);
+      const nombre = o.nuevo ? o.nuevo.name : o.nombre || '';
+      const pdf = (o.nuevo ? o.nuevo.type : o.tipo) === 'application/pdf';
+      const input = '<input type="file" accept="image/*,application/pdf" data-comprobante hidden>';
+      return `<div class="bm-comprobante ${con ? 'con' : ''}">${con ? `
+        <button type="button" class="bm-miniatura" data-accion="ver-comprobante" title="Ver ${esc(nombre)}">${pdf ? '<i class="ti ti-file-type-pdf" aria-hidden="true"></i>' : '<img data-comprobante-img alt="">'}</button>
+        <div class="bm-comprobante-txt"><small>Imagen ${esc(o.que)}</small><b title="${esc(nombre)}">${esc(nombre)}</b>${o.nuevo ? '<span class="tk-tenue">Se sube al guardar</span>' : ''}</div>
+        ${o.ed ? `<label class="rp-enlace bm-cambiar">Cambiar${input}</label><button type="button" class="icono-boton" data-accion="quitar-comprobante" aria-label="Quitar la imagen"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}`
+        : o.ed ? `<label class="bm-adjuntar"><i class="ti ti-photo-plus" aria-hidden="true"></i><span><b>Adjuntar imagen ${esc(o.que)}</b><small>${esc(o.ayuda || 'Imagen o PDF, hasta 10 MB')}</small></span>${input}</label>`
+        : `<span class="bm-sin-imagen"><i class="ti ti-photo-off" aria-hidden="true"></i> Sin imagen adjunta${o.puede ? ' · usa «Modificar» para adjuntarla' : ''}</span>`}</div>`;
+    },
+    async miniatura(raiz, o) {
+      const img = raiz.querySelector('[data-comprobante-img]');
+      if (!img) return;
+      if (o.nuevo) { img.src = URL.createObjectURL(o.nuevo); return; }
+      const { data } = await window.FIN.sb.storage.from(BUCKET).createSignedUrl(o.ruta, 600);
+      if (data?.signedUrl && img.isConnected) img.src = data.signedUrl;
+    },
+    async ver(o) {
+      if (o.nuevo) return window.open(URL.createObjectURL(o.nuevo), '_blank');
+      const { data, error } = await window.FIN.sb.storage.from(BUCKET).createSignedUrl(o.ruta, 600);
+      if (error || !data?.signedUrl) return window.FIN.aviso('No se pudo abrir la imagen');
+      window.open(data.signedUrl, '_blank');
+    },
+    // Después de guardar el registro: sube la imagen elegida (y quita la anterior) o quita la guardada.
+    // o: { tabla, id, carpeta, nuevo, quitar, anterior }. Devuelve false si algo falló.
+    async guardar(o) {
+      const sb = window.FIN.sb;
+      if (o.nuevo) {
+        const limpio = o.nuevo.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').slice(-80);
+        const ruta = `${o.carpeta}/${Date.now()}-${limpio}`;
+        const up = await sb.storage.from(BUCKET).upload(ruta, o.nuevo, { contentType: o.nuevo.type || 'application/octet-stream' });
+        if (up.error) return false;
+        const r = await sb.from(o.tabla).update({ comprobante_ruta: ruta, comprobante_nombre: o.nuevo.name, comprobante_tipo: o.nuevo.type || null }).eq('id', o.id);
+        if (r.error) { await sb.storage.from(BUCKET).remove([ruta]); return false; }
+        if (o.anterior) await sb.storage.from(BUCKET).remove([o.anterior]);
+      } else if (o.quitar && o.anterior) {
+        const r = await sb.from(o.tabla).update({ comprobante_ruta: null, comprobante_nombre: null, comprobante_tipo: null }).eq('id', o.id);
+        if (r.error) return false;
+        await sb.storage.from(BUCKET).remove([o.anterior]);
+      }
+      return true;
+    }
+  };
+
+  // Barra de pestañas: [{ id, texto, icono, n }]; los paneles llevan data-panel con el mismo id.
+  const pestanas = (lista, activa) => `<div class="rp-pestanas" role="tablist">${lista.map((p) => `<button type="button" role="tab" data-pestana="${p.id}" class="${activa === p.id ? 'activa' : ''}" aria-selected="${activa === p.id}"><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.texto)}${p.n ? ` <b>${p.n}</b>` : ''}</button>`).join('')}</div>`;
+  const activarPestana = (raiz, id) => {
+    raiz.querySelectorAll('[data-pestana]').forEach((x) => { x.classList.toggle('activa', x.dataset.pestana === id); x.setAttribute('aria-selected', x.dataset.pestana === id); });
+    raiz.querySelectorAll('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== id; });
+  };
+
+  window.BANCOS = { montar, fmt, imprimir, adjunto, pestanas, activarPestana };
 
   // ===================== Cuentas bancarias =====================
   window.PANTALLAS = window.PANTALLAS || {};
