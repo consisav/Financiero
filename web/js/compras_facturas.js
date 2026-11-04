@@ -15,8 +15,6 @@
   const { esc } = window.UI;
   const { montar, fmt, imprimir } = window.BANCOS;
   const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
-  const DTE = ['FACTURA ELECTRÓNICA', 'FACTURA CAMBIARIA', 'FACTURA ESPECIAL', 'FACTURA PEQUEÑO CONTRIBUYENTE', 'NOTA DE DÉBITO', 'DUCA (IMPORTACIÓN)', 'RECIBO'];
-  const CLASIFICACIONES = ['BIENES', 'SERVICIOS', 'COMBUSTIBLE', 'IMPORTACIÓN', 'ACTIVOS FIJOS', 'OTROS'];
   const OPERACIONES = ['NO DEFINIDO', 'COMPRA LOCAL', 'IMPORTACIÓN', 'SERVICIO LOCAL', 'SERVICIO DEL EXTERIOR', 'CUENTA AJENA'];
   const DIAS = [0, 8, 15, 30, 45, 60, 90, 120];
   const ESTADO_PAGO = (c) => c.estado === 'ANULADA' ? 'ANULADA' : Number(c.pendiente) <= 0 ? 'PAGADA' : Number(c.pagado) > 0 ? 'PARCIAL' : 'PENDIENTE';
@@ -31,7 +29,7 @@
     const [anio, mes] = fmt.hoy().split('-');
     const f = { estado: 'TODAS', desde: `${anio}-${mes}-01`, hasta: fmt.hoy() };
     let compras = [];
-    let proveedores = [], bodegas = [], regimenes = [], rubros = [], cuentas = [], contables = [], centros = [], transacciones = [];
+    let proveedores = [], bodegas = [], regimenes = [], rubros = [], tiposDoc = [], clasificaciones = [], cuentas = [], contables = [], centros = [], transacciones = [];
     let params = {};
     let actual = null;
     let items = [], lineas = [], pagos = [], cuentasProv = [];
@@ -43,6 +41,8 @@
     const contable = (id) => contables.find((x) => x.id === id);
     const porCodigo = (cod) => contables.find((x) => x.codigo === String(cod || '').trim() && x.movimiento);
     const proveedor = (id) => proveedores.find((p) => p.id === id);
+    const tipoDoc = (id) => tiposDoc.find((x) => x.id === id);
+    const clasificacion = (id) => clasificaciones.find((x) => x.id === id);
     const simbolo = (id) => ctx.moneda(id)?.simbolo || 'Q';
     const provTxt = (p) => `${p.codigo} · ${p.nombre_comercial}${p.nit ? ` · ${p.nit}` : ''}`;
     const docTxt = (c) => `${c.serie ? `${c.serie}-` : ''}${c.documento}`;
@@ -58,10 +58,11 @@
 
     async function iniciar() {
       if (!(await ctx.cargarBase())) return;
-      const prueba = await sb.from('compras_saldo').select('id, tipo_dte').limit(1);
-      if (prueba.error) { ctx.espacio.innerHTML = `<section class="panel"><p class="vacio">${/tipo_dte|proveedor/.test(prueba.error.message) ? 'Falta instalar el script 57 (proveedores, bodegas y facturas de compra) en Supabase.' : /compras/.test(prueba.error.message) ? 'Falta instalar el script 53 (facturas de compra) en Supabase.' : esc(prueba.error.message)}</p></section>`; return; }
-      const [r, u] = await Promise.all([sb.from('regimenes_isr').select('*').order('codigo'), sb.from('rubros_presupuesto').select('id, codigo, nombre, activo').order('codigo')]);
-      regimenes = r.data || []; rubros = u.data || [];
+      const prueba = await sb.from('compras_saldo').select('id, tipo_dte, tipo_documento_id').limit(1);
+      if (prueba.error) { ctx.espacio.innerHTML = `<section class="panel"><p class="vacio">${/tipo_documento_id/.test(prueba.error.message) ? 'Falta instalar el script 58 (clasificaciones, tipos de documento y contraseñas de pago) en Supabase.' : /tipo_dte|proveedor/.test(prueba.error.message) ? 'Falta instalar el script 57 (proveedores, bodegas y facturas de compra) en Supabase.' : /compras/.test(prueba.error.message) ? 'Falta instalar el script 53 (facturas de compra) en Supabase.' : esc(prueba.error.message)}</p></section>`; return; }
+      const [r, u, t, k] = await Promise.all([sb.from('regimenes_isr').select('*').order('codigo'), sb.from('rubros_presupuesto').select('id, codigo, nombre, activo').order('codigo'),
+        sb.from('tipos_documento_compra').select('*').order('codigo'), sb.from('clasificaciones_compra').select('*').order('codigo')]);
+      regimenes = r.data || []; rubros = u.data || []; tiposDoc = t.data || []; clasificaciones = k.data || [];
       pintarFiltros();
       await cargarLocalidad();
     }
@@ -147,8 +148,8 @@
     const nuevoValor = () => {
       const base = ctx.monedaBase();
       const hoy = fmt.hoy();
-      return { tipo_dte: 'FACTURA ELECTRÓNICA', mes_presentacion: Number(hoy.slice(5, 7)), anio_presentacion: Number(hoy.slice(0, 4)), pago_inmediato: false, dias_credito: 0, serie: '', documento: '', fecha_documento: hoy, fecha_ingreso: hoy, fecha_vencimiento: hoy,
-        factura_original: true, proveedor_id: null, proveedor_codigo: '', proveedor_nombre: '', nit: '', beneficiario: '', tipo_tercero: 'PROVEEDOR PRODUCTOS', regimen_isr_id: null, clasificacion: 'BIENES', tipo_operacion: 'NO DEFINIDO', rubro_id: null, bodega_id: null, descripcion: '',
+      return { tipo_documento_id: (tiposDoc.find((x) => x.nombre === 'FACTURA ELECTRÓNICA') || tiposDoc.find((x) => x.activo))?.id || null, mes_presentacion: Number(hoy.slice(5, 7)), anio_presentacion: Number(hoy.slice(0, 4)), pago_inmediato: false, dias_credito: 0, serie: '', documento: '', fecha_documento: hoy, fecha_ingreso: hoy, fecha_vencimiento: hoy,
+        factura_original: true, proveedor_id: null, proveedor_codigo: '', proveedor_nombre: '', nit: '', beneficiario: '', tipo_tercero: 'PROVEEDOR PRODUCTOS', regimen_isr_id: null, clasificacion_id: (clasificaciones.find((x) => x.nombre === 'BIENES') || clasificaciones.find((x) => x.activo))?.id || null, tipo_operacion: 'NO DEFINIDO', rubro_id: null, bodega_id: null, descripcion: '',
         moneda_id: base?.id, tipo_cambio: base?.cambio || 1, valor_total: '', bonificaciones: 0, notas_credito: 0, descuentos_nd: 0,
         galones_super: 0, galones_regular: 0, galones_diesel: 0, exento: 0, no_deducible: 0, iva_especial: 0, isr_especial: 0, aplica_inguat: false, inguat: 0, turismo_itp: 0, iva_importacion: 0, dai: 0, valor_cuenta_ajena: 0,
         retencion: false, retencion_formulario: '', retencion_valor: 0, retencion_fecha: '', forma_pago: 'CHEQUE', cuenta_bancaria_id: null, banco_destino_id: null, cuenta_destino: '', cuenta_pagar_id: null, transaccion_id: null, compra_inventario: '', orden_compra: '' };
@@ -161,9 +162,11 @@
       const inguat = v.aplica_inguat ? n('inguat') : 0;
       const afecto = fmt.redondear(n('valor_total') - n('exento') - idp - inguat - n('turismo_itp') - n('no_deducible') - n('dai') - n('valor_cuenta_ajena') - n('iva_importacion'));
       const pct = Number(params.impuesto1 || 12);
-      const tipo = v.tipo_dte || 'FACTURA ELECTRÓNICA';
-      const iva = ['RECIBO', 'FACTURA PEQUEÑO CONTRIBUYENTE'].includes(tipo) ? 0 : tipo === 'DUCA (IMPORTACIÓN)' ? n('iva_importacion') : afecto > 0 ? fmt.redondear(afecto * pct / (100 + pct)) : 0;
-      const base = tipo === 'DUCA (IMPORTACIÓN)' ? afecto : fmt.redondear(afecto - iva);
+      // Igual que el servidor: el tipo de documento dice cómo va el IVA y la clasificación si aplica.
+      const calculo = tipoDoc(v.tipo_documento_id)?.calculo_iva || 'NORMAL';
+      const aplica = clasificacion(v.clasificacion_id)?.aplica_iva !== false;
+      const iva = calculo === 'IMPORTACIÓN' ? n('iva_importacion') : calculo === 'SIN IVA' || !aplica || afecto <= 0 ? 0 : fmt.redondear(afecto * pct / (100 + pct));
+      const base = calculo === 'IMPORTACIÓN' || calculo === 'SIN IVA' || !aplica ? afecto : fmt.redondear(afecto - iva);
       const neto = fmt.redondear(n('valor_total') - n('bonificaciones') - n('notas_credito') - n('descuentos_nd'));
       return { idp, afecto, iva, base, neto };
     }
@@ -178,7 +181,9 @@
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-file-invoice'); return; }
       const ed = editable();
       const dis = ed ? '' : 'disabled';
-      const v = v0 || (c ? { ...c, tipo_dte: c.tipo_dte || (c.tipo_documento === 'RECIBO' ? 'RECIBO' : 'FACTURA ELECTRÓNICA') } : nuevoValor());
+      const v = v0 || (c ? { ...c } : nuevoValor());
+      const td = tipoDoc(v.tipo_documento_id);
+      const cl = clasificacion(v.clasificacion_id);
       const k = calcular(v);
       const sim = simbolo(v.moneda_id);
       const pagado = c ? Number(c.pagado) : 0;
@@ -191,7 +196,7 @@
         <form class="tk-form ta-form bm-form cf-form" novalidate>
           <header class="tk-titulo bm-titulo cf-titulo">
             <span class="tk-icono"><i class="ti ti-file-invoice" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>${c ? `Compra ${c.numero} · ${esc(v.tipo_dte)} ${esc(docTxt(c))}` : 'Nueva factura de compra'}</small><h2>${esc(v.proveedor_nombre || (c ? '' : 'Elige el proveedor'))}</h2></div>
+            <div class="tk-titulo-texto"><small>${c ? `Compra ${c.numero} · ${esc(td?.nombre || c.tipo_dte || '')} ${esc(docTxt(c))}` : 'Nueva factura de compra'}</small><h2>${esc(v.proveedor_nombre || (c ? '' : 'Elige el proveedor'))}</h2></div>
             <div class="tk-marcas">${c ? marca(ESTADO_PAGO(c)) : ''}${c?.partida_id ? '<span class="pc-marca definitiva"><i class="ti ti-check" aria-hidden="true"></i> Contabilizada</span>' : ''}${modificando ? '<span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}</div>
             <div class="tk-titulo-acciones">
               ${consulta && ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>' : ''}
@@ -207,7 +212,7 @@
           <div class="cf-cabecera">
             <section class="bs-tipo cf-doc">
               <div class="cf-g cf-g4">
-                <label class="campo cf-c2"><span>Tipo de documento</span><select name="tipo_dte" ${dis}>${DTE.map((t) => `<option ${v.tipo_dte === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+                <label class="campo cf-c2"><span>Tipo de documento</span><select name="tipo_documento_id" ${dis}>${tiposDoc.filter((t) => t.activo || t.id === v.tipo_documento_id).map((t) => `<option value="${t.id}" ${t.id === v.tipo_documento_id ? 'selected' : ''}>${t.codigo} · ${esc(t.nombre)}</option>`).join('')}</select><small class="cf-ayuda">${td ? (td.calculo_iva === 'NORMAL' ? 'IVA incluido en el total' : td.calculo_iva === 'SIN IVA' ? 'Sin IVA' : 'IVA de importación') : ''}${td?.es_recibo ? ' · recibo' : ''}</small></label>
                 <label class="campo"><span>Presentación</span><select name="mes_presentacion" ${dis}>${MESES.map((m, i) => `<option value="${i + 1}" ${Number(v.mes_presentacion) === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
                 <label class="campo"><span>Año</span><input type="number" name="anio_presentacion" min="1900" max="2999" value="${esc(String(v.anio_presentacion || ''))}" ${dis}></label>
                 <div class="bs-req-num"><span>Compra</span><b>${c ? c.numero : 'Auto'}</b></div>
@@ -217,7 +222,7 @@
                 <label class="campo"><span>Días de crédito</span><select name="dias_credito" ${dis || (v.pago_inmediato ? 'disabled' : '')}>${[...new Set([...DIAS, Number(v.dias_credito) || 0])].sort((a, b) => a - b).map((d) => `<option value="${d}" ${Number(v.dias_credito) === d ? 'selected' : ''}>${d ? `${d} DÍAS` : 'INMEDIATO'}</option>`).join('')}</select></label>
                 <label class="campo"><span>Fecha de pago</span><input type="date" name="fecha_vencimiento" value="${esc(v.fecha_vencimiento || '')}" ${dis}></label>
                 <label class="pc-check cf-check"><input type="checkbox" name="pago_inmediato" ${v.pago_inmediato ? 'checked' : ''} ${dis}> Pago inmediato</label>
-                <div class="campo cf-c2"><span>Contraseña de pago</span><div class="cf-contra">${c?.contrasena ? `<b>${c.contrasena}</b><small>${esc(fmt.fechaDia(c.contrasena_fecha))}</small>` : '<span class="tk-tenue">Sin contraseña</span>'}${consulta && ctx.admin && c.estado === 'ACTIVA' && !c.contrasena ? '<button type="button" class="boton secundario-sm" data-accion="contrasena"><i class="ti ti-key" aria-hidden="true"></i> Crear</button>' : ''}${c?.contrasena ? '<button type="button" class="icono-boton" data-accion="imprimir-contrasena" title="Imprimir contraseña" aria-label="Imprimir contraseña"><i class="ti ti-printer" aria-hidden="true"></i></button>' : ''}</div></div>
+                <div class="campo cf-c2"><span>Contraseña de pago</span><div class="cf-contra">${c?.contrasena ? `<b>${c.contrasena}</b><small>${esc(fmt.fechaDia(c.contrasena_fecha))}</small>` : '<span class="tk-tenue">Sin contraseña</span>'}${consulta && ctx.admin && c.estado === 'ACTIVA' && !c.contrasena ? '<button type="button" class="boton secundario-sm" data-accion="contrasena"><i class="ti ti-key" aria-hidden="true"></i> Crear</button>' : ''}${c?.contrasena ? '<a class="icono-boton" href="#/compras/contrasenas-pago" title="Abrir en Contraseñas de pago" aria-label="Abrir en Contraseñas de pago"><i class="ti ti-external-link" aria-hidden="true"></i></a>' : ''}${c?.contrasena ? '<button type="button" class="icono-boton" data-accion="imprimir-contrasena" title="Imprimir contraseña" aria-label="Imprimir contraseña"><i class="ti ti-printer" aria-hidden="true"></i></button>' : ''}</div></div>
                 <label class="pc-check cf-check cf-c2"><input type="checkbox" name="factura_original" ${v.factura_original ? 'checked' : ''} ${dis}> Factura original recibida</label>
               </div>
             </section>
@@ -226,7 +231,7 @@
               <div class="cf-g cf-g4">
                 <label class="campo cf-c4"><span>Proveedor * <small class="tk-tenue">(código, NIT o nombre)</small></span><input list="cf-proveedores" name="proveedor" value="${esc(p ? provTxt(p) : v.proveedor_nombre ? [v.proveedor_codigo, v.proveedor_nombre, v.nit].filter(Boolean).join(' · ') : '')}" placeholder="Escribe para buscar en el catálogo" ${dis}></label>
                 <label class="campo cf-c2"><span>Régimen ISR</span><select name="regimen_isr_id" ${dis}><option value="">—</option>${regimenes.map((r) => `<option value="${r.id}" ${r.id === v.regimen_isr_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
-                <label class="campo cf-c2"><span>Clasificación</span><select name="clasificacion" ${dis}>${CLASIFICACIONES.map((x) => `<option ${v.clasificacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                <label class="campo cf-c2"><span>Clasificación</span><select name="clasificacion_id" ${dis}>${clasificaciones.filter((x) => x.activo || x.id === v.clasificacion_id).map((x) => `<option value="${x.id}" ${x.id === v.clasificacion_id ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select><small class="cf-ayuda">${cl ? `${cl.aplica_iva ? 'Aplica IVA' : 'No aplica IVA'} · ${cl.libro_compras ? 'libro de compras' : 'fuera del libro'}` : ''}</small></label>
                 <label class="campo cf-c2"><span>Tipo de operación</span><select name="tipo_operacion" ${dis}>${OPERACIONES.map((x) => `<option ${v.tipo_operacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
                 <label class="campo cf-c2"><span>Bodega</span><select name="bodega_id" ${dis}><option value="">—</option>${bodegas.filter((b) => b.estado === 'ACTIVO' || b.id === v.bodega_id).map((b) => `<option value="${b.id}" ${b.id === v.bodega_id ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}</select></label>
                 <label class="campo cf-c4"><span>Rubro</span><select name="rubro_id" ${dis}><option value="">—</option>${rubros.filter((r) => r.activo || r.id === v.rubro_id).map((r) => `<option value="${r.id}" ${r.id === v.rubro_id ? 'selected' : ''}>${r.codigo} · ${esc(r.nombre)}</option>`).join('')}</select></label>
@@ -399,13 +404,13 @@
       const p = proveedorDe(el.proveedor.value);
       const v0 = actual || {};
       return {
-        tipo_dte: el.tipo_dte.value, mes_presentacion: Number(el.mes_presentacion.value), anio_presentacion: Number(el.anio_presentacion.value) || null,
+        tipo_documento_id: Number(el.tipo_documento_id.value) || null, mes_presentacion: Number(el.mes_presentacion.value), anio_presentacion: Number(el.anio_presentacion.value) || null,
         serie: t('serie'), documento: el.documento.value.trim(), fecha_documento: el.fecha_documento.value, fecha_vencimiento: el.fecha_vencimiento.value || null,
         pago_inmediato: el.pago_inmediato.checked, dias_credito: el.pago_inmediato.checked ? 0 : Number(el.dias_credito.value) || 0, factura_original: el.factura_original.checked,
         proveedor_id: p ? p.id : (v0.proveedor_id && el.proveedor.value.trim() === [v0.proveedor_codigo, v0.proveedor_nombre, v0.nit].filter(Boolean).join(' · ') ? v0.proveedor_id : null),
         proveedor_codigo: p ? String(p.codigo) : v0.proveedor_codigo || null, proveedor_nombre: p ? p.nombre_fiscal || p.nombre_comercial : v0.proveedor_nombre || '', nit: p ? p.nit : v0.nit || null,
         _prov: el.proveedor.value.trim(),
-        regimen_isr_id: id('regimen_isr_id'), clasificacion: el.clasificacion.value, tipo_operacion: el.tipo_operacion.value, bodega_id: id('bodega_id'), rubro_id: id('rubro_id'), descripcion: t('descripcion'),
+        regimen_isr_id: id('regimen_isr_id'), clasificacion_id: Number(el.clasificacion_id.value) || null, tipo_operacion: el.tipo_operacion.value, bodega_id: id('bodega_id'), rubro_id: id('rubro_id'), descripcion: t('descripcion'),
         moneda_id: Number(el.moneda_id.value), tipo_cambio: Number(el.tipo_cambio.value) || 1, valor_total: n('valor_total'), bonificaciones: n('bonificaciones'), notas_credito: n('notas_credito'), descuentos_nd: n('descuentos_nd'),
         galones_super: Number(el.galones_super.value) || 0, galones_regular: Number(el.galones_regular.value) || 0, galones_diesel: Number(el.galones_diesel.value) || 0,
         exento: n('exento'), no_deducible: n('no_deducible'), iva_especial: n('iva_especial'), isr_especial: n('isr_especial'), aplica_inguat: el.aplica_inguat.checked, inguat: el.aplica_inguat.checked ? n('inguat') : 0,
@@ -633,7 +638,10 @@
         form.elements.fecha_vencimiento.value = sumaDias(form.elements.fecha_documento.value, dias);
         if (nm === 'fecha_documento' && e.target.value && !actual) { form.elements.mes_presentacion.value = String(Number(e.target.value.slice(5, 7))); form.elements.anio_presentacion.value = e.target.value.slice(0, 4); }
       }
-      if (nm === 'tipo_dte' && e.target.value === 'DUCA (IMPORTACIÓN)' && form.elements.tipo_operacion.value === 'NO DEFINIDO') form.elements.tipo_operacion.value = 'IMPORTACIÓN';
+      if (nm === 'tipo_documento_id' || nm === 'clasificacion_id') {
+        if (nm === 'tipo_documento_id' && tipoDoc(Number(e.target.value))?.calculo_iva === 'IMPORTACIÓN' && form.elements.tipo_operacion.value === 'NO DEFINIDO') form.elements.tipo_operacion.value = 'IMPORTACIÓN';
+        return repintar();
+      }
       if (nm === 'cuenta_pagar') {
         const k = porCodigo(e.target.value);
         form.querySelector('[data-cxp]').innerHTML = k ? esc(k.nombre) : e.target.value.trim() ? '<span class="pc-error">No es una cuenta de movimiento</span>' : '';

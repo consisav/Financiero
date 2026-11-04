@@ -259,7 +259,10 @@ window.MODULOS = [
           subgrupo: 'Compras',
           icono: 'ti-file-invoice',
           pantallas: [
-            { id: 'facturas-compra', nombre: 'Facturas de compra', icono: 'ti-file-invoice', descripcion: 'Ingreso de la compra: documento, proveedor, desglose fiscal, retención, detalle, detalle contable, contraseña de pago y pagos.' }
+            { id: 'clasificaciones-compra', nombre: 'Clasificación compras', icono: 'ti-tags', descripcion: 'Clasificaciones fiscales de las compras: siglas, libro de compras y si aplica IVA.' },
+            { id: 'tipos-documento-compra', nombre: 'Tipo documento', icono: 'ti-file-description', descripcion: 'Tipos de documento de las compras y cómo se calcula su IVA.', separador: true },
+            { id: 'facturas-compra', nombre: 'Facturas de compra', icono: 'ti-file-invoice', descripcion: 'Ingreso de la compra: documento, proveedor, desglose fiscal, retención, detalle, detalle contable, contraseña de pago y pagos.' },
+            { id: 'contrasenas-pago', nombre: 'Contraseñas de pago', icono: 'ti-key', descripcion: 'Recepción de facturas del proveedor: documentos recibidos, fecha estimada de pago, autorización, impresión y liquidación.' }
           ]
         }
       ]
