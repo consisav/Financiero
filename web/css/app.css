@@ -1568,3 +1568,60 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-cod { width: 26px; height: 26px; border-radius: 8px; font-size: 11.5px; }
 .bk-banco-txt b { font-size: 12.5px; }
 .bk-banco-txt small { font-size: 10.5px; }
+
+/* ---------- Bancos · Depósitos y notas: encabezado en tarjetas y pestañas de detalle ---------- */
+.bk-movimientos .ta-cuerpo { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.bk-movimientos .bk-detalle { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.bk-movimientos .bm-form { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.bk-movimientos .bm-form > .tk-error:empty { display: none; }
+.bm-cabecera { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px; }
+.bm-banco { grid-column: span 8; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) minmax(0, .8fr); gap: 6px 14px; align-items: end; padding: 8px 14px 10px; border-radius: var(--radio); background: color-mix(in srgb, var(--acento-fondo) 60%, var(--panel)); border: 1px solid color-mix(in srgb, var(--acento) 28%, var(--borde)); }
+.bm-empresa { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; padding-bottom: 6px; border-bottom: 1px dashed color-mix(in srgb, var(--acento) 25%, var(--borde)); }
+.bm-empresa small, .bm-banco-id small, .bm-ml span { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); }
+.bm-empresa b { font-size: 13px; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-banco-id { display: flex; align-items: center; gap: 10px; min-width: 0; padding-bottom: 3px; }
+.bm-banco-id .bk-cod { width: 36px; height: 36px; font-size: 14px; background: var(--acento); color: #fff; flex: none; }
+.bm-banco-id > div { display: flex; flex-direction: column; min-width: 0; }
+.bm-banco-id b { font-size: 15px; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-banco .campo { gap: 4px; font-size: 12px; }
+.bm-cta select, .bm-num input { font-size: 15px !important; font-weight: 700; color: var(--acento); }
+.bm-num input { text-align: center; }
+.bm-importe { grid-column: span 4; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: end; padding: 10px 14px; border-radius: var(--radio); border: 1px solid var(--borde); background: var(--panel); }
+.bm-importe .campo { gap: 4px; font-size: 12px; }
+.bm-importe input { font-size: 22px !important; font-weight: 700; text-align: right; color: var(--texto); padding: 8px 12px !important; }
+.bm-ml { display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; border-radius: 10px; background: var(--fondo); text-align: right; }
+.bm-ml b { font-size: 22px; font-weight: 700; color: var(--ok); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-bloque { grid-column: span 4; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 8px 12px 10px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--panel); }
+.bm-bloque .ta-col-titulo { margin: 0; }
+.bm-campos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; }
+.bm-campos .campo { gap: 3px; font-size: 12px; }
+.bk-movimientos .bm-form .campo input, .bk-movimientos .bm-form .campo select { padding: 6px 9px; font-size: 13px; }
+.bm-c2 { grid-column: span 2; }
+.bm-c3 { grid-column: 1 / -1; }
+.bm-check { align-self: end; padding: 0 0 8px 2px; font-size: 12.5px; }
+.bm-radios { padding: 0; gap: 14px; }
+.bm-control dl { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: dense; gap: 6px 10px; }
+.bm-dato { min-width: 0; }
+.bm-dato.bm-c2 { grid-column: span 2; }
+.bm-dato dt { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.bm-dato dd { margin: 1px 0 0; font-size: 13px; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-dato dd small { margin-left: 4px; font-size: 11.5px; color: var(--tenue); }
+.bm-flujo { align-self: flex-start; margin-top: auto; display: inline-flex; align-items: center; gap: 6px; }
+.bm-pestanas { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.bm-tabs-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.bm-aplicado { font-size: 12.5px; font-weight: 600; color: var(--ok); display: inline-flex; align-items: center; gap: 5px; }
+.bm-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.bm-panel[hidden] { display: none; }
+.bm-panel .pc-lineas { flex: 1; min-height: 0; }
+.bm-panel .bm-transaccion .campo { flex: 0 1 520px; }
+.bm-panel td.bm-auto { color: var(--suave); background: var(--fondo); font-variant-numeric: tabular-nums; }
+.bm-panel .bm-centro { width: 110px; }
+.bm-panel .pc-lineas tfoot td { font-weight: 700; font-variant-numeric: tabular-nums; }
+.bm-listado .bk-maestro { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: none; }
+.bm-listado .bk-maestro .tk-bandeja-cab { padding: 8px 12px; }
+@media (max-width: 1400px) {
+  .bm-banco, .bm-importe { grid-column: 1 / -1; }
+  .bm-bloque { grid-column: span 6; }
+  .bm-control { grid-column: 1 / -1; }
+  .bk-movimientos .bm-form { overflow: auto; }
+}
