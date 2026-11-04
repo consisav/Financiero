@@ -1991,7 +1991,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-generacion { --bg-t: var(--acento); --bg-f: var(--acento-fondo); }
 .bg-transferencias { --bg-t: var(--violeta-t); --bg-f: var(--violeta-f); }
 .bk-generacion .ta-titulo .tk-icono { background: var(--bg-f); color: var(--bg-t); }
-.bk-generacion .ta-filtros { grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(130px, .7fr) minmax(130px, .7fr) minmax(0, .9fr) auto; }
+.bk-generacion .ta-filtros { grid-template-columns: auto minmax(0, 1.2fr) minmax(110px, .55fr) minmax(0, 1.1fr) minmax(130px, .7fr) minmax(130px, .7fr) minmax(0, .9fr) auto; }
 .bk-generacion .ta-cuerpo { grid-template-rows: minmax(0, 1fr) minmax(0, auto); gap: 10px; }
 .bk-generacion .bk-maestro { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .bk-generacion .bk-detalle { background: none; border: 0; box-shadow: none; overflow: visible; }
@@ -2109,3 +2109,5 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bu-control .bm-dato dd b + b { display: block; }
 .bu-aviso { color: var(--ambar-t); }
 .bu-aviso b { color: inherit; }
+.bg-tipo-fac { background: color-mix(in srgb, var(--acento) 12%, var(--panel)); color: var(--acento); }
+.bg-tipo-rec { background: color-mix(in srgb, var(--ambar-t) 14%, var(--panel)); color: var(--ambar-t); }

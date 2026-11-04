@@ -30,7 +30,8 @@
       const cfg = CONFIG[clave];
       const ctx = montar(cont, { titulo: cfg.titulo, icono: cfg.icono, clase: `bk-movimientos bk-generacion ${cfg.clase}`, grupo: 'Cheques' });
       const { sb, yo } = ctx;
-      const f = { proveedor: '', desde: '', hasta: '', forma: cfg.forma };
+      const f = { proveedor: '', documento: '', desde: '', hasta: '', forma: cfg.forma };
+      const DOCUMENTOS = [['', 'Ambos'], ['FACTURA', 'Facturas'], ['RECIBO', 'Recibos']];
       const p = { cuenta: null, fecha: fmt.hoy(), transaccion: '', descripcion: '', agrupar: true, partida: true, referencia: '', cambio: '' };
       let compras = [];
       let cuentas = [];
@@ -93,6 +94,7 @@
 
       function pintarFiltros() {
         ctx.filtros(`
+          <label class="campo"><span>Documento</span><select name="documento">${DOCUMENTOS.map(([v, t]) => `<option value="${v}" ${f.documento === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
           <label class="campo"><span>Proveedor</span><input type="search" name="proveedor" value="${esc(f.proveedor)}" placeholder="Código o nombre"></label>
           <label class="campo"><span>Ingreso desde</span><input type="date" name="desde" value="${f.desde}" ${f.hasta ? `max="${f.hasta}"` : ''}></label>
           <label class="campo"><span>Ingreso hasta</span><input type="date" name="hasta" value="${f.hasta}" ${f.desde ? `min="${f.desde}"` : ''}></label>
@@ -134,6 +136,7 @@
         if (f.desde) q = q.gte('fecha_ingreso', f.desde);
         if (f.hasta) q = q.lte('fecha_ingreso', f.hasta);
         if (f.forma) q = q.eq('forma_pago', f.forma);
+        if (f.documento) q = q.eq('tipo_documento', f.documento);
         const { data, error } = await q;
         if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
         const t = f.proveedor.trim().toLowerCase();
@@ -179,7 +182,7 @@
         const destino = (c) => `${esc(banco(c.banco_destino_id)?.siglas || banco(c.banco_destino_id)?.nombre || '')}`;
         ctx.pMae.innerHTML = `
           <header class="tk-bandeja-cab bg-cab">
-            <h2>Facturas pendientes de pago <small>${compras.length}</small></h2>
+            <h2>${f.documento === 'RECIBO' ? 'Recibos' : f.documento === 'FACTURA' ? 'Facturas' : 'Facturas y recibos'} pendientes de pago <small>${compras.length}</small></h2>
             <div class="bg-kpis">
               <span><small>Pendiente</small><b>${simCta} ${fmt.monto(totalPend)}</b></span>
               <span class="${marcadas.size ? 'activo' : ''}"><small>Marcadas</small><b>${marcadas.size}</b></span>
@@ -193,7 +196,7 @@
             <table>
               <thead><tr>
                 <th class="bg-marca"><input type="checkbox" data-todas ${todas ? 'checked' : ''} ${elegibles.length ? '' : 'disabled'} aria-label="Marcar todas"></th>
-                <th>Factura</th><th>Compra</th><th>Proveedor</th><th>Transacción</th><th>Fecha ingreso</th><th>Vence</th>
+                <th>Documento</th><th>Tipo</th><th>Compra</th><th>Proveedor</th><th>Transacción</th><th>Fecha ingreso</th><th>Vence</th>
                 <th class="num">Valor total</th><th class="num bg-bonif">Bonificaciones</th><th class="num bg-pend">Pendiente liq.</th>
                 ${cfg.forma === 'CHEQUE' ? '<th>Cuenta bancaria</th><th>Cheque</th>' : '<th>Banco destino</th><th>Cuenta destino</th><th>Lote</th>'}
               </tr></thead>
@@ -206,7 +209,7 @@
                   const ml = c.moneda_id !== (cb?.moneda_id) && enCuenta(c) !== null ? `<small class="bg-ml">≈ ${simCta} ${fmt.monto(enCuenta(c))}</small>` : '';
                   return `<tr data-compra="${c.id}" class="${actual && actual.id === c.id ? 'actual' : ''} ${marcada ? 'marcada' : ''} ${b ? 'bloqueada' : ''}" tabindex="0">
                     <td class="bg-marca"><input type="checkbox" data-marca="${c.id}" ${marcada ? 'checked' : ''} ${b ? 'disabled' : ''} title="${esc(b || 'Generar')}" aria-label="Generar ${esc(docTxt(c))}"></td>
-                    <td class="fuerte">${esc(docTxt(c))}</td><td>${c.numero}</td>
+                    <td class="fuerte">${esc(`${c.serie ? `${c.serie}-` : ''}${c.documento}`)}</td><td><span class="pc-tipo bg-tipo-${c.tipo_documento === 'RECIBO' ? 'rec' : 'fac'}">${c.tipo_documento === 'RECIBO' ? 'Recibo' : 'Factura'}</span></td><td>${c.numero}</td>
                     <td class="bg-prov" title="${esc(c.proveedor_nombre)}">${c.proveedor_codigo ? `<span class="tk-tenue">${esc(c.proveedor_codigo)}</span> ` : ''}${esc(c.proveedor_nombre)}</td>
                     <td>${c.transaccion_id ? esc(String(transacciones.find((t) => t.id === c.transaccion_id)?.numero || '')) : '<span class="tk-tenue">—</span>'}</td>
                     <td>${esc(fmt.fechaDia(c.fecha_ingreso))}</td>
@@ -218,7 +221,7 @@
                       ? `<td>${pref ? esc(pref.numero) : '<span class="tk-tenue">—</span>'}</td><td>${marcada ? `<span class="pc-tipo bg-num">${esc(num.get(c.id) || '')}</span>` : b ? `<span class="bg-aviso" title="${esc(b)}"><i class="ti ti-alert-triangle" aria-hidden="true"></i></span>` : '<span class="tk-tenue">—</span>'}</td>`
                       : `<td>${destino(c) || '<span class="tk-tenue">—</span>'}</td><td>${c.cuenta_destino ? esc(c.cuenta_destino) : `<span class="bg-aviso" title="${esc(b)}"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Sin cuenta</span>`}</td><td>${marcada ? `<span class="pc-tipo bg-num">${esc(num.get(c.id) || '')}</span>` : '<span class="tk-tenue">—</span>'}</td>`}
                   </tr>`;
-                }).join('') || `<tr><td colspan="${cfg.forma === 'CHEQUE' ? 12 : 13}" class="tk-vacio"><i class="ti ti-file-check" aria-hidden="true"></i>${ctx.sel.loc ? 'No hay facturas pendientes de pago con esos filtros.' : 'Elige la empresa.'}</td></tr>`}
+                }).join('') || `<tr><td colspan="${cfg.forma === 'CHEQUE' ? 13 : 14}" class="tk-vacio"><i class="ti ti-file-check" aria-hidden="true"></i>${ctx.sel.loc ? `No hay ${f.documento === 'RECIBO' ? 'recibos' : f.documento === 'FACTURA' ? 'facturas' : 'facturas ni recibos'} pendientes de pago con esos filtros.` : 'Elige la empresa.'}</td></tr>`}
               </tbody>
             </table>
           </div>`;
