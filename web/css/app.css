@@ -2107,3 +2107,5 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bu-supabase { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .bu-supabase .boton { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
 .bu-control .bm-dato dd b + b { display: block; }
+.bu-aviso { color: var(--ambar-t); }
+.bu-aviso b { color: inherit; }

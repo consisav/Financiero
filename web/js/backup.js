@@ -1,9 +1,11 @@
 // Administración · Procesos · Backup: respaldo de la información en un archivo JSON (comprimido
 // si el navegador lo permite), por organización y localidad.
-//   Parámetros: organización y localidad (empresa); «Todas» solo para administradores, los demás
-//   respaldan únicamente su organización y su localidad. Usuario y fecha (hora, minuto, segundo)
-//   automáticos. Destino: carpeta de la computadora o del servidor (en Chrome y Edge se elige y el
-//   archivo se guarda ahí; en otros navegadores se descarga) y la ruta como referencia.
+//   Parámetros: organización y localidad (empresa); «Todas» solo para administradores (y es lo que
+//   trae por defecto el superadministrador), los demás respaldan únicamente su organización y su
+//   localidad. Usuario y fecha (hora, minuto, segundo) automáticos. Destino: la carpeta de la
+//   computadora o del servidor que corresponde a la ruta; en Chrome y Edge los archivos se guardan
+//   ahí (la carpeta se recuerda y el navegador solo pide permiso), no en Descargas. En otros
+//   navegadores, que no permiten escribir en carpetas, se descargan.
 //   «Generar backup» lee cada tabla en páginas (respaldo_tablas / respaldo_datos), arma el archivo,
 //   lo guarda y registra el respaldo en el historial.
 //   Contenido: Base de datos (respaldo SQL leído de Supabase: un INSERT por tabla que se restaura en
@@ -17,12 +19,30 @@
   const tamano = (n) => n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`;
   const leerLocal = (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
   const guardarLocal = (k, v) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
+  // La carpeta de destino se recuerda en IndexedDB (un FileSystemDirectoryHandle no cabe en localStorage).
+  const almacen = (modo, fn) => new Promise((ok) => {
+    try {
+      const r = indexedDB.open('fin-backup', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('carpeta');
+      r.onsuccess = () => {
+        const t = r.result.transaction('carpeta', modo);
+        const q = fn(t.objectStore('carpeta'));
+        t.oncomplete = () => { r.result.close(); ok(q.result ?? null); };
+        t.onerror = () => { r.result.close(); ok(null); };
+      };
+      r.onerror = () => ok(null);
+    } catch { ok(null); }
+  });
+  const leerCarpeta = () => almacen('readonly', (st) => st.get('destino'));
+  const guardarCarpeta = (h) => almacen('readwrite', (st) => st.put(h, 'destino'));
+  const ultimaCarpeta = (ruta) => (ruta || '').replace(/[\\/]+$/, '').split(/[\\/]/).pop().replace(/:$/, '');
 
   window.PANTALLAS = window.PANTALLAS || {};
   window.PANTALLAS.backup = function (cont) {
     const sb = window.FIN.sb;
     const yo = window.FIN.perfil();
     const admin = window.FIN.esAdmin();
+    const superadmin = admin && yo.rol_id === 'superadministrador';
     let organizaciones = [];
     let localidades = [];
     let historial = [];
@@ -41,12 +61,18 @@
     // Página de respaldos del proyecto en el panel de Supabase.
     const proyecto = (window.FIN_CONFIG?.supabaseUrl || window.CONFIG?.supabaseUrl || '').match(/https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] || '';
     const panelBackups = proyecto ? `https://supabase.com/dashboard/project/${proyecto}/database/backups/scheduled` : 'https://supabase.com/dashboard/projects';
-    const sel = { org: yo.organizacion_id ? String(yo.organizacion_id) : '', loc: yo.localidad_id ? String(yo.localidad_id) : '' };
+    // El superadministrador respalda por defecto todas las organizaciones y todas las localidades.
+    const sel = superadmin ? { org: '', loc: '' } : { org: yo.organizacion_id ? String(yo.organizacion_id) : '', loc: yo.localidad_id ? String(yo.localidad_id) : '' };
     const puedeCarpeta = typeof window.showDirectoryPicker === 'function';
     const puedeComprimir = typeof window.CompressionStream === 'function';
 
     const org = (id) => organizaciones.find((o) => String(o.id) === String(id));
     const loc = (id) => localidades.find((l) => String(l.id) === String(id));
+    const coincide = () => { const r = ultimaCarpeta(leerLocal('fin.backup.ruta')); return !r || !carpeta || r.toLowerCase() === carpeta.name.toLowerCase(); };
+    const elegirCarpeta = async () => {
+      carpeta = await window.showDirectoryPicker({ id: 'fin-backup', mode: 'readwrite', ...(carpeta ? { startIn: carpeta } : {}) });
+      await guardarCarpeta(carpeta);
+    };
 
     async function iniciar() {
       const [o, l] = await Promise.all([
@@ -54,6 +80,7 @@
         sb.from('localidades').select('id, codigo, nombre_comercial, organizacion_id').order('organizacion_id').order('correlativo')
       ]);
       organizaciones = o.data || [];
+      if (puedeCarpeta) carpeta = await leerCarpeta();
       localidades = l.data || [];
       if (!admin && (!yo.organizacion_id || !yo.localidad_id)) {
         cont.innerHTML = '<section class="panel"><p class="vacio">Tu usuario no tiene organización y localidad asignadas: pide a un administrador que las asigne para poder generar un backup.</p></section>';
@@ -77,7 +104,7 @@
             <header class="tk-titulo bm-titulo">
               <span class="tk-icono"><i class="ti ti-database-export" aria-hidden="true"></i></span>
               <div class="tk-titulo-texto"><small>Administración · Procesos</small><h2>Backup de la información</h2></div>
-              <div class="tk-marcas">${admin ? '<span class="pc-marca definitiva"><i class="ti ti-shield-check" aria-hidden="true"></i> Administrador: puede respaldar todas</span>' : '<span class="pc-marca pendiente">Solo tu organización y localidad</span>'}</div>
+              <div class="tk-marcas">${superadmin ? '<span class="pc-marca definitiva"><i class="ti ti-shield-check" aria-hidden="true"></i> Super administrador: todas las organizaciones y localidades</span>' : admin ? '<span class="pc-marca definitiva"><i class="ti ti-shield-check" aria-hidden="true"></i> Administrador: puede respaldar todas</span>' : '<span class="pc-marca pendiente">Solo tu organización y localidad</span>'}</div>
               <div class="tk-titulo-acciones"><button type="submit" class="boton primario-sm" data-generar><i class="ti ti-database-export" aria-hidden="true"></i> Generar backup</button></div>
             </header>
             <p class="modal-error tk-error" role="alert"></p>
@@ -115,7 +142,8 @@
                 <label class="campo"><span>Directorio o ruta (computadora o servidor)</span><input name="ruta" value="${esc(leerLocal('fin.backup.ruta'))}" placeholder="Ej. D:\\Respaldos\\Financiero o \\\\SERVIDOR\\Respaldos" maxlength="300"></label>
                 ${puedeCarpeta ? `<div class="bu-carpeta">
                     <button type="button" class="boton secundario-sm" data-carpeta><i class="ti ti-folder-open" aria-hidden="true"></i> ${carpeta ? 'Cambiar carpeta' : 'Elegir carpeta…'}</button>
-                    <span>${carpeta ? `<i class="ti ti-folder-check" aria-hidden="true"></i> Se guardará en la carpeta <b>${esc(carpeta.name)}</b>` : 'Elige la carpeta donde se guardará el archivo (también una carpeta compartida del servidor).'}</span></div>`
+                    <span>${carpeta ? `<i class="ti ti-folder-check" aria-hidden="true"></i> Los archivos se guardarán en la carpeta <b>${esc(carpeta.name)}</b>, no en Descargas.` : 'Elige la carpeta de la ruta (también una carpeta compartida del servidor): los archivos se guardarán ahí, no en Descargas.'}</span></div>
+                  ${carpeta && !coincide() ? `<p class="bu-nota bu-aviso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> La carpeta elegida (<b>${esc(carpeta.name)}</b>) no coincide con la ruta escrita: pulsa «Cambiar carpeta» y busca ${esc(leerLocal('fin.backup.ruta'))}.</p>` : ''}`
                   : '<p class="bu-nota"><i class="ti ti-download" aria-hidden="true"></i> Este navegador no permite elegir la carpeta: el archivo se descarga y después lo mueves a la ruta indicada. En Chrome o Edge se guarda directo en la carpeta elegida.</p>'}
               </section>
             </div>
@@ -216,6 +244,20 @@
       const ruta = form.elements.ruta.value.trim();
       if (!ruta && !carpeta) { error.textContent = 'Escribe el directorio o la ruta donde se alojará el backup.'; return; }
       guardarLocal('fin.backup.ruta', ruta);
+      if (puedeCarpeta) {
+        // Con el clic todavía vigente: elegir la carpeta o renovar el permiso antes de leer datos.
+        try {
+          if (!carpeta) await elegirCarpeta();
+          else if (await carpeta.queryPermission({ mode: 'readwrite' }) !== 'granted' && await carpeta.requestPermission({ mode: 'readwrite' }) !== 'granted') {
+            error.textContent = 'El navegador no dio permiso para escribir en la carpeta de destino.';
+            return;
+          }
+        } catch (err) {
+          if (err?.name !== 'AbortError') { carpeta = null; pintar(); }
+          cont.querySelector('.modal-error').textContent = err?.name === 'AbortError' ? 'Elige la carpeta de destino: ahí se guardará el backup.' : 'No se pudo abrir la carpeta de destino: elígela de nuevo.';
+          return;
+        }
+      }
       const comprimir = !!form.elements.comprimir?.checked;
       const boton = form.querySelector('[data-generar]');
       trabajando = true;
@@ -272,7 +314,7 @@
             const w = await archivo.createWritable();
             await w.write(x.blob);
             await w.close();
-            destino = ruta || carpeta.name;
+            destino = coincide() ? ruta || carpeta.name : carpeta.name;
           } else {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(x.blob);
@@ -318,7 +360,7 @@
     cont.addEventListener('click', async (e) => {
       if (!e.target.closest('[data-carpeta]')) return;
       try {
-        carpeta = await window.showDirectoryPicker({ id: 'fin-backup', mode: 'readwrite' });
+        await elegirCarpeta();
         const ruta = cont.querySelector('[name=ruta]');
         if (ruta && !ruta.value.trim()) guardarLocal('fin.backup.ruta', carpeta.name);
         pintar();
