@@ -215,9 +215,61 @@
       const filas = lista.map((t) => [t.numero, t.localidad?.codigo || '', fechaCorta(t.fecha), t.usuario || '', nombreModulo(t.modulo_id), t.descripcion, prioridad(t.prioridad).texto, nombreEstado(t.estado), nombreUsuario(t.recurso_id) || 'Sin asignar', fechaCorta(fechaAsig(t)), duracion(msTranscurrido(t)), fechaDia(t.fecha_entrega), plazo(t)]);
       if (f.formato === 'EXCEL') return window.COMPRAS_CAT.descargarCsv(`tickets_${f.desde}_${f.hasta}.csv`, [cab, ...filas]);
       const loc = localidades.find((x) => x.id === f.loc);
-      window.BANCOS.imprimir('Tickets · Visualización general', `<h1>Tickets · Visualización general</h1><h2>${esc(loc ? `${loc.codigo} · ${loc.nombre_comercial}` : 'Todas las localidades')} · del ${esc(fechaDia(f.desde))} al ${esc(fechaDia(f.hasta))} · ordenado por ${esc(COLUMNAS.find(([c]) => c === f.orden)[1].toLowerCase())} (${f.dir === 'asc' ? 'ascendente' : 'descendente'})</h2>
-        <table><thead><tr>${cab.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${filas.map((r) => `<tr>${r.map((v) => `<td>${esc(String(v ?? ''))}</td>`).join('')}</tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="${cab.length}">${filas.length} ticket(s)</td></tr></tfoot></table>`);
+      // Hoja vertical: cada ticket en dos líneas (datos principales y, abajo, el requerimiento con
+      // las fechas de asignación y entrega); al final las gráficas por usuario y por estado.
+      const g = new Map();
+      lista.forEach((t) => { const k = t.recurso_id || ''; const x = g.get(k) || { nombre: k ? nombreUsuario(k) || 'Usuario' : 'Sin asignar', total: 0, abiertos: 0 }; x.total++; if (t.estado < RESUELTO) x.abiertos++; g.set(k, x); });
+      const porUsuario = [...g.entries()].sort((p, q) => (p[0] === '') - (q[0] === '') || q[1].total - p[1].total);
+      const maxU = Math.max(1, ...porUsuario.map(([, x]) => x.total));
+      const u = usuarioElegido(lista);
+      const suyos = lista.filter((t) => t.recurso_id === u);
+      const porEstado = estados.map((e) => [e, suyos.filter((t) => t.estado === e.codigo).length]);
+      const maxE = Math.max(1, ...porEstado.map(([, n]) => n));
+      const barra = (txt, n, max, extra = '', gris = false) => `<div class="bf"><span class="bn">${esc(txt)}</span><span class="bp"><span class="bb ${gris ? 'gris' : ''}" style="width:${n ? Math.max(1.5, n / max * 100) : 0}%"></span></span><span class="bv"><b>${n}</b> ${extra}</span></div>`;
+      const estilo = `<style>
+        @page { size: letter portrait; margin: 11mm 10mm; }
+        body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        table.tv { width: 100%; border-collapse: collapse; font-size: 10.5px; table-layout: fixed; }
+        table.tv th { background: #e1eefb; font-size: 9.5px; text-transform: uppercase; letter-spacing: .02em; padding: 3px 5px; border: 1px solid #b9c7d8; }
+        table.tv td { border: 0; border-left: 1px solid #dde3ea; padding: 3px 5px; vertical-align: top; overflow-wrap: anywhere; }
+        table.tv tbody { break-inside: avoid; page-break-inside: avoid; border: 1px solid #c9d3df; }
+        table.tv tbody tr.l1 td { padding-top: 4px; }
+        table.tv tbody tr.l2 td { padding-bottom: 5px; color: #333; border-top: 1px dashed #dde3ea; }
+        table.tv tbody:nth-of-type(even) { background: #f7f9fb; }
+        table.tv .num { font-weight: 700; white-space: nowrap; }
+        table.tv small { display: block; color: #666; font-size: 9px; }
+        table.tv .rojo { color: #c62828; font-weight: 700; }
+        table.tv .lbl { display: block; font-size: 8.5px; text-transform: uppercase; color: #777; letter-spacing: .03em; }
+        .graf { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; break-inside: avoid; page-break-inside: avoid; }
+        .graf section { border: 1px solid #c9d3df; border-radius: 6px; padding: 8px 10px; }
+        .graf h3 { margin: 0 0 2px; font-size: 11.5px; color: #1d5fb4; text-transform: uppercase; letter-spacing: .04em; }
+        .graf p { margin: 0 0 6px; font-size: 9.5px; color: #555; }
+        .bf { display: grid; grid-template-columns: 34% 1fr 22%; align-items: center; gap: 6px; font-size: 10px; margin: 3px 0; }
+        .bn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+        .bp { height: 10px; border-left: 1px solid #b9c7d8; }
+        .bb { display: block; height: 100%; background: #1d5fb4; border-radius: 0 3px 3px 0; }
+        .bb.gris { background: #8a94a6; }
+        .bv { white-space: nowrap; color: #555; } .bv b { color: #111; }
+      </style>`;
+      window.BANCOS.imprimir('Tickets · Visualización general', `${estilo}<h1>Tickets · Visualización general</h1><h2>${esc(loc ? `${loc.codigo} · ${loc.nombre_comercial}` : 'Todas las localidades')} · del ${esc(fechaDia(f.desde))} al ${esc(fechaDia(f.hasta))} · ordenado por ${esc(COLUMNAS.find(([c]) => c === f.orden)[1].toLowerCase())} (${f.dir === 'asc' ? 'ascendente' : 'descendente'}) · ${lista.length} ticket(s)</h2>
+        <table class="tv">
+          <colgroup><col style="width:15%"><col style="width:13%"><col style="width:13%"><col style="width:10%"><col style="width:12%"><col style="width:14%"><col style="width:23%"></colgroup>
+          <thead><tr><th>Ticket</th><th>Fecha</th><th>Solicitante</th><th>Módulo</th><th>Prioridad</th><th>Estado</th><th>Recurso asignado</th></tr>
+            <tr><th colspan="4">Requerimiento</th><th>Fecha asignación</th><th>Tiempo transcurrido</th><th>Fecha estimada de entrega</th></tr></thead>
+          ${lista.map((t) => `<tbody>
+            <tr class="l1"><td class="num">${esc(t.numero)}${f.loc ? '' : `<small>${esc(t.localidad?.codigo || '')}</small>`}</td><td>${esc(fechaCorta(t.fecha))}</td><td>${esc(t.usuario || '')}</td><td>${esc(nombreModulo(t.modulo_id))}</td>
+              <td>${esc(prioridad(t.prioridad).texto)}</td><td><b>${esc(nombreEstado(t.estado))}</b></td><td>${esc(nombreUsuario(t.recurso_id) || 'Sin asignar')}</td></tr>
+            <tr class="l2"><td colspan="4"><span class="lbl">Requerimiento</span>${esc(t.descripcion)}</td><td><span class="lbl">Asignación</span>${esc(fechaCorta(fechaAsig(t)) || '—')}</td>
+              <td><span class="lbl">Transcurrido</span>${esc(duracion(msTranscurrido(t)))}</td>
+              <td class="${vencido(t) ? 'rojo' : ''}"><span class="lbl">Entrega estimada</span>${t.fecha_entrega ? `${esc(fechaDia(t.fecha_entrega))}${plazo(t) ? ` · ${esc(plazo(t))}` : ''}` : 'Sin fecha'}</td></tr>
+          </tbody>`).join('')}
+        </table>
+        <div class="graf">
+          <section><h3>Tickets asignados por usuario</h3><p>${porUsuario.filter(([k]) => k).reduce((n, [, x]) => n + x.total, 0)} de ${lista.length} ticket(s) asignados</p>
+            ${porUsuario.map(([k, x]) => barra(x.nombre, x.total, maxU, x.abiertos ? `· ${x.abiertos} abierto${x.abiertos === 1 ? '' : 's'}` : '· resueltos', !k)).join('')}</section>
+          <section><h3>Tickets por estado de ${esc(u ? nombreUsuario(u) || 'usuario' : '—')}</h3><p>${u ? `${suyos.length} ticket(s) · ${suyos.filter((t) => t.estado < RESUELTO).length} abiertos${suyos.filter(vencido).length ? ` · ${suyos.filter(vencido).length} con entrega vencida` : ''}` : 'Ningún ticket asignado con estos parámetros'}</p>
+            ${u ? porEstado.map(([e, n]) => barra(e.nombre, n, maxE)).join('') : ''}</section>
+        </div>`);
     }
 
     cont.addEventListener('change', (e) => {
