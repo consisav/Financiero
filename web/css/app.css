@@ -2668,3 +2668,34 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-compacto .cf-cifras .cf-total dd input { font-size: 13.5px; }
 .cf-compacto .bm-pestanas { flex: 1 1 0; }
 @media (max-width: 1500px) { .cf-compras .bk-filtros { grid-template-columns: auto repeat(4, minmax(0, 1fr)); } .cf-compras .oc-extra { grid-column: 1 / -1; } .cf-barra { border-left: 0; padding-left: 0; } }
+
+/* ---------- Ventas · Clientes (mismo bloque compacto que Productos y servicios) ---------- */
+.bk-espacio.bk-clientes.cp-lado .ta-cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 10px; }
+.bk-clientes.cp-lado .bk-detalle { overflow: hidden; }
+.bk-clientes .cc-tabla td, .bk-clientes .cc-tabla th { padding: 5px 8px; }
+.bk-clientes .cc-cab { padding: 8px 12px 6px; }
+.bk-clientes .cl-razon { max-width: 200px; color: var(--suave); }
+.cpr-c12 { grid-column: 1 / -1; }
+.cl-c5 { grid-column: span 5; }
+.cl-form .cpr-tit.cpr-c12 { padding-bottom: 0; }
+.cl-credito { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.cl-credito .campo { width: 130px; }
+.cl-credito .cl-motivo { flex: 1; min-width: 200px; width: auto; }
+.cl-credito .boton { padding: 4px 10px; margin-bottom: 1px; display: inline-flex; align-items: center; gap: 5px; }
+.cl-credito.cl-editando { border-color: color-mix(in srgb, var(--ambar-t) 50%, var(--borde)); background: color-mix(in srgb, var(--ambar-f) 55%, var(--panel)); }
+.cl-credito input[type=number] { text-align: right; }
+.cl-ok { font-style: normal; font-weight: 600; color: var(--ok); }
+.cl-mal { font-style: normal; font-weight: 600; color: var(--ambar-t); }
+@media (max-width: 1500px) { .bk-espacio.bk-clientes.cp-lado .ta-cuerpo { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); } .cl-c5 { grid-column: span 6; } .bk-clientes .cl-razon { display: none; } }
+.cl-c1 { grid-column: span 1; }
+.cl-form .cpr-titulo { flex-wrap: nowrap; }
+.cl-form .cpr-titulo .tk-titulo-texto { flex: 1 1 auto; min-width: 0; }
+.cl-form .cpr-titulo .tk-titulo-texto h2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl-form .cpr-titulo .tk-marcas { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
+.cl-form .cpr-titulo .tk-titulo-acciones { flex: 0 0 auto; flex-wrap: nowrap; }
+.cl-credito { flex-wrap: nowrap; }
+.cl-credito .campo { width: 118px; flex: 0 0 auto; }
+.cl-credito .cpr-chk { flex: 0 0 auto; }
+.cl-credito > .boton { margin-left: auto; }
+.cpr-compacto .cp-panel { overflow: auto; }
+@media (max-width: 1500px) { .cl-c1 { grid-column: span 2; } .cl-credito { flex-wrap: wrap; } }

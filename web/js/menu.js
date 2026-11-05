@@ -232,6 +232,7 @@ window.MODULOS = [
           subgrupo: 'Ventas',
           icono: 'ti-user-dollar',
           pantallas: [
+            { id: 'clientes', nombre: 'Clientes', icono: 'ti-users', descripcion: 'Clientes de la empresa: documento (NIT, CUI…), contacto, vendedor, tipo de precio, entrega, crédito, ubicación y datos de exportación.' },
             { id: 'vendedores', nombre: 'Vendedores', icono: 'ti-user-dollar', descripcion: 'Vendedores de la empresa: contacto, comisiones (general, crédito y contado), siglas y usuario del sistema.' }
           ]
         },
@@ -249,7 +250,7 @@ window.MODULOS = [
       ]
     },
     opciones: {
-      catalogos: ['Clientes', 'Formas de pago'],
+      catalogos: ['Formas de pago'],
       registros: ['Cotizaciones', 'Pedidos', 'Facturas', 'Notas de crédito', 'Cobros'],
       mantenimientos: ['Series de documentos', 'Listas de precios', 'Descuentos'],
       procesos: ['Anulación de documentos', 'Antigüedad de saldos', 'Comisiones'],
