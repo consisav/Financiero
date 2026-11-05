@@ -48,8 +48,10 @@
     const provTxt = (p) => `${p.codigo} · ${p.nombre_comercial}${p.nit ? ` · ${p.nit}` : ''}`;
     const docTxt = (c) => `${c.serie ? `${c.serie}-` : ''}${c.documento}`;
     // Compra de bienes (artículos) o de servicios (compras varias), según su clasificación.
-    // Una compra que ya tiene líneas de compras varias se queda con ese detalle.
-    const esBienes = (v) => articulos.length > 0 || (!items.some((i) => i.descripcion) && !/SERVICIO/i.test(clasificacion(v?.clasificacion_id)?.nombre || ''));
+    // Bienes si la clasificación aplica inventarios (sin el script 64, si no es de servicios); una compra
+    // que ya tiene artículos o líneas de compras varias se queda con ese detalle.
+    const aplicaInv = (k) => !k || (k.aplica_inventario ?? !/SERVICIO/i.test(k.nombre || ''));
+    const esBienes = (v) => articulos.length > 0 || (!items.some((i) => i.descripcion) && aplicaInv(clasificacion(v?.clasificacion_id)));
     const totalArt = (a) => Number(a.cantidad || 0) * Number(a.costo_unitario || 0) - Number(a.descuento || 0) + Number(a.costo_extra || 0);
     const subtotal = () => fmt.redondear(articulos.length ? articulos.reduce((t, a) => t + totalArt(a), 0) : items.reduce((t, i) => t + Number(i.costo_total || 0), 0));
     const prod = (id) => productos.find((p) => p.id === id);
@@ -674,7 +676,7 @@
         serie: i.serie || v.serie, documento: i.documento || v.documento, fecha_documento: i.fecha_documento || i.fecha_ingreso, moneda_id: i.moneda_id, tipo_cambio: aBase(i.moneda_id, i.tipo_cambio), bodega_id: i.bodega_id,
         transaccion_id: i.transaccion_id || v.transaccion_id, dias_credito: i.dias_credito, pago_inmediato: i.forma_pago === 'CONTADO', fecha_vencimiento: sumaDias(i.fecha_documento || i.fecha_ingreso, i.dias_credito),
         orden_compra: i.ordenes_compra?.numero || v.orden_compra, bonificaciones: Number(i.valor_descuento) || 0,
-        clasificacion_id: (clasificaciones.find((x) => x.nombre === 'BIENES') || clasificaciones.find((x) => !/SERVICIO/i.test(x.nombre)))?.id || v.clasificacion_id,
+        clasificacion_id: aplicaInv(clasificacion(v.clasificacion_id)) && v.clasificacion_id ? v.clasificacion_id : (clasificaciones.find((x) => x.nombre === 'BIENES' && aplicaInv(x)) || clasificaciones.find((x) => x.activo !== false && aplicaInv(x)))?.id || v.clasificacion_id,
         descripcion: v.descripcion || `COMPRA DEL INGRESO ${i.numero} DE LA ORDEN ${i.ordenes_compra?.numero || ''}` });
       articulos = articulos.filter((a) => !a.ingreso_linea_id).concat(i.ingreso_lineas.map((l) => ({ producto_id: l.producto_id, serie: l.lote || '', cantidad: Number(l.cantidad), costo_unitario: Number(l.costo_unitario), descuento: 0, costo_extra: 0, inventario: true, exento: false, inventariado: false, ingreso_linea_id: l.id })));
       v.valor_total = fmt.redondear(articulos.reduce((t, a) => t + totalArt(a), 0) - (Number(i.valor_descuento) || 0));
