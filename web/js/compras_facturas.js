@@ -34,6 +34,9 @@
     let actual = null;
     let items = [], lineas = [], pagos = [], cuentasProv = [];
     let articulos = [], productos = [], ingresosLibres = [], ingresoVincular = null;
+    // Medicamentos y perecederos llevan lote, fabricación y vencimiento en los artículos; no perecederos, serie.
+    let tipoVenta = null;
+    const conLote = () => tipoVenta !== 'NO PERECEDEROS';
     let modificando = false;
     let pestana = 'ITEMS';
     let buscar = '';
@@ -90,9 +93,11 @@
       proveedores = p.data || []; bodegas = b.data || []; params = g.data?.[0] || {};
       const [pr, il] = await Promise.all([
         loc ? sb.from('productos').select('id, codigo, codigo_producto, nombre, estado, precio_costo').eq('localidad_id', loc).order('nombre') : { data: [] },
-        loc ? sb.from('ingresos_compra').select('id, numero, fecha_ingreso, orden_id, proveedor_id, bodega_id, moneda_id, tipo_cambio, forma_pago, dias_credito, serie, documento, fecha_documento, valor_descuento, transaccion_id, ordenes_compra(numero), ingreso_lineas(id, producto_id, lote, cantidad, costo_unitario, inventariado)').eq('localidad_id', loc).eq('estado', 'APLICADO').is('compra_id', null).order('numero', { ascending: false }) : { data: [] }
+        loc ? sb.from('ingresos_compra').select('id, numero, fecha_ingreso, orden_id, proveedor_id, bodega_id, moneda_id, tipo_cambio, forma_pago, dias_credito, serie, documento, fecha_documento, valor_descuento, transaccion_id, ordenes_compra(numero), ingreso_lineas(id, producto_id, lote, fecha_vencimiento, fecha_fabricacion, cantidad, costo_unitario, inventariado)').eq('localidad_id', loc).eq('estado', 'APLICADO').is('compra_id', null).order('numero', { ascending: false }) : { data: [] }
       ]);
       productos = pr.data || []; ingresosLibres = il.error ? [] : il.data || [];
+      const tv = loc ? await sb.from('localidades').select('tipo_venta').eq('id', loc).maybeSingle() : { data: null };
+      tipoVenta = tv.error ? null : tv.data?.tipo_venta || null;
       [cuentas, contables, centros, transacciones] = await Promise.all([ctx.cuentasBancarias(), ctx.cuentasContables(), C.centrosLocalidad(sb, loc), C.transaccionesLocalidad(sb, loc)]);
       await consultar();
     }
@@ -307,20 +312,21 @@
               ${ed ? '<div class="cf-acc"><button type="button" class="boton secundario-sm" data-accion="item"><i class="ti ti-plus" aria-hidden="true"></i> Línea</button><button type="button" class="boton secundario-sm" data-accion="total-detalle" ' + (items.length ? '' : 'disabled') + '><i class="ti ti-equal" aria-hidden="true"></i> Usar el detalle como total</button></div>' : ''}
             </div>
             <div class="bm-panel cf-articulos" data-panel="ARTICULOS" ${pestana === 'ARTICULOS' ? '' : 'hidden'}>
-              <div class="pc-lineas"><table><thead><tr><th class="pc-n">ID</th><th>Código producto</th><th>Nombre producto</th><th>Serie</th><th class="num">Cantidad</th><th class="num">Costo unitario</th><th class="num">Descuento</th><th class="num">Costo total</th><th class="num">C/U MI</th><th class="num">Costo total MI</th><th class="cc-det" title="Va a inventario">Inv?</th><th class="cc-det" title="Exento">Exen?</th><th></th></tr></thead>
+              <div class="pc-lineas"><table><thead><tr>${conLote() ? '<th class="pc-n">Prod</th><th>Cód. prod</th><th>Nombre producto</th><th>Lote</th><th>Fecha fabricación</th><th>Fecha vencimiento</th>' : '<th class="pc-n">ID</th><th>Código producto</th><th>Nombre producto</th><th>Serie</th>'}<th class="num">Cantidad</th><th class="num">Costo unitario</th><th class="num">Descuento</th><th class="num">Costo total</th><th class="num">C/U MI</th><th class="num">Costo total MI</th><th class="cc-det" title="Va a inventario">Inv?</th>${conLote() ? '<th class="cc-det" title="Controla fecha de vencimiento">Fecha</th>' : '<th class="cc-det" title="Exento">Exen?</th>'}<th></th></tr></thead>
                 <tbody>${articulos.map((a, i) => { const pd = prod(a.producto_id); const fijo = a.inventariado; const d2 = ed && !fijo ? '' : 'disabled'; const tq = totalArt(a) * cambio; return `<tr data-art="${i}" class="${fijo ? 'cf-inventariado' : ''}">
-                  <td class="pc-n">${a.linea || i + 1}</td><td class="fuerte">${esc(pd?.codigo_producto || String(pd?.codigo || ''))}</td><td class="cc-nombre" title="${esc(pd?.nombre || '')}">${esc(pd?.nombre || '')}${a.ingreso_linea_id ? ' <i class="ti ti-truck-delivery cf-del-ingreso" title="Viene del ingreso de la orden" aria-label="Del ingreso"></i>' : ''}</td>
-                  <td><input data-a="serie" value="${esc(a.serie || '')}" maxlength="40" ${ed ? '' : 'disabled'} aria-label="Serie"></td>
+                  <td class="pc-n">${conLote() ? esc(String(pd?.codigo ?? '')) : a.linea || i + 1}</td><td class="fuerte">${esc(pd?.codigo_producto || String(pd?.codigo || ''))}</td><td class="cc-nombre" title="${esc(pd?.nombre || '')}">${esc(pd?.nombre || '')}${a.ingreso_linea_id ? ' <i class="ti ti-truck-delivery cf-del-ingreso" title="Viene del ingreso de la orden" aria-label="Del ingreso"></i>' : ''}</td>
+                  <td><input data-a="serie" value="${esc(a.serie || '')}" maxlength="40" ${ed ? '' : 'disabled'} aria-label="${conLote() ? 'Lote' : 'Serie'}"></td>
+                  ${conLote() ? `<td class="cf-fecha"><input type="date" data-a="fecha_fabricacion" value="${esc(a.fecha_fabricacion || '')}" ${ed ? '' : 'disabled'} aria-label="Fecha de fabricación"></td><td class="cf-fecha"><input type="date" data-a="fecha_vencimiento" value="${esc(a.fecha_vencimiento || '')}" ${ed ? '' : 'disabled'} aria-label="Fecha de vencimiento" class="${a.control_fecha && !a.fecha_vencimiento ? 'cf-falta' : ''}"></td>` : ''}
                   <td class="num"><input type="number" step="0.0001" min="0" data-a="cantidad" value="${a.cantidad || ''}" ${d2} aria-label="Cantidad"></td>
                   <td class="num"><input type="number" step="0.0001" min="0" data-a="costo_unitario" value="${a.costo_unitario || ''}" ${ed ? '' : 'disabled'} aria-label="Costo unitario"></td>
                   <td class="num"><input type="number" step="0.0001" min="0" data-a="descuento" value="${a.descuento || ''}" ${ed ? '' : 'disabled'} aria-label="Descuento"></td>
                   <td class="num fuerte" data-at>${fmt.monto(totalArt(a))}${a.costo_extra ? `<small class="cf-extra" title="Incluye ${fmt.monto(a.costo_extra)} de costos extra">+extra</small>` : ''}</td>
                   <td class="num">${fmt.monto(Number(a.costo_unitario || 0) * cambio / mi)}</td><td class="num" data-atm>${fmt.monto(tq / mi)}</td>
                   <td class="cc-det"><input type="checkbox" data-a="inventario" ${a.inventario ? 'checked' : ''} ${d2} aria-label="Va a inventario"></td>
-                  <td class="cc-det"><input type="checkbox" data-a="exento" ${a.exento ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Exento"></td>
+                  ${conLote() ? `<td class="cc-det"><input type="checkbox" data-a="control_fecha" ${a.control_fecha ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Controla fecha de vencimiento"></td>` : `<td class="cc-det"><input type="checkbox" data-a="exento" ${a.exento ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Exento"></td>`}
                   <td>${ed && !fijo ? `<button type="button" class="icono-boton" data-quitar-art="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('')
-                  || `<tr><td colspan="13" class="tk-vacio">${ed ? 'Agrega los artículos, elige la compra de inventario arriba o carga el detalle desde Excel.' : 'La compra no tiene artículos.'}</td></tr>`}</tbody>
-                <tfoot><tr><td colspan="7" class="num">Total</td><td class="num" data-tart>${esc(sim)} ${fmt.monto(totArt)}</td><td></td><td class="num" data-tartm>$ ${fmt.monto(totArt * cambio / mi)}</td><td colspan="3"></td></tr></tfoot></table></div>
+                  || `<tr><td colspan="${conLote() ? 15 : 13}" class="tk-vacio">${ed ? 'Agrega los artículos, elige la compra de inventario arriba o carga el detalle desde Excel.' : 'La compra no tiene artículos.'}</td></tr>`}</tbody>
+                <tfoot><tr><td colspan="${conLote() ? 9 : 7}" class="num">Total</td><td class="num" data-tart>${esc(sim)} ${fmt.monto(totArt)}</td><td></td><td class="num" data-tartm>$ ${fmt.monto(totArt * cambio / mi)}</td><td colspan="3"></td></tr></tfoot></table></div>
               <div class="cf-art-cuenta"><b data-nart>${articulos.length}</b> Total productos${ed ? '<input list="cf-productos" data-agregar-art placeholder="Agregar artículo (código o nombre)…" aria-label="Agregar artículo">' : ''}</div>
               <div class="cf-art-acc">${(() => {
                 const activa = consulta && ctx.admin && c?.estado === 'ACTIVA';
@@ -328,7 +334,8 @@
                 return `<div class="cf-art-grupo">${b('cargar-inv', 'ti-package-import', 'Cargar inventario', activa && pendInv, 'title="Carga a la bodega los artículos marcados en Inv?"')}${b('revertir-inv', 'ti-arrow-back-up', 'Revertir carga', activa && hayInv)}</div>
                   <div class="cf-art-grupo">${b('anular', 'ti-ban', 'Anular', activa && !pagado && !hayInv)}</div>
                   <div class="cf-art-grupo">${b('imprimir', 'ti-printer', 'Imprimir', !!c)}${b('costos-extra', 'ti-truck', 'Costos extras', ed && articulos.length, 'title="Prorratea fletes, seguros u otros costos entre los artículos"')}${b('crear-producto', 'ti-plus', 'Crear producto', ed)}
-                  ${ed ? '<label class="boton secundario-sm" title="Archivo CSV de Excel: código; cantidad; costo unitario; serie; descuento"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Cargar detalle Excel<input type="file" accept=".csv,.txt,text/csv" data-excel hidden></label>' : b('excel', 'ti-file-spreadsheet', 'Cargar detalle Excel', false)}</div>`;
+                  ${conLote() ? b('crear-conta', 'ti-calculator', 'Crear compra conta', ed && !disC && articulos.length, 'title="Genera el detalle contable de la compra (pestaña Contabilidad)"')
+                    : ed ? '<label class="boton secundario-sm" title="Archivo CSV de Excel: código; cantidad; costo unitario; serie; descuento"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Cargar detalle Excel<input type="file" accept=".csv,.txt,text/csv" data-excel hidden></label>' : b('excel', 'ti-file-spreadsheet', 'Cargar detalle Excel', false)}</div>`;
               })()}</div>
               </div>
             </div>
@@ -439,7 +446,7 @@
       });
       ctx.pDet.querySelectorAll('tr[data-art]').forEach((tr) => {
         const a = articulos[Number(tr.dataset.art)];
-        tr.querySelectorAll('[data-a]').forEach((el) => { a[el.dataset.a] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) || 0 : el.value; });
+        tr.querySelectorAll('[data-a]').forEach((el) => { a[el.dataset.a] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) || 0 : el.type === 'date' ? el.value || null : el.value; });
       });
       ctx.pDet.querySelectorAll('tr[data-item]').forEach((tr) => {
         const it = items[Number(tr.dataset.item)];
@@ -601,6 +608,10 @@
       const bienes = esBienes(v);
       if (!bienes && items.some((i) => (i.costo_total || i.cantidad !== 1) && !i.descripcion)) { pestana = 'ITEMS'; error.textContent = 'Escribe la descripción de cada línea del detalle.'; return; }
       const malArt = articulos.find((a) => !(a.cantidad > 0) || a.descuento > a.cantidad * a.costo_unitario);
+      const sinFecha = conLote() && articulos.find((a) => a.control_fecha && !a.fecha_vencimiento);
+      if (bienes && sinFecha) { pestana = 'ARTICULOS'; error.textContent = `Escribe la fecha de vencimiento de ${prod(sinFecha.producto_id)?.nombre || 'un artículo'}.`; return; }
+      const malFecha = conLote() && articulos.find((a) => a.fecha_fabricacion && a.fecha_vencimiento && a.fecha_vencimiento < a.fecha_fabricacion);
+      if (bienes && malFecha) { pestana = 'ARTICULOS'; error.textContent = `El vencimiento de ${prod(malFecha.producto_id)?.nombre || 'un artículo'} es anterior a su fabricación.`; return; }
       if (bienes && malArt) { pestana = 'ARTICULOS'; error.textContent = `Revisa la cantidad y el descuento de ${prod(malArt.producto_id)?.nombre || 'un artículo'}.`; return; }
       if (bienes && articulos.some((a) => a.inventario && !a.inventariado) && !v.bodega_id) return foco('bodega_id', 'Elige la bodega a la que entran los artículos.');
       const ls = lineas.filter((l) => l.cuenta_id && (l.debe || l.haber));
@@ -641,14 +652,15 @@
     }
 
     // Artículos: los que ya están en inventario se actualizan; los demás se vuelven a grabar.
+    const fechasArt = (a) => (conLote() ? { fecha_fabricacion: a.fecha_fabricacion || null, fecha_vencimiento: a.fecha_vencimiento || null, control_fecha: !!a.control_fecha } : {});
     async function guardarArticulos(id) {
       const fijos = articulos.filter((a) => a.id && a.inventariado);
-      for (const a of fijos) { const r = await sb.from('compra_articulos').update({ serie: a.serie || null, costo_unitario: a.costo_unitario || 0, descuento: a.descuento || 0, costo_extra: a.costo_extra || 0, exento: !!a.exento }).eq('id', a.id); if (r.error) throw r.error; }
+      for (const a of fijos) { const r = await sb.from('compra_articulos').update({ serie: a.serie || null, ...fechasArt(a), costo_unitario: a.costo_unitario || 0, descuento: a.descuento || 0, costo_extra: a.costo_extra || 0, exento: !!a.exento }).eq('id', a.id); if (r.error) throw r.error; }
       const d = await sb.from('compra_articulos').delete().eq('compra_id', id).eq('inventariado', false);
       if (d.error) throw d.error;
       let n = Math.max(0, ...fijos.map((a) => a.linea || 0));
       const otros = articulos.filter((a) => !(a.id && a.inventariado));
-      if (otros.length) { const r = await sb.from('compra_articulos').insert(otros.map((a) => ({ compra_id: id, linea: ++n, producto_id: a.producto_id, serie: a.serie || null, cantidad: a.cantidad, costo_unitario: a.costo_unitario || 0, descuento: a.descuento || 0, costo_extra: a.costo_extra || 0, inventario: !!a.inventario, exento: !!a.exento, ingreso_linea_id: a.ingreso_linea_id || null }))); if (r.error) throw r.error; }
+      if (otros.length) { const r = await sb.from('compra_articulos').insert(otros.map((a) => ({ compra_id: id, linea: ++n, producto_id: a.producto_id, serie: a.serie || null, ...fechasArt(a), cantidad: a.cantidad, costo_unitario: a.costo_unitario || 0, descuento: a.descuento || 0, costo_extra: a.costo_extra || 0, inventario: !!a.inventario, exento: !!a.exento, ingreso_linea_id: a.ingreso_linea_id || null }))); if (r.error) throw r.error; }
     }
     function agregarArticulo(texto) {
       const t = String(texto || '').trim().toUpperCase();
@@ -677,7 +689,7 @@
         orden_compra: i.ordenes_compra?.numero || v.orden_compra, bonificaciones: Number(i.valor_descuento) || 0,
         clasificacion_id: aplicaInv(clasificacion(v.clasificacion_id)) && v.clasificacion_id ? v.clasificacion_id : (clasificaciones.find((x) => x.nombre === 'BIENES' && aplicaInv(x)) || clasificaciones.find((x) => x.activo !== false && aplicaInv(x)))?.id || v.clasificacion_id,
         descripcion: v.descripcion || `COMPRA DEL INGRESO ${i.numero} DE LA ORDEN ${i.ordenes_compra?.numero || ''}` });
-      articulos = articulos.filter((a) => !a.ingreso_linea_id).concat(i.ingreso_lineas.map((l) => ({ producto_id: l.producto_id, serie: l.lote || '', cantidad: Number(l.cantidad), costo_unitario: Number(l.costo_unitario), descuento: 0, costo_extra: 0, inventario: true, exento: false, inventariado: false, ingreso_linea_id: l.id })));
+      articulos = articulos.filter((a) => !a.ingreso_linea_id).concat(i.ingreso_lineas.map((l) => ({ producto_id: l.producto_id, serie: l.lote || '', fecha_fabricacion: l.fecha_fabricacion || null, fecha_vencimiento: l.fecha_vencimiento || null, control_fecha: !!l.fecha_vencimiento, cantidad: Number(l.cantidad), costo_unitario: Number(l.costo_unitario), descuento: 0, costo_extra: 0, inventario: true, exento: false, inventariado: false, ingreso_linea_id: l.id })));
       v.valor_total = fmt.redondear(articulos.reduce((t, a) => t + totalArt(a), 0) - (Number(i.valor_descuento) || 0));
       ingresoVincular = i.id;
       await cargarCuentasProv(i.proveedor_id);
@@ -880,6 +892,7 @@
       if (a === 'imprimir-contrasena') return imprimirContrasena();
       if (a === 'contrasena') return crearContrasena();
       if (a === 'contabilizar') return contabilizar();
+      if (a === 'crear-conta') { pestana = 'CONTABLE'; repintar(); return contabilizar(); }
       if (a === 'linea') { leerFilas(); lineas.push({ cuenta_id: null, codigo: '', centro_id: null, debe: 0, haber: 0 }); return repintar(); }
       if (a === 'item') { leerFilas(); items.push({ descripcion: '', cantidad: 1, costo_total: 0 }); repintar(); const ins = ctx.pDet.querySelectorAll('[data-i=descripcion]'); return ins[ins.length - 1]?.focus(); }
       if (a === 'total-detalle') { leerFilas(); const form = ctx.pDet.querySelector('.cf-form'); form.elements.valor_total.value = fmt.redondear(subtotal() - Number(form.elements.bonificaciones.value || 0)); return actualizar(form); }

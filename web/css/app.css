@@ -2973,3 +2973,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .kx-pe .kx-tabla .pc-n { width: 24px; }
 .kx-pe .kx-tabla th:nth-child(2), .kx-pe .kx-tabla td:nth-child(2) { width: 30px; }
 .kx-pe .kx-fis { max-width: 100px; }
+.cf-articulos .cf-fecha input { min-width: 118px; padding: 2px 4px !important; }
+.cf-articulos input.cf-falta { border-color: #c62828 !important; background: color-mix(in srgb, #c62828 8%, var(--panel)) !important; }
+.cf-articulos tbody td:nth-child(4) input { min-width: 96px; }
+.cf-articulos .pc-lineas td.num input { max-width: 96px; }
