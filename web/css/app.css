@@ -3213,3 +3213,17 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .oc-derivada td { color: var(--suave); background: var(--fondo); }
 .oc-derivada .oc-linea { font-size: 12px; white-space: normal; }
 .oc-nota { margin-top: 2px; }
+
+/* Usuarios · usuarios por crear (migrados sin correo). */
+.um-panel { border-top: 1px dashed var(--borde); margin-top: 10px; padding-top: 8px; display: grid; gap: 6px; }
+.um-cab { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.um-cab h3 { margin: 0; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--acento); display: flex; align-items: center; gap: 6px; }
+.um-cab h3 small { color: var(--tenue); font-weight: 600; }
+.um-tabla { max-height: 196px; }
+.um-tabla td, .um-tabla th { padding-top: 3px; padding-bottom: 3px; }
+.um-tabla .boton { padding: 4px 14px; min-height: 0; }
+.um-tabla .um-correo { padding: 3px 8px; }
+.um-correo { width: 100%; min-width: 220px; font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); color: var(--texto); }
+.um-clave { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--fondo); border: 1px solid var(--borde); font-size: 13px; }
+.um-clave > span { flex: 1; }
+.um-clave code { font-size: 14px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--panel); user-select: all; }

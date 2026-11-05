@@ -2,6 +2,8 @@
 // con su código, rol, estado, vencimiento de clave, empleado, extensión y firma.
 // Administradores modifican; solo el Super Administrador cambia roles o modifica a otro Super
 // Administrador. Los demás ven su propio usuario (RLS de perfiles).
+// Usuarios por crear (migrados de otro sistema, sin correo): el administrador escribe el correo y
+// «Crear» genera la cuenta con una clave que se muestra una sola vez (public.crear_usuario_migrado).
 (function () {
   const { esc, fecha, fechaCorta, tabla, formulario, filtrar } = window.UI;
   const BUCKET = 'firmas';
@@ -25,7 +27,7 @@
     const roles = window.FIN.roles();
     // Un administrador modifica a todos salvo al Super Administrador; solo este cambia roles.
     const puedeModificar = (u) => admin && (u.rol_id !== 'superadministrador' || superAdmin);
-    const estado = { filas: [], sel: null, orgs: [], locs: [], filtroOrg: '', filtroLoc: '', buscar: '', firma: null };
+    const estado = { filas: [], sel: null, orgs: [], locs: [], filtroOrg: '', filtroLoc: '', buscar: '', firma: null, migrados: [], claveNueva: null };
 
     const [o, l] = await Promise.all([
       sb.from('organizaciones').select('id, codigo, nombre').order('codigo'),
@@ -45,10 +47,41 @@
       const { data, error } = await sb.from('perfiles').select('*').order('usuario', { nullsFirst: false }).order('nombre');
       if (error) { panel.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       estado.filas = data;
+      if (admin) {
+        const pm = await sb.from('usuarios_migrados').select('*').is('perfil_id', null).order('usuario_anterior');
+        estado.migrados = pm.error ? [] : pm.data;
+      }
       const previo = seleccion || (estado.sel && estado.sel.id);
       estado.sel = data.find((u) => u.id === previo) || data[0] || null;
       estado.firma = estado.sel ? await urlFirma(sb, estado.sel.firma_ruta) : null;
       pintar();
+    }
+
+    const migradosVisibles = () => estado.migrados.filter((u) =>
+      (!estado.filtroOrg || u.organizacion_id === Number(estado.filtroOrg)) &&
+      (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc)));
+
+    // Usuarios por crear: correo y «Crear» por fila; la clave nueva se muestra una sola vez arriba.
+    function pintarMigrados() {
+      const lista = migradosVisibles();
+      const c = estado.claveNueva;
+      if (!lista.length && !c) return '';
+      return `
+        <section class="um-panel">
+          <header class="um-cab"><h3><i class="ti ti-user-plus" aria-hidden="true"></i> Usuarios por crear <small>${lista.length}</small></h3>
+            <span class="rp-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Migrados del sistema anterior: escribe el correo de cada uno y pulsa «Crear». Su clave anterior no se migra.</span></header>
+          ${c ? `<div class="um-clave" role="status"><i class="ti ti-key" aria-hidden="true"></i><span>Cuenta creada para <b>${esc(c.nombre)}</b> (${esc(c.correo)}).${c.clave ? ` Clave: <code data-clave>${esc(c.clave)}</code> <button type="button" class="boton secundario-sm" data-accion="copiar-clave"><i class="ti ti-copy" aria-hidden="true"></i> Copiar</button> Se muestra una sola vez y vence hoy: el usuario la cambia al entrar.` : ' Se ligó a la cuenta que ya tenía ese correo.'} Asígnale su rol con «Modificar».</span><button type="button" class="icono-boton" data-accion="cerrar-clave" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></div>` : ''}
+          ${lista.length ? `<div class="tabla-desplazable um-tabla"><table class="tabla catalogo">
+            <thead><tr><th class="angosta">Usuario ant.</th><th>Nombre</th><th>Organización · localidad</th><th>Creado (sist. anterior)</th><th>Clave al (sist. anterior)</th><th>Estado</th><th>Correo</th><th class="acciones"></th></tr></thead>
+            <tbody>${lista.map((x) => `<tr data-migrado="${x.id}">
+              <td class="angosta"><span class="codigo">${esc(x.usuario_anterior)}</span></td><td class="fuerte">${esc(x.nombre)}</td>
+              <td>${esc((org(x.organizacion_id) || {}).nombre || '')} · <span class="codigo">${esc((loc(x.localidad_id) || {}).codigo || '')}</span></td>
+              <td>${fechaCorta(x.fecha_creacion_anterior) || '—'}</td><td>${fechaCorta(x.fecha_clave_anterior) || '—'}</td>
+              <td>${window.UI.estado(x.activo)}</td>
+              <td><input type="email" class="um-correo" data-correo placeholder="correo@empresa.com" aria-label="Correo de ${esc(x.nombre)}"></td>
+              <td class="acciones"><button type="button" class="boton primario-sm" data-accion="crear-migrado">Crear</button></td></tr>`).join('')}</tbody>
+          </table></div>` : ''}
+        </section>`;
     }
 
     const visibles = () => estado.filas.filter((u) =>
@@ -114,13 +147,15 @@
                 ${dato('Empleado', esc(u.empleado))}
                 ${dato('Estado', u.activo ? 'ACTIVO' : 'INACTIVO')}
                 ${dato('Extensión telefónica', esc(u.extension))}
+                ${u.usuario_anterior ? dato('Usuario sist. anterior', `<span class="codigo">${esc(u.usuario_anterior)}</span>${u.fecha_creacion_anterior ? ` · desde ${fechaCorta(u.fecha_creacion_anterior)}` : ''}`) : ''}
               </div>
               <figure class="imagen-org firma">
                 <figcaption>Firma</figcaption>
                 <div class="imagen-marco">${estado.firma ? `<img src="${esc(estado.firma)}" alt="Firma de ${esc(u.nombre)}">` : '<span class="sin-imagen"><i class="ti ti-signature" aria-hidden="true"></i> Sin firma</span>'}</div>
               </figure>
             </div>
-          </div>` : ''}`;
+          </div>` : ''}
+        ${pintarMigrados()}`;
       filtrar(panel, estado.buscar);
     }
 
@@ -200,6 +235,21 @@
         const a = accion.dataset.accion;
         if (a === 'modificar') formUsuario(estado.sel);
         if (a === 'actualizar') { await cargar(); window.FIN.aviso('Datos actualizados'); }
+        if (a === 'cerrar-clave') { estado.claveNueva = null; pintar(); }
+        if (a === 'copiar-clave') { try { await navigator.clipboard.writeText(estado.claveNueva.clave); window.FIN.aviso('Clave copiada'); } catch { window.FIN.aviso('Selecciona la clave y cópiala'); } }
+        if (a === 'crear-migrado') {
+          const tr = accion.closest('tr[data-migrado]');
+          const x = estado.migrados.find((y) => String(y.id) === tr.dataset.migrado);
+          const correo = tr.querySelector('[data-correo]').value.trim();
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) { window.FIN.aviso('Escribe un correo válido.'); tr.querySelector('[data-correo]').focus(); return; }
+          accion.disabled = true;
+          const { data, error } = await sb.rpc('crear_usuario_migrado', { p_migrado: x.id, p_correo: correo });
+          if (error) { accion.disabled = false; window.FIN.aviso(window.UI.traducirError(error)); return; }
+          estado.claveNueva = { nombre: x.nombre, correo, clave: data };
+          const nuevo = await sb.from('perfiles').select('id').eq('correo', correo.toLowerCase()).maybeSingle();
+          await cargar(nuevo.data?.id);
+          return;
+        }
         if (a === 'generar') location.hash = `#/${m.id}/generar-usuario/${estado.sel.id}`;
         if (a === 'clave') {
           const { error } = await sb.auth.resetPasswordForEmail(estado.sel.correo, { redirectTo: window.FIN.urlSitio });
