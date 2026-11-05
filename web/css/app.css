@@ -3014,3 +3014,46 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ra-n2 td:nth-child(2) { padding-left: 22px; font-weight: 600; }
 .ra-n3 td:nth-child(2) { padding-left: 38px; color: var(--suave); }
 .ra-tabla tfoot td { position: sticky; bottom: 0; background: var(--fondo); font-weight: 700; }
+
+/* Ayuda · Manual del módulo (presentación) */
+.mm-fondo { position: fixed; inset: 0; z-index: 900; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(10, 20, 35, .62); }
+.mm-visor { width: min(1500px, 100%); height: min(900px, 100%); display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--panel); box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
+.mm-cargando { align-items: center; justify-content: center; font-size: 15px; color: var(--suave); width: 360px; height: 120px; flex-direction: row; }
+.mm-gira { animation: mm-giro 1s linear infinite; display: inline-block; }
+@keyframes mm-giro { to { transform: rotate(360deg); } }
+.mm-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--borde); }
+.mm-titulo { display: flex; align-items: center; gap: 10px; }
+.mm-titulo > .ti { font-size: 26px; color: var(--cl-rojo); }
+.mm-titulo b { display: block; font-size: 16px; }
+.mm-titulo small { color: var(--suave); font-size: 12px; }
+.mm-acc { display: flex; gap: 6px; align-items: center; }
+.mm-cuerpo-visor { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 12px; }
+.mm-indice { overflow: auto; display: flex; flex-direction: column; gap: 3px; padding-right: 4px; }
+.mm-indice button { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border: 1px solid transparent; border-radius: 8px; background: none; text-align: left; font-size: 12.5px; cursor: pointer; color: var(--texto); }
+.mm-indice button span { min-width: 20px; font-size: 11px; color: var(--suave); text-align: right; }
+.mm-indice button:hover { background: var(--fondo); }
+.mm-indice button.actual { border-color: var(--cl-azul-borde); background: var(--cl-azul); font-weight: 700; }
+.mm-escena { min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.mm-dia { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 26px 34px; border: 1px solid var(--cl-azul-borde); border-radius: 14px; background: linear-gradient(160deg, var(--panel) 70%, var(--cl-azul)); overflow: auto; }
+.mm-dia header { display: flex; align-items: center; gap: 14px; padding-bottom: 12px; border-bottom: 3px solid var(--cl-rojo); }
+.mm-tipo { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--cl-azul); color: var(--acento); font-size: 28px; flex: 0 0 auto; }
+.mm-dia h2 { margin: 0; font-size: 28px; color: var(--cl-rojo); }
+.mm-dia header p { margin: 3px 0 0; color: var(--suave); font-size: 15px; }
+.mm-cuerpo { flex: 1; padding-top: 16px; font-size: 17px; line-height: 1.5; }
+.mm-cuerpo ul { margin: 0; padding-left: 22px; }
+.mm-cuerpo li { margin: 7px 0; }
+.mm-pasos { margin: 0; padding: 0; list-style: none; counter-reset: paso; }
+.mm-pasos li { counter-increment: paso; position: relative; padding: 8px 12px 8px 50px; margin: 6px 0; border-radius: 10px; background: var(--fondo); }
+.mm-pasos li::before { content: counter(paso); position: absolute; left: 10px; top: 7px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--acento); color: #fff; font-weight: 800; font-size: 14px; }
+.mm-tabla { margin-top: 10px; overflow: auto; border: 1px solid var(--borde); border-radius: 10px; }
+.mm-tabla table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.mm-tabla th { padding: 7px 10px; text-align: left; background: var(--cl-azul); color: var(--cl-rojo); font-size: 12px; text-transform: uppercase; }
+.mm-tabla td { padding: 6px 10px; border-top: 1px solid var(--borde); }
+.mm-dia footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--borde); font-size: 12px; color: var(--suave); }
+.mm-t-portada .mm-cuerpo, .mm-t-cierre .mm-cuerpo { display: flex; align-items: center; }
+.mm-t-portada h2 { font-size: 40px; }
+.mm-t-portada .mm-tipo, .mm-t-cierre .mm-tipo { width: 72px; height: 72px; font-size: 40px; }
+.mm-nav { display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 13px; color: var(--suave); }
+.mm-estado:empty { display: none; }
+.mm-estado { margin: 0; padding: 6px 10px; border-radius: 8px; background: var(--cl-amarillo); font-size: 13px; }
+@media (max-width: 900px) { .mm-cuerpo-visor { grid-template-columns: 1fr; } .mm-indice { display: none; } .mm-dia { padding: 16px; } .mm-dia h2 { font-size: 22px; } }

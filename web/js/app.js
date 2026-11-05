@@ -290,7 +290,7 @@
   function menuModulo(m, actual) {
     const grupoDe = (g) => subgruposDe(m, g.id).some((s) => contiene(s, actual));
     return `
-      <nav class="menu-modulo" data-color="${m.color}" aria-label="Menú de ${esc(m.corto)}">
+      <nav class="menu-modulo" data-color="${m.color}" data-modulo="${m.id}" aria-label="Menú de ${esc(m.corto)}">
         ${gruposDe(m).map((g) => `
           <div class="menu-item">
             <button type="button" class="menu-boton ${actual && grupoDe(g) ? 'actual' : ''}" data-menu="${g.id}" aria-expanded="false" aria-haspopup="true">
@@ -368,6 +368,13 @@
     }
     if (e.target.closest('.menu-panel a.opcion')) cerrarMenus();
     const b = e.target.closest('button[data-opcion]');
+    if (b && b.dataset.opcion === 'Manual del módulo' && window.MANUAL) {
+      // Manual del módulo: presentación con la estructura del menú (y con IA si se generó).
+      cerrarMenus();
+      const m = MODULOS.find((x) => x.id === b.closest('.menu-modulo')?.dataset.modulo);
+      if (m) window.MANUAL.abrir(m, estructuraModulo(m));
+      return;
+    }
     if (b) { cerrarMenus(); aviso(`${b.dataset.grupo} › ${b.dataset.opcion}: en construcción.`); }
   });
   // Se cierran al tocar fuera del menú o con Escape.
@@ -389,6 +396,11 @@
     return s.pantallas.flatMap((p) => p.pantallas ? hojas(p, `${ruta} · ${p.subgrupo}`) : [{ p, ruta }]);
   }
   const contiene = (s, actual) => !!actual && hojas(s).some((h) => h.p === actual);
+  // Grupos, subgrupos y pantallas del módulo con su descripción (para el manual del módulo).
+  const estructuraModulo = (m) => gruposDe(m).filter((g) => g.id !== 'ayuda').map((g) => ({
+    id: g.id, grupo: g.nombre, opciones: (m.opciones || {})[g.id] || [],
+    subgrupos: subgruposDe(m, g.id).map((s) => ({ subgrupo: s.subgrupo, pantallas: hojas(s).map((h) => ({ id: h.p.id, nombre: h.p.nombre, descripcion: h.p.descripcion || '', ruta: h.ruta })) }))
+  })).filter((g) => g.subgrupos.length || g.opciones.length);
 
   // Pantalla de un subgrupo dentro de un módulo: #/<modulo>/<pantalla>
   function pantalla(m, p, extra) {
