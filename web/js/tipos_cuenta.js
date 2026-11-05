@@ -5,6 +5,8 @@
 
   const OPERACIONES = [{ valor: 'DEBE-HABER', texto: 'DEBE - HABER' }, { valor: 'HABER-DEBE', texto: 'HABER - DEBE' }];
   const RESULTADOS = ['NINGUNA', 'SUMAR', 'RESTAR'].map((v) => ({ valor: v, texto: v }));
+  const REPORTES = [{ valor: 'B', texto: 'Balance general' }, { valor: 'E', texto: 'Estado de resultados' }];
+  const nombreReporte = (v) => (REPORTES.find((x) => x.valor === v) || {}).texto || '';
   const marca = (si) => si ? '<i class="ti ti-square-check marca-si" aria-label="Sí"></i>' : '<i class="ti ti-square marca-no" aria-label="No"></i>';
 
   window.PANTALLAS = window.PANTALLAS || {};
@@ -17,6 +19,8 @@
     const yo = window.FIN.perfil();
     const sel = { org: yo.organizacion_id || null, loc: yo.localidad_id || null };
     const locsOrg = () => locs.filter((l) => l.organizacion_id === sel.org);
+    // Columnas del script 76 (reporte financiero, operación balance, presupuesto y versión).
+    const conNuevas = () => !filas.length || 'reporte_financiero' in filas[0];
 
     cont.innerHTML = '<section class="panel" id="p-tipos"></section>';
     const panel = cont.querySelector('#p-tipos');
@@ -55,6 +59,11 @@
             { titulo: 'Tipo de operación', valor: (f) => esc(f.tipo_operacion.replace('-', ' - ')) },
             { titulo: 'Operación resultado ejercicio', valor: (f) => esc(f.operacion_resultado) },
             { titulo: 'Incluye centro de costo', valor: (f) => marca(f.incluye_centro_costo), clase: 'centrada' },
+            ...(conNuevas() ? [
+              { titulo: 'Reporte financiero', valor: (f) => esc(nombreReporte(f.reporte_financiero)) },
+              { titulo: 'Operación balance', valor: (f) => (f.operacion_balance ?? '—'), clase: 'centrada' },
+              { titulo: 'Presupuesto', valor: (f) => marca(f.presupuesto), clase: 'centrada' },
+              { titulo: 'Versión', valor: (f) => f.version ?? '', clase: 'angosta' }] : []),
             { titulo: 'Estado', valor: (f) => window.UI.estado(f.activo) }
           ],
           filas
@@ -65,17 +74,23 @@
     function form(fila) {
       formulario({
         titulo: fila ? `Modificar tipo de cuenta · ${fila.descripcion}` : 'Nuevo tipo de cuenta',
-        valores: fila || { codigo: Math.max(0, ...filas.map((x) => x.codigo)) + 1, tipo_operacion: 'DEBE-HABER', operacion_resultado: 'NINGUNA', activo: true },
+        valores: fila || { codigo: Math.max(0, ...filas.map((x) => x.codigo)) + 1, tipo_operacion: 'DEBE-HABER', operacion_resultado: 'NINGUNA', activo: true, reporte_financiero: 'E', version: 1 },
         campos: [
           { nombre: 'codigo', etiqueta: 'Tipo', tipo: 'numero', requerido: true },
           { nombre: 'descripcion', etiqueta: 'Descripción', requerido: true },
           { nombre: 'tipo_operacion', etiqueta: 'Tipo de operación', tipo: 'select', opciones: OPERACIONES, requerido: true },
           { nombre: 'operacion_resultado', etiqueta: 'Operación resultado ejercicio', tipo: 'select', opciones: RESULTADOS, requerido: true },
           { nombre: 'incluye_centro_costo', etiqueta: 'Incluye centro de costo', tipo: 'casilla' },
+          ...(conNuevas() ? [
+            { nombre: 'reporte_financiero', etiqueta: 'Reporte financiero', tipo: 'select', opciones: REPORTES },
+            { nombre: 'operacion_balance', etiqueta: 'Operación balance (0 o 1, vacío si no aplica)', tipo: 'numero' },
+            { nombre: 'presupuesto', etiqueta: 'Se presupuesta', tipo: 'casilla' },
+            { nombre: 'version', etiqueta: 'Versión', tipo: 'numero' }] : []),
           { nombre: 'activo', etiqueta: 'Activo', tipo: 'casilla' }
         ],
         alGuardar: async (d) => {
           d.descripcion = d.descripcion.toUpperCase();
+          if (conNuevas()) { d.reporte_financiero = d.reporte_financiero || null; d.operacion_balance = d.operacion_balance === '' || d.operacion_balance == null ? null : Number(d.operacion_balance); d.version = Number(d.version) || 1; }
           const r = fila ? await sb.from('tipos_cuenta').update(d).eq('id', fila.id) : await sb.from('tipos_cuenta').insert({ ...d, organizacion_id: sel.org, localidad_id: sel.loc });
           if (r.error) throw r.error;
           window.FIN.aviso('Tipo de cuenta guardado');
