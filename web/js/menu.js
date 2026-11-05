@@ -284,6 +284,16 @@ window.MODULOS = [
           pantallas: [
             { id: 'clasificaciones-compra', nombre: 'Clasificación compras', icono: 'ti-tags', descripcion: 'Clasificaciones fiscales de las compras: siglas, libro de compras y si aplica IVA.' },
             { id: 'tipos-documento-compra', nombre: 'Tipo documento', icono: 'ti-file-description', descripcion: 'Tipos de documento de las compras y cómo se calcula su IVA.', separador: true },
+            {
+              subgrupo: 'Órdenes de compra',
+              icono: 'ti-clipboard-list',
+              pantallas: [
+                { id: 'solicitudes-de-compra', nombre: 'Solicitudes de compra', icono: 'ti-file-plus', descripcion: 'Requisiciones de compra de cada área, con su aprobación.' },
+                { id: 'ordenes-de-compra', nombre: 'Órdenes de compra', icono: 'ti-clipboard-list', descripcion: 'Órdenes de compra a los proveedores, con su detalle y su autorización.' },
+                { id: 'recepcion-de-mercaderia', nombre: 'Recepción de mercadería', icono: 'ti-truck-delivery', descripcion: 'Recepción en bodega de lo comprado contra la orden de compra.' },
+                { id: 'notas-de-credito-proveedores', nombre: 'Notas de crédito de proveedores', icono: 'ti-receipt-refund', descripcion: 'Notas de crédito recibidas de los proveedores.' }
+              ]
+            },
             { id: 'facturas-compra', nombre: 'Facturas de compra', icono: 'ti-file-invoice', descripcion: 'Ingreso de la compra: documento, proveedor, desglose fiscal, retención, detalle, detalle contable, contraseña de pago y pagos.' },
             { id: 'contrasenas-pago', nombre: 'Contraseñas de pago', icono: 'ti-key', descripcion: 'Recepción de facturas del proveedor: documentos recibidos, fecha estimada de pago, autorización, impresión y liquidación.' }
           ]
@@ -292,7 +302,6 @@ window.MODULOS = [
     },
     opciones: {
       catalogos: ['Productos y servicios de compra', 'Compradores', 'Condiciones de pago'],
-      registros: ['Solicitudes de compra', 'Órdenes de compra', 'Recepción de mercadería', 'Notas de crédito de proveedores'],
       mantenimientos: ['Series de documentos', 'Listas de precios de proveedores'],
       procesos: ['Aprobación de órdenes de compra', 'Anulación de documentos', 'Antigüedad de saldos'],
       reportes: ['Compras por período', 'Compras por proveedor', 'Cuentas por pagar', 'Gráfica de compras'],
