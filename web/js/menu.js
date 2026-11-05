@@ -83,7 +83,8 @@ window.MODULOS = [
             { id: 'tickets-generacion', nombre: 'Generación', icono: 'ti-ticket', descripcion: 'Creación de tickets de solicitud o soporte.' },
             { id: 'tickets-asignacion', nombre: 'Asignación', icono: 'ti-user-check', descripcion: 'Asignación de cada ticket a su responsable.' },
             { id: 'tickets-seguimiento', nombre: 'Seguimiento', icono: 'ti-progress-check', descripcion: 'Estado y avance de los tickets hasta su cierre.' },
-            { id: 'tickets-cierre', nombre: 'Cierre', icono: 'ti-circle-check', descripcion: 'Cierre de los tickets resueltos.' }
+            { id: 'tickets-cierre', nombre: 'Cierre', icono: 'ti-circle-check', descripcion: 'Cierre de los tickets resueltos.' },
+            { id: 'tickets-visualizacion', nombre: 'Visualización General', icono: 'ti-layout-dashboard', descripcion: 'Todos los tickets con su asignación y tiempo transcurrido, ordenados por la columna que elijas.' }
           ]
         }
       ]

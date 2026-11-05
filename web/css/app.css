@@ -3113,3 +3113,22 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .tq-espacio .ta-procesos { gap: 6px; }
 .tq-espacio .ta-procesos > p.tk-tenue { margin: 0; }
 .tq-espacio .ta-col .ta-col-titulo + * { margin-top: 0; }
+
+/* Tickets · Visualización general */
+.tv-espacio { grid-template-rows: auto minmax(0, 1fr); gap: 10px; }
+.tv-tabla { display: flex; flex-direction: column; min-height: 0; }
+.tv-cab { flex-wrap: wrap; gap: 8px 12px; padding: 8px 14px; }
+.tv-cab .tk-buscar { margin-left: auto; min-width: 260px; }
+.tv-cab select { height: 32px; }
+.tv-cuenta { display: flex; flex-wrap: wrap; gap: 6px; }
+.tv-cuenta b { margin-left: 3px; }
+.tv-vencidos { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, #c62828 12%, transparent); color: #c62828; font-size: 12px; font-weight: 700; }
+.tv-lista { flex: 1; min-height: 0; overflow: auto; }
+.tv-lista td { padding-top: 6px; padding-bottom: 6px; }
+.tv-lista .tk-celda-num small { display: block; font-size: 10.5px; color: var(--tenue); }
+.tv-req { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-recurso { display: inline-flex; align-items: center; gap: 6px; }
+.tv-orden { cursor: pointer; user-select: none; white-space: nowrap; }
+.tv-orden:hover { color: var(--acento); }
+.tv-orden.activo { color: var(--acento); }
+.tv-filtros { grid-template-columns: auto minmax(180px, 1.3fr) repeat(2, 150px) minmax(140px, 1fr) repeat(2, minmax(110px, .8fr)) minmax(170px, 1fr) 140px !important; }
