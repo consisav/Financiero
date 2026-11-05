@@ -1,0 +1,62 @@
+{
+  "version": "2026.11",
+  "titulo": "Manual del módulo Administración",
+  "resumen": "Usuarios y claves, módulos y roles con sus permisos, parámetros, tipos de cambio, geografía, organizaciones y localidades, tickets, backup y reportes administrativos.",
+  "nombresTablas": { "organizaciones": "Organizaciones", "localidades": "Localidades (empresas)", "roles_funcionales": "Roles funcionales", "modulos_sistema": "Módulos del sistema" },
+  "diapositivas": [
+    { "tipo": "portada", "titulo": "Módulo de Administración", "subtitulo": "La base del sistema: empresas, usuarios, permisos y parámetros", "nota": "CONSISAV Financiero · manual de operación" },
+    { "tipo": "indice", "titulo": "Contenido", "puntos": [
+      "Catálogos › Usuarios: usuarios y generación de claves",
+      "Catálogos › Módulos: módulos del sistema y roles con sus permisos",
+      "Catálogos › Parámetros: parámetros generales, tipos de cambio, geografía y organizaciones",
+      "Tickets: generación, asignación, seguimiento y cierre",
+      "Procesos: backup · Reportes y gráficas: organizaciones, módulos, roles y usuarios" ] },
+    { "tipo": "concepto", "titulo": "Cómo se organiza el sistema", "subtitulo": "Todo pertenece a una organización y a una localidad (empresa)", "pasos": [
+      "La organización agrupa empresas; cada localidad es una empresa con su NIT y sus propios datos.",
+      "Cada localidad indica qué vende: medicamentos, productos perecederos o no perecederos.",
+      "Los usuarios pertenecen a una organización y una localidad y tienen un rol.",
+      "Los roles funcionales dan acceso a cada pantalla: ver, crear, modificar, anular e imprimir.",
+      "Los parámetros generales definen impuestos, monedas y firmantes de cada localidad." ] },
+    { "tipo": "pasos", "titulo": "Crear un usuario", "subtitulo": "Catálogos › Usuarios", "pasos": [
+      "En «Generar clave» escribe los nombres y apellidos: el usuario son las iniciales más el primer apellido (Oliver Asturias → Oasturias).",
+      "Presiona «Generar usuario»: la clave se muestra una sola vez y vence hoy; cópiala con «Copiar».",
+      "En «Usuarios» completa su organización, localidad, rol, empleado, extensión y firma.",
+      "El usuario cambia su clave al entrar; «Enviar cambio de clave» la restablece.",
+      "Solo el Super Administrador cambia roles o modifica a otro Super Administrador." ] },
+    { "tipo": "pasos", "titulo": "Dar permisos con roles", "subtitulo": "Catálogos › Módulos › Roles módulos", "pasos": [
+      "A la izquierda elige el rol (o crea uno); a la derecha aparecen sus usuarios y la matriz de accesos.",
+      "Asigna los usuarios al rol con su fecha de inicio, fin y estado.",
+      "Presiona «Modificar rol» y marca por pantalla: ver, crear, modificar, anular e imprimir.",
+      "«Expandir todo» y «Contraer todo» recorren los módulos y sus grupos.",
+      "Cada usuario puede tener excepciones a los permisos de su rol.",
+      "Un rol con acceso total ve todas las pantallas." ] },
+    { "tipo": "pantalla", "titulo": "Parámetros", "subtitulo": "Catálogos › Parámetros", "puntos": [
+      "Parámetros generales: tiempo, uso de pantallas, impuestos, monedas y firmantes de cada localidad («Guardar cambios»).",
+      "Tipos de cambio: las monedas y su tasa de compra y venta por fecha («Tasa cambio actual»).",
+      "Geografía: países, departamentos y municipios, y regiones por país.",
+      "Organizaciones: cada organización con sus localidades, datos fiscales, venta de productos y organización o empresa anterior." ] },
+    { "tipo": "pasos", "titulo": "Atender un ticket", "subtitulo": "Tickets", "pasos": [
+      "Generación: «Nuevo ticket» con organización, localidad, módulo, prioridad y descripción del requerimiento.",
+      "Asignación: elige el recurso, la fecha estimada de entrega y los procesos de la solución.",
+      "Seguimiento: registra las observaciones en la bitácora y revisa los tiempos y la gráfica del proceso.",
+      "Cierre: usuario que entrega y que recibe, tipo de pruebas, observaciones y archivos; el ticket pasa a CERRADO." ] },
+    { "tipo": "pasos", "titulo": "Respaldar la información", "subtitulo": "Procesos › Backup", "pasos": [
+      "Elige la organización y la localidad («Todas» solo para administradores).",
+      "Indica la carpeta o ruta de destino; en Chrome y Edge el archivo se guarda ahí, no en Descargas.",
+      "Presiona «Generar backup»: el usuario y la fecha y hora se graban solos.",
+      "Guarda los respaldos fuera de la computadora (disco externo o nube)." ] },
+    { "tipo": "pantalla", "titulo": "Reportes administrativos", "subtitulo": "Reportes y gráficas", "puntos": [
+      "Antes de ejecutar: organización (una o todas), localidad (una o todas) y fechas cuando el reporte las maneja.",
+      "Organizaciones y localidades: datos fiscales, venta de productos, ubicación y estado.",
+      "Módulos y sub módulos: opciones del sistema y cuántos usuarios tienen acceso a cada una.",
+      "Roles módulos: usuarios asignados y permisos de cada rol.",
+      "Listado de usuarios: rol, roles funcionales, vencimiento de clave y estado; en PDF o Excel." ] },
+    { "tipo": "consejos", "titulo": "Buenas prácticas de seguridad", "puntos": [
+      "Da a cada usuario solo los permisos que necesita su puesto (rol funcional).",
+      "Desactiva a los usuarios que ya no laboran en lugar de eliminarlos: se conserva su historial.",
+      "Revisa cada mes el reporte de usuarios y el de roles.",
+      "Registra el tipo de cambio del día antes de operar en otra moneda.",
+      "Genera un backup antes de procesos grandes como replicaciones o cierres." ] },
+    { "tipo": "cierre", "titulo": "¡Sistema listo!", "subtitulo": "Consulta este manual en Administración › Ayuda › Manual del módulo" }
+  ]
+}

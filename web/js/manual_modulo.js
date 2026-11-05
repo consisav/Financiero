@@ -16,6 +16,9 @@
   };
   // Columnas que no se muestran ni se envían (identificadores, auditoría y datos de contacto).
   const OCULTA = /(^id$|_id$|^creado_|^modificado_|correo|telefono|ruta|firma|imagen|logo|eslogan|clave|token)/i;
+  // Generación con IA desde el visor (Edge Function con clave de Anthropic): apagada; los manuales
+  // escritos viven en web/manuales/<módulo>.json y se completan con ejemplos de la información actual.
+  const CON_IA = false;
   const TIPO_ICONO = { portada: 'ti-book', indice: 'ti-list', concepto: 'ti-route', pantalla: 'ti-app-window', pasos: 'ti-list-numbers', ejemplo: 'ti-table', consejos: 'ti-bulb', cierre: 'ti-flag' };
 
   async function ejemplos(sb, loc) {
@@ -62,6 +65,17 @@
     return { titulo: `Manual del módulo ${m.nombre}`, resumen: m.descripcion || '', diapositivas: d };
   }
 
+  // El manual escrito más las diapositivas de ejemplo con la información actual (antes de los consejos).
+  function conEjemplos(manual, datos) {
+    const vacio = { titulo: '', columnas: [], filas: [] };
+    const ej = Object.entries(datos).filter(([t]) => !(manual.sinEjemplos || []).includes(t)).map(([t, x]) => ({ tipo: 'ejemplo', titulo: `Información actual: ${manual.nombresTablas?.[t] || nombreTabla(t)}`, subtitulo: `${x.total} registro(s) en el sistema · datos reales de la empresa`, puntos: [], pasos: [], ejemplo: { titulo: '', columnas: x.columnas, filas: x.filas }, nota: '' }));
+    const ds = manual.diapositivas.map((d) => ({ subtitulo: '', puntos: [], pasos: [], ejemplo: vacio, nota: '', ...d }));
+    let k = ds.findIndex((d) => d.tipo === 'consejos');
+    if (k < 0) k = ds.length - (ds[ds.length - 1]?.tipo === 'cierre' ? 1 : 0);
+    ds.splice(k, 0, ...ej);
+    return { ...manual, diapositivas: ds };
+  }
+
   // ---------- Visor ----------
   let estado = null;
   function cerrar() { document.querySelector('.mm-fondo')?.remove(); document.removeEventListener('keydown', teclas); estado = null; }
@@ -90,9 +104,9 @@
     const fondo = document.querySelector('.mm-fondo');
     fondo.innerHTML = `<div class="mm-visor" role="dialog" aria-modal="true" aria-label="${esc(manual.titulo)}">
         <div class="mm-barra">
-          <div class="mm-titulo"><i class="ti ti-presentation" aria-hidden="true"></i><div><b>${esc(manual.titulo)}</b><small>${origen === 'IA' ? `Generado con IA (${esc(estado.modelo || 'Claude')}) · ${esc(estado.fecha || '')}` : 'Manual automático · sin IA'}</small></div></div>
+          <div class="mm-titulo"><i class="ti ti-presentation" aria-hidden="true"></i><div><b>${esc(manual.titulo)}</b><small>${origen === 'IA' ? `Generado con IA (${esc(estado.modelo || 'Claude')}) · ${esc(estado.fecha || '')}` : origen === 'GUIA' ? `Manual del módulo · versión ${esc(estado.version || '')} · con ejemplos de la información actual` : 'Manual automático'}</small></div></div>
           <div class="mm-acc">
-            ${window.FIN.puedeEditarCatalogos() ? `<button type="button" class="boton secundario-sm" data-mm="ia"><i class="ti ti-sparkles" aria-hidden="true"></i> ${origen === 'IA' ? 'Regenerar con IA' : 'Generar con IA'}</button>` : ''}
+            ${CON_IA && window.FIN.puedeEditarCatalogos() ? `<button type="button" class="boton secundario-sm" data-mm="ia"><i class="ti ti-sparkles" aria-hidden="true"></i> ${origen === 'IA' ? 'Regenerar con IA' : 'Generar con IA'}</button>` : ''}
             <button type="button" class="boton secundario-sm" data-mm="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir / PDF</button>
             <button type="button" class="icono-boton" data-mm="cerrar" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
           </div>
@@ -176,7 +190,10 @@
       estado = { m, estructura, manual: guardado.data.contenido, origen: 'IA', modelo: guardado.data.modelo, fecha: new Date(guardado.data.generado_en).toLocaleString('es-GT'), i: 0 };
     } else {
       const datos = await ejemplos(sb, window.FIN.perfil()?.localidad_id);
-      estado = { m, estructura, manual: automatico(m, estructura, datos), origen: 'AUTO', i: 0 };
+      const escrito = await fetch(`manuales/${m.id}.json?v=${encodeURIComponent(document.querySelector('script[src*="manual_modulo.js"]')?.src.split('v=')[1] || '')}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      estado = escrito?.diapositivas?.length
+        ? { m, estructura, manual: conEjemplos(escrito, datos), origen: 'GUIA', version: escrito.version, i: 0 }
+        : { m, estructura, manual: automatico(m, estructura, datos), origen: 'AUTO', i: 0 };
     }
     if (document.body.contains(fondo)) pintar();
   }

@@ -177,7 +177,8 @@ window.MODULOS = [
     grupos: [
       { id: 'bancos', nombre: 'Bancos', icono: 'ti-building-bank' },
       { id: 'cheques', nombre: 'Cheques', icono: 'ti-writing' },
-      { id: 'cajas', nombre: 'Cajas', icono: 'ti-cash-register' }
+      { id: 'cajas', nombre: 'Cajas', icono: 'ti-cash-register' },
+      { id: 'ayuda', nombre: 'Ayuda', icono: 'ti-help' }
     ],
     subgrupos: {
       bancos: [
@@ -220,7 +221,8 @@ window.MODULOS = [
     },
     opciones: {
       cheques: ['Chequeras', 'Anulación de cheques', 'Cheques en circulación'],
-      cajas: ['Arqueo de caja']
+      cajas: ['Arqueo de caja'],
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },
   {
