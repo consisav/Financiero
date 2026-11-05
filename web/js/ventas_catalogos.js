@@ -17,6 +17,66 @@
   const faltaScript = (msg) => /does not exist|schema cache|vendedores|productos|clasificaciones_producto/.test(msg || '');
   const AVISO_SCRIPT = 'Falta instalar el script 59 (catálogos de ventas y productos) en Supabase.';
 
+  // Lista de valores: ventana con búsqueda para elegir un registro de un catálogo y, si se permite,
+  // crear uno nuevo ahí mismo. o: { titulo, columnas, filas: [{ id, celdas }], actual, crear: { campos:
+  // [{ k, t, req, max }], guardar: async (datos) => id } }. Devuelve el id elegido o null.
+  function listaValores(o) {
+    return new Promise((resolver) => {
+      const fondo = document.createElement('div');
+      fondo.className = 'lov-fondo';
+      let q = '';
+      let sel = Math.max(0, o.filas.findIndex((f) => f.id === o.actual));
+      const visibles = () => o.filas.filter((f) => !q || f.celdas.some((c) => String(c ?? '').toLowerCase().includes(q)));
+      const cerrar = (id) => { fondo.remove(); document.removeEventListener('keydown', teclas, true); resolver(id ?? null); };
+      function pintar() {
+        const vis = visibles();
+        sel = Math.min(sel, Math.max(0, vis.length - 1));
+        fondo.querySelector('tbody').innerHTML = vis.map((f, i) => `<tr data-id="${f.id}" class="${i === sel ? 'lov-sel' : ''} ${f.id === o.actual ? 'lov-actual' : ''}">${f.celdas.map((c, k) => `<td class="${k === 0 ? 'num fuerte' : ''}">${esc(String(c ?? ''))}</td>`).join('')}</tr>`).join('')
+          || `<tr><td colspan="${o.columnas.length}" class="tk-vacio">${o.filas.length ? 'Nada coincide con la búsqueda.' : 'El catálogo está vacío.'}${o.crear ? ' Agrégalo abajo.' : ''}</td></tr>`;
+        fondo.querySelector('[data-n]').textContent = `${vis.length} de ${o.filas.length}`;
+        fondo.querySelector('tr.lov-sel')?.scrollIntoView({ block: 'nearest' });
+      }
+      fondo.innerHTML = `
+        <div class="lov" role="dialog" aria-modal="true" aria-label="${esc(o.titulo)}">
+          <header class="lov-cab"><h3><i class="ti ti-list-search" aria-hidden="true"></i> ${esc(o.titulo)}</h3><small data-n></small><button type="button" class="icono-boton" data-cerrar aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></header>
+          <label class="tk-buscar lov-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-q placeholder="Buscar… (Enter elige, Esc cierra)" aria-label="Buscar"></label>
+          <div class="pc-lineas lov-tabla"><table><thead><tr>${o.columnas.map((c, k) => `<th class="${k === 0 ? 'num' : ''}">${esc(c)}</th>`).join('')}</tr></thead><tbody></tbody></table></div>
+          ${o.crear ? `<form class="lov-nuevo" novalidate><span class="lov-nuevo-t"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</span>${o.crear.campos.map((c) => `<label class="campo"><span>${esc(c.t)}${c.req ? ' *' : ''}</span><input name="${c.k}" maxlength="${c.max || 120}"></label>`).join('')}<button type="submit" class="boton primario-sm">Agregar y elegir</button><p class="modal-error tk-error" role="alert"></p></form>` : ''}
+        </div>`;
+      document.body.appendChild(fondo);
+      pintar();
+      fondo.querySelector('[data-q]').focus();
+      function teclas(e) {
+        if (e.key === 'Escape') { e.preventDefault(); return cerrar(null); }
+        if (e.target.closest?.('.lov-nuevo')) return;
+        const vis = visibles();
+        if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(sel + 1, vis.length - 1); pintar(); }
+        if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(sel - 1, 0); pintar(); }
+        if (e.key === 'Enter' && vis[sel]) { e.preventDefault(); cerrar(vis[sel].id); }
+      }
+      document.addEventListener('keydown', teclas, true);
+      fondo.addEventListener('input', (e) => { if (e.target.matches('[data-q]')) { q = e.target.value.trim().toLowerCase(); sel = 0; pintar(); } });
+      fondo.addEventListener('click', (e) => {
+        if (e.target === fondo || e.target.closest('[data-cerrar]')) return cerrar(null);
+        const tr = e.target.closest('tr[data-id]');
+        if (tr) cerrar(Number(tr.dataset.id));
+      });
+      fondo.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const datos = Object.fromEntries(o.crear.campos.map((c) => [c.k, form.elements[c.k].value.trim()]));
+        const falta = o.crear.campos.find((c) => c.req && !datos[c.k]);
+        if (falta) { form.querySelector('.modal-error').textContent = `Escribe ${falta.t.toLowerCase()}.`; return form.elements[falta.k].focus(); }
+        const boton = form.querySelector('[type=submit]');
+        boton.disabled = true;
+        try { const id = await o.crear.guardar(datos); if (id) cerrar(id); }
+        catch (err) { form.querySelector('.modal-error').textContent = window.UI.traducirError(err); }
+        finally { boton.disabled = false; }
+      });
+    });
+  }
+  window.LOV = listaValores;
+
   window.PANTALLAS = window.PANTALLAS || {};
 
   // ===================== Vendedores =====================
@@ -335,6 +395,8 @@
     const provTxt = (p) => `${p.codigo} · ${p.nombre_comercial}`;
     const provDe = (t0) => { const t = String(t0 || '').trim().toUpperCase(); return t ? proveedores.find((p) => provTxt(p).toUpperCase() === t) || proveedores.find((p) => String(p.codigo) === t || p.nit === t || p.nombre_comercial === t) || null : null; };
     const clas = (id) => clasificaciones.find((x) => x.id === id);
+    // La bodega principal: la general activa sin bodega mayor (o la que se llama «principal»).
+    const principal = () => { const act = bodegas.filter((b) => b.estado === 'ACTIVO'); return (act.find((b) => /PRINCIPAL/i.test(b.nombre)) || act.find((b) => b.tipo !== 'SUB-BODEGA' && !b.bodega_mayor_id) || act[0])?.id || null; };
 
     function pintarFiltros() {
       ctx.filtros(`
@@ -354,7 +416,7 @@
       const loc = ctx.sel.loc || 0;
       const q = (t, cols = '*') => sb.from(t).select(cols).eq('localidad_id', loc).order('codigo');
       const r = await Promise.all([q('clasificaciones_producto'), q('tipos_producto'), q('tipos_medida'), q('presentaciones_producto'), q('tipos_precio'),
-        sb.from('proveedores').select('id, codigo, nit, nombre_comercial, estado').eq('localidad_id', loc).order('nombre_comercial'), q('bodegas', 'id, codigo, nombre, estado')]);
+        sb.from('proveedores').select('id, codigo, nit, nombre_comercial, estado').eq('localidad_id', loc).order('nombre_comercial'), q('bodegas', 'id, codigo, nombre, estado, tipo, bodega_mayor_id')]);
       [clasificaciones, tipos, medidas, presentaciones, precios, proveedores, bodegas] = r.map((x) => x.data || []);
       if (f.clasificacion && !clas(Number(f.clasificacion))) f.clasificacion = '';
       pintarFiltros();
@@ -400,7 +462,7 @@
       const p = actual;
       if (!p && !nuevo) { ctx.pDet.innerHTML = ctx.vacio(ctx.admin ? 'Elige un artículo o crea uno nuevo.' : 'Elige un artículo.', 'ti-package'); return; }
       const dis = ctx.admin ? '' : 'disabled';
-      const v = v0 || (p ? { ...p } : { estado: 'ACTIVO', clasificacion_id: f.clasificacion ? Number(f.clasificacion) : null, tipo_producto_id: null, generico: false, punto_minimo: false, minimo: 0, maximo: 0, precio_costo: 0, presentacion_id: presentaciones[0]?.id || null, tipo_medida_id: null, bodega_id: null, proveedor_id: null });
+      const v = v0 || (p ? { ...p } : { estado: 'ACTIVO', clasificacion_id: f.clasificacion ? Number(f.clasificacion) : null, tipo_producto_id: null, generico: false, punto_minimo: false, minimo: 0, maximo: 0, precio_costo: 0, presentacion_id: presentaciones.find((x) => x.activo && /SIN PRESENT/i.test(x.nombre))?.id || presentaciones.find((x) => x.activo)?.id || null, tipo_medida_id: medidas.find((x) => x.activo && /^UNIDAD/i.test(x.nombre))?.id || null, bodega_id: principal(), proveedor_id: null });
       const tiposClas = tipos.filter((t) => t.clasificacion_id === v.clasificacion_id && (t.activo || t.id === v.tipo_producto_id));
       const opt = (lista, id, txt = (x) => `${x.codigo} · ${esc(x.nombre)}`, vacio = '—') => `<option value="">${vacio}</option>${lista.filter((x) => x.activo !== false || x.id === id).filter((x) => x.estado === undefined || x.estado === 'ACTIVO' || x.id === id).map((x) => `<option value="${x.id}" ${x.id === id ? 'selected' : ''}>${txt(x)}</option>`).join('')}`;
       const pv = prov(v.proveedor_id);
@@ -419,13 +481,13 @@
               <label class="campo cpr-c2"><span>Código producto</span><input name="codigo_producto" value="${esc(v.codigo_producto || '')}" maxlength="40" ${dis}></label>
               <label class="campo cpr-c2"><span>Estado</span><select name="estado" ${dis}>${['ACTIVO', 'INACTIVO', 'DESCONTINUADO'].map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
               <label class="pc-check cpr-c2 cpr-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> ¿Es genérico?</label>
-              <label class="campo cpr-c3"><span>Clasificación</span><select name="clasificacion_id" ${dis}>${opt(clasificaciones, v.clasificacion_id)}</select></label>
-              <label class="campo cpr-c3"><span>Tipo producto</span><select name="tipo_producto_id" ${dis}>${opt(tiposClas, v.tipo_producto_id, (x) => `${x.codigo} · ${esc(x.nombre)}${x.siglas ? ` (${esc(x.siglas)})` : ''}`, v.clasificacion_id ? (tiposClas.length ? '—' : 'Sin tipos') : 'Elige la clasificación')}</select></label>
+              <div class="campo cpr-c3"><span>Clasificación</span><div class="lov-campo"><select name="clasificacion_id" ${dis} aria-label="Clasificación">${opt(clasificaciones, v.clasificacion_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="clasificacion" title="Lista de valores de clasificaciones" aria-label="Lista de valores de clasificaciones" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
+              <div class="campo cpr-c3"><span>Tipo producto</span><div class="lov-campo"><select name="tipo_producto_id" ${dis} aria-label="Tipo producto">${opt(tiposClas, v.tipo_producto_id, (x) => `${x.codigo} · ${esc(x.nombre)}${x.siglas ? ` (${esc(x.siglas)})` : ''}`, v.clasificacion_id ? (tiposClas.length ? '—' : 'Sin tipos') : 'Elige la clasificación')}</select><button type="button" class="icono-boton lov-btn" data-lov="tipo" title="Lista de valores de tipos de producto" aria-label="Lista de valores de tipos de producto" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
               <label class="campo cpr-c3"><span>Marca</span><input name="marca" value="${esc(v.marca || '')}" maxlength="80" ${dis}></label>
               <label class="campo cpr-c3"><span>Código de barras</span><input name="codigo_barras" value="${esc(v.codigo_barras || '')}" maxlength="40" ${dis}></label>
-              <label class="campo cpr-c4"><span>Proveedor principal</span><input list="cpr-proveedores" name="proveedor" value="${esc(pv ? provTxt(pv) : '')}" placeholder="Código, NIT o nombre" ${dis}></label>
-              <label class="campo cpr-c2"><span>Presentación</span><select name="presentacion_id" ${dis}>${opt(presentaciones, v.presentacion_id)}</select></label>
-              <label class="campo cpr-c2"><span>Unidad de medida</span><select name="tipo_medida_id" ${dis}>${opt(medidas, v.tipo_medida_id)}</select></label>
+              <div class="campo cpr-c4"><span>Proveedor principal</span><div class="lov-campo"><input list="cpr-proveedores" name="proveedor" value="${esc(pv ? provTxt(pv) : '')}" placeholder="Código, NIT o nombre" ${dis} aria-label="Proveedor principal"><button type="button" class="icono-boton lov-btn" data-lov="proveedor" title="Lista de valores de proveedores" aria-label="Lista de valores de proveedores" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
+              <div class="campo cpr-c2"><span>Presentación</span><div class="lov-campo"><select name="presentacion_id" ${dis} aria-label="Presentación">${opt(presentaciones, v.presentacion_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="presentacion" title="Lista de valores de presentaciones" aria-label="Lista de valores de presentaciones" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
+              <div class="campo cpr-c2"><span>Unidad de medida</span><div class="lov-campo"><select name="tipo_medida_id" ${dis} aria-label="Unidad de medida">${opt(medidas, v.tipo_medida_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="medida" title="Lista de valores de unidades de medida" aria-label="Lista de valores de unidades de medida" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
               <label class="campo cpr-c2 cpr-costo"><span>Precio costo Q</span><input type="number" step="0.0001" min="0" name="precio_costo" value="${esc(String(v.precio_costo ?? 0))}" ${dis}></label>
               <label class="campo cpr-c2"><span>Bodega</span><select name="bodega_id" ${dis}>${opt(bodegas, v.bodega_id)}</select></label>
             </div>
@@ -598,7 +660,43 @@
       if (a === 'imprimir') return listado();
       if (a === 'otro') { leerOtros(); otros.push({ proveedor_id: null, codigo_proveedor: '', ultimo_costo: null }); return repintar(); }
       if (a === 'quitar-imagen') { imagen = { nuevo: null, quitar: true }; return repintar(); }
+      const lv = e.target.closest('[data-lov]');
+      if (lv) return abrirLov(lv.dataset.lov);
     });
+    // Lista de valores de clasificación, tipo, proveedor, presentación y medida.
+    async function abrirLov(que) {
+      const form = ctx.pDet.querySelector('.cpr-form');
+      leerOtros();
+      const v = leer(form);
+      const nuevaEn = (tabla, extra = {}) => async (d) => {
+        const r = await sb.from(tabla).insert({ codigo: 0, ...d, ...extra, organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc }).select('*').single();
+        if (r.error) throw r.error;
+        return r.data;
+      };
+      const activos = (l) => l.filter((x) => x.activo !== false && (x.estado === undefined || x.estado === 'ACTIVO'));
+      let cfg;
+      if (que === 'clasificacion') cfg = { titulo: 'Clasificaciones', columnas: ['#', 'Descripción', 'Tipo'], filas: activos(clasificaciones).map((x) => ({ id: x.id, celdas: [x.codigo, x.nombre, x.tipo] })), actual: v.clasificacion_id,
+        crear: ctx.admin && { campos: [{ k: 'nombre', t: 'Descripción', req: true }], guardar: async (d) => { const x = await nuevaEn('clasificaciones_producto')(d); clasificaciones.push(x); return x.id; } },
+        aplicar: (id) => ({ clasificacion_id: id, tipo_producto_id: null }) };
+      if (que === 'tipo') {
+        if (!v.clasificacion_id) return window.FIN.aviso('Elige primero la clasificación');
+        cfg = { titulo: `Tipos de producto · ${clas(v.clasificacion_id)?.nombre || ''}`, columnas: ['Tipo', 'Siglas', 'Descripción'], filas: activos(tipos.filter((t) => t.clasificacion_id === v.clasificacion_id)).map((x) => ({ id: x.id, celdas: [x.codigo, x.siglas, x.nombre] })), actual: v.tipo_producto_id,
+          crear: ctx.admin && { campos: [{ k: 'siglas', t: 'Siglas', max: 6 }, { k: 'nombre', t: 'Descripción', req: true }], guardar: async (d) => { if (d.siglas && !/^[A-Za-z0-9]{1,6}$/.test(d.siglas)) throw new Error('Las siglas son de 1 a 6 letras o números.'); const x = await nuevaEn('tipos_producto', { clasificacion_id: v.clasificacion_id, siglas: d.siglas || null })({ nombre: d.nombre }); tipos.push(x); return x.id; } },
+          aplicar: (id) => ({ tipo_producto_id: id }) };
+      }
+      if (que === 'proveedor') cfg = { titulo: 'Proveedores', columnas: ['Código', 'NIT', 'Nombre comercial'], filas: activos(proveedores).map((x) => ({ id: x.id, celdas: [x.codigo, x.nit, x.nombre_comercial] })), actual: v.proveedor_id,
+        crear: ctx.admin && { campos: [{ k: 'nit', t: 'NIT', max: 20 }, { k: 'nombre_comercial', t: 'Nombre comercial', req: true, max: 150 }], guardar: async (d) => { const r = await sb.from('proveedores').insert({ nit: d.nit || null, nombre_comercial: d.nombre_comercial, concepto_gastos: 'COMPRAS DE PRODUCTOS', organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc }).select('id, codigo, nit, nombre_comercial, estado').single(); if (r.error) throw r.error; proveedores.push(r.data); return r.data.id; } },
+        aplicar: (id) => ({ proveedor_id: id }) };
+      if (que === 'presentacion') cfg = { titulo: 'Presentaciones de productos', columnas: ['#', 'Descripción'], filas: activos(presentaciones).map((x) => ({ id: x.id, celdas: [x.codigo, x.nombre] })), actual: v.presentacion_id,
+        crear: ctx.admin && { campos: [{ k: 'nombre', t: 'Descripción', req: true }], guardar: async (d) => { const x = await nuevaEn('presentaciones_producto')(d); presentaciones.push(x); return x.id; } },
+        aplicar: (id) => ({ presentacion_id: id }) };
+      if (que === 'medida') cfg = { titulo: 'Tipos de medida', columnas: ['Tipo', 'Descripción'], filas: activos(medidas).map((x) => ({ id: x.id, celdas: [x.codigo, x.nombre] })), actual: v.tipo_medida_id,
+        crear: ctx.admin && { campos: [{ k: 'nombre', t: 'Descripción', req: true }], guardar: async (d) => { const x = await nuevaEn('tipos_medida')(d); medidas.push(x); return x.id; } },
+        aplicar: (id) => ({ tipo_medida_id: id }) };
+      if (!cfg.crear) delete cfg.crear;
+      const id = await listaValores(cfg);
+      if (id) repintar(cfg.aplicar(id));
+    }
     cont.addEventListener('submit', (e) => { if (e.target.matches('.cpr-form')) { e.preventDefault(); guardar(e.target); } });
     iniciar();
   };

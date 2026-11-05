@@ -2747,3 +2747,28 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .oq-sin-orden { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 12px; }
 .oq-sin-orden .tk-vacio { flex: 0 0 auto; padding: 14px; }
 .oq-sin-orden .bk-maestro { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* ---------- Lista de valores (ventana para elegir o crear en un catálogo) ---------- */
+.lov-campo { display: flex; gap: 3px; min-width: 0; }
+.lov-campo > :is(select, input) { flex: 1 1 auto; min-width: 0; }
+.lov-btn { flex: 0 0 auto; width: 28px !important; height: 28px !important; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); }
+.lov-btn:hover:not(:disabled) { border-color: var(--acento); color: var(--acento); }
+.lov-fondo { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh; background: rgba(15, 27, 45, .35); }
+.lov { width: min(620px, calc(100vw - 32px)); max-height: 76vh; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--borde); box-shadow: 0 18px 48px rgba(15, 27, 45, .28); }
+.lov-cab { display: flex; align-items: center; gap: 10px; }
+.lov-cab h3 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 6px; color: var(--cl-rojo); flex: 1; }
+.lov-cab small { color: var(--tenue); font-size: 12px; }
+.lov-buscar { width: 100%; }
+.lov-tabla { flex: 1; min-height: 120px; max-height: 46vh; overflow: auto; }
+.lov-tabla td { padding: 5px 8px; cursor: pointer; }
+.lov-tabla tbody tr:hover td { background: var(--fondo); }
+.lov-tabla tr.lov-sel td { background: var(--acento-fondo); }
+.lov-tabla tr.lov-sel td:first-child { box-shadow: inset 3px 0 0 var(--acento); }
+.lov-tabla tr.lov-actual td:last-child::after { content: ' · actual'; color: var(--tenue); font-size: 11px; }
+.lov-nuevo { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; padding: 8px 10px; border: 1px dashed var(--borde); border-radius: var(--radio); background: var(--fondo); }
+.lov-nuevo-t { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--acento); display: flex; align-items: center; gap: 4px; padding-bottom: 7px; }
+.lov-nuevo .campo { flex: 1 1 120px; gap: 2px; font-size: 11px; }
+.lov-nuevo .campo input { padding: 5px 8px; font-size: 13px; }
+.lov-nuevo .boton { padding: 6px 12px; }
+.lov-nuevo .tk-error { flex: 1 1 100%; margin: 0; }
+.lov-nuevo .tk-error:empty { display: none; }
