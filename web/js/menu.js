@@ -324,7 +324,8 @@ window.MODULOS = [
           subgrupo: 'Inventarios',
           icono: 'ti-packages',
           pantallas: [
-            { id: 'kardex-productos', nombre: 'Kardex de Productos', icono: 'ti-list-numbers', descripcion: 'Movimientos de inventario de cada producto por bodega: entradas, salidas, saldo y costo, con su documento de origen.' }
+            { id: 'kardex-productos', nombre: 'Kardex de Productos', icono: 'ti-list-numbers', descripcion: 'Movimientos de inventario de cada producto por bodega: entradas, salidas, saldo y costo, con su documento de origen.' },
+            { id: 'analisis-costos', nombre: 'Análisis de Costos', icono: 'ti-chart-line', descripcion: 'Compras de cada producto con su costo unitario, promedio ponderado, descuentos, bonificaciones, notas de crédito y costo neto.' }
           ]
         }
       ]

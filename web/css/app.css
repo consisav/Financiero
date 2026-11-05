@@ -2977,3 +2977,18 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-articulos input.cf-falta { border-color: #c62828 !important; background: color-mix(in srgb, #c62828 8%, var(--panel)) !important; }
 .cf-articulos tbody td:nth-child(4) input { min-width: 96px; }
 .cf-articulos .pc-lineas td.num input { max-width: 96px; }
+/* Análisis de costos */
+.ac-cuerpo { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 10px; }
+.ac-compras { min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+.ac-lado { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid var(--cl-azul-borde); border-radius: var(--radio); background: var(--cl-azul); overflow: auto; }
+.ac-dato { display: flex; flex-direction: column; padding: 4px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); }
+.ac-dato span, .ac-mini span { font-size: 11px; font-weight: 700; color: var(--cl-rojo); text-transform: uppercase; letter-spacing: .03em; }
+.ac-dato b { font-size: 16px; text-align: right; font-variant-numeric: tabular-nums; }
+.ac-dato small { font-size: 11px; color: var(--suave); text-align: right; }
+.ac-prom { border-color: var(--acento); background: color-mix(in srgb, var(--acento) 8%, var(--panel)); }
+.ac-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.ac-mini > div { padding: 4px 6px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); text-align: right; }
+.ac-mini span { display: block; text-align: left; font-size: 10px; }
+.ac-mini b { font-size: 13px; font-variant-numeric: tabular-nums; }
+.ac-graf { width: 18%; }
+.ac-barra { display: block; height: 10px; border-radius: 5px; background: linear-gradient(90deg, color-mix(in srgb, var(--acento) 55%, transparent), var(--acento)); }

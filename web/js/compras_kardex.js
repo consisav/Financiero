@@ -5,6 +5,8 @@
 //   fabricación, vencimiento, existencia por lote y costo promedio, entre fechas.
 // Arriba el catálogo de productos (subir / bajar para recorrerlo) y abajo sus entradas y salidas,
 // de la más reciente a la más antigua, con su documento interno y físico.
+// Compras · Mantenimientos · Análisis de Costos: compras de cada producto, promedio, descuentos,
+// bonificaciones, notas de crédito y costo neto.
 (function () {
   const { esc } = window.UI;
   const { montar, fmt, imprimir } = window.BANCOS;
@@ -233,6 +235,176 @@
     });
     cont.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.matches('[data-buscar]')) { e.preventDefault(); const v = visibles(); if (v[0]) elegir(v[0].id); return; }
+      const fila = e.target.closest?.('tr[data-prod]');
+      if (fila && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); const v = visibles(); const i = v.findIndex((p) => p.id === Number(fila.dataset.prod)); const nx = v[i + (e.key === 'ArrowDown' ? 1 : -1)]; if (nx) { elegir(nx.id); ctx.pDet.querySelector(`tr[data-prod="${nx.id}"]`)?.focus(); } }
+      else if (fila && e.key === 'Enter') elegir(Number(fila.dataset.prod));
+    });
+    iniciar();
+  };
+  // ===================== Análisis de Costos =====================
+  // Por producto: sus compras (artículos de compras vigentes) con el costo unitario de cada una, los
+  // descuentos de línea, las bonificaciones de la compra prorrateadas y las notas de crédito
+  // operadas; el promedio ponderado de compras, el costo neto, el último, el mínimo, el máximo y la
+  // diferencia contra el precio de costo del catálogo.
+  window.PANTALLAS['analisis-costos'] = function (cont) {
+    const ctx = montar(cont, { titulo: 'Análisis de Costos', icono: 'ti-chart-line', clase: 'bk-movimientos kx-kardex ac-costos', grupo: 'Compras · Mantenimientos' });
+    const { sb } = ctx;
+    const [y] = fmt.hoy().split('-');
+    const f = { desde: `${y}-01-01`, hasta: fmt.hoy(), buscar: '', inactivos: false };
+    let productos = [], resumen = new Map(), sel = null, compras = [], notas = 0;
+    const prod = (id) => productos.find((p) => p.id === id);
+    const aBase = (c) => (ctx.moneda(c.moneda_id)?.iso === 'GTQ' ? 1 : Number(c.tipo_cambio) || 1);
+    const visibles = () => {
+      const q = f.buscar.trim().toLowerCase();
+      return productos.filter((p) => (f.inactivos || p.estado === 'ACTIVO') && (!q || [p.codigo, p.codigo_producto, p.nombre, p.principio_activo].some((v) => String(v || '').toLowerCase().includes(q))));
+    };
+
+    function pintarFiltros() {
+      ctx.filtros(`
+        <label class="campo"><span>Compras desde</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
+        <label class="campo"><span>Compras hasta</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>`,
+        '<button type="button" class="boton primario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>');
+    }
+    async function iniciar() {
+      if (!(await ctx.cargarBase())) return;
+      pintarFiltros();
+      await cargarLocalidad();
+    }
+    async function cargarLocalidad() {
+      const loc = ctx.sel.loc;
+      if (!loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-chart-line'); return; }
+      const { data } = await sb.from('productos').select('*, clasificaciones_producto(nombre), tipos_producto(nombre), tipos_medida(nombre), presentaciones_producto(nombre)').eq('localidad_id', loc).order('codigo');
+      productos = data || [];
+      await consultarResumen();
+      sel = (productos.find((p) => resumen.has(p.id)) || visibles()[0])?.id || null;
+      pintar();
+      await consultar();
+    }
+    // Compras por producto en el periodo (para marcar qué productos tienen compras y su promedio).
+    async function consultarResumen() {
+      const { data } = await sb.from('compra_articulos').select('producto_id, cantidad, costo_total, compras!inner(estado, fecha_documento, localidad_id, moneda_id, tipo_cambio)')
+        .eq('compras.localidad_id', ctx.sel.loc).eq('compras.estado', 'ACTIVA').gte('compras.fecha_documento', f.desde).lte('compras.fecha_documento', f.hasta).limit(20000);
+      resumen = new Map();
+      (data || []).forEach((a) => { const r = resumen.get(a.producto_id) || { cant: 0, total: 0, n: 0 }; r.cant += Number(a.cantidad); r.total += Number(a.costo_total) * aBase(a.compras); r.n++; resumen.set(a.producto_id, r); });
+    }
+    async function consultar() {
+      compras = []; notas = 0;
+      if (!sel) return pintarCompras();
+      const [a, n] = await Promise.all([
+        sb.from('compra_articulos').select('id, cantidad, costo_unitario, descuento, costo_extra, costo_total, compras!inner(id, numero, serie, documento, fecha_documento, proveedor_id, proveedor_codigo, proveedor_nombre, moneda_id, tipo_cambio, valor_total, bonificaciones, estado, localidad_id)')
+          .eq('producto_id', sel).eq('compras.localidad_id', ctx.sel.loc).eq('compras.estado', 'ACTIVA').gte('compras.fecha_documento', f.desde).lte('compras.fecha_documento', f.hasta),
+        sb.from('nota_compra_lineas').select('total, notas_compra!inner(tipo, estado, fecha, moneda_id, tipo_cambio, localidad_id)').eq('producto_id', sel)
+          .eq('notas_compra.localidad_id', ctx.sel.loc).eq('notas_compra.estado', 'OPERADA').eq('notas_compra.tipo', 'NOTA DE CRÉDITO').gte('notas_compra.fecha', f.desde).lte('notas_compra.fecha', f.hasta)
+      ]);
+      compras = (a.data || []).map((x) => {
+        const c = x.compras, k = aBase(c);
+        const total = Number(x.costo_total) * k;
+        // Bonificación de la compra prorrateada por el peso del artículo en el total.
+        const bruto = Number(c.valor_total) + Number(c.bonificaciones);
+        const bonif = bruto > 0 ? Number(c.bonificaciones) * k * (Number(x.costo_total) / bruto) : 0;
+        return { ...x, c, k, cant: Number(x.cantidad), total, unit: total / Number(x.cantidad), desc: Number(x.descuento) * k, bonif };
+      }).sort((p, q) => q.c.fecha_documento.localeCompare(p.c.fecha_documento) || q.c.numero - p.c.numero);
+      notas = (n.data || []).reduce((t, l) => t + Number(l.total) * (ctx.moneda(l.notas_compra.moneda_id)?.iso === 'GTQ' ? 1 : Number(l.notas_compra.tipo_cambio) || 1), 0);
+      pintarCompras();
+    }
+
+    function pintar() {
+      ctx.pDet.innerHTML = `
+        <div class="bm-form kx-form cl-clasico">
+          <div class="cl-banda kx-banda"><span>Análisis de costos</span><small>${esc(ctx.localidad(ctx.sel.loc)?.nombre_comercial || '')} · compras del ${esc(fmt.fechaDia(f.desde))} al ${esc(fmt.fechaDia(f.hasta))}</small></div>
+          <section class="kx-cat">
+            <div class="kx-cat-cab">
+              <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Código, nombre o principio activo…" value="${esc(f.buscar)}" aria-label="Buscar producto"></label>
+              <label class="pc-check kx-inact"><input type="checkbox" data-inactivos ${f.inactivos ? 'checked' : ''}> Incluir inactivos</label>
+            </div>
+            <div class="pc-lineas kx-productos"><table>
+              <thead><tr><th class="num">Código</th><th>Nombre</th><th>Presentación</th><th>Clasificación</th><th>Unidad de med. compra</th><th>Principio activo / tipo</th><th class="num">Compras</th><th class="num">Costo promedio</th></tr></thead>
+              <tbody data-productos>${filasProductos()}</tbody>
+            </table></div>
+          </section>
+          <section class="ac-cuerpo" data-compras></section>
+        </div>`;
+    }
+    function filasProductos() {
+      return visibles().map((p) => { const r = resumen.get(p.id); return `<tr data-prod="${p.id}" class="${p.id === sel ? 'actual' : ''}" tabindex="0">
+          <td class="num fuerte">${p.codigo}</td><td class="cx-nombre" title="${esc(p.nombre)}">${esc(p.nombre)}</td><td class="tk-tenue">${esc(p.presentaciones_producto?.nombre || '')}</td>
+          <td class="tk-tenue">${esc(p.clasificaciones_producto?.nombre || '')}</td><td class="tk-tenue">${esc(p.tipos_medida?.nombre || '')}</td><td>${esc(p.principio_activo || p.tipos_producto?.nombre || '')}</td>
+          <td class="num">${r ? r.n : ''}</td><td class="num ${r ? 'fuerte' : 'tk-tenue'}">${r ? fmt.monto(r.total / r.cant) : '—'}</td></tr>`; }).join('')
+        || '<tr><td colspan="8" class="tk-vacio">Ningún producto coincide.</td></tr>';
+    }
+    function calculo() {
+      const cant = compras.reduce((t, x) => t + x.cant, 0);
+      const total = compras.reduce((t, x) => t + x.total, 0);
+      const desc = compras.reduce((t, x) => t + x.desc, 0);
+      const bonif = compras.reduce((t, x) => t + x.bonif, 0);
+      const unit = compras.map((x) => x.unit);
+      return { cant, total, desc, bonif, prom: cant ? total / cant : 0, neto: cant ? (total - bonif - notas) / cant : 0,
+        ultimo: compras[0]?.unit || 0, min: unit.length ? Math.min(...unit) : 0, max: unit.length ? Math.max(...unit) : 0 };
+    }
+    function pintarCompras() {
+      const caja = ctx.pDet.querySelector('[data-compras]');
+      if (!caja) return;
+      const p = prod(sel);
+      const k = calculo();
+      const cat = Number(p?.precio_costo || 0);
+      const dif = cat && k.prom ? (k.prom - cat) / cat * 100 : null;
+      // Barra entre el mínimo y el máximo: se ven las diferencias de precio entre compras.
+      const barra = (v) => (k.max === k.min ? 100 : Math.round(25 + 75 * (v - k.min) / (k.max - k.min)));
+      caja.innerHTML = `
+        <div class="ac-compras">
+          <div class="kx-resumen">${p ? `<b>${esc(p.codigo_producto || String(p.codigo))} · ${esc(p.nombre)}</b><span>${compras.length} compra(s)</span><span>Cantidad <b>${cant(k.cant)}</b></span><span>Comprado <b>Q ${fmt.monto(k.total)}</b></span>` : '<span class="tk-tenue">Elige un producto.</span>'}</div>
+          <div class="pc-lineas kx-tabla"><table>
+            <thead><tr><th class="num">Compra</th><th>Documento</th><th>Fecha docto.</th><th class="num">Prov.</th><th>Proveedor</th><th class="num">Cantidad</th><th class="num">Descuento</th><th class="num">Costo unitario</th><th class="ac-graf">Comparativo</th></tr></thead>
+            <tbody>${compras.map((x) => `<tr><td class="num fuerte">${x.c.numero}</td><td>${esc([x.c.serie, x.c.documento].filter(Boolean).join('-'))}</td><td>${esc(fmt.fechaDia(x.c.fecha_documento))}</td><td class="num">${esc(x.c.proveedor_codigo || '')}</td>
+              <td class="cx-nombre" title="${esc(x.c.proveedor_nombre || '')}">${esc(x.c.proveedor_nombre || '')}</td><td class="num">${cant(x.cant)}</td><td class="num tk-tenue">${x.desc ? fmt.monto(x.desc) : ''}</td>
+              <td class="num fuerte ${x.unit === k.min && compras.length > 1 ? 'kx-ent' : x.unit === k.max && compras.length > 1 ? 'kx-sal' : ''}">${fmt.monto(x.unit)}</td>
+              <td class="ac-graf"><span class="ac-barra" style="width:${barra(x.unit)}%"></span></td></tr>`).join('')
+              || `<tr><td colspan="9" class="tk-vacio"><i class="ti ti-shopping-cart" aria-hidden="true"></i>${p ? 'El producto no tiene compras en el periodo.' : ''}</td></tr>`}</tbody>
+            <tfoot><tr><td colspan="5" class="num">Promedio compras</td><td class="num">${cant(k.cant)}</td><td class="num">${fmt.monto(k.desc)}</td><td class="num">${fmt.monto(k.prom)}</td><td></td></tr></tfoot>
+          </table></div>
+        </div>
+        <aside class="ac-lado">
+          <div class="ac-dato"><span>Descuentos</span><b>${fmt.monto(k.desc)}</b></div>
+          <div class="ac-dato"><span>Bonificaciones</span><b>${fmt.monto(k.bonif)}</b><small>de la compra, en proporción</small></div>
+          <div class="ac-dato"><span>Notas crédito</span><b>${fmt.monto(notas)}</b><small>operadas en el periodo</small></div>
+          <div class="ac-dato ac-prom"><span>Promedio compras</span><b>Q ${fmt.monto(k.prom)}</b></div>
+          <div class="ac-dato"><span>Costo neto promedio</span><b>Q ${fmt.monto(k.neto)}</b><small>menos bonificaciones y notas</small></div>
+          <div class="ac-mini"><div><span>Último</span><b>${fmt.monto(k.ultimo)}</b></div><div><span>Mínimo</span><b class="kx-ent">${fmt.monto(k.min)}</b></div><div><span>Máximo</span><b class="kx-sal">${fmt.monto(k.max)}</b></div></div>
+          <div class="ac-dato"><span>Precio costo catálogo</span><b>${cat ? `Q ${fmt.monto(cat)}` : '—'}</b>${dif !== null ? `<small class="${Math.abs(dif) > 5 ? 'pc-rojo' : ''}">Promedio ${dif >= 0 ? '+' : ''}${dif.toFixed(1)} % vs. catálogo</small>` : ''}</div>
+        </aside>`;
+    }
+
+    function imprimirCostos() {
+      const p = prod(sel);
+      if (!p) return window.FIN.aviso('Elige un producto');
+      const k = calculo(), e = ctx.localidad(ctx.sel.loc);
+      imprimir(`Análisis de costos ${p.nombre}`, `<h1>Análisis de costos · ${esc(p.codigo_producto || String(p.codigo))} · ${esc(p.nombre)}</h1><h2>${esc(e ? `${e.codigo} · ${e.nombre_comercial}` : '')} · compras del ${esc(fmt.fechaDia(f.desde))} al ${esc(fmt.fechaDia(f.hasta))}</h2>
+        <div class="cab"><div><b>Clasificación</b>${esc(p.clasificaciones_producto?.nombre || '')}</div><div><b>Unidad de medida</b>${esc(p.tipos_medida?.nombre || '')}</div><div><b>Principio activo / tipo</b>${esc(p.principio_activo || p.tipos_producto?.nombre || '')}</div><div><b>Precio costo catálogo</b>Q ${fmt.monto(p.precio_costo)}</div>
+          <div><b>Descuentos</b>Q ${fmt.monto(k.desc)}</div><div><b>Bonificaciones</b>Q ${fmt.monto(k.bonif)}</div><div><b>Notas crédito</b>Q ${fmt.monto(notas)}</div><div><b>Costo neto promedio</b>Q ${fmt.monto(k.neto)}</div></div>
+        <table><thead><tr><th>Compra</th><th>Documento</th><th>Fecha</th><th>Prov.</th><th>Proveedor</th><th class="n">Cantidad</th><th class="n">Descuento</th><th class="n">Costo unitario</th></tr></thead>
+        <tbody>${compras.map((x) => `<tr><td>${x.c.numero}</td><td>${esc([x.c.serie, x.c.documento].filter(Boolean).join('-'))}</td><td>${esc(fmt.fechaDia(x.c.fecha_documento))}</td><td>${esc(x.c.proveedor_codigo || '')}</td><td>${esc(x.c.proveedor_nombre || '')}</td><td class="n">${cant(x.cant)}</td><td class="n">${fmt.monto(x.desc)}</td><td class="n">${fmt.monto(x.unit)}</td></tr>`).join('') || '<tr><td colspan="8">Sin compras en el periodo.</td></tr>'}</tbody>
+        <tfoot><tr><td colspan="5">Promedio compras</td><td class="n">${cant(k.cant)}</td><td class="n">${fmt.monto(k.desc)}</td><td class="n">${fmt.monto(k.prom)}</td></tr></tfoot></table>`);
+    }
+
+    function elegir(id) {
+      sel = id;
+      ctx.pDet.querySelectorAll('tr[data-prod]').forEach((tr) => tr.classList.toggle('actual', Number(tr.dataset.prod) === id));
+      consultar();
+    }
+    function refrescar() { const tb = ctx.pDet.querySelector('[data-productos]'); if (tb) tb.innerHTML = filasProductos(); }
+    cont.addEventListener('change', async (e) => {
+      const cambio = ctx.cambioOrgLoc(e);
+      if (cambio === 'org' || cambio === 'loc') return cargarLocalidad();
+      if (cambio === 'otro') { f[e.target.name] = e.target.value; if (f.hasta < f.desde) { if (e.target.name === 'desde') f.hasta = f.desde; else f.desde = f.hasta; } pintarFiltros(); await consultarResumen(); pintar(); return consultar(); }
+      if (e.target.matches('[data-inactivos]')) { f.inactivos = e.target.checked; refrescar(); }
+    });
+    cont.addEventListener('input', (e) => { if (e.target.matches('[data-buscar]')) { f.buscar = e.target.value; refrescar(); } });
+    cont.addEventListener('click', (e) => {
+      const fila = e.target.closest('tr[data-prod]');
+      if (fila) return elegir(Number(fila.dataset.prod));
+      if (e.target.closest('[data-accion=imprimir]')) return imprimirCostos();
+    });
+    cont.addEventListener('keydown', (e) => {
       const fila = e.target.closest?.('tr[data-prod]');
       if (fila && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); const v = visibles(); const i = v.findIndex((p) => p.id === Number(fila.dataset.prod)); const nx = v[i + (e.key === 'ArrowDown' ? 1 : -1)]; if (nx) { elegir(nx.id); ctx.pDet.querySelector(`tr[data-prod="${nx.id}"]`)?.focus(); } }
       else if (fila && e.key === 'Enter') elegir(Number(fila.dataset.prod));
