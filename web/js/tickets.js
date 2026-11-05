@@ -212,14 +212,13 @@
               <h2>${t ? esc(t.numero) : 'Se numera al generarlo'}</h2>
             </div>
             <div class="tk-marcas" data-marcas>${marcaEstado(estado)}${marcaPrioridad(prio)}</div>
+            <div class="tk-proceso tg-proceso" data-grafica>${grafica(estado)}</div>
             <div class="tk-titulo-acciones">
               ${editable && t ? '<button type="button" class="boton secundario-sm" data-accion="descartar" title="Descartar cambios"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Descartar</button>' : ''}
               ${editable ? `<button type="submit" class="boton primario-sm"><i class="ti ${t ? 'ti-device-floppy' : 'ti-send'}" aria-hidden="true"></i> ${t ? 'Guardar cambios' : 'Generar ticket'}</button>` : '<span class="tk-aviso"><i class="ti ti-lock" aria-hidden="true"></i> Solo quien lo creó, el recurso asignado o un administrador pueden modificarlo</span>'}
             </div>
           </header>
           <p class="modal-error tk-error" role="alert"></p>
-
-          <div class="tk-proceso" data-grafica>${grafica(estado)}</div>
 
           <div class="ta-det-grid">
             <div class="ta-col">
@@ -440,6 +439,7 @@
       agregarArchivos(e.dataTransfer.files);
     });
     cont.addEventListener('input', (e) => {
+      if (e.target.matches('[name=descripcion]')) { const er = e.target.form?.querySelector('.modal-error'); if (er && /descripci/.test(er.textContent)) er.textContent = ''; return; }
       if (!e.target.matches('[data-buscar]')) return;
       buscar = e.target.value;
       const pos = e.target.selectionStart;

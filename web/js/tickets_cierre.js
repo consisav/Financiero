@@ -52,7 +52,7 @@
     };
 
     cont.innerHTML = `
-      <div class="ta-espacio ta-apilado">
+      <div class="ta-espacio ta-apilado tq-espacio">
         <section class="ta-filtros" id="tc-filtros"></section>
         <div class="ta-cuerpo">
           <section class="tk-bandeja ta-maestro" id="tc-maestro"></section>

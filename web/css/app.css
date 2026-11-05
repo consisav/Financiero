@@ -3061,3 +3061,55 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 /* Tickets: el campo de la descripción se resalta al crear un ticket nuevo */
 .ta-col .tg-descripcion textarea { min-height: 110px; }
 .tg-resalta { outline: 3px solid color-mix(in srgb, var(--acento) 55%, transparent); outline-offset: 2px; transition: outline-color .4s; }
+
+/* Tickets (generación, asignación, seguimiento y cierre) compactos: filtros, listado y ticket en una pantalla, sin desplazamientos */
+:is(.tg-espacio, .tq-espacio) { gap: 10px; }
+:is(.tg-espacio, .tq-espacio) .ta-filtros { padding-top: 8px; padding-bottom: 8px; }
+:is(.tg-espacio, .tq-espacio) .ta-cuerpo { grid-template-rows: auto minmax(0, 1fr); gap: 10px; }
+:is(.tg-espacio, .tq-espacio) .ta-maestro { max-height: 214px; }
+:is(.tg-espacio, .tq-espacio) .tk-bandeja-cab { padding: 8px 14px 6px; }
+:is(.tg-espacio, .tq-espacio) .ta-maestro td { padding-top: 5px; padding-bottom: 5px; }
+:is(.tg-espacio, .tq-espacio) .ta-detalle .ta-form { padding: 8px 14px 10px; gap: 6px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-titulo { flex-wrap: nowrap; gap: 10px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-titulo .tk-icono { width: 34px; height: 34px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-titulo-texto { flex: 0 0 auto; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-titulo-texto h2 { font-size: 17px; white-space: nowrap; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-marcas { flex: 0 0 auto; }
+.tg-proceso { flex: 1 1 auto; min-width: 0; }
+.tg-proceso .tk-pasos { grid-auto-columns: minmax(58px, 1fr); overflow: hidden; padding: 0; }
+.tg-proceso .tk-paso { gap: 1px; padding: 0 2px; }
+.tg-proceso .tk-paso::before { top: 10px; height: 2px; }
+.tg-proceso .tk-punto { width: 22px; height: 22px; font-size: 11px; }
+.tg-proceso .tk-paso.actual .tk-punto { box-shadow: 0 0 0 3px var(--acento-fondo); }
+.tg-proceso .tk-paso-nombre { font-size: 9.5px; letter-spacing: .02em; white-space: nowrap; }
+.tg-proceso .tk-paso small { font-size: 9px; min-height: 0; }
+.tg-proceso .tk-paso small:empty { display: none; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-error:empty { display: none; }
+.tg-espacio .ta-form .ta-det-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, .85fr); }
+:is(.tg-espacio, .tq-espacio) .ta-form .ta-col { padding: 8px 12px 4px; gap: 7px; overflow: visible; }
+:is(.tg-espacio, .tq-espacio) .ta-form .ta-col-titulo { margin: 0; font-size: 12px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-datos > div { padding: 4px 10px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-datos dt { font-size: 10px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-datos dd { font-size: 12.5px; margin-top: 1px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .campo > span, :is(.tg-espacio, .tq-espacio) .ta-form .tk-prioridades legend { font-size: 12px; margin-bottom: 3px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .campo :is(select, input) { padding-top: 6px; padding-bottom: 6px; font-size: 13px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .ta-col .tg-descripcion { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+:is(.tg-espacio, .tq-espacio) .ta-form .ta-col .tg-descripcion textarea { flex: 1; min-height: 64px; height: auto; padding: 8px 10px; font-size: 13.5px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-prioridades { gap: 4px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-opcion-prio { padding: 3px 9px; font-size: 12px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-dos { gap: 8px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-adjuntos { max-height: 64px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .tk-zona { padding: 4px 10px; }
+:is(.tg-espacio, .tq-espacio) .ta-form .ta-historial { min-height: 0; overflow: auto; }
+@media (max-width: 1100px) { :is(.tg-espacio, .tq-espacio) .ta-form .tk-titulo { flex-wrap: wrap; } .tg-proceso { flex-basis: 100%; order: 5; } :is(.tg-espacio, .tq-espacio) .ta-form .ta-col { overflow: visible; } }
+.tq-espacio .ta-proc-campos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px 8px; }
+.tq-espacio .ta-proc-campos .ta-proc-desc { grid-column: 1 / -1; }
+.tq-espacio .ta-proc-campos .ta-proc-obs { grid-column: span 2; }
+.tq-espacio .ta-proc-campos .ta-auto { padding: 3px 8px; }
+.tq-espacio .ta-proc-campos .ta-auto small { display: none; }
+.tq-espacio .ta-proc-form { gap: 5px; padding-top: 5px; }
+.tq-espacio .ta-auto small { font-size: 10px; }
+.tq-espacio .ta-asignar textarea { min-height: 48px; }
+.tq-espacio .ta-procesos { gap: 6px; }
+.tq-espacio .ta-procesos > p.tk-tenue { margin: 0; }
+.tq-espacio .ta-col .ta-col-titulo + * { margin-top: 0; }

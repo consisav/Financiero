@@ -53,7 +53,7 @@
     };
 
     cont.innerHTML = `
-      <div class="ta-espacio ta-apilado">
+      <div class="ta-espacio ta-apilado tq-espacio">
         <section class="ta-filtros ts-filtros" id="ts-filtros"></section>
         <div class="ta-cuerpo ts-cuerpo">
           <section class="tk-bandeja ta-maestro" id="ts-maestro"></section>
@@ -236,9 +236,8 @@
             <span class="tk-icono ts-icono e${t.estado}"><i class="ti ti-ticket" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto"><small>Seguimiento del ticket</small><h2>${esc(t.numero)}</h2></div>
             <div class="tk-marcas">${marcaEstado(t.estado)}${marcaPrioridad(t.prioridad)}</div>
+            <div class="tk-proceso tg-proceso">${grafica(t)}</div>
           </header>
-
-          <div class="tk-proceso">${grafica(t)}</div>
 
           <div class="ta-det-grid">
           <div class="ta-col">
