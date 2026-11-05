@@ -59,23 +59,36 @@
       }
     };
 
-    // Cuentas y centros de costo de la localidad (versiones activas más recientes).
+    // Cuentas y centros de costo de la localidad. Las cuentas son las de la versión del catálogo
+    // que usa el registro abierto (version_nomenclatura) o, si no tiene, la activa más reciente.
     ctx.cargarCatalogos = async function () {
-      ctx.cuentas = []; ctx.centros = []; ctx.catalogoId = null;
+      ctx.cuentas = []; ctx.centros = []; ctx.catalogoId = null; ctx.version = null;
+      ctx.catalogos = []; ctx.catalogoBase = null; ctx.cacheCuentas = {};
       if (!seleccion.loc) return;
       const [k, kc] = await Promise.all([
-        sb.from('catalogos_cuentas').select('id').eq('localidad_id', seleccion.loc).eq('activo', true).order('version', { ascending: false }).limit(1),
+        sb.from('catalogos_cuentas').select('id, version, activo').eq('localidad_id', seleccion.loc).order('version', { ascending: false }),
         sb.from('catalogos_centros').select('id').eq('localidad_id', seleccion.loc).eq('activo', true).order('version', { ascending: false }).limit(1)
       ]);
-      ctx.catalogoId = k.data?.[0]?.id || null;
-      const [c, cc] = await Promise.all([
-        ctx.catalogoId ? sb.from('cuentas').select('id, codigo, nombre, cuenta_mayor_id, vigente').eq('catalogo_id', ctx.catalogoId).order('codigo') : { data: [] },
-        kc.data?.[0] ? sb.from('centros_costo').select('id, codigo, nombre, centro_mayor_id, vigente').eq('catalogo_id', kc.data[0].id).order('codigo') : { data: [] }
-      ]);
-      const padres = new Set((c.data || []).map((x) => x.cuenta_mayor_id).filter(Boolean));
-      ctx.cuentas = (c.data || []).map((x) => ({ ...x, movimiento: !padres.has(x.id) && x.vigente }));
+      ctx.catalogos = k.data || [];
+      ctx.catalogoBase = ctx.catalogos.find((x) => x.activo) || null;
+      const cc = kc.data?.[0] ? await sb.from('centros_costo').select('id, codigo, nombre, centro_mayor_id, vigente').eq('catalogo_id', kc.data[0].id).order('codigo') : { data: [] };
       const padresC = new Set((cc.data || []).map((x) => x.centro_mayor_id).filter(Boolean));
       ctx.centros = (cc.data || []).filter((x) => !padresC.has(x.id) && x.vigente);
+      await ctx.usarVersion(null);
+    };
+
+    // Deja en ctx.cuentas las cuentas de la versión indicada del catálogo (se guardan en memoria).
+    ctx.usarVersion = async function (version) {
+      const cat = (version != null && ctx.catalogos.find((x) => x.version === version)) || ctx.catalogoBase;
+      ctx.catalogoId = cat?.id || null;
+      ctx.version = cat?.version ?? null;
+      if (!cat) { ctx.cuentas = []; return; }
+      if (!ctx.cacheCuentas[cat.id]) {
+        const { data } = await sb.from('cuentas').select('id, codigo, nombre, cuenta_mayor_id, vigente').eq('catalogo_id', cat.id).order('codigo');
+        const padres = new Set((data || []).map((x) => x.cuenta_mayor_id).filter(Boolean));
+        ctx.cacheCuentas[cat.id] = (data || []).map((x) => ({ ...x, movimiento: !padres.has(x.id) && x.vigente }));
+      }
+      ctx.cuentas = ctx.cacheCuentas[cat.id];
     };
 
     ctx.pintarFiltros = function (extra = '') {
@@ -181,6 +194,7 @@
 
     async function abrir(x) {
       actual = x;
+      await ctx.usarVersion(x?.version_nomenclatura ?? null);
       cuentasObj = [];
       transObj = [];
       if (x) {
@@ -222,7 +236,7 @@
         <form class="tk-form ta-form oc-form" novalidate>
           <header class="tk-titulo">
             <span class="tk-icono"><i class="ti ti-category" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>Objeto contable</small><h2>${x ? `Objeto ${x.numero}` : 'Nuevo objeto'}</h2></div>
+            <div class="tk-titulo-texto"><small>Objeto contable${ctx.version != null ? ` · catálogo versión ${ctx.version}` : ''}</small><h2>${x ? `Objeto ${x.numero}` : 'Nuevo objeto'}</h2></div>
             <label class="campo oc-desc"><span>Descripción *</span><input name="descripcion" value="${esc(x ? x.descripcion : '')}" maxlength="120" placeholder="Ej. PROVEEDORES, CRÉDITOS, IMPUESTOS…" ${dis}></label>
             <label class="pc-check"><input type="checkbox" name="activo" ${!x || x.activo ? 'checked' : ''} ${dis}> Activo</label>
             <div class="tk-titulo-acciones">${ctx.admin ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${x ? 'Guardar cambios' : 'Crear objeto'}</button>` : ''}</div>
@@ -284,7 +298,7 @@
           const [a, b] = await Promise.all([sb.from('objeto_cuentas').delete().eq('objeto_id', id), sb.from('objeto_transacciones').delete().eq('objeto_id', id)]);
           if (a.error || b.error) throw a.error || b.error;
         } else {
-          const r = await sb.from('objetos_contables').insert({ ...d, organizacion_id: seleccion.org, localidad_id: seleccion.loc }).select('id').single();
+          const r = await sb.from('objetos_contables').insert({ ...d, organizacion_id: seleccion.org, localidad_id: seleccion.loc, version_nomenclatura: ctx.version }).select('id').single();
           if (r.error) throw r.error;
           id = r.data.id;
         }
@@ -424,6 +438,7 @@
 
     async function abrir(x) {
       actual = x;
+      await ctx.usarVersion(x?.version_nomenclatura ?? null);
       lineas = [];
       if (x) {
         const { data } = await sb.from('transaccion_cuentas').select('*').eq('transaccion_id', x.id).order('linea');
@@ -463,7 +478,7 @@
         <form class="tk-form ta-form ot-form" novalidate>
           <header class="tk-titulo">
             <span class="tk-icono"><i class="ti ti-arrows-exchange" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>Transacción</small><h2>${x ? `Transacción ${x.numero}` : 'Nueva transacción'}</h2></div>
+            <div class="tk-titulo-texto"><small>Transacción${ctx.version != null ? ` · catálogo versión ${ctx.version}` : ''}</small><h2>${x ? `Transacción ${x.numero}` : 'Nueva transacción'}</h2></div>
             <div class="tk-titulo-acciones">${ctx.admin ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${x ? 'Guardar cambios' : 'Crear transacción'}</button>` : ''}</div>
           </header>
           <p class="modal-error tk-error" role="alert"></p>
@@ -541,13 +556,13 @@
           const del = await sb.from('transaccion_cuentas').delete().eq('transaccion_id', id);
           if (del.error) throw del.error;
         } else {
-          const r = await sb.from('transacciones_contables').insert({ ...d, organizacion_id: seleccion.org, localidad_id: seleccion.loc }).select('id').single();
+          const r = await sb.from('transacciones_contables').insert({ ...d, organizacion_id: seleccion.org, localidad_id: seleccion.loc, version_nomenclatura: ctx.version }).select('id').single();
           if (r.error) throw r.error;
           id = r.data.id;
         }
         if (validas.length) {
           const r = await sb.from('transaccion_cuentas').insert(validas.map((l, i) => ({
-            transaccion_id: id, linea: i + 1, cuenta_id: l.cuenta_id || null, cuenta_codigo: l.cuenta_codigo || null, naturaleza: l.naturaleza, orden: l.orden, operacion: l.operacion, centro_id: l.centro_id || null, columna_nomina: l.columna_nomina || null
+            transaccion_id: id, linea: i + 1, cuenta_id: l.cuenta_id || null, cuenta_codigo: l.cuenta_codigo || null, version: ctx.version, naturaleza: l.naturaleza, orden: l.orden, operacion: l.operacion, centro_id: l.centro_id || null, columna_nomina: l.columna_nomina || null
           })));
           if (r.error) throw r.error;
         }
