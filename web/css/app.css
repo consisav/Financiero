@@ -2915,3 +2915,22 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .kq-form tfoot td { position: sticky; bottom: 0; padding: 6px; font-weight: 800; background: var(--fondo); }
 .kq-ct { color: var(--cl-rojo); text-align: left !important; }
 .kq-form .ck-docs-acc [data-agregar] { width: 380px; height: 28px; padding: 3px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); }
+
+/* Kardex de productos */
+.kx-kardex .bk-filtros { display: flex !important; flex-wrap: wrap; gap: 8px 10px; align-items: end; }
+.kx-kardex .bk-filtros .kx-prod { flex: 1 1 320px; min-width: 260px; }
+.kx-kardex .bk-filtros .oc-extra { display: flex; gap: 6px; margin-left: auto; }
+.kx-kardex .bk-maestro { display: none; }
+.kx-form { gap: 8px !important; }
+.kx-tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.kx-tarjetas > div { padding: 6px 10px; border: 1px solid var(--cl-azul-borde); border-radius: var(--radio); background: var(--cl-azul); }
+.kx-tarjetas span { display: block; font-size: 11px; font-weight: 700; color: var(--cl-rojo); text-transform: uppercase; letter-spacing: .03em; }
+.kx-tarjetas b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.kx-tarjetas .kx-alerta { background: color-mix(in srgb, #d33 12%, var(--panel)); }
+.kx-ent { color: var(--ok, #1a7f37); } .kx-sal { color: var(--cl-rojo); }
+.kx-origen { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11.5px; font-weight: 700; }
+.kx-origen.kx-e { background: color-mix(in srgb, #1a7f37 14%, transparent); color: #1a7f37; }
+.kx-origen.kx-s { background: color-mix(in srgb, #c62828 14%, transparent); color: #c62828; }
+.kx-ini td { background: var(--fondo); font-weight: 700; }
+.kx-form tbody tr[data-prod] { cursor: pointer; }
+.kx-form .pc-lineas td { white-space: nowrap; }

@@ -1,6 +1,8 @@
 // Catálogo común Organizaciones: organizaciones y sus localidades, con detalle y auditoría.
 (function () {
   const { esc, bandera, estado: estadoHtml, auditoria, tabla, formulario, cascadaUbicacion, filtrar } = window.UI;
+  // Qué vende la localidad (empresa): define controles como lote, vencimiento y registro sanitario.
+  const VENTA = { MEDICAMENTOS: 'Medicamentos', PERECEDEROS: 'Productos perecederos', 'NO PERECEDEROS': 'Productos no perecederos' };
 
   const EMBEBIDO = '*, pais:paises(nombre, iso2), departamento:departamentos(nombre), municipio:municipios(nombre)';
 
@@ -189,6 +191,7 @@
               ${dato('Empresa anterior', esc(l.empresa_anterior))}
               ${dato('Razón social', esc(l.razon_social))}
               ${dato('NIT', esc(l.nit))}
+              ${dato('Venta de productos', esc(VENTA[l.tipo_venta] || ''))}
               ${dato('Teléfonos', esc(l.telefonos))}
               ${dato('Correos', esc(l.correos))}
               ${dato('Dirección', esc(l.direccion), true)}
@@ -211,6 +214,7 @@
           { nombre: 'razon_social', etiqueta: 'Razón social', ancho: 'completo' },
           { nombre: 'empresa_anterior', etiqueta: 'Empresa anterior', placeholder: 'Código en el sistema anterior (migración)' },
           { nombre: 'nit', etiqueta: 'NIT', placeholder: '1234567-8' },
+          { nombre: 'tipo_venta', etiqueta: 'Venta de productos', tipo: 'select', vacio: 'Sin definir', opciones: Object.entries(VENTA).map(([valor, texto]) => ({ valor, texto })) },
           { nombre: 'telefonos', etiqueta: 'Teléfonos' },
           { nombre: 'correos', etiqueta: 'Correos', ancho: 'completo' },
           { nombre: 'direccion', etiqueta: 'Dirección', tipo: 'area', ancho: 'completo' },
@@ -220,6 +224,7 @@
         alPreparar: (form) => cascadaUbicacion(form, valores),
         alGuardar: async (d) => {
           d.organizacion_id = o.id;
+          d.tipo_venta = d.tipo_venta || null;
           const r = fila ? await sb.from('localidades').update(d).eq('id', fila.id).select('id').single()
                          : await sb.from('localidades').insert(d).select('id').single();
           if (r.error) throw r.error;
