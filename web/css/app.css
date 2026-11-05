@@ -2786,3 +2786,53 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-art-acc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .cf-art-acc [data-agregar-art] { flex: 0 1 320px; height: 30px; padding: 3px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); }
 .cf-art-acc label.boton { cursor: pointer; }
+
+/* Regularización anticipos */
+.rg-regulariza.bk-movimientos .bk-filtros { grid-template-columns: auto minmax(220px, 1fr) minmax(260px, 1.3fr) auto; }
+.rg-form { gap: 8px !important; }
+.rg-cab { border: 1px solid var(--cl-azul-borde); border-radius: var(--radio); background: var(--cl-azul); padding: 8px 12px; display: grid; gap: 6px; }
+.rg-g { display: grid; grid-template-columns: 130px 150px 150px minmax(0, 1fr); grid-template-areas: none; gap: 6px 12px; align-items: end; }
+.rg-g > :nth-child(4n+1) { grid-column: 1; }
+.rg-g .rg-cta { grid-column: span 2; }
+.rg-g > .rg-acc { display: flex; gap: 6px; justify-content: flex-end; align-items: end; flex-wrap: wrap; }
+.rg-g :is(input, select):not(:disabled) { background: var(--panel); }
+.rg-num b, .rg-poliza b { display: flex; align-items: center; height: 30px; font-size: 17px; color: var(--acento); font-variant-numeric: tabular-nums; }
+.rg-par { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 4px; }
+.rg-poliza .campo { min-width: 70px; }
+.rg-pie { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.rg-nota { margin: 0; color: var(--cl-rojo); font-size: 12px; font-weight: 700; text-align: right; }
+.rg-cuerpo { flex: 1; min-height: 0; display: grid; grid-template-rows: 1fr 1fr; gap: 8px; }
+.rg-sec { min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+.rg-sec .pc-lineas { flex: 1; }
+.rg-sec-cab { display: flex; align-items: center; justify-content: center; gap: 12px; position: relative; }
+.rg-sec-cab .boton { position: absolute; right: 0; }
+.rg-sec td input { width: 100%; min-width: 0; height: 26px; padding: 2px 6px; border: 1px solid var(--borde); border-radius: 4px; background: var(--panel); }
+.rg-sec td.num input { max-width: 130px; margin-left: auto; display: block; text-align: right; }
+.rg-sec .rg-desc { width: 34%; }
+.rg-sec .rg-prov { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-vacia td { height: 30px; }
+.rg-sec tfoot td { position: sticky; bottom: 0; font-weight: 700; background: var(--fondo); padding: 6px; }
+
+/* Cuentas x Pagar */
+.cx-rep .bk-filtros { display: flex !important; flex-wrap: wrap; gap: 8px 10px; }
+.cx-rep .bk-filtros .cx-prov { min-width: 240px; flex: 1 1 240px; }
+.cx-rep .bk-filtros .cx-anio input { width: 90px; }
+.cx-rep .bk-filtros .oc-extra { display: flex; gap: 6px; margin-left: auto; align-items: end; }
+.cx-rep .boton.activo { border-color: var(--acento); color: var(--acento); background: color-mix(in srgb, var(--acento) 10%, transparent); }
+.cx-aviso { align-self: center; font-size: 12px; }
+.cx-form { gap: 8px !important; }
+.cx-meses { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; justify-content: center; }
+.cx-anio-n { min-width: 64px; text-align: center; padding: 4px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); font-variant-numeric: tabular-nums; }
+.cx-mes { min-width: 92px; padding: 5px 8px; border: 1px solid var(--cl-azul-borde); border-radius: 6px; background: var(--panel); font-size: 12px; font-weight: 700; cursor: pointer; }
+.cx-mes:hover { border-color: var(--acento); }
+.cx-mes.activo { background: var(--acento); border-color: var(--acento); color: #fff; }
+.cx-tabla { flex: 1; }
+.cx-tabla td { padding: 5px 8px; font-variant-numeric: tabular-nums; }
+.cx-tabla .cx-nombre { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-tabla tbody tr { cursor: pointer; }
+.cx-tabla tbody tr.actual td { background: color-mix(in srgb, var(--acento) 12%, transparent); }
+.cx-tabla tfoot td { position: sticky; bottom: 0; padding: 7px 8px; font-weight: 800; background: var(--cl-azul); border-top: 2px solid var(--cl-azul-borde); text-align: right; }
+
+.rg-regulariza .bk-maestro:empty, .cx-rep .bk-maestro { display: none; }
+.cx-rep .bk-filtros { display: flex !important; }
+.rg-g .pc-marca { justify-self: start; width: fit-content; margin-top: 6px; }
