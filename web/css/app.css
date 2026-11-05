@@ -2836,3 +2836,8 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .rg-regulariza .bk-maestro:empty, .cx-rep .bk-maestro { display: none; }
 .cx-rep .bk-filtros { display: flex !important; }
 .rg-g .pc-marca { justify-self: start; width: fit-content; margin-top: 6px; }
+
+/* Catálogos en lista: las marcas angostas (título en dos líneas) dejan el espacio a la descripción */
+.cg-tabla th.cg-chk, .cg-tabla th[style] { white-space: normal; line-height: 1.25; vertical-align: bottom; }
+.cg-tabla th.cg-chk, .cg-tabla td.cg-chk { width: 92px; }
+.cg-tabla td input:not([type=checkbox]) { min-width: 0; }

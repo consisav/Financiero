@@ -133,7 +133,7 @@
     descripcion: 'Clasificación fiscal de cada compra: si se incluye en el libro de compras, si aplica IVA y si aplica inventarios.',
     columnas: [
       { k: 'nombre', t: 'Descripción', req: true, max: 80 },
-      { k: 'siglas', t: 'Siglas (migración doctos.)', ancho: '170px', max: 6, ayuda: 'Siglas con las que llegan los documentos en la migración' },
+      { k: 'siglas', t: 'Siglas (migración doctos.)', ancho: '110px', max: 6, ayuda: 'Siglas con las que llegan los documentos en la migración' },
       { k: 'libro_compras', t: 'Incluir libro compras', tipo: 'check', defecto: true },
       { k: 'aplica_iva', t: 'Aplicar IVA', tipo: 'check', defecto: true },
       { k: 'aplica_inventario', t: 'Aplica inventarios', tipo: 'check', defecto: true, ayuda: 'Las compras de esta clasificación pueden cargar sus artículos al inventario' }
