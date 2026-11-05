@@ -2849,3 +2849,69 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-art-grupo { display: flex; gap: 6px; padding: 0 12px; }
 .cf-art-grupo + .cf-art-grupo { border-left: 2px solid var(--texto); }
 .cf-art-grupo .boton:disabled { opacity: .55; }
+
+/* Notas crédito compras */
+.nq-notas.bk-movimientos .bk-filtros { grid-template-columns: auto minmax(220px, 1fr) repeat(3, minmax(120px, .6fr)) auto; }
+.nq-notas .bk-maestro { display: none; }
+.nq-form { gap: 6px !important; }
+.nq-banda { display: grid; grid-template-columns: 110px 1fr 200px; align-items: center; gap: 10px; padding: 4px 10px !important; }
+.nq-banda .nq-num { justify-self: start; min-width: 80px; padding: 2px 10px; border: 1px solid var(--cl-azul-borde); border-radius: 6px; background: var(--panel); color: var(--acento); font-size: 15px; text-align: center; }
+.nq-banda select { height: 28px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.nq-cab { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, .7fr) minmax(0, .7fr); grid-template-areas: "doc mon val" "prov acc aud" "ref acc aud"; gap: 6px 12px; padding: 8px 12px; border: 1px solid var(--cl-azul-borde); border-radius: var(--radio); background: var(--cl-azul); }
+.nq-cab :is(input, select):not(:disabled) { background: var(--panel); }
+.nq-doc { grid-area: doc; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 6px 8px; align-items: end; }
+.nq-mon { grid-area: mon; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; align-items: end; padding-left: 12px; border-left: 2px solid var(--texto); }
+.nq-val { grid-area: val; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; align-items: end; padding-left: 12px; border-left: 2px solid var(--texto); }
+.nq-val b { display: block; padding: 4px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--fondo); text-align: right; font-size: 15px; font-variant-numeric: tabular-nums; }
+.nq-prov { grid-area: prov; display: grid; grid-template-columns: 2fr .8fr 1fr; gap: 6px 8px; align-items: end; padding-top: 6px; border-top: 1px solid var(--cl-azul-borde); }
+.nq-ref { grid-area: ref; margin: 0; display: grid; grid-template-columns: 1.4fr .8fr 1fr 1fr 1.2fr .8fr; gap: 4px 8px; align-items: end; padding: 4px 10px 8px; border: 1px solid var(--cl-azul-borde); border-radius: 10px; background: var(--panel); }
+.nq-ref legend { padding: 0 6px; font-weight: 800; font-size: 13px; color: var(--texto); }
+.nq-ref .nq-motivo { grid-column: span 4; }
+.nq-ref .nq-fact { grid-column: span 1; }
+.nq-ref .nq-fact .lov-campo input { font-weight: 700; color: var(--acento); }
+.nq-acc { grid-area: acc; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 0 12px; border-left: 1px solid var(--cl-azul-borde); border-right: 1px solid var(--cl-azul-borde); }
+.nq-acc .boton { justify-content: center; }
+.nq-aud { grid-area: aud; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; align-content: center; }
+.nq-txt { display: block; min-height: 26px; padding: 4px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--fondo); font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nq-pestanas { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.nq-pestanas .bm-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.nq-pestanas .bm-panel > .pc-lineas { flex: 1; }
+.nq-detalle { flex-direction: row !important; gap: 10px; }
+.nq-detalle > .pc-lineas { flex: 1; min-width: 0; }
+.nq-lado { flex: 0 0 210px; display: flex; flex-direction: column; gap: 4px; padding: 6px 8px; border: 1px solid var(--cl-azul-borde); border-radius: var(--radio); background: var(--cl-azul); overflow: auto; }
+.nq-lado .campo > span { color: var(--cl-rojo); font-weight: 700; text-align: center; }
+.nq-lado :is(input, select):not(:disabled) { background: var(--panel); }
+.nq-form .pc-lineas td input:not([type=checkbox]) { width: 100%; min-width: 0; height: 26px; padding: 2px 6px; border: 1px solid var(--borde); border-radius: 4px; background: var(--panel); }
+.nq-form .pc-lineas td.num input { max-width: 110px; margin-left: auto; display: block; text-align: right; }
+.nq-desc { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nq-form tbody tr[data-l] { cursor: pointer; }
+.nq-form tbody tr.actual td { background: color-mix(in srgb, var(--acento) 10%, transparent); }
+.nq-form tfoot td { position: sticky; bottom: 0; padding: 6px; font-weight: 800; background: var(--fondo); }
+.nq-tot { color: var(--cl-rojo); font-size: 15px; }
+.nq-form .ck-docs-acc { display: flex; gap: 6px; align-items: center; }
+.nq-form .ck-docs-acc [data-agregar] { width: 260px; height: 28px; padding: 3px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); }
+.nq-doc .pc-marca, .kq-datos .pc-marca { justify-self: start; width: fit-content; }
+
+/* Productos en consignación */
+.kq-consig.bk-movimientos .bk-filtros { grid-template-columns: auto minmax(220px, 1fr) repeat(3, minmax(120px, .6fr)) auto; }
+.kq-consig .bk-maestro { display: none; }
+.kq-form { gap: 6px !important; }
+.kq-cab { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 12px; padding: 8px 12px; border: 1px solid var(--cl-azul-borde); border-radius: var(--radio); background: var(--cl-azul); }
+.kq-cab :is(input, select):not(:disabled) { background: var(--panel); }
+.kq-datos { display: grid; grid-template-columns: 90px repeat(6, minmax(0, 1fr)); gap: 6px 10px; align-items: end; }
+.kq-num b { display: flex; align-items: center; height: 30px; font-size: 18px; color: var(--acento); font-variant-numeric: tabular-nums; }
+.kq-total b { display: block; padding: 4px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--fondo); text-align: right; font-size: 15px; font-variant-numeric: tabular-nums; }
+.kq-datos .kq-prov { grid-column: 1 / span 3; }
+.kq-datos .kq-bod { grid-column: span 2; }
+.kq-datos .kq-trx { grid-column: span 1; }
+.kq-datos .kq-desc { grid-column: 1 / span 4; }
+.kq-aud { grid-column: span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 4px 8px; border: 1px solid var(--cl-azul-borde); border-radius: 10px; background: var(--panel); }
+.kq-acc { display: flex; flex-direction: column; justify-content: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--cl-azul-borde); border-radius: 10px; background: var(--panel); }
+.kq-acc .boton { justify-content: center; }
+.kq-imp { display: grid; grid-template-columns: 1fr 90px; gap: 6px; }
+.kq-imp select { height: 30px; }
+.kq-form .pc-lineas td input:not([type=checkbox]) { width: 100%; min-width: 0; height: 26px; padding: 2px 6px; border: 1px solid var(--borde); border-radius: 4px; background: var(--panel); }
+.kq-form .pc-lineas td.num input { max-width: 120px; margin-left: auto; display: block; text-align: right; }
+.kq-form tfoot td { position: sticky; bottom: 0; padding: 6px; font-weight: 800; background: var(--fondo); }
+.kq-ct { color: var(--cl-rojo); text-align: left !important; }
+.kq-form .ck-docs-acc [data-agregar] { width: 380px; height: 28px; padding: 3px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); }
