@@ -615,7 +615,7 @@
             <label class="campo"><span>Valor cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
             <div class="campo"><span>Estado</span><b class="oq-num">${esc(i ? i.estado : 'VIGENTE')}</b></div>
             <div class="cc-calc oi-total"><span>Valor total</span><b data-vt>${esc(sim)} ${fmt.monto(valorTotal)}</b></div>
-            <div class="campo"><span>Compra</span>${i?.compra_id ? `<a class="pc-tipo oq-num" href="#/compras/facturas-compra" title="Abrir en Facturas de compra">Generada</a>` : '<b class="oq-num tk-tenue">—</b>'}</div>
+            <div class="campo"><span>Compra</span>${i?.compra_id ? `<a class="pc-tipo oq-num" href="#/compras/facturas-compra" title="Abrir en Ingreso de compras">Generada</a>` : '<b class="oq-num tk-tenue">—</b>'}</div>
             <label class="campo"><span>Serie doc.</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
             <label class="campo"><span>Documento</span><input name="documento" value="${esc(v.documento || '')}" maxlength="40" placeholder="Factura del proveedor" ${dis}></label>
             <label class="campo"><span>Fecha doc.</span><input type="date" name="fecha_documento" value="${esc(v.fecha_documento || '')}" ${dis}></label>

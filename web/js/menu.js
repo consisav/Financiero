@@ -296,7 +296,7 @@ window.MODULOS = [
                 { id: 'notas-de-credito-proveedores', nombre: 'Notas de crédito de proveedores', icono: 'ti-receipt-refund', descripcion: 'Notas de crédito recibidas de los proveedores.' }
               ]
             },
-            { id: 'facturas-compra', nombre: 'Facturas de compra', icono: 'ti-file-invoice', descripcion: 'Ingreso de la compra: documento, proveedor, desglose fiscal, retención, detalle, detalle contable, contraseña de pago y pagos.' },
+            { id: 'facturas-compra', nombre: 'Ingreso de compras', icono: 'ti-file-invoice', descripcion: 'Ingreso de la compra (bienes o servicios): compra de inventario sin facturar, artículos, carga al inventario, documento, proveedor, desglose fiscal, retención, detalle, detalle contable, contraseña de pago y pagos.' },
             { id: 'contrasenas-pago', nombre: 'Contraseñas de pago', icono: 'ti-key', descripcion: 'Recepción de facturas del proveedor: documentos recibidos, fecha estimada de pago, autorización, impresión y liquidación.' }
           ]
         }

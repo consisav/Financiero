@@ -1,4 +1,4 @@
-// Compras · Registros · Facturas de compra: el ingreso completo de la compra (son las mismas compras
+// Compras · Registros · Ingreso de compras (antes Facturas de compra): el ingreso completo de la compra (son las mismas compras
 // que se pagan en Generación cheques y Generación transferencias).
 //   Encabezado: el proveedor (del catálogo: trae NIT, régimen, días de crédito, forma y datos de
 //   pago, bodega y transacción), estado y factura original; el documento (tipo DTE, mes y año de
@@ -24,7 +24,7 @@
 
   window.PANTALLAS = window.PANTALLAS || {};
   window.PANTALLAS['facturas-compra'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Facturas de compra', icono: 'ti-file-invoice', clase: 'bk-movimientos bk-compras cf-compras', grupo: 'Compras · Registros' });
+    const ctx = montar(cont, { titulo: 'Ingreso de compras', icono: 'ti-file-invoice', clase: 'bk-movimientos bk-compras cf-compras', grupo: 'Compras · Registros' });
     const { sb, yo } = ctx;
     const [anio, mes] = fmt.hoy().split('-');
     const f = { estado: 'TODAS', desde: `${anio}-${mes}-01`, hasta: fmt.hoy() };
@@ -33,6 +33,7 @@
     let params = {};
     let actual = null;
     let items = [], lineas = [], pagos = [], cuentasProv = [];
+    let articulos = [], productos = [], ingresosLibres = [], ingresoVincular = null;
     let modificando = false;
     let pestana = 'ITEMS';
     let buscar = '';
@@ -46,7 +47,16 @@
     const simbolo = (id) => ctx.moneda(id)?.simbolo || 'Q';
     const provTxt = (p) => `${p.codigo} · ${p.nombre_comercial}${p.nit ? ` · ${p.nit}` : ''}`;
     const docTxt = (c) => `${c.serie ? `${c.serie}-` : ''}${c.documento}`;
-    const subtotal = () => fmt.redondear(items.reduce((t, i) => t + Number(i.costo_total || 0), 0));
+    // Compra de bienes (artículos) o de servicios (compras varias), según su clasificación.
+    // Una compra que ya tiene líneas de compras varias se queda con ese detalle.
+    const esBienes = (v) => articulos.length > 0 || (!items.some((i) => i.descripcion) && !/SERVICIO/i.test(clasificacion(v?.clasificacion_id)?.nombre || ''));
+    const totalArt = (a) => Number(a.cantidad || 0) * Number(a.costo_unitario || 0) - Number(a.descuento || 0) + Number(a.costo_extra || 0);
+    const subtotal = () => fmt.redondear(articulos.length ? articulos.reduce((t, a) => t + totalArt(a), 0) : items.reduce((t, i) => t + Number(i.costo_total || 0), 0));
+    const prod = (id) => productos.find((p) => p.id === id);
+    const prodTxt = (p) => `${p.codigo_producto || p.codigo} · ${p.nombre}`;
+    const tasaMI = () => ctx.monedas.find((m) => m.iso === 'USD')?.cambio || 1;
+    // Tipo de cambio a la moneda base: una compra en la moneda base no se convierte.
+    const aBase = (moneda, cambio) => Number(moneda) === ctx.monedaBase()?.id ? 1 : Number(cambio) || 1;
 
     function pintarFiltros() {
       ctx.filtros(`
@@ -76,6 +86,11 @@
         loc ? sb.from('parametros_generales').select('impuesto1, idp_super, idp_regular, idp_diesel').eq('localidad_id', loc).order('id').limit(1) : { data: [] }
       ]);
       proveedores = p.data || []; bodegas = b.data || []; params = g.data?.[0] || {};
+      const [pr, il] = await Promise.all([
+        loc ? sb.from('productos').select('id, codigo, codigo_producto, nombre, estado, precio_costo').eq('localidad_id', loc).order('nombre') : { data: [] },
+        loc ? sb.from('ingresos_compra').select('id, numero, fecha_ingreso, orden_id, proveedor_id, bodega_id, moneda_id, tipo_cambio, forma_pago, dias_credito, serie, documento, fecha_documento, valor_descuento, transaccion_id, ordenes_compra(numero), ingreso_lineas(id, producto_id, lote, cantidad, costo_unitario, inventariado)').eq('localidad_id', loc).eq('estado', 'APLICADO').is('compra_id', null).order('numero', { ascending: false }) : { data: [] }
+      ]);
+      productos = pr.data || []; ingresosLibres = il.error ? [] : il.data || [];
       [cuentas, contables, centros, transacciones] = await Promise.all([ctx.cuentasBancarias(), ctx.cuentasContables(), C.centrosLocalidad(sb, loc), C.transaccionesLocalidad(sb, loc)]);
       await consultar();
     }
@@ -123,8 +138,10 @@
     async function abrir(c, editar = false) {
       actual = c;
       modificando = !!c && editar && c.estado === 'ACTIVA' && ctx.admin;
-      items = []; lineas = []; pagos = [];
+      items = []; lineas = []; pagos = []; articulos = []; ingresoVincular = null;
       if (c) {
+        const ar = await sb.from('compra_articulos').select('*').eq('compra_id', c.id).order('linea');
+        articulos = ar.error ? [] : (ar.data || []).map((x) => ({ ...x, cantidad: Number(x.cantidad), costo_unitario: Number(x.costo_unitario), descuento: Number(x.descuento), costo_extra: Number(x.costo_extra) }));
         const [i, l, d] = await Promise.all([
           sb.from('compra_items').select('*').eq('compra_id', c.id).order('linea'),
           sb.from('compra_lineas').select('*').eq('compra_id', c.id).order('linea'),
@@ -171,7 +188,10 @@
       return { idp, afecto, iva, base, neto };
     }
 
-    const tabs = () => [
+    const tabs = (bienes) => bienes ? [
+      ['ARTICULOS', 'Artículos', 'ti-package', articulos.length], ['LISTADO', 'Listado de facturas', 'ti-list-search', compras.length], ['LIQUIDAR', 'Abonos', 'ti-receipt-refund', pagos.length],
+      ['CONTABLE', 'Contabilidad', 'ti-list-details', lineas.length], ['OTRAS', 'Otras funciones, integración', 'ti-plug-connected', 0], ['ORDENES', 'Órdenes de compra', 'ti-clipboard-list', 0]
+    ] : [
       ['ITEMS', 'Compras varias', 'ti-list', items.length], ['CONTABLE', 'Detalle contable', 'ti-list-details', lineas.length], ['LIQUIDAR', 'Doctos. a liquidar', 'ti-receipt-refund', pagos.length],
       ['OTRAS', 'Otras funciones, integración', 'ti-plug-connected', 0], ['ORDENES', 'Órdenes de compra', 'ti-clipboard-list', 0], ['LISTADO', 'Listado de compras', 'ti-list-search', compras.length]
     ];
@@ -192,6 +212,14 @@
       const disC = ed && !c?.partida_id ? '' : 'disabled';
       const num = (name, etq, extra = '', step = '0.01') => `<label class="campo ${extra}"><span>${etq}</span><input type="number" step="${step}" min="0" name="${name}" value="${esc(String(v[name] ?? 0))}" ${dis}></label>`;
       const cxp = contable(v.cuenta_pagar_id);
+      const bienes = esBienes(v);
+      if (bienes && pestana === 'ITEMS') pestana = 'ARTICULOS';
+      if (!bienes && pestana === 'ARTICULOS') pestana = 'ITEMS';
+      const mi = tasaMI();
+      const cambio = aBase(v.moneda_id, v.tipo_cambio);
+      const totArt = fmt.redondear(articulos.reduce((t, a) => t + totalArt(a), 0));
+      const hayInv = articulos.some((a) => a.inventariado && !a.ingreso_linea_id);
+      const pendInv = articulos.some((a) => a.inventario && !a.inventariado && !a.ingreso_linea_id);
       ctx.pDet.innerHTML = `
         <form id="cf-form" class="tk-form ta-form bm-form cf-form cl-clasico cf-compacto" novalidate>
           <p class="modal-error tk-error" role="alert"></p>
@@ -204,8 +232,9 @@
                 <label class="campo cfx2"><span>Presentación</span><select name="mes_presentacion" ${dis}>${MESES.map((m, i) => `<option value="${i + 1}" ${Number(v.mes_presentacion) === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
                 <label class="campo"><span>Año</span><input type="number" name="anio_presentacion" min="1900" max="2999" value="${esc(String(v.anio_presentacion || ''))}" ${dis}></label>
                 <div class="campo cf-numero"><span>Compra</span><b>${c ? c.numero : 'Auto'}</b></div>
+                <div class="campo cf-inv" title="Ingreso de la orden de compra que se convierte en esta compra"><span>Compra inv.</span><div class="lov-campo"><input name="compra_inventario" value="${esc(v.compra_inventario || '')}" maxlength="30" readonly placeholder="—" aria-label="Compra de inventario"><button type="button" class="icono-boton lov-btn" data-accion="lov-ingresos" title="Ingresos que aún no se han convertido en compra (${ingresosLibres.length})" aria-label="Ingresos sin compra" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
                 <label class="campo"><span># Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
-                <label class="campo cfx2"><span># Documento *</span><input name="documento" value="${esc(v.documento || '')}" maxlength="40" ${dis}></label>
+                <label class="campo"><span># Documento *</span><input name="documento" value="${esc(v.documento || '')}" maxlength="40" ${dis}></label>
                 <label class="campo cfx2"><span>Fecha *</span><input type="date" name="fecha_documento" value="${esc(v.fecha_documento || '')}" ${dis}></label>
                 <label class="campo cfx2"><span>Días de crédito</span><select name="dias_credito" ${dis || (v.pago_inmediato ? 'disabled' : '')}>${[...new Set([...DIAS, Number(v.dias_credito) || 0])].sort((a, b) => a - b).map((d) => `<option value="${d}" ${Number(v.dias_credito) === d ? 'selected' : ''}>${d ? `${d} DÍAS` : 'INMEDIATO'}</option>`).join('')}</select></label>
                 <label class="campo cfx2"><span>Fecha de pago</span><input type="date" name="fecha_vencimiento" value="${esc(v.fecha_vencimiento || '')}" ${dis}></label>
@@ -262,7 +291,7 @@
 
           <section class="bm-pestanas">
             <div class="bm-tabs-barra">
-              <div class="rp-pestanas" role="tablist">${tabs().map(([id, t, i, n]) => `<button type="button" role="tab" data-pestana="${id}" class="${pestana === id ? 'activa' : ''}" aria-selected="${pestana === id}"><i class="ti ${i}" aria-hidden="true"></i> ${t}${n ? ` <b>${n}</b>` : ''}</button>`).join('')}</div>
+              <div class="rp-pestanas" role="tablist">${tabs(bienes).map(([id, t, i, n]) => `<button type="button" role="tab" data-pestana="${id}" class="${pestana === id ? 'activa' : ''}" aria-selected="${pestana === id}"><i class="ti ${i}" aria-hidden="true"></i> ${t}${n ? ` <b>${n}</b>` : ''}</button>`).join('')}</div>
               <span data-cuadre></span>
             </div>
             <div class="bm-panel" data-panel="ITEMS" ${pestana === 'ITEMS' ? '' : 'hidden'}>
@@ -274,6 +303,33 @@
                   || `<tr><td colspan="6" class="tk-vacio">${ed ? 'Agrega el detalle de lo comprado con «Línea».' : 'La compra no tiene detalle.'}</td></tr>`}</tbody>
                 <tfoot><tr><td colspan="4">Total del detalle ${items.length && Number(v.valor_total) && Math.abs(subtotal() - Number(v.valor_total) + Number(v.bonificaciones || 0)) > 0.009 ? '<span class="pc-cuadre no"><i class="ti ti-alert-triangle" aria-hidden="true"></i> No coincide con el total menos descuentos</span>' : ''}</td><td class="num" data-calc="subtotal2">${fmt.monto(subtotal())}</td><td></td></tr></tfoot></table></div>
               ${ed ? '<div class="cf-acc"><button type="button" class="boton secundario-sm" data-accion="item"><i class="ti ti-plus" aria-hidden="true"></i> Línea</button><button type="button" class="boton secundario-sm" data-accion="total-detalle" ' + (items.length ? '' : 'disabled') + '><i class="ti ti-equal" aria-hidden="true"></i> Usar el detalle como total</button></div>' : ''}
+            </div>
+            <div class="bm-panel cf-articulos" data-panel="ARTICULOS" ${pestana === 'ARTICULOS' ? '' : 'hidden'}>
+              <div class="pc-lineas"><table><thead><tr><th class="pc-n">ID</th><th>Código producto</th><th>Nombre producto</th><th>Serie</th><th class="num">Cantidad</th><th class="num">Costo unitario</th><th class="num">Descuento</th><th class="num">Costo total</th><th class="num">C/U MI</th><th class="num">Costo total MI</th><th class="cc-det" title="Va a inventario">Inv?</th><th class="cc-det" title="Exento">Exen?</th><th></th></tr></thead>
+                <tbody>${articulos.map((a, i) => { const pd = prod(a.producto_id); const fijo = a.inventariado; const d2 = ed && !fijo ? '' : 'disabled'; const tq = totalArt(a) * cambio; return `<tr data-art="${i}" class="${fijo ? 'cf-inventariado' : ''}">
+                  <td class="pc-n">${a.linea || i + 1}</td><td class="fuerte">${esc(pd?.codigo_producto || String(pd?.codigo || ''))}</td><td class="cc-nombre" title="${esc(pd?.nombre || '')}">${esc(pd?.nombre || '')}${a.ingreso_linea_id ? ' <i class="ti ti-truck-delivery cf-del-ingreso" title="Viene del ingreso de la orden" aria-label="Del ingreso"></i>' : ''}</td>
+                  <td><input data-a="serie" value="${esc(a.serie || '')}" maxlength="40" ${ed ? '' : 'disabled'} aria-label="Serie"></td>
+                  <td class="num"><input type="number" step="0.0001" min="0" data-a="cantidad" value="${a.cantidad || ''}" ${d2} aria-label="Cantidad"></td>
+                  <td class="num"><input type="number" step="0.0001" min="0" data-a="costo_unitario" value="${a.costo_unitario || ''}" ${ed ? '' : 'disabled'} aria-label="Costo unitario"></td>
+                  <td class="num"><input type="number" step="0.0001" min="0" data-a="descuento" value="${a.descuento || ''}" ${ed ? '' : 'disabled'} aria-label="Descuento"></td>
+                  <td class="num fuerte" data-at>${fmt.monto(totalArt(a))}${a.costo_extra ? `<small class="cf-extra" title="Incluye ${fmt.monto(a.costo_extra)} de costos extra">+extra</small>` : ''}</td>
+                  <td class="num">${fmt.monto(Number(a.costo_unitario || 0) * cambio / mi)}</td><td class="num" data-atm>${fmt.monto(tq / mi)}</td>
+                  <td class="cc-det"><input type="checkbox" data-a="inventario" ${a.inventario ? 'checked' : ''} ${d2} aria-label="Va a inventario"></td>
+                  <td class="cc-det"><input type="checkbox" data-a="exento" ${a.exento ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Exento"></td>
+                  <td>${ed && !fijo ? `<button type="button" class="icono-boton" data-quitar-art="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('')
+                  || `<tr><td colspan="13" class="tk-vacio">${ed ? 'Agrega los artículos, elige la compra de inventario arriba o carga el detalle desde Excel.' : 'La compra no tiene artículos.'}</td></tr>`}</tbody>
+                <tfoot><tr><td colspan="3">${articulos.length} total productos</td><td colspan="4" class="num">Total</td><td class="num" data-tart>${esc(sim)} ${fmt.monto(totArt)}</td><td></td><td class="num" data-tartm>$ ${fmt.monto(totArt * cambio / mi)}</td><td colspan="3"></td></tr></tfoot></table></div>
+              <div class="cf-art-acc">
+                ${ed ? '<input list="cf-productos" data-agregar-art placeholder="Agregar artículo (código o nombre)…" aria-label="Agregar artículo">' : ''}
+                ${consulta && ctx.admin && c.estado === 'ACTIVA' ? `<button type="button" class="boton secundario-sm" data-accion="cargar-inv" ${pendInv ? '' : 'disabled'} title="Carga a la bodega los artículos marcados en Inv?"><i class="ti ti-package-import" aria-hidden="true"></i> Cargar inventario</button>
+                  <button type="button" class="boton secundario-sm" data-accion="revertir-inv" ${hayInv ? '' : 'disabled'}><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Revertir carga</button>
+                  <button type="button" class="boton secundario-sm rp-peligro" data-accion="anular" ${pagado || hayInv ? 'disabled' : ''}><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>` : ''}
+                ${c ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
+                ${ed ? `<button type="button" class="boton secundario-sm" data-accion="costos-extra" ${articulos.length ? '' : 'disabled'} title="Prorratea fletes, seguros u otros costos entre los artículos"><i class="ti ti-truck" aria-hidden="true"></i> Costos extras</button>
+                  <button type="button" class="boton secundario-sm" data-accion="crear-producto"><i class="ti ti-plus" aria-hidden="true"></i> Crear producto</button>
+                  <label class="boton secundario-sm" title="Archivo CSV de Excel: código; cantidad; costo unitario; serie; descuento"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Cargar detalle Excel<input type="file" accept=".csv,.txt,text/csv" data-excel hidden></label>
+                  <button type="button" class="boton secundario-sm" data-accion="total-articulos" ${articulos.length ? '' : 'disabled'}><i class="ti ti-equal" aria-hidden="true"></i> Usar como total</button>` : ''}
+              </div>
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
               <div class="bm-transaccion bc-transaccion">
@@ -319,13 +375,13 @@
             <div class="bm-panel" data-panel="ORDENES" ${pestana === 'ORDENES' ? '' : 'hidden'}>
               <div class="cf-g cf-g4 cf-ordenes">
                 <label class="campo"><span>Orden de compra</span><input name="orden_compra" value="${esc(v.orden_compra || '')}" maxlength="30" ${dis}></label>
-                <label class="campo"><span>Compra de inventario (ingreso)</span><input name="compra_inventario" value="${esc(v.compra_inventario || '')}" maxlength="30" ${dis}></label>
-                <p class="cc-ingreso cf-c2"><i class="ti ti-info-circle" aria-hidden="true"></i> El número de la orden de compra y del ingreso a inventario quedan como referencia; se enlazarán cuando estén los registros de Órdenes de compra e Inventarios.</p>
+                <p class="cc-ingreso cf-c3"><i class="ti ti-info-circle" aria-hidden="true"></i> La compra de inventario (ingreso de la orden) se elige arriba, con su lista de valores: trae el proveedor, el documento y los artículos ya recibidos en la bodega.</p>
               </div>
             </div>
             <div class="bm-panel bm-listado" data-panel="LISTADO" ${pestana === 'LISTADO' ? '' : 'hidden'}></div>
           </section>
           <datalist id="cf-proveedores">${proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
+          <datalist id="cf-productos">${productos.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(prodTxt(x))}"></option>`).join('')}</datalist>
           <datalist id="cf-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
           <datalist id="cf-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
         </form>`;
@@ -379,6 +435,10 @@
         tr.querySelector('[data-nombre-centro]').innerHTML = cc ? esc(cc.nombre) : codC ? '<span class="pc-error">No es un centro de movimiento</span>' : '';
         l.debe = fmt.redondear(tr.querySelector('[data-campo=debe]').value);
         l.haber = fmt.redondear(tr.querySelector('[data-campo=haber]').value);
+      });
+      ctx.pDet.querySelectorAll('tr[data-art]').forEach((tr) => {
+        const a = articulos[Number(tr.dataset.art)];
+        tr.querySelectorAll('[data-a]').forEach((el) => { a[el.dataset.a] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) || 0 : el.value; });
       });
       ctx.pDet.querySelectorAll('tr[data-item]').forEach((tr) => {
         const it = items[Number(tr.dataset.item)];
@@ -537,7 +597,11 @@
       if (v._cxp && !v.cuenta_pagar_id) { pestana = 'CONTABLE'; return foco('cuenta_pagar', 'La cuenta por pagar no es una cuenta de movimiento de la localidad.'); }
       if (v.forma_pago === 'TRANSFERENCIA' && !v.cuenta_destino) { pestana = 'OTRAS'; return foco('cuenta_destino', 'Para pagar por transferencia escribe la cuenta bancaria del proveedor.'); }
       if (lineas.some((l) => (l.debe || l.haber || l.codigo) && !l.cuenta_id)) { error.textContent = 'Hay líneas contables con una cuenta que no es de movimiento.'; return; }
-      if (items.some((i) => (i.costo_total || i.cantidad !== 1) && !i.descripcion)) { pestana = 'ITEMS'; error.textContent = 'Escribe la descripción de cada línea del detalle.'; return; }
+      const bienes = esBienes(v);
+      if (!bienes && items.some((i) => (i.costo_total || i.cantidad !== 1) && !i.descripcion)) { pestana = 'ITEMS'; error.textContent = 'Escribe la descripción de cada línea del detalle.'; return; }
+      const malArt = articulos.find((a) => !(a.cantidad > 0) || a.descuento > a.cantidad * a.costo_unitario);
+      if (bienes && malArt) { pestana = 'ARTICULOS'; error.textContent = `Revisa la cantidad y el descuento de ${prod(malArt.producto_id)?.nombre || 'un artículo'}.`; return; }
+      if (bienes && articulos.some((a) => a.inventario && !a.inventariado) && !v.bodega_id) return foco('bodega_id', 'Elige la bodega a la que entran los artículos.');
       const ls = lineas.filter((l) => l.cuenta_id && (l.debe || l.haber));
       const its = items.filter((i) => i.descripcion);
       if (!v.cuenta_pagar_id) v.cuenta_pagar_id = ls.find((l) => l.haber)?.cuenta_id || null;
@@ -555,14 +619,16 @@
           if (r.error) throw r.error;
           id = r.data.id;
         }
+        if (bienes) await guardarArticulos(id);
         const di = await sb.from('compra_items').delete().eq('compra_id', id);
         if (di.error) throw di.error;
-        if (its.length) { const r = await sb.from('compra_items').insert(its.map((i, n) => ({ compra_id: id, linea: n + 1, descripcion: i.descripcion, cantidad: i.cantidad || 1, costo_total: i.costo_total || 0 }))); if (r.error) throw r.error; }
+        if (its.length && !bienes) { const r = await sb.from('compra_items').insert(its.map((i, n) => ({ compra_id: id, linea: n + 1, descripcion: i.descripcion, cantidad: i.cantidad || 1, costo_total: i.costo_total || 0 }))); if (r.error) throw r.error; }
         if (!actual?.partida_id) {
           const d = await sb.from('compra_lineas').delete().eq('compra_id', id);
           if (d.error) throw d.error;
           if (ls.length) { const r = await sb.from('compra_lineas').insert(ls.map((l, i) => ({ compra_id: id, linea: i + 1, cuenta_id: l.cuenta_id, centro_id: l.centro_id || null, debe: l.debe || 0, haber: l.haber || 0 }))); if (r.error) throw r.error; }
         }
+        if (ingresoVincular) { const r = await sb.rpc('vincular_ingreso_compra', { p_ingreso: ingresoVincular, p_compra: id }); if (r.error) throw r.error; ingresoVincular = null; }
         window.FIN.aviso(actual ? 'Compra guardada' : 'Compra registrada');
         modificando = false;
         if (!actual && (v.fecha_documento < f.desde || v.fecha_documento > f.hasta) && f.estado !== 'POR PAGAR') { f.desde = v.fecha_documento < f.desde ? v.fecha_documento : f.desde; f.hasta = v.fecha_documento > f.hasta ? v.fecha_documento : f.hasta; pintarFiltros(); }
@@ -571,6 +637,97 @@
       } catch (err) {
         error.textContent = /compras_documento_key/.test(err.message || '') ? 'Ese documento ya está registrado para el proveedor.' : window.UI.traducirError(err);
       } finally { if (boton) boton.disabled = false; }
+    }
+
+    // Artículos: los que ya están en inventario se actualizan; los demás se vuelven a grabar.
+    async function guardarArticulos(id) {
+      const fijos = articulos.filter((a) => a.id && a.inventariado);
+      for (const a of fijos) { const r = await sb.from('compra_articulos').update({ serie: a.serie || null, costo_unitario: a.costo_unitario || 0, descuento: a.descuento || 0, costo_extra: a.costo_extra || 0, exento: !!a.exento }).eq('id', a.id); if (r.error) throw r.error; }
+      const d = await sb.from('compra_articulos').delete().eq('compra_id', id).eq('inventariado', false);
+      if (d.error) throw d.error;
+      let n = Math.max(0, ...fijos.map((a) => a.linea || 0));
+      const otros = articulos.filter((a) => !(a.id && a.inventariado));
+      if (otros.length) { const r = await sb.from('compra_articulos').insert(otros.map((a) => ({ compra_id: id, linea: ++n, producto_id: a.producto_id, serie: a.serie || null, cantidad: a.cantidad, costo_unitario: a.costo_unitario || 0, descuento: a.descuento || 0, costo_extra: a.costo_extra || 0, inventario: !!a.inventario, exento: !!a.exento, ingreso_linea_id: a.ingreso_linea_id || null }))); if (r.error) throw r.error; }
+    }
+    function agregarArticulo(texto) {
+      const t = String(texto || '').trim().toUpperCase();
+      const pd = productos.find((p) => prodTxt(p).toUpperCase() === t) || productos.find((p) => (p.codigo_producto || '').toUpperCase() === t || String(p.codigo) === t);
+      if (!pd) return window.FIN.aviso('Ese producto no está en el catálogo: créalo con «Crear producto»');
+      leerFilas();
+      articulos.push({ producto_id: pd.id, serie: '', cantidad: 1, costo_unitario: Number(pd.precio_costo) || 0, descuento: 0, costo_extra: 0, inventario: true, exento: false, inventariado: false });
+      repintar();
+      const ins = ctx.pDet.querySelectorAll('[data-a=cantidad]'); ins[ins.length - 1]?.select();
+    }
+    // Lista de valores de los ingresos aplicados que aún no se convirtieron en compra.
+    async function elegirIngreso() {
+      if (!ingresosLibres.length) return window.FIN.aviso('No hay ingresos de órdenes de compra pendientes de convertir en compra');
+      const prov = (id) => proveedores.find((p) => p.id === id)?.nombre_comercial || '';
+      const id = await window.LOV({ titulo: 'Ingresos sin compra', columnas: ['Ingreso', 'Orden', 'Proveedor', 'Documento', 'Fecha', 'Valor'],
+        filas: ingresosLibres.map((i) => ({ id: i.id, celdas: [i.numero, i.ordenes_compra?.numero || '', prov(i.proveedor_id), [i.serie, i.documento].filter(Boolean).join('-'), fmt.fechaDia(i.fecha_ingreso), fmt.monto(i.ingreso_lineas.reduce((t, l) => t + Number(l.cantidad) * Number(l.costo_unitario), 0) - Number(i.valor_descuento))] })) });
+      if (!id) return;
+      const i = ingresosLibres.find((x) => x.id === id);
+      const form = ctx.pDet.querySelector('.cf-form');
+      leerFilas();
+      const v = { ...(actual || {}), ...leer(form) };
+      const p = proveedores.find((x) => x.id === i.proveedor_id);
+      Object.assign(v, { compra_inventario: String(i.numero), proveedor_id: i.proveedor_id, proveedor_codigo: p ? String(p.codigo) : '', proveedor_nombre: p ? p.nombre_fiscal || p.nombre_comercial : '', nit: p?.nit || null,
+        serie: i.serie || v.serie, documento: i.documento || v.documento, fecha_documento: i.fecha_documento || i.fecha_ingreso, moneda_id: i.moneda_id, tipo_cambio: aBase(i.moneda_id, i.tipo_cambio), bodega_id: i.bodega_id,
+        transaccion_id: i.transaccion_id || v.transaccion_id, dias_credito: i.dias_credito, pago_inmediato: i.forma_pago === 'CONTADO', fecha_vencimiento: sumaDias(i.fecha_documento || i.fecha_ingreso, i.dias_credito),
+        orden_compra: i.ordenes_compra?.numero || v.orden_compra, bonificaciones: Number(i.valor_descuento) || 0,
+        clasificacion_id: (clasificaciones.find((x) => x.nombre === 'BIENES') || clasificaciones.find((x) => !/SERVICIO/i.test(x.nombre)))?.id || v.clasificacion_id,
+        descripcion: v.descripcion || `COMPRA DEL INGRESO ${i.numero} DE LA ORDEN ${i.ordenes_compra?.numero || ''}` });
+      articulos = articulos.filter((a) => !a.ingreso_linea_id).concat(i.ingreso_lineas.map((l) => ({ producto_id: l.producto_id, serie: l.lote || '', cantidad: Number(l.cantidad), costo_unitario: Number(l.costo_unitario), descuento: 0, costo_extra: 0, inventario: true, exento: false, inventariado: false, ingreso_linea_id: l.id })));
+      v.valor_total = fmt.redondear(articulos.reduce((t, a) => t + totalArt(a), 0) - (Number(i.valor_descuento) || 0));
+      ingresoVincular = i.id;
+      await cargarCuentasProv(i.proveedor_id);
+      delete v._cxp; delete v._prov;
+      pestana = 'ARTICULOS';
+      pintarDetalle(v);
+      window.FIN.aviso(`Ingreso ${i.numero} cargado: ${i.ingreso_lineas.length} artículo(s) (ya están en la bodega)`);
+    }
+    function costosExtras() {
+      leerFilas();
+      const t = prompt('Total de costos extra a prorratear entre los artículos (flete, seguro, aduana…):');
+      if (t === null) return;
+      const extra = fmt.redondear(t);
+      const base = articulos.reduce((s, a) => s + a.cantidad * a.costo_unitario - a.descuento, 0);
+      if (!(extra >= 0) || !base) return window.FIN.aviso('Escribe un monto válido');
+      let resto = extra;
+      articulos.forEach((a, i) => { const m = i === articulos.length - 1 ? resto : fmt.redondear(extra * (a.cantidad * a.costo_unitario - a.descuento) / base); a.costo_extra = m; resto = fmt.redondear(resto - m); });
+      repintar();
+      window.FIN.aviso(`${fmt.monto(extra)} prorrateados entre ${articulos.length} artículo(s)`);
+    }
+    async function crearProducto() {
+      const id = await window.LOV({ titulo: 'Productos', columnas: ['Código', 'Nombre'], filas: productos.filter((p) => p.estado === 'ACTIVO').map((p) => ({ id: p.id, celdas: [p.codigo_producto || p.codigo, p.nombre] })),
+        crear: ctx.admin && { campos: [{ k: 'codigo_producto', t: 'Código producto', max: 40 }, { k: 'nombre', t: 'Nombre', req: true, max: 150 }], guardar: async (d) => { const r = await sb.from('productos').insert({ codigo: 0, nombre: d.nombre, codigo_producto: d.codigo_producto || null, organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, bodega_id: actual?.bodega_id || null }).select('id, codigo, codigo_producto, nombre, estado, precio_costo').single(); if (r.error) throw r.error; productos.push(r.data); return r.data.id; } } });
+      if (id) agregarArticulo(prodTxt(prod(id)));
+    }
+    // Detalle desde Excel guardado como CSV: código; cantidad; costo unitario; serie; descuento.
+    async function cargarExcel(archivo) {
+      const texto = await archivo.text();
+      const filas = texto.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      const sep = (filas[0] || '').includes('\t') ? '\t' : (filas[0] || '').includes(';') ? ';' : ',';
+      const num = (x) => Number(String(x ?? '').replace(/[^0-9.,-]/g, '').replace(/,(?=\d{3}(\D|$))/g, '').replace(',', '.')) || 0;
+      leerFilas();
+      let n = 0; const faltan = [];
+      filas.forEach((l, k) => {
+        const c = l.split(sep).map((x) => x.replace(/^"|"$/g, '').trim());
+        const cod = (c[0] || '').toUpperCase();
+        if (!cod || (k === 0 && !num(c[1]))) return;
+        const pd = productos.find((p) => (p.codigo_producto || '').toUpperCase() === cod || String(p.codigo) === cod);
+        if (!pd) { faltan.push(cod); return; }
+        articulos.push({ producto_id: pd.id, cantidad: num(c[1]) || 1, costo_unitario: num(c[2]), serie: c[3] || '', descuento: num(c[4]), costo_extra: 0, inventario: true, exento: false, inventariado: false });
+        n++;
+      });
+      repintar();
+      window.FIN.aviso(`${n} artículo(s) cargado(s)${faltan.length ? ` · no están en el catálogo: ${faltan.slice(0, 5).join(', ')}${faltan.length > 5 ? '…' : ''}` : ''}`);
+    }
+    async function inventario(accion) {
+      if (!confirm(accion === 'CARGAR' ? `¿Cargar a la bodega los artículos de la compra ${actual.numero}?` : `¿Revertir la carga al inventario de la compra ${actual.numero}?`)) return;
+      const { data, error } = await sb.rpc('cargar_inventario_compra', { p_compra: actual.id, p_accion: accion });
+      if (error) { const e = ctx.pDet.querySelector('.modal-error'); if (e) e.textContent = window.UI.traducirError(error); return; }
+      window.FIN.aviso(`${data.articulos} artículo(s) ${accion === 'CARGAR' ? 'cargado(s) al' : 'revertido(s) del'} inventario`);
+      await consultar(actual.id);
     }
 
     async function procesar(accion) {
@@ -603,7 +760,8 @@
           <div><b>Total</b>${esc(sim)} ${fmt.monto(c.valor_total)}</div><div><b>Base</b>${fmt.monto(c.base)}</div><div><b>IVA</b>${fmt.monto(c.iva)}</div><div><b>Saldo</b>${fmt.monto(c.pendiente)}</div>
           <div><b>Exento</b>${fmt.monto(c.exento)}</div><div><b>IDP</b>${fmt.monto(c.idp)}</div><div><b>G. N. D.</b>${fmt.monto(c.no_deducible)}</div><div><b>Retención</b>${c.retencion ? `${fmt.monto(c.retencion_valor)} · form. ${esc(c.retencion_formulario || '')}` : 'No'}</div>
           <div style="grid-column:1/-1"><b>Descripción</b>${esc(c.descripcion || '')}</div></div>
-        ${items.length ? `<h3>Detalle de la compra</h3><table><thead><tr><th>#</th><th>Descripción</th><th class="n">Cantidad</th><th class="n">Costo total</th></tr></thead><tbody>${items.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.descripcion)}</td><td class="n">${i.cantidad}</td><td class="n">${fmt.monto(i.costo_total)}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="3">Total</td><td class="n">${fmt.monto(subtotal())}</td></tr></tfoot></table>` : ''}
+        ${articulos.length ? `<h3>Artículos</h3><table><thead><tr><th>#</th><th>Código</th><th>Producto</th><th>Serie</th><th class="n">Cantidad</th><th class="n">Costo unitario</th><th class="n">Descuento</th><th class="n">Costo total</th></tr></thead><tbody>${articulos.map((a, n) => { const pd = prod(a.producto_id); return `<tr><td>${a.linea || n + 1}</td><td>${esc(pd?.codigo_producto || '')}</td><td>${esc(pd?.nombre || '')}</td><td>${esc(a.serie || '')}</td><td class="n">${a.cantidad}</td><td class="n">${fmt.monto(a.costo_unitario)}</td><td class="n">${fmt.monto(a.descuento)}</td><td class="n">${fmt.monto(totalArt(a))}</td></tr>`; }).join('')}</tbody><tfoot><tr><td colspan="7">Total</td><td class="n">${fmt.monto(subtotal())}</td></tr></tfoot></table>` : ''}
+        ${items.length && !articulos.length ? `<h3>Detalle de la compra</h3><table><thead><tr><th>#</th><th>Descripción</th><th class="n">Cantidad</th><th class="n">Costo total</th></tr></thead><tbody>${items.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.descripcion)}</td><td class="n">${i.cantidad}</td><td class="n">${fmt.monto(i.costo_total)}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="3">Total</td><td class="n">${fmt.monto(subtotal())}</td></tr></tfoot></table>` : ''}
         ${lineas.length ? `<h3>Detalle contable</h3><table><thead><tr><th>Cuenta</th><th>Nombre</th><th class="n">Debe</th><th class="n">Haber</th></tr></thead><tbody>${lineas.map((l) => { const k = contable(l.cuenta_id); return `<tr><td>${esc(k?.codigo || '')}</td><td>${esc(k?.nombre || '')}</td><td class="n">${l.debe ? fmt.monto(l.debe) : ''}</td><td class="n">${l.haber ? fmt.monto(l.haber) : ''}</td></tr>`; }).join('')}</tbody></table>` : ''}
         <div class="firmas"><div>Elaboró</div><div>Revisó</div><div>Autorizó</div></div>`);
     }
@@ -634,6 +792,8 @@
       if (!form) return;
       const nm = e.target.name;
       if (nm === 'proveedor') return aplicarProveedor(form);
+      // Bienes o servicios: el detalle cambia con la clasificación.
+      if (nm === 'clasificacion_id' && !articulos.length && esBienes({ clasificacion_id: Number(e.target.value) }) !== !form.querySelector('[data-panel=ITEMS]')) return repintar();
       if (nm === 'moneda_id') form.elements.tipo_cambio.value = ctx.moneda(Number(e.target.value))?.cambio || 1;
       if (nm === 'fecha_documento' || nm === 'dias_credito' || nm === 'pago_inmediato') {
         const dias = form.elements.pago_inmediato.checked ? 0 : Number(form.elements.dias_credito.value) || 0;
@@ -649,10 +809,26 @@
         const k = porCodigo(e.target.value);
         form.querySelector('[data-cxp]').innerHTML = k ? esc(k.nombre) : e.target.value.trim() ? '<span class="pc-error">No es una cuenta de movimiento</span>' : '';
       }
+      if (e.target.matches('[data-agregar-art]')) { const t = e.target.value; e.target.value = ''; return agregarArticulo(t); }
+      if (e.target.matches('[data-excel]')) { const a = e.target.files[0]; e.target.value = ''; if (a) cargarExcel(a); return; }
+      if (e.target.closest('tr[data-art]') && e.target.type === 'checkbox') { leerFilas(); return; }
       if (e.target.closest('tr[data-linea], tr[data-item]')) { leerFilas(); totalizar(); }
       actualizar(form);
     });
+    // Totales de los artículos mientras se escribe.
+    function totalesArticulos() {
+      const form = ctx.pDet.querySelector('.cf-form');
+      const sim = simbolo(Number(form.elements.moneda_id.value));
+      const cambio = aBase(form.elements.moneda_id.value, form.elements.tipo_cambio.value);
+      const mi = tasaMI();
+      ctx.pDet.querySelectorAll('tr[data-art]').forEach((tr) => { const a = articulos[Number(tr.dataset.art)]; tr.querySelector('[data-at]').firstChild.textContent = fmt.monto(totalArt(a)); tr.querySelector('[data-atm]').textContent = fmt.monto(totalArt(a) * cambio / mi); });
+      const tot = articulos.reduce((t, a) => t + totalArt(a), 0);
+      ctx.pDet.querySelector('[data-tart]').textContent = `${sim} ${fmt.monto(tot)}`;
+      ctx.pDet.querySelector('[data-tartm]').textContent = `$ ${fmt.monto(tot * cambio / mi)}`;
+      const st = form.querySelector('[data-calc=subtotal]'); if (st) st.textContent = fmt.monto(tot);
+    }
     cont.addEventListener('input', (e) => {
+      if (e.target.closest('tr[data-art]') && e.target.type === 'number') { leerFilas(); return totalesArticulos(); }
       if (e.target.matches('[data-buscar]')) {
         buscar = e.target.value;
         const pos = e.target.selectionStart;
@@ -665,7 +841,10 @@
       if (e.target.closest('tr[data-linea], tr[data-item]')) { leerFilas(); totalizar(); }
       actualizar(form);
     });
-    cont.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-buscar]')) e.preventDefault(); });
+    cont.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.matches('[data-buscar]')) e.preventDefault();
+      if (e.key === 'Enter' && e.target.matches('[data-agregar-art]')) { e.preventDefault(); const t = e.target.value; e.target.value = ''; agregarArticulo(t); }
+    });
     cont.addEventListener('click', (e) => {
       const tab = e.target.closest('[data-pestana]');
       if (tab) {
@@ -677,6 +856,8 @@
       }
       const fila = e.target.closest('tr[data-compra]');
       if (fila) { pestana = 'ITEMS'; return abrir(compras.find((c) => String(c.id) === fila.dataset.compra)); }
+      const qa = e.target.closest('[data-quitar-art]');
+      if (qa) { leerFilas(); articulos.splice(Number(qa.dataset.quitarArt), 1); return repintar(); }
       const ql = e.target.closest('[data-quitar-linea]');
       if (ql) { leerFilas(); lineas.splice(Number(ql.dataset.quitarLinea), 1); return repintar(); }
       const qi = e.target.closest('[data-quitar-item]');
@@ -684,7 +865,13 @@
       const ac = e.target.closest('[data-accion]');
       if (!ac) return;
       const a = ac.dataset.accion;
-      if (a === 'nuevo') { actual = null; modificando = false; items = []; lineas = []; pagos = []; cuentasProv = []; pestana = 'ITEMS'; pintarDetalle(); return ctx.pDet.querySelector('[name=proveedor]')?.focus(); }
+      if (a === 'lov-ingresos') return elegirIngreso();
+      if (a === 'cargar-inv') return inventario('CARGAR');
+      if (a === 'revertir-inv') return inventario('REVERTIR');
+      if (a === 'costos-extra') return costosExtras();
+      if (a === 'crear-producto') return crearProducto();
+      if (a === 'total-articulos') { leerFilas(); const form = ctx.pDet.querySelector('.cf-form'); form.elements.valor_total.value = fmt.redondear(articulos.reduce((t, x) => t + totalArt(x), 0) - Number(form.elements.bonificaciones.value || 0)); return actualizar(form); }
+      if (a === 'nuevo') { actual = null; modificando = false; items = []; lineas = []; pagos = []; cuentasProv = []; articulos = []; ingresoVincular = null; pestana = 'ITEMS'; pintarDetalle(); return ctx.pDet.querySelector('[name=proveedor]')?.focus(); }
       if (a === 'modificar') { modificando = true; return repintar(); }
       if (a === 'cancelar') return actual ? abrir(actual) : abrir(compras[0] || null);
       if (a === 'imprimir') return imprimirCompra();

@@ -2772,3 +2772,17 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .lov-nuevo .boton { padding: 6px 12px; }
 .lov-nuevo .tk-error { flex: 1 1 100%; margin: 0; }
 .lov-nuevo .tk-error:empty { display: none; }
+
+/* Ingreso de compras · artículos (bienes) */
+.cf-inv .lov-campo input { font-weight: 700; color: var(--acento); }
+.cf-articulos { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.cf-articulos .pc-lineas td input:not([type=checkbox]) { width: 100%; min-width: 0; height: 26px; padding: 2px 6px; border: 1px solid var(--borde); border-radius: 4px; background: var(--panel); text-align: inherit; }
+.cf-articulos .pc-lineas td.num input { max-width: 110px; margin-left: auto; display: block; }
+.cf-articulos .cc-nombre { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-articulos tfoot td { position: sticky; bottom: 0; padding: 6px; font-weight: 700; background: var(--fondo); border-top: 2px solid var(--cl-azul-borde, var(--borde)); }
+.cf-inventariado td { background: color-mix(in srgb, var(--acento) 6%, transparent); }
+.cf-del-ingreso { color: var(--acento); font-size: 13px; margin-left: 4px; }
+.cf-extra { display: block; font-size: 10px; font-weight: 500; color: var(--tenue); }
+.cf-art-acc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cf-art-acc [data-agregar-art] { flex: 0 1 320px; height: 30px; padding: 3px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); }
+.cf-art-acc label.boton { cursor: pointer; }
