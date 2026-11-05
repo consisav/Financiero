@@ -296,11 +296,17 @@ window.MODULOS = [
                 { id: 'notas-de-credito-proveedores', nombre: 'Notas de crédito de proveedores', icono: 'ti-receipt-refund', descripcion: 'Notas de crédito recibidas de los proveedores.' }
               ]
             },
-            { id: 'facturas-compra', nombre: 'Ingreso de compras', icono: 'ti-file-invoice', descripcion: 'Ingreso de la compra (bienes o servicios): compra de inventario sin facturar, artículos, carga al inventario, documento, proveedor, desglose fiscal, retención, detalle, detalle contable, contraseña de pago y pagos.' },
-            { id: 'regularizacion-anticipos', nombre: 'Regularización anticipos', icono: 'ti-arrows-exchange', descripcion: 'Liquida los anticipos a proveedores (cheques y notas de débito) contra las compras por pagar y genera su póliza contable.' },
-            { id: 'notas-credito-compras', nombre: 'Notas crédito compras', icono: 'ti-receipt-refund', descripcion: 'Notas de crédito y débito de los proveedores: factura de referencia, devolución al inventario, detalle contable y póliza.' },
-            { id: 'productos-consignacion', nombre: 'Productos en consignación', icono: 'ti-packages', descripcion: 'Partes de depósito de los proveedores: envío o devolución de mercadería en consignación y su carga al inventario.' },
-            { id: 'contrasenas-pago', nombre: 'Contraseñas de pago', icono: 'ti-key', descripcion: 'Recepción de facturas del proveedor: documentos recibidos, fecha estimada de pago, autorización, impresión y liquidación.' },
+            {
+              subgrupo: 'Procesar Compras',
+              icono: 'ti-file-invoice',
+              pantallas: [
+                { id: 'facturas-compra', nombre: 'Ingreso de compras', icono: 'ti-file-invoice', descripcion: 'Ingreso de la compra (bienes o servicios): compra de inventario sin facturar, artículos, carga al inventario, documento, proveedor, desglose fiscal, retención, detalle, detalle contable, contraseña de pago y pagos.' },
+                { id: 'regularizacion-anticipos', nombre: 'Regularización anticipos', icono: 'ti-arrows-exchange', descripcion: 'Liquida los anticipos a proveedores (cheques y notas de débito) contra las compras por pagar y genera su póliza contable.' },
+                { id: 'notas-credito-compras', nombre: 'Notas crédito compras', icono: 'ti-receipt-refund', descripcion: 'Notas de crédito y débito de los proveedores: factura de referencia, devolución al inventario, detalle contable y póliza.' },
+                { id: 'productos-consignacion', nombre: 'Productos en consignación', icono: 'ti-packages', descripcion: 'Partes de depósito de los proveedores: envío o devolución de mercadería en consignación y su carga al inventario.' },
+                { id: 'contrasenas-pago', nombre: 'Contraseñas de pago', icono: 'ti-key', descripcion: 'Recepción de facturas del proveedor: documentos recibidos, fecha estimada de pago, autorización, impresión y liquidación.' }
+              ]
+            },
             {
               subgrupo: 'Cuentas x Pagar',
               icono: 'ti-report-money',
