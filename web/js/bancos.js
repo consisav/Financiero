@@ -1,6 +1,6 @@
 // Registros · Bancos: base común de las pantallas bancarias (parámetros organización y
 // localidad, maestro arriba y detalle abajo) y la pantalla Cuentas bancarias:
-//   Maestro: bancos del sistema bancario de Guatemala (catálogo común).
+//   Maestro: bancos de la localidad (cada organización y localidad tiene su catálogo y sus códigos).
 //   Detalle: cuentas bancarias del banco elegido en la localidad y, a la derecha, la cuenta
 //   elegida: moneda, saldos, chequera (inicial, final, utilizados, mínimo, disponibles), formato
 //   de cheque y cuenta contable.
@@ -81,6 +81,8 @@
     ctx.moneda = (id) => ctx.monedas.find((x) => x.id === id);
     ctx.monedaBase = () => ctx.monedas.find((x) => x.iso === 'GTQ') || ctx.monedas[0];
     ctx.banco = (id) => ctx.bancos.find((x) => x.id === id);
+    // Bancos de la localidad elegida (o de la indicada): el catálogo es propio de cada localidad.
+    ctx.bancosLoc = (loc = seleccion.loc) => ctx.bancos.filter((x) => x.localidad_id === loc);
     ctx.localidad = (id) => ctx.localidades.find((x) => x.id === id);
 
     // Selector de empresa (localidad), agrupado por organización: la organización ya no se elige
@@ -230,8 +232,9 @@
         const { data } = await sb.rpc('saldo_cuenta_bancaria', { p_cuenta: c.id, p_hasta: ctx.fmt?.hoy?.() || hoy() });
         saldos[c.id] = Number(data || 0);
       }));
-      if (!bancoActual || !ctx.bancos.some((b) => b.id === bancoActual.id)) {
-        bancoActual = ctx.bancos.find((b) => cuentas.some((c) => c.banco_id === b.id)) || ctx.bancos[0] || null;
+      const bancos = ctx.bancosLoc();
+      if (!bancoActual || !bancos.some((b) => b.id === bancoActual.id)) {
+        bancoActual = bancos.find((b) => cuentas.some((c) => c.banco_id === b.id)) || bancos[0] || null;
       }
       pintarMaestro();
       abrirBanco(bancoActual, cuentaActual?.id);
@@ -240,12 +243,13 @@
     // Lista compacta de bancos: siglas, nombre, cuentas en la localidad y costo de transferencia.
     function pintarMaestro() {
       const { monto } = window.BANCOS.fmt;
+      const bancos = ctx.bancosLoc();
       ctx.pMae.innerHTML = `
-        <header class="tk-bandeja-cab tg-cab"><h2>Bancos del sistema <small>${ctx.bancos.length}</small></h2>
-          <span class="rp-nota" title="Bancos del sistema bancario de Guatemala: verifica el listado vigente con la SIB"><i class="ti ti-info-circle" aria-hidden="true"></i> SIB</span></header>
+        <header class="tk-bandeja-cab tg-cab"><h2>Bancos de la empresa <small>${bancos.length}</small></h2>
+          <span class="rp-nota" title="Cada organización y localidad tiene su propio catálogo de bancos y sus códigos"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(ctx.localidad(seleccion.loc)?.codigo || '')}</span></header>
         <label class="bk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar-banco placeholder="Buscar banco…" aria-label="Buscar banco"></label>
         <ul class="bk-bancos">
-          ${ctx.bancos.map((b) => {
+          ${bancos.map((b) => {
             const n = cuentas.filter((c) => c.banco_id === b.id).length;
             return `
             <li class="${bancoActual && bancoActual.id === b.id ? 'actual' : ''} ${b.activo ? '' : 'inactivo'}" data-banco="${b.id}" tabindex="0" data-texto="${esc(`${b.codigo} ${b.nombre} ${b.siglas || ''}`.toLowerCase())}">
@@ -255,7 +259,7 @@
               ${ctx.admin ? `<button type="button" class="bk-editar" data-editar-banco="${b.id}" title="Modificar banco" aria-label="Modificar ${esc(b.nombre)}"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}
             </li>`;
           }).join('')}
-        </ul>`;
+        </ul>${bancos.length ? '' : ctx.vacio('La localidad no tiene bancos: créalos con «+ Banco».')}`;
     }
 
     function abrirBanco(b, cuentaId) {
@@ -373,7 +377,7 @@
     function formBanco(b) {
       window.UI.formulario({
         titulo: b ? `Modificar banco · ${b.nombre}` : 'Nuevo banco',
-        valores: b || { codigo: Math.max(0, ...ctx.bancos.map((x) => x.codigo)) + 1, activo: true },
+        valores: b || { codigo: Math.max(0, ...ctx.bancosLoc().map((x) => x.codigo)) + 1, activo: true },
         campos: [
           { nombre: 'codigo', etiqueta: 'Código', tipo: 'numero', requerido: true },
           { nombre: 'nombre', etiqueta: 'Nombre', requerido: true },
@@ -384,8 +388,8 @@
         alGuardar: async (d) => {
           d.nombre = d.nombre.toUpperCase();
           if (d.siglas) d.siglas = d.siglas.toUpperCase();
-          const r = b ? await sb.from('bancos').update(d).eq('id', b.id) : await sb.from('bancos').insert(d);
-          if (r.error) throw r.error;
+          const r = b ? await sb.from('bancos').update(d).eq('id', b.id) : await sb.from('bancos').insert({ ...d, localidad_id: seleccion.loc });
+          if (r.error) throw /bancos_localidad_codigo_uk/.test(r.error.message) ? new Error('Ya existe un banco con ese código en la localidad.') : /bancos_localidad_nombre_uk/.test(r.error.message) ? new Error('Ya existe un banco con ese nombre en la localidad.') : r.error;
           const { data } = await sb.from('bancos').select('*').order('codigo');
           ctx.bancos = data || [];
           window.FIN.aviso('Banco guardado');
