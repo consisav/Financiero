@@ -3131,7 +3131,6 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .tv-orden { cursor: pointer; user-select: none; white-space: nowrap; }
 .tv-orden:hover { color: var(--acento); }
 .tv-orden.activo { color: var(--acento); }
-.tv-filtros { grid-template-columns: auto minmax(180px, 1.3fr) repeat(2, 150px) minmax(140px, 1fr) repeat(2, minmax(110px, .8fr)) minmax(170px, 1fr) 140px !important; }
 
 /* Tickets · Visualización general: gráfica de tickets por usuario asignado */
 :root { --tv-barra: #1d5fb4; --tv-sin: #8a94a6; }
@@ -3152,3 +3151,49 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .tv-barra.sin { background: var(--tv-sin); }
 .tv-valor { font-size: 12.5px; color: var(--texto); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tv-valor small { color: var(--tenue); font-size: 11px; }
+
+/* Visualización general: columnas fijas, todo visible sin desplazamiento horizontal */
+.tv-t { table-layout: fixed; width: 100%; }
+.tv-t col.c-num { width: 9.5%; } .tv-t col.c-fecha { width: 8.6%; } .tv-t col.c-sol { width: 7.2%; } .tv-t col.c-mod { width: 5%; }
+.tv-t col.c-prio { width: 7%; } .tv-t col.c-est { width: 8.6%; } .tv-t col.c-rec { width: 10.5%; } .tv-t col.c-tiempo { width: 7.4%; } .tv-t col.c-ent { width: 8.6%; }
+.tv-t th, .tv-t td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; padding-left: 7px !important; padding-right: 7px !important; }
+.tv-t th { white-space: normal; line-height: 1.2; font-size: 10.5px; vertical-align: bottom; }
+.tv-t .tv-recurso { max-width: 100%; overflow: hidden; }
+.tv-t .tk-estado, .tv-t .tk-prioridad { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.tv-entrega b { display: block; font-weight: 600; }
+.tv-entrega small { display: block; font-size: 10.5px; color: var(--tenue); }
+.tv-entrega.vencida b, .tv-entrega.vencida small { color: #c62828; font-weight: 700; }
+.tv-filtros { display: flex !important; flex-wrap: wrap; align-items: end; gap: 8px 10px; }
+.tv-filtros .ta-titulo { flex: 0 0 auto; margin-right: 6px; }
+.tv-filtros .campo { flex: 1 1 118px; min-width: 0; }
+.tv-filtros .campo:nth-of-type(1) { flex: 1.6 1 170px; }
+.tv-filtros .campo:has([type=date]) { flex: 0 0 148px; }
+.tv-filtros .campo:nth-of-type(7) { flex: 1.3 1 160px; }
+.tv-filtros .campo :is(select, input) { width: 100%; }
+
+/* Visualización general: columnas clave en ancho fijo, Requerimiento toma el resto */
+.tv-t col.c-num { width: 112px; } .tv-t col.c-fecha { width: 86px; } .tv-t col.c-sol { width: 92px; } .tv-t col.c-mod { width: 62px; }
+.tv-t col.c-prio { width: 92px; } .tv-t col.c-est { width: 116px; } .tv-t col.c-rec { width: 140px; } .tv-t col.c-tiempo { width: 90px; } .tv-t col.c-ent { width: 100px; }
+.tv-f2 b { display: block; font-weight: 600; }
+.tv-f2 small { display: block; font-size: 10.5px; color: var(--tenue); }
+/* Las dos gráficas lado a lado */
+.tv-graficas { flex: 0 0 auto; max-height: 40%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: 1px solid var(--borde); min-height: 0; }
+.tv-graficas .tv-grafica { max-height: none; border-top: 0; min-height: 0; }
+.tv-graficas .tv-grafica + .tv-grafica { border-left: 1px solid var(--borde); }
+.tv-graficas .tv-barras { grid-template-columns: minmax(0, 1fr); }
+.tv-graficas .tv-fila { grid-template-columns: minmax(130px, 190px) minmax(0, 1fr) 96px; }
+.tv-grafica header { flex-wrap: wrap; }
+.tv-grafica header select { height: 26px; padding: 0 6px; font-size: 12.5px; font-weight: 700; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); color: var(--texto); }
+.tv-fila[data-usuario] { cursor: pointer; }
+.tv-fila[data-usuario=""] { cursor: default; }
+.tv-fila.elegido { background: color-mix(in srgb, var(--acento) 9%, transparent); }
+.tv-fila.cero .tv-valor b { color: var(--tenue); font-weight: 500; }
+.tv-fila .tk-estado { font-size: 11px; }
+@media (max-width: 1250px) { .tv-graficas { grid-template-columns: minmax(0, 1fr); } .tv-graficas .tv-grafica + .tv-grafica { border-left: 0; border-top: 1px solid var(--borde); } }
+.tv-graficas .tv-barras.tv-estados { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 16px; }
+.tv-estados .tv-fila { grid-template-columns: 118px minmax(0, 1fr) 30px !important; padding: 2px 4px; }
+.tv-graficas .tv-fila { padding-top: 2px; padding-bottom: 2px; }
+.tv-graficas .tv-pista { height: 12px; }
+@media (max-height: 820px) { .tv-graficas { max-height: 50%; } .tv-grafica { padding-top: 5px; padding-bottom: 6px; gap: 4px; } .tv-lista td { padding-top: 3px; padding-bottom: 3px; } }
+.tv-graficas .tv-barras.tv-estados { grid-auto-flow: column; grid-template-rows: repeat(4, auto); }
+.tv-filtros .campo:nth-of-type(8) { flex: 0 0 140px; }
