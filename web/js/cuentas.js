@@ -174,7 +174,7 @@
       const div = document.createElement('div');
       destino.appendChild(div);
       estado.arbol = window.Jerarquia(div, {
-        ...cfg.arbol(estado.ctx),
+        ...cfg.arbol({ ...estado.ctx, loc: estado.loc }),
         filtro: { catalogo_id: estado.version.id },
         editable, fichaUnica: true, alCargar: pintarCifras,
         antesDeGuardar: (d) => { d.nombre = d.nombre.toUpperCase(); }
@@ -226,7 +226,7 @@
         const loc = locActual();
         const v = estado.version;
         return imprimir(`${cfg.tituloImpresion} · ${org.nombre}`, `Localidad ${loc.codigo} · ${loc.nombre_comercial} · Versión ${v.version}, del ${fechaCorta(v.fecha_del)} al ${fechaCorta(v.fecha_al) || 'vigente'}`,
-          estado.arbol.filas(), cfg.arbol(estado.ctx).padre, cfg.columnasImpresion(estado.ctx));
+          estado.arbol.filas(), cfg.arbol({ ...estado.ctx, loc: estado.loc }).padre, cfg.columnasImpresion(estado.ctx));
       }
       const ed = e.target.closest('[data-editar-version]');
       if (ed) return formVersion(estado.versiones.find((v) => String(v.id) === ed.dataset.editarVersion));
@@ -241,12 +241,14 @@
       tablaVersiones: 'catalogos_cuentas', nombreCatalogo: 'catálogo de cuentas', unidad: 'cuentas', icono: 'ti-list-tree',
       tituloImpresion: 'Catálogo de cuentas', script: '20261102000005_cuentas_por_localidad.sql',
       preparar: async (sb) => {
-        const { data, error } = await sb.from('tipos_cuenta').select('id, codigo, descripcion, activo').order('codigo');
+        const { data, error } = await sb.from('tipos_cuenta').select('id, codigo, descripcion, activo, localidad_id').order('codigo');
         if (error) throw error;
         return { tipos: data };
       },
-      arbol: ({ tipos }) => {
-        const tipoDe = (id) => (tipos.find((t) => t.id === id) || {}).descripcion || '';
+      // Los tipos de cuenta son de cada localidad: se ofrecen los de la empresa elegida.
+      arbol: ({ tipos: todos, loc }) => {
+        const tipos = todos.filter((t) => !t.localidad_id || !loc || t.localidad_id === loc);
+        const tipoDe = (id) => (todos.find((t) => t.id === id) || {}).descripcion || '';
         const tiposActivos = tipos.filter((t) => t.activo).map((t) => ({ valor: t.id, texto: `${t.codigo} · ${t.descripcion}` }));
         return {
           tabla: 'cuentas', padre: 'cuenta_mayor_id',

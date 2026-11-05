@@ -3197,3 +3197,8 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 @media (max-height: 820px) { .tv-graficas { max-height: 50%; } .tv-grafica { padding-top: 5px; padding-bottom: 6px; gap: 4px; } .tv-lista td { padding-top: 3px; padding-bottom: 3px; } }
 .tv-graficas .tv-barras.tv-estados { grid-auto-flow: column; grid-template-rows: repeat(4, auto); }
 .tv-filtros .campo:nth-of-type(8) { flex: 0 0 140px; }
+
+/* Tipos de cuentas: empresa (organización y localidad) */
+.tc-empresa { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 14px; margin: 0 0 12px; }
+.tc-empresa .campo { min-width: 260px; }
+.tc-empresa small { margin-bottom: 9px; }
