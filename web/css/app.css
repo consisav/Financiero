@@ -2699,3 +2699,51 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cl-credito > .boton { margin-left: auto; }
 .cpr-compacto .cp-panel { overflow: auto; }
 @media (max-width: 1500px) { .cl-c1 { grid-column: span 2; } .cl-credito { flex-wrap: wrap; } }
+
+/* ---------- Compras · Órdenes de compra ---------- */
+.oq-form .cl-banda, .oi-form .cl-banda { padding: 4px 12px; font-size: 14px; }
+.oq-cab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, .95fr); grid-template-rows: auto auto; gap: 5px; }
+.oq-cab > section { padding: 5px 9px 6px; min-width: 0; }
+.oq-orden { grid-column: 1 / -1; }
+.oq-g1 { grid-template-columns: 90px minmax(0, 1.2fr) 160px minmax(0, 1.4fr); }
+.oq-g2 { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.oq-g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.oq-c2 { grid-column: span 2; } .oq-c3 { grid-column: span 3; }
+.oq-prov { grid-column: 1 / span 2; }
+.oq-bod { grid-column: 3; }
+.oq-num { display: flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 6px; background: var(--panel); border: 1px solid var(--cl-azul-borde); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oq-estado { display: flex; align-items: center; gap: 6px; height: 26px; }
+.oq-estado b { padding: 2px 8px; border-radius: 6px; background: var(--panel); border: 1px solid var(--cl-azul-borde); font-size: 13px; }
+.oq-estado span { flex: 1; display: flex; align-items: center; height: 26px; padding: 0 8px; border-radius: 6px; background: var(--panel); border: 1px solid var(--cl-azul-borde); font-size: 12.5px; color: var(--suave); }
+.oq-acciones { display: flex; gap: 5px; flex-wrap: wrap; align-items: flex-end; }
+.oq-acciones .boton { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; }
+.oq-tab-acc { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.oq-tab-acc .boton { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; }
+.oq-tab-acc [data-agregar] { width: 300px; height: 28px; padding: 3px 9px; font-size: 12.5px; border: 1px solid var(--borde); border-radius: 8px; background: var(--panel); color: var(--texto); }
+.oq-productos { gap: 4px; }
+.oq-productos tr[data-linea] { cursor: pointer; }
+.oq-productos tr.oq-fuera td { opacity: .5; }
+.oq-aprueba input, td.oq-aprueba { background: color-mix(in srgb, #f5d94a 16%, var(--panel)) !important; }
+.oq-linea { display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap; padding: 5px 8px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--fondo); }
+.oq-linea .cc-calc { flex-direction: column; align-items: flex-end; height: auto; padding: 2px 8px; background: var(--panel); }
+.oq-linea .cc-calc span { font-size: 9.5px; }
+.oq-obs-linea { flex: 1; min-width: 200px; }
+.oq-control { flex: 1 1 100%; font-size: 11px; color: var(--tenue); }
+.oq-control:empty { display: none; }
+.oq-otros { grid-template-columns: repeat(3, minmax(0, 1fr)); padding-top: 4px; }
+.oq-aprobacion .ta-cuerpo { grid-template-rows: minmax(0, 1fr) 0 !important; }
+.oq-aprobacion .bk-detalle { display: none; }
+.oq-aprob { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; height: 100%; min-height: 0; }
+.oq-aprob .ta-tabla { flex: 1; }
+.oq-aprob .boton { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; }
+.oi-cab { padding: 5px 9px 6px; }
+.oi-g { grid-template-columns: 80px 140px repeat(3, minmax(0, 1fr)) 150px 110px 130px minmax(0, 1fr); }
+.oi-g { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+.oi-total { grid-column: span 2; background: var(--acento-fondo); }
+.oi-total b { color: var(--acento); font-size: 14px !important; }
+@media (max-width: 1500px) { .oq-cab { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .oq-prov { grid-column: 1 / -1; } .oq-bod { grid-column: 1 / -1; } .oi-g { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.oq-productos .oq-linea { flex: 0 0 auto; align-self: stretch; }
+.oq-productos .pc-lineas { min-height: 120px; }
+.oq-sin-orden { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 12px; }
+.oq-sin-orden .tk-vacio { flex: 0 0 auto; padding: 14px; }
+.oq-sin-orden .bk-maestro { flex: 1; min-height: 0; display: flex; flex-direction: column; }
