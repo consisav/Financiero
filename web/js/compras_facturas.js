@@ -320,17 +320,16 @@
                   <td class="cc-det"><input type="checkbox" data-a="exento" ${a.exento ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Exento"></td>
                   <td>${ed && !fijo ? `<button type="button" class="icono-boton" data-quitar-art="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('')
                   || `<tr><td colspan="13" class="tk-vacio">${ed ? 'Agrega los artículos, elige la compra de inventario arriba o carga el detalle desde Excel.' : 'La compra no tiene artículos.'}</td></tr>`}</tbody>
-                <tfoot><tr><td colspan="3">${articulos.length} total productos</td><td colspan="4" class="num">Total</td><td class="num" data-tart>${esc(sim)} ${fmt.monto(totArt)}</td><td></td><td class="num" data-tartm>$ ${fmt.monto(totArt * cambio / mi)}</td><td colspan="3"></td></tr></tfoot></table></div>
-              <div class="cf-art-acc">
-                ${ed ? '<input list="cf-productos" data-agregar-art placeholder="Agregar artículo (código o nombre)…" aria-label="Agregar artículo">' : ''}
-                ${consulta && ctx.admin && c.estado === 'ACTIVA' ? `<button type="button" class="boton secundario-sm" data-accion="cargar-inv" ${pendInv ? '' : 'disabled'} title="Carga a la bodega los artículos marcados en Inv?"><i class="ti ti-package-import" aria-hidden="true"></i> Cargar inventario</button>
-                  <button type="button" class="boton secundario-sm" data-accion="revertir-inv" ${hayInv ? '' : 'disabled'}><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Revertir carga</button>
-                  <button type="button" class="boton secundario-sm rp-peligro" data-accion="anular" ${pagado || hayInv ? 'disabled' : ''}><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>` : ''}
-                ${c ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
-                ${ed ? `<button type="button" class="boton secundario-sm" data-accion="costos-extra" ${articulos.length ? '' : 'disabled'} title="Prorratea fletes, seguros u otros costos entre los artículos"><i class="ti ti-truck" aria-hidden="true"></i> Costos extras</button>
-                  <button type="button" class="boton secundario-sm" data-accion="crear-producto"><i class="ti ti-plus" aria-hidden="true"></i> Crear producto</button>
-                  <label class="boton secundario-sm" title="Archivo CSV de Excel: código; cantidad; costo unitario; serie; descuento"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Cargar detalle Excel<input type="file" accept=".csv,.txt,text/csv" data-excel hidden></label>
-                  <button type="button" class="boton secundario-sm" data-accion="total-articulos" ${articulos.length ? '' : 'disabled'}><i class="ti ti-equal" aria-hidden="true"></i> Usar como total</button>` : ''}
+                <tfoot><tr><td colspan="7" class="num">Total</td><td class="num" data-tart>${esc(sim)} ${fmt.monto(totArt)}</td><td></td><td class="num" data-tartm>$ ${fmt.monto(totArt * cambio / mi)}</td><td colspan="3"></td></tr></tfoot></table></div>
+              <div class="cf-art-cuenta"><b data-nart>${articulos.length}</b> Total productos${ed ? '<input list="cf-productos" data-agregar-art placeholder="Agregar artículo (código o nombre)…" aria-label="Agregar artículo">' : ''}</div>
+              <div class="cf-art-acc">${(() => {
+                const activa = consulta && ctx.admin && c?.estado === 'ACTIVA';
+                const b = (accion, icono, texto, ok, extra = '') => `<button type="button" class="boton secundario-sm" data-accion="${accion}" ${ok ? '' : 'disabled'} ${extra}><i class="ti ${icono}" aria-hidden="true"></i> ${texto}</button>`;
+                return `<div class="cf-art-grupo">${b('cargar-inv', 'ti-package-import', 'Cargar inventario', activa && pendInv, 'title="Carga a la bodega los artículos marcados en Inv?"')}${b('revertir-inv', 'ti-arrow-back-up', 'Revertir carga', activa && hayInv)}</div>
+                  <div class="cf-art-grupo">${b('anular', 'ti-ban', 'Anular', activa && !pagado && !hayInv)}</div>
+                  <div class="cf-art-grupo">${b('imprimir', 'ti-printer', 'Imprimir', !!c)}${b('costos-extra', 'ti-truck', 'Costos extras', ed && articulos.length, 'title="Prorratea fletes, seguros u otros costos entre los artículos"')}${b('crear-producto', 'ti-plus', 'Crear producto', ed)}
+                  ${ed ? '<label class="boton secundario-sm" title="Archivo CSV de Excel: código; cantidad; costo unitario; serie; descuento"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Cargar detalle Excel<input type="file" accept=".csv,.txt,text/csv" data-excel hidden></label>' : b('excel', 'ti-file-spreadsheet', 'Cargar detalle Excel', false)}</div>`;
+              })()}</div>
               </div>
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
@@ -828,6 +827,7 @@
       ctx.pDet.querySelector('[data-tart]').textContent = `${sim} ${fmt.monto(tot)}`;
       ctx.pDet.querySelector('[data-tartm]').textContent = `$ ${fmt.monto(tot * cambio / mi)}`;
       const st = form.querySelector('[data-calc=subtotal]'); if (st) st.textContent = fmt.monto(tot);
+      if (editable() && form.elements.valor_total && !form.elements.valor_total.disabled) { form.elements.valor_total.value = fmt.redondear(tot - Number(form.elements.bonificaciones.value || 0)); actualizar(form); }
     }
     cont.addEventListener('input', (e) => {
       if (e.target.closest('tr[data-art]') && e.target.type === 'number') { leerFilas(); return totalesArticulos(); }
@@ -892,6 +892,7 @@
       leerFilas();
       const v = leer(form);
       delete v._cxp; delete v._prov;
+      if (editable() && articulos.length && esBienes(v)) v.valor_total = fmt.redondear(articulos.reduce((t, a) => t + totalArt(a), 0) - Number(v.bonificaciones || 0));
       pintarDetalle({ ...(actual || {}), ...v });
     }
     cont.addEventListener('submit', (e) => { if (e.target.matches('.cf-form')) { e.preventDefault(); guardar(e.target); } });

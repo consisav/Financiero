@@ -2841,3 +2841,11 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cg-tabla th.cg-chk, .cg-tabla th[style] { white-space: normal; line-height: 1.25; vertical-align: bottom; }
 .cg-tabla th.cg-chk, .cg-tabla td.cg-chk { width: 92px; }
 .cg-tabla td input:not([type=checkbox]) { min-width: 0; }
+/* Ingreso de compras · barra de artículos (clásica, amarilla con separadores) */
+.cf-art-cuenta { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--cl-rojo); }
+.cf-art-cuenta b { min-width: 28px; text-align: right; color: var(--acento); font-variant-numeric: tabular-nums; }
+.cf-art-cuenta [data-agregar-art] { margin-left: auto; flex: 0 1 340px; height: 28px; padding: 3px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); font-weight: 400; color: var(--texto); }
+.cf-articulos .cf-art-acc { flex-wrap: nowrap; gap: 0; padding: 6px 4px; border: 1px solid var(--cl-amarillo-borde); border-radius: var(--radio); background: var(--cl-amarillo); }
+.cf-art-grupo { display: flex; gap: 6px; padding: 0 12px; }
+.cf-art-grupo + .cf-art-grupo { border-left: 2px solid var(--texto); }
+.cf-art-grupo .boton:disabled { opacity: .55; }
