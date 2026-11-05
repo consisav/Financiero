@@ -63,6 +63,18 @@ window.MODULOS = [
           ]
         }
       ],
+      reportes: [
+        {
+          subgrupo: 'Reportes',
+          icono: 'ti-report',
+          pantallas: [
+            { id: 'reporte-organizaciones', nombre: 'Organizaciones y localidades', icono: 'ti-building', descripcion: 'Organizaciones con sus localidades: datos fiscales, venta de productos, ubicación y estado.' },
+            { id: 'reporte-modulos', nombre: 'Módulos y sub módulos', icono: 'ti-apps', descripcion: 'Módulos, sub módulos y opciones del sistema con los usuarios que tienen acceso.' },
+            { id: 'reporte-roles', nombre: 'Roles módulos', icono: 'ti-shield-lock', descripcion: 'Roles con sus usuarios asignados y las opciones y permisos que dan.' },
+            { id: 'reporte-usuarios', nombre: 'Listado de usuarios', icono: 'ti-users', descripcion: 'Usuarios por organización y localidad con su rol, roles funcionales y estado.' }
+          ]
+        }
+      ],
       tickets: [
         {
           subgrupo: 'Tickets',
@@ -80,7 +92,6 @@ window.MODULOS = [
       registros: ['Solicitudes', 'Órdenes de compra', 'Contratos'],
       mantenimientos: ['Parámetros administrativos', 'Niveles de aprobación'],
       procesos: ['Aprobaciones', 'Cierre administrativo'],
-      reportes: ['Gastos por departamento', 'Órdenes de compra por período', 'Contratos vigentes'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },

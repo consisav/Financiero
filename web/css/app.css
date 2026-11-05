@@ -2992,3 +2992,25 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ac-mini b { font-size: 13px; font-variant-numeric: tabular-nums; }
 .ac-graf { width: 18%; }
 .ac-barra { display: block; height: 10px; border-radius: 5px; background: linear-gradient(90deg, color-mix(in srgb, var(--acento) 55%, transparent), var(--acento)); }
+
+/* Administración · reportes */
+.ra-espacio { display: flex; justify-content: center; }
+.ra-panel { width: min(1500px, 100%); display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; }
+.ra-param { display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(5, minmax(130px, 1fr)) auto; gap: 8px 12px; align-items: end; padding: 10px 12px; border: 1px solid var(--cl-azul-borde); border-radius: var(--radio); background: var(--cl-azul); }
+.ra-param :is(input, select) { background: var(--panel); }
+.ra-ayuda { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--suave); }
+.ra-ayuda .ti { font-size: 22px; color: var(--cl-rojo); }
+.ra-acc { display: flex; gap: 6px; grid-column: -2 / -1; }
+.ra-resultado { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.ra-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.ra-cab > b { color: var(--cl-rojo); font-size: 15px; }
+.ra-tarjeta { display: inline-flex; flex-direction: column; padding: 3px 12px; border: 1px solid var(--cl-azul-borde); border-radius: 8px; background: var(--cl-azul); }
+.ra-tarjeta small { font-size: 10.5px; font-weight: 700; color: var(--cl-rojo); text-transform: uppercase; }
+.ra-tarjeta b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.ra-tabla { flex: 1; max-height: calc(100vh - 440px); }
+.ra-tabla td { padding: 4px 8px; font-size: 12.5px; }
+.ra-grupo td { background: var(--cl-azul); color: var(--cl-rojo); font-weight: 800; }
+.ra-n1 td { font-weight: 700; }
+.ra-n2 td:nth-child(2) { padding-left: 22px; font-weight: 600; }
+.ra-n3 td:nth-child(2) { padding-left: 38px; color: var(--suave); }
+.ra-tabla tfoot td { position: sticky; bottom: 0; background: var(--fondo); font-weight: 700; }
