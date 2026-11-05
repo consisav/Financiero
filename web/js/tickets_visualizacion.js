@@ -149,7 +149,24 @@
             <td><span class="ts-tiempo ${fin ? 'fin' : ''}" data-tiempo="${t.id}">${esc(duracion(msTranscurrido(t)))}</span></td>
             <td class="${vencido(t) ? 'pc-rojo fuerte' : ''}">${t.fecha_entrega ? esc(fechaDia(t.fecha_entrega)) : '—'}</td></tr>`; }).join('')
             || '<tr><td colspan="11" class="tk-vacio"><i class="ti ti-ticket" aria-hidden="true"></i>No hay tickets con esos parámetros.</td></tr>'}</tbody>
-        </table></div>`;
+        </table></div>
+        ${grafica(lista)}`;
+    }
+    // Tickets asignados por usuario (barras horizontales, una serie): los mismos tickets de la tabla.
+    function grafica(lista) {
+      if (!lista.length) return '';
+      const g = new Map();
+      lista.forEach((t) => { const k = t.recurso_id || ''; const x = g.get(k) || { nombre: k ? nombreUsuario(k) || 'Usuario' : 'Sin asignar', total: 0, abiertos: 0, porEstado: {} }; x.total++; if (t.estado < RESUELTO) x.abiertos++; x.porEstado[t.estado] = (x.porEstado[t.estado] || 0) + 1; g.set(k, x); });
+      const filas = [...g.entries()].sort((a, b) => (a[0] === '') - (b[0] === '') || b[1].total - a[1].total);
+      const max = Math.max(...filas.map(([, x]) => x.total));
+      const asignados = filas.filter(([k]) => k).reduce((t, [, x]) => t + x.total, 0);
+      return `<section class="tv-grafica" aria-label="Tickets asignados por usuario">
+          <header><h3><i class="ti ti-chart-bar" aria-hidden="true"></i> Tickets asignados por usuario</h3><small>${asignados} de ${lista.length} ticket(s) asignados · según los parámetros y la búsqueda</small></header>
+          <div class="tv-barras">${filas.map(([k, x]) => { const det = Object.entries(x.porEstado).map(([e, n]) => `${nombreEstado(Number(e))}: ${n}`).join(' · '); return `<div class="tv-fila" tabindex="0" title="${esc(x.nombre)} · ${x.total} ticket(s) · ${esc(det)}">
+              <span class="tv-nombre">${k ? `<span class="tk-avatar">${esc(iniciales(x.nombre))}</span>` : ''}${esc(x.nombre)}</span>
+              <span class="tv-pista"><span class="tv-barra ${k ? '' : 'sin'}" style="width:${Math.max(2, x.total / max * 100)}%"></span></span>
+              <span class="tv-valor"><b>${x.total}</b> <small>${x.abiertos === x.total ? (x.total === 1 ? 'abierto' : 'abiertos') : x.abiertos ? `· ${x.abiertos} abierto${x.abiertos === 1 ? '' : 's'}` : (x.total === 1 ? 'resuelto' : 'resueltos')}</small></span></div>`; }).join('')}</div>
+        </section>`;
     }
     function imprimirLista() {
       const lista = ordenados();

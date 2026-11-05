@@ -3132,3 +3132,23 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .tv-orden:hover { color: var(--acento); }
 .tv-orden.activo { color: var(--acento); }
 .tv-filtros { grid-template-columns: auto minmax(180px, 1.3fr) repeat(2, 150px) minmax(140px, 1fr) repeat(2, minmax(110px, .8fr)) minmax(170px, 1fr) 140px !important; }
+
+/* Tickets · Visualización general: gráfica de tickets por usuario asignado */
+:root { --tv-barra: #1d5fb4; --tv-sin: #8a94a6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --tv-barra: #5a95e4; --tv-sin: #7b879b; } }
+:root[data-theme="dark"] { --tv-barra: #5a95e4; --tv-sin: #7b879b; }
+.tv-lista { min-height: 150px; }
+.tv-grafica { flex: 0 0 auto; max-height: 38%; display: flex; flex-direction: column; gap: 6px; padding: 8px 14px 10px; border-top: 1px solid var(--borde); background: var(--panel); }
+.tv-grafica header { display: flex; align-items: baseline; gap: 12px; }
+.tv-grafica h3 { margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--acento); }
+.tv-grafica header small { color: var(--tenue); font-size: 11.5px; }
+.tv-barras { min-height: 0; overflow: auto; display: grid; grid-template-columns: minmax(0, 1100px); gap: 3px; align-content: start; }
+.tv-fila { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr) 120px; align-items: center; gap: 10px; padding: 3px 6px; border-radius: 6px; }
+.tv-fila:hover, .tv-fila:focus-visible { background: var(--fondo); outline: none; }
+.tv-nombre { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-nombre .tk-avatar { flex: 0 0 auto; }
+.tv-pista { position: relative; height: 14px; border-left: 1px solid var(--borde); }
+.tv-barra { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--tv-barra); transition: width .3s; }
+.tv-barra.sin { background: var(--tv-sin); }
+.tv-valor { font-size: 12.5px; color: var(--texto); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tv-valor small { color: var(--tenue); font-size: 11px; }
