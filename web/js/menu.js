@@ -289,8 +289,8 @@ window.MODULOS = [
               icono: 'ti-clipboard-list',
               pantallas: [
                 { id: 'solicitudes-de-compra', nombre: 'Solicitudes de compra', icono: 'ti-file-plus', descripcion: 'Generación de órdenes de compra: proveedor, bodega, productos con su existencia y punto mínimo, cotizaciones y envío a autorización.' },
-                { id: 'autorizaciones-de-compras', nombre: 'Autorizaciones de compras', icono: 'ti-checklist', descripcion: 'Autorización de cada orden: cantidad aprobada por producto, aprobar, devolver o rechazar.' },
-                { id: 'autorizar-ordenes', nombre: 'Autorizar órdenes', icono: 'ti-list-check', descripcion: 'Órdenes en espera de autorización, con su botón Ver.', separador: true },
+                { id: 'autorizaciones-de-compras', nombre: 'Autorizaciones compras', icono: 'ti-checklist', descripcion: 'Autorización de cada orden: cantidad aprobada por producto, aprobar, devolver o rechazar.' },
+                { id: 'autorizar-ordenes', nombre: 'Aprobación órdenes', icono: 'ti-list-check', descripcion: 'Órdenes en espera de autorización, con su botón Ver.', separador: true },
                 { id: 'ordenes-de-compra', nombre: 'Órdenes de compra', icono: 'ti-clipboard-list', descripcion: 'Ingresos de compras basados en órdenes: lote, vencimiento, aplicar inventario y generar la factura de compra.' },
                 { id: 'recepcion-de-mercaderia', nombre: 'Recepción de mercadería', icono: 'ti-truck-delivery', descripcion: 'Recepción en bodega de lo comprado contra la orden de compra.' },
                 { id: 'notas-de-credito-proveedores', nombre: 'Notas de crédito de proveedores', icono: 'ti-receipt-refund', descripcion: 'Notas de crédito recibidas de los proveedores.' }

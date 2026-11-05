@@ -6,9 +6,9 @@
 //   (existencia, cantidad solicitada, precio, y abajo el precio en la moneda y en dólares, lo que
 //   está en tránsito y solicitado, mínimo y máximo), Cotizaciones, Otros y Órdenes. «Generar orden»
 //   la envía a autorización.
-//   Autorizaciones de compras: la misma orden en solo lectura, con la cantidad aprobada y «Aprueba»
+//   Autorizaciones compras: la misma orden en solo lectura, con la cantidad aprobada y «Aprueba»
 //   por producto; Aprobar orden, Rechazar o Devolver.
-//   Autorizar órdenes: las órdenes en autorización con su botón Ver.
+//   Aprobación órdenes: las órdenes en autorización con su botón Ver.
 //   Órdenes de compra (ingresos basados en órdenes): se recibe lo autorizado por lote y vencimiento,
 //   «Aplicar inventario» lo carga a la bodega y genera la factura de compra; Revertir y Anular.
 (function () {
@@ -51,10 +51,10 @@
 
   window.PANTALLAS = window.PANTALLAS || {};
 
-  // ===================== Solicitudes de compra y Autorizaciones de compras =====================
+  // ===================== Solicitudes de compra y Autorizaciones compras =====================
   function pantallaOrden(cont, modo) {
     const AUT = modo === 'AUTORIZACION';
-    const ctx = montar(cont, { titulo: AUT ? 'Autorizaciones de compras' : 'Solicitudes de compra', icono: AUT ? 'ti-checklist' : 'ti-file-plus', clase: 'bk-movimientos oq-ordenes', grupo: 'Compras · Órdenes de compra' });
+    const ctx = montar(cont, { titulo: AUT ? 'Autorizaciones compras' : 'Solicitudes de compra', icono: AUT ? 'ti-checklist' : 'ti-file-plus', clase: 'bk-movimientos oq-ordenes', grupo: 'Compras · Órdenes de compra' });
     const { sb, yo } = ctx;
     const [anio, mes] = fmt.hoy().split('-');
     const f = { estado: AUT ? 'EN AUTORIZACIÓN' : 'PENDIENTES', desde: `${anio}-${String(Number(mes) - 2 > 0 ? Number(mes) - 2 : 1).padStart(2, '0')}-01`, hasta: fmt.hoy() };
@@ -462,7 +462,7 @@
   window.PANTALLAS['solicitudes-de-compra'] = (cont) => pantallaOrden(cont, 'SOLICITUD');
   window.PANTALLAS['autorizaciones-de-compras'] = (cont) => pantallaOrden(cont, 'AUTORIZACION');
 
-  // ===================== Autorizar órdenes =====================
+  // ===================== Aprobación órdenes =====================
   window.PANTALLAS['autorizar-ordenes'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Aprobación de órdenes de compra', icono: 'ti-list-check', clase: 'oq-aprobacion', grupo: 'Compras · Órdenes de compra' });
     const { sb } = ctx;
