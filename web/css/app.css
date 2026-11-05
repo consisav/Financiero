@@ -3057,3 +3057,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .mm-estado:empty { display: none; }
 .mm-estado { margin: 0; padding: 6px 10px; border-radius: 8px; background: var(--cl-amarillo); font-size: 13px; }
 @media (max-width: 900px) { .mm-cuerpo-visor { grid-template-columns: 1fr; } .mm-indice { display: none; } .mm-dia { padding: 16px; } .mm-dia h2 { font-size: 22px; } }
+
+/* Tickets: el campo de la descripción se resalta al crear un ticket nuevo */
+.ta-col .tg-descripcion textarea { min-height: 110px; }
+.tg-resalta { outline: 3px solid color-mix(in srgb, var(--acento) 55%, transparent); outline-offset: 2px; transition: outline-color .4s; }

@@ -315,17 +315,35 @@
       pTicket.querySelector('[data-grafica]').innerHTML = grafica(estado);
     }
 
+    // Lleva la vista al formulario del ticket y pone el cursor en la descripción.
+    function enfocarDescripcion() {
+      const ta = pTicket.querySelector('[name=descripcion]');
+      if (!ta) return;
+      pTicket.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      ta.focus({ preventScroll: true });
+      ta.classList.add('tg-resalta');
+      setTimeout(() => ta.classList.remove('tg-resalta'), 1600);
+    }
+
     async function guardar(form) {
+      try { await guardarTicket(form); } catch (err) {
+        const msg = window.UI.traducirError(err);
+        form.querySelector('.modal-error').textContent = msg;
+        window.FIN.aviso(`No se generó el ticket: ${msg}`);
+      }
+    }
+    async function guardarTicket(form) {
       const error = form.querySelector('.modal-error');
       const boton = form.querySelector('[type=submit]');
       const d = {
         descripcion: form.elements.descripcion.value.trim(),
-        prioridad: Number(form.querySelector('[name=prioridad]:checked').value),
+        prioridad: Number(form.querySelector('[name=prioridad]:checked')?.value || 1),
         estado: Number(form.elements.estado.value),
         recurso_id: form.elements.recurso_id.value || null,
         modulo_id: form.elements.modulo_id.value ? Number(form.elements.modulo_id.value) : null
       };
-      if (!d.descripcion) { error.textContent = 'Escribe la descripción del requerimiento.'; form.elements.descripcion.focus(); return; }
+      if (!d.descripcion) { error.textContent = 'Escribe la descripción del requerimiento.'; window.FIN.aviso('Escribe la descripción del requerimiento para generar el ticket'); return enfocarDescripcion(); }
       error.textContent = '';
       boton.disabled = true;
       try {
@@ -349,6 +367,8 @@
         await abrir(t || null);
       } catch (err) {
         error.textContent = window.UI.traducirError(err);
+        window.FIN.aviso(`No se pudo guardar el ticket: ${error.textContent}`);
+        error.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } finally {
         boton.disabled = false;
       }
@@ -373,7 +393,7 @@
         const t = tickets.find((x) => String(x.id) === bm.dataset.eliminar);
         return window.TICKETS.eliminar(t).then(async (ok) => { if (ok) { if (actual && actual.id === t.id) actual = null; await cargarLista().then(() => { if (!actual) abrir(null); }); } });
       }
-      if (e.target.closest('[data-accion=nuevo]')) return abrir(null);
+      if (e.target.closest('[data-accion=nuevo]')) { await abrir(null); return enfocarDescripcion(); }
       if (e.target.closest('[data-accion=descartar]')) return abrir(actual);
       const fila = e.target.closest('[data-ticket]');
       if (fila) return abrir(tickets.find((x) => String(x.id) === fila.dataset.ticket));
