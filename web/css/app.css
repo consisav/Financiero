@@ -3202,3 +3202,9 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .tc-empresa { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 14px; margin: 0 0 12px; }
 .tc-empresa .campo { min-width: 260px; }
 .tc-empresa small { margin-bottom: 9px; }
+/* Tipos de cuentas: la lista ocupa el alto disponible de la pantalla */
+#p-tipos .tabla-desplazable { max-height: calc(100vh - 430px); min-height: 280px; }
+#p-tipos .tabla td { padding-top: 7px; padding-bottom: 7px; }
+#p-tipos .tabla th { white-space: normal; line-height: 1.25; vertical-align: bottom; }
+#p-tipos .tabla td.fuerte { white-space: nowrap; }
+#p-tipos .tabla td, #p-tipos .tabla th { padding-left: 10px; padding-right: 10px; }
