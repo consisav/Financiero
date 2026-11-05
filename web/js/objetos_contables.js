@@ -134,6 +134,7 @@
     let objetos = [];
     let transacciones = [];
     let actual = null;
+    let derivadas = new Map(); // objeto_id → cuentas de sus transacciones
     let cuentasObj = [];    // { cuenta_id, linea }
     let transObj = [];      // { transaccion_id, cuenta_bancaria }
     let buscar = '';
@@ -152,12 +153,27 @@
     async function consultar() {
       await ctx.cargarCatalogos();
       if (!seleccion.loc) { objetos = []; transacciones = []; pintarMaestro(); return abrir(null); }
-      const [o, t] = await Promise.all([
+      const [o, t, ot, tc] = await Promise.all([
         sb.from('objetos_contables').select('*, cuentas:objeto_cuentas(count), transacciones:objeto_transacciones(count)').eq('localidad_id', seleccion.loc).order('numero'),
-        sb.from('transacciones_contables').select('id, numero, descripcion, estado').eq('localidad_id', seleccion.loc).order('numero')
+        sb.from('transacciones_contables').select('id, numero, descripcion, estado').eq('localidad_id', seleccion.loc).order('numero'),
+        sb.from('objeto_transacciones').select('objeto_id, transaccion_id, objetos_contables!inner(localidad_id)').eq('objetos_contables.localidad_id', seleccion.loc),
+        sb.from('transaccion_cuentas').select('transaccion_id, cuenta_id, cuenta_codigo, transacciones_contables!inner(localidad_id)').eq('transacciones_contables.localidad_id', seleccion.loc).order('linea')
       ]);
       objetos = o.data || [];
       transacciones = t.data || [];
+      // Cuentas de cada objeto tomadas de sus transacciones (sin repetir), con las transacciones que las usan.
+      derivadas = new Map();
+      for (const v of ot.data || []) {
+        const numero = transacciones.find((x) => x.id === v.transaccion_id)?.numero;
+        const lista = derivadas.get(v.objeto_id) || [];
+        for (const l of (tc.data || []).filter((x) => x.transaccion_id === v.transaccion_id && (x.cuenta_id || x.cuenta_codigo))) {
+          let d = lista.find((x) => (l.cuenta_id && x.cuenta_id === l.cuenta_id) || (!l.cuenta_id && x.cuenta_codigo === l.cuenta_codigo));
+          if (!d) lista.push(d = { cuenta_id: l.cuenta_id, cuenta_codigo: l.cuenta_codigo, trx: [] });
+          if (numero != null && !d.trx.includes(numero)) d.trx.push(numero);
+        }
+        derivadas.set(v.objeto_id, lista);
+      }
+      for (const lista of derivadas.values()) lista.sort((a, b) => String(a.cuenta_codigo).localeCompare(String(b.cuenta_codigo)));
       if (actual && !objetos.some((x) => x.id === actual.id)) actual = null;
       pintarMaestro();
       await abrir(actual ? objetos.find((x) => x.id === actual.id) : objetos[0] || null);
@@ -180,7 +196,7 @@
                 <tr class="${actual && actual.id === x.id ? 'actual' : ''}" data-fila="${x.id}" tabindex="0">
                   <td class="fuerte">${x.numero}</td>
                   <td>${esc(x.descripcion)}</td>
-                  <td class="num">${x.cuentas?.[0]?.count ?? 0}</td>
+                  <td class="num">${x.cuentas?.[0]?.count || (derivadas.get(x.id)?.length ? `<span class="tk-tenue" title="Cuentas de sus transacciones">${derivadas.get(x.id).length}</span>` : 0)}</td>
                   <td class="num tk-tenue">${x.no_cuentas_anterior ?? ''}</td>
                   <td class="num tk-tenue">${x.version_nomenclatura ?? ''}</td>
                   <td class="num">${x.transacciones?.[0]?.count ?? 0}</td>
@@ -219,6 +235,22 @@
         <td class="oc-linea"><input data-campo="linea" value="${esc(r.linea)}" maxlength="20" ${dis} aria-label="Línea ${i + 1}"></td>
         <td>${dis ? '' : `<button type="button" class="icono-boton" data-quitar-cta="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>`}</td></tr>`;
     }
+    function filasDerivadas(x) {
+      if (!x || cuentasObj.some((r) => r.cuenta_id)) return '';
+      return (derivadas.get(x.id) || []).map((d) => {
+        const c = ctx.cuentas.find((y) => y.id === d.cuenta_id) || ctx.cuentas.find((y) => y.codigo === d.cuenta_codigo);
+        return `<tr class="oc-derivada" title="Cuenta usada por sus transacciones">
+          <td class="pc-cta">${esc(c ? c.codigo : d.cuenta_codigo || '')}</td>
+          <td class="pc-nombre">${esc(c ? c.nombre : '')}</td>
+          <td class="oc-linea" colspan="2">Trx ${d.trx.join(', ')}</td></tr>`;
+      }).join('');
+    }
+    function notaCuentas(x) {
+      if (!x || cuentasObj.some((r) => r.cuenta_id)) return '';
+      if (derivadas.get(x.id)?.length) return '<p class="rp-nota oc-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Cuentas de sus transacciones (en gris). Agrega cuentas propias si el objeto las necesita.</p>';
+      if (x.no_cuentas_anterior) return `<p class="rp-nota oc-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> En el sistema anterior tenía ${x.no_cuentas_anterior} cuenta${x.no_cuentas_anterior === 1 ? '' : 's'}; no vinieron en los archivos migrados ni tiene transacciones ligadas.</p>`;
+      return '';
+    }
     function filaTrans(r, i, dis) {
       const t = transacciones.find((x) => x.id === r.transaccion_id);
       return `<tr data-tra="${i}">
@@ -247,7 +279,8 @@
             <div class="ta-col">
               <div class="pc-detalle-cab"><h3 class="ta-col-titulo"><i class="ti ti-list-tree" aria-hidden="true"></i> Cuentas x objeto</h3>${ctx.admin ? '<button type="button" class="rp-enlace" data-agregar="cta"><i class="ti ti-plus" aria-hidden="true"></i> Agregar cuenta</button>' : ''}</div>
               <div class="pc-lineas"><table><thead><tr><th class="pc-cta">Cuenta</th><th>Nombre</th><th>Línea</th><th></th></tr></thead>
-                <tbody data-tabla="cta">${cuentasObj.map((r, i) => filaCuenta(r, i, dis)).join('')}</tbody></table></div>
+                <tbody data-tabla="cta">${cuentasObj.map((r, i) => filaCuenta(r, i, dis)).join('')}${filasDerivadas(x)}</tbody></table></div>
+              ${notaCuentas(x)}
             </div>
             <div class="ta-col">
               <div class="pc-detalle-cab"><h3 class="ta-col-titulo"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> Transacciones x objeto</h3>${ctx.admin ? '<button type="button" class="rp-enlace" data-agregar="tra"><i class="ti ti-plus" aria-hidden="true"></i> Agregar transacción</button>' : ''}</div>

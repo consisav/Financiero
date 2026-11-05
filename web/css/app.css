@@ -3208,3 +3208,8 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 #p-tipos .tabla th { white-space: normal; line-height: 1.25; vertical-align: bottom; }
 #p-tipos .tabla td.fuerte { white-space: nowrap; }
 #p-tipos .tabla td, #p-tipos .tabla th { padding-left: 10px; padding-right: 10px; }
+
+/* Objetos contables: cuentas tomadas de las transacciones del objeto (solo lectura). */
+.oc-derivada td { color: var(--suave); background: var(--fondo); }
+.oc-derivada .oc-linea { font-size: 12px; white-space: normal; }
+.oc-nota { margin-top: 2px; }
