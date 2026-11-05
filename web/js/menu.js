@@ -35,13 +35,7 @@ window.CATALOGOS_COMUNES = [
     icono: 'ti-adjustments',
     pantallas: [
       { id: 'parametros', nombre: 'Parámetros generales', icono: 'ti-settings', descripcion: 'Parámetros de tiempo, impuestos, monedas y firmantes de cada localidad.' },
-      { id: 'monedas-y-tipos-de-cambio', nombre: 'Tipos de cambio', icono: 'ti-currency-dollar', descripcion: 'Monedas que maneja el sistema y su tipo de cambio por fecha.' }
-    ]
-  },
-  {
-    subgrupo: 'Geografía',
-    icono: 'ti-map-2',
-    pantallas: [
+      { id: 'monedas-y-tipos-de-cambio', nombre: 'Tipos de cambio', icono: 'ti-currency-dollar', descripcion: 'Monedas que maneja el sistema y su tipo de cambio por fecha.' },
       { id: 'geografia', nombre: 'Geografía', icono: 'ti-world', descripcion: 'Países, estados o departamentos y ciudades o municipios.' },
       { id: 'organizaciones', nombre: 'Organizaciones', icono: 'ti-building', descripcion: 'Organizaciones y sus localidades.' }
     ]
@@ -83,7 +77,6 @@ window.MODULOS = [
       ]
     },
     opciones: {
-      catalogos: ['Departamentos', 'Puestos', 'Proveedores'],
       registros: ['Solicitudes', 'Órdenes de compra', 'Contratos'],
       mantenimientos: ['Parámetros administrativos', 'Niveles de aprobación'],
       procesos: ['Aprobaciones', 'Cierre administrativo'],
