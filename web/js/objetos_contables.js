@@ -161,17 +161,19 @@
         </header>
         <div class="ta-tabla">
           <table>
-            <thead><tr><th>Objeto</th><th>Descripción</th><th class="num">No. cuentas</th><th class="num">No. transacciones</th><th>Estado</th><th><span class="oculto">Acciones</span></th></tr></thead>
+            <thead><tr><th>Objeto</th><th>Descripción</th><th class="num">No. cuentas</th><th class="num" title="Cuentas que tenía el objeto en el sistema anterior">Cuentas sist. anterior</th><th class="num">Versión nomenclatura</th><th class="num">No. transacciones</th><th>Estado</th><th><span class="oculto">Acciones</span></th></tr></thead>
             <tbody>
               ${filas.map((x) => `
                 <tr class="${actual && actual.id === x.id ? 'actual' : ''}" data-fila="${x.id}" tabindex="0">
                   <td class="fuerte">${x.numero}</td>
                   <td>${esc(x.descripcion)}</td>
                   <td class="num">${x.cuentas?.[0]?.count ?? 0}</td>
+                  <td class="num tk-tenue">${x.no_cuentas_anterior ?? ''}</td>
+                  <td class="num tk-tenue">${x.version_nomenclatura ?? ''}</td>
                   <td class="num">${x.transacciones?.[0]?.count ?? 0}</td>
                   <td>${window.UI.estado(x.activo)}</td>
                   ${ctx.botonesFila(x.id, ctx.admin)}
-                </tr>`).join('') || `<tr><td colspan="6" class="tk-vacio"><i class="ti ti-box" aria-hidden="true"></i>${objetos.length ? 'Ningún objeto coincide con la búsqueda.' : 'Todavía no hay objetos contables en esta localidad.'}</td></tr>`}
+                </tr>`).join('') || `<tr><td colspan="8" class="tk-vacio"><i class="ti ti-box" aria-hidden="true"></i>${objetos.length ? 'Ningún objeto coincide con la búsqueda.' : 'Todavía no hay objetos contables en esta localidad.'}</td></tr>`}
             </tbody>
           </table>
         </div>`;
