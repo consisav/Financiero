@@ -78,7 +78,7 @@
     return `${partes.join(' ') || 'CERO'} ${de}${nombre} CON ${String(centavos % 100).padStart(2, '0')}/100`;
   }
 
-  function pantallaMovimiento(cont, cfg) {
+  function pantallaMovimiento(cont, cfg, extra) {
     const ctx = montar(cont, { titulo: cfg.titulo, icono: cfg.icono, clase: `bk-movimientos${cfg.cheque ? ' bk-cheques' : ''}`, grupo: cfg.grupo || 'Bancos' });
     const { sb } = ctx;
     const [anio, mes] = fmt.hoy().split('-');
@@ -122,6 +122,11 @@
     async function iniciar() {
       if (!(await ctx.cargarBase())) return;
       await cargarLocalidad();
+      // Enlace a un documento (Consulta de Cheques): se abre con su fecha y su empresa.
+      if (extra && /^\d+$/.test(String(extra))) {
+        const { data: d } = await sb.from('movimientos_bancarios').select('*').eq('id', Number(extra)).eq('tipo', cfg.tipo).maybeSingle();
+        if (d && Number(d.localidad_id) === Number(ctx.sel.loc)) { f.desde = d.fecha; f.hasta = d.fecha; f.cuenta = String(d.cuenta_bancaria_id); f.estado = ''; actual = d; }
+      }
       pintarFiltros();
       await consultar();
       let pedida = null;
@@ -863,5 +868,5 @@
   }
 
   window.PANTALLAS = window.PANTALLAS || {};
-  Object.entries(CONFIG).forEach(([id, cfg]) => { window.PANTALLAS[id] = (cont) => pantallaMovimiento(cont, cfg); });
+  Object.entries(CONFIG).forEach(([id, cfg]) => { window.PANTALLAS[id] = (cont, m, extra) => pantallaMovimiento(cont, cfg, extra); });
 })();

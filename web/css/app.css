@@ -3737,3 +3737,12 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bu-det summary::-webkit-details-marker { display: none; }
 .bu-det pre { white-space: pre-wrap; font-size: 11px; margin: 4px 0 0; max-width: 420px; color: var(--rojo-t, #b42318); background: var(--panel); border: 1px solid var(--borde); border-radius: 6px; padding: 6px 8px; }
 .bu-a .bu-historial .bu-tabla { max-height: calc(100vh - 690px); }
+
+/* Caja y Bancos · Consulta de Cheques (como Consultar Compras). */
+.bk-consulta-cheques .bk-filtros { grid-template-columns: auto minmax(220px, 1.3fr) minmax(200px, 1fr) repeat(4, minmax(120px, 160px)) 1fr; }
+.bk-consulta-cheques .cc-tabla .cqc-desc { max-width: 330px; color: var(--suave); }
+.bk-consulta-cheques .cq-det { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.cqc-concepto { margin: 0 0 6px; font-size: 12.5px; color: var(--suave); display: flex; align-items: center; gap: 6px; }
+.bk-consulta-cheques .bk-filtros { grid-template-columns: auto minmax(190px, 1fr) minmax(190px, 1fr) minmax(160px, .8fr) repeat(4, minmax(118px, 150px)) auto; }
+.bk-consultar .cq-lineas .cc-nombre { min-width: 300px; }
+.bk-consulta-cheques .cq-lineas .cc-nombre { min-width: 0; max-width: 260px; }
