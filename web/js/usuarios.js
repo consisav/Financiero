@@ -22,8 +22,10 @@
     const superAdmin = window.FIN.esSuperAdmin();
     const yo = window.FIN.perfil();
     const roles = window.FIN.roles();
-    // Un administrador modifica a todos salvo al Super Administrador; solo este cambia roles.
-    const puedeModificar = (u) => admin && (u.rol_id !== 'superadministrador' || superAdmin);
+    const global = window.FIN.esGlobal ? window.FIN.esGlobal() : superAdmin;
+    // El Super Administrador Global modifica a todos; los demás administradores, a los usuarios de su
+    // organización que no son Super Administrador (y a sí mismos). Solo los Super Administradores cambian roles.
+    const puedeModificar = (u) => admin && (global || ((u.rol_id !== 'superadministrador' || u.id === yo.id) && (!u.organizacion_id || u.organizacion_id === yo.organizacion_id)));
     const estado = { filas: [], sel: null, orgs: [], locs: [], filtroOrg: '', filtroLoc: '', buscar: '', firma: null, migrados: [], claveNueva: null };
 
     const [o, l] = await Promise.all([
@@ -35,7 +37,7 @@
     estado.locs = l.data;
     const org = (id) => estado.orgs.find((x) => x.id === id);
     const loc = (id) => estado.locs.find((x) => x.id === id);
-    const rol = (id) => (roles.find((r) => r.id === id) || {}).nombre || id;
+    const rol = (id, x) => x?.es_global ? 'Super Administrador Global' : x && id === 'superadministrador' ? 'Super Administrador (organización)' : (roles.find((r) => r.id === id) || {}).nombre || id;
 
     cont.innerHTML = '<section class="panel" id="p-usuarios"></section>';
     const panel = cont.querySelector('#p-usuarios');
@@ -51,7 +53,8 @@
         estado.migrados = pm.error ? [] : pm.data;
       }
       const previo = seleccion || (estado.sel && estado.sel.id);
-      estado.sel = data.find((u) => u.id === previo) || data[0] || null;
+      const vistos = visibles();
+      estado.sel = vistos.find((u) => u.id === previo) || vistos[0] || null;
       estado.firma = estado.sel ? await urlFirma(sb, estado.sel.firma_ruta) : null;
       pintar();
     }
@@ -65,7 +68,7 @@
     const empresasDe = (u) => estado.pe
       ? estado.pe.filter((x) => x.perfil_id === u.id && x.activo).sort((a, b) => ((loc(a.localidad_id) || {}).codigo || '').localeCompare((loc(b.localidad_id) || {}).codigo || ''))
       : [u.localidad_id, ...(u.localidades_adicionales || [])].filter(Boolean).map((id) => ({ localidad_id: id, rol_id: u.rol_id }));
-    const visibles = () => estado.filas.filter((u) =>
+    const visibles = () => estado.filas.filter((u) => (global || !u.organizacion_id || u.organizacion_id === yo.organizacion_id) &&
       (!estado.filtroOrg || u.organizacion_id === Number(estado.filtroOrg)) &&
       (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc) || empresasDe(u).some((x) => x.localidad_id === Number(estado.filtroLoc))));
     // «+N» con las otras empresas del usuario y su rol en cada una.
@@ -120,7 +123,7 @@
                   <td class="fuerte">${esc(f.nombre) || '—'}</td>
                   <td>${esc(f.correo)}</td>
                   <td>${empresa(f.organizacion_id, f.localidad_id)}${masEmpresas(f)}</td>
-                  <td>${esc(rol(f.rol_id))}</td>
+                  <td>${esc(rol(f.rol_id, f))}</td>
                   <td>${window.UI.estado(f.activo)}${f.fecha_vence_clave && f.fecha_vence_clave < hoy() ? ' <span class="estado vencida">Clave vencida</span>' : ''}</td>
                   <td class="acciones">${puedeModificar(f) ? `<button type="button" class="icono-editar" data-editar="${f.id}" aria-label="Modificar"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}</td>
                 </tr>`).join('')}
@@ -145,7 +148,7 @@
               <div><b>${esc(u.nombre) || '—'}</b><small><span class="codigo">${esc(u.usuario) || '—'}</span> · ${esc(u.correo)}</small></div>
             </div>
             <dl class="us-ficha-datos">
-              <div><dt>Empresa activa · rol</dt><dd>${u.organizacion_id ? `${org(u.organizacion_id).codigo} · ` : ''}${empresa(u.organizacion_id, u.localidad_id)} · ${esc(rol(u.rol_id))}</dd></div>
+              <div><dt>Empresa activa · rol</dt><dd>${u.organizacion_id ? `${(org(u.organizacion_id) || {}).codigo || ""} · ` : ''}${empresa(u.organizacion_id, u.localidad_id)} · ${esc(rol(u.rol_id, u))}</dd></div>
               ${empresasDe(u).length > 1 ? `<div><dt>Empresas y roles</dt><dd class="us-roles">${empresasDe(u).map((x) => `<span class="${x.localidad_id === u.localidad_principal_id ? 'principal' : ''}" title="${x.localidad_id === u.localidad_principal_id ? 'Empresa principal' : ''}">${esc((loc(x.localidad_id) || {}).codigo || '')} ${esc(rol(x.rol_id))}</span>`).join('')}</dd></div>` : ''}
               <div><dt>Creado</dt><dd>${u.creado_en ? new Date(u.creado_en).toLocaleDateString('es-GT', { timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-') : '—'}</dd></div>
               <div><dt>Vence clave</dt><dd class="${vencida ? 'pc-rojo' : ''}">${fechaCorta(u.fecha_vence_clave) || '—'}</dd></div>
@@ -187,7 +190,7 @@
       const firmaActual = estado.sel && estado.sel.id === u.id ? estado.firma : null;
       formulario({
         titulo: `Modificar usuario · ${u.nombre || u.correo}`,
-        valores: { ...u, localidad_principal_id: u.localidad_principal_id || u.localidad_id, firma: firmaActual },
+        valores: { ...u, localidad_principal_id: u.localidad_principal_id || u.localidad_id, super_org: u.rol_id === 'superadministrador', firma: firmaActual },
         campos: [
           { nombre: 'usuario', etiqueta: 'Usuario (código)', patron: '[A-Za-z0-9]{2,20}', max: 20,
             placeholder: window.UI.proponerUsuario ? window.UI.proponerUsuario(u.nombre || '', []) || 'Oasturias' : 'Oasturias' },
@@ -197,7 +200,7 @@
           { nombre: 'localidad_principal_id', etiqueta: 'Empresa principal', tipo: 'select-numero', requerido: true, opciones: [] },
           // El rol de cada empresa va en la tabla de empresas; el Super Administrador lo es en todas y su
           // rol se cambia aquí (la base de datos impide quitarle el rol al último Super Administrador).
-          ...(superAdmin && u.rol_id === 'superadministrador' ? [{ nombre: 'rol_id', etiqueta: 'Rol (en todas las empresas)', tipo: 'select', requerido: true, opciones: rolesActivos.map((r) => ({ valor: r.id, texto: r.nombre })) }] : []),
+          ...(global && !u.es_global ? [{ nombre: 'super_org', etiqueta: 'Super Administrador de la organización', tipo: 'casilla' }] : []),
           ...(propio ? [] : [{ nombre: 'activo', etiqueta: 'Activo', tipo: 'casilla' }]),
           { nombre: 'fecha_vence_clave', etiqueta: 'Fecha vence clave', tipo: 'fecha' },
           { nombre: 'empleado', etiqueta: 'Empleado' },
@@ -222,7 +225,8 @@
           const tabla = (idOrg) => {
             const lista = estado.locs.filter((x) => x.organizacion_id === Number(idOrg));
             const principal = Number(selLoc.value) || null;
-            if (u.rol_id === 'superadministrador') { caja.innerHTML = '<span>Empresas</span><p class="us-nota"><i class="ti ti-shield-check" aria-hidden="true"></i> Super Administrador: entra a todas las empresas con todos los permisos.</p>'; return; }
+            const esSuper = u.es_global || (form.elements.super_org ? form.elements.super_org.checked : u.rol_id === 'superadministrador');
+            if (esSuper) { caja.innerHTML = `<span>Empresas</span><p class="us-nota"><i class="ti ti-shield-check" aria-hidden="true"></i> ${u.es_global ? 'Super Administrador Global: acceso total a todas las organizaciones y empresas.' : 'Super Administrador de la organización: entra a todas sus empresas con todos los permisos.'}</p>`; return; }
             caja.innerHTML = `<span>Empresas y rol en cada una</span>
               <div class="us-emp-tabla"><table><thead><tr><th>Acceso</th><th>Empresa</th><th>Rol en la empresa</th></tr></thead>
                 <tbody>${lista.map((x) => { const tiene = actuales.has(x.id) || x.id === principal; return `<tr data-emp="${x.id}">
@@ -234,6 +238,7 @@
           llenar(u.organizacion_id, u.localidad_principal_id || u.localidad_id);
           tabla(u.organizacion_id);
           selOrg.addEventListener('change', () => { actuales.clear(); llenar(selOrg.value); tabla(selOrg.value); });
+          if (form.elements.super_org) form.elements.super_org.addEventListener('change', () => tabla(selOrg.value));
           selLoc.addEventListener('change', () => { caja.querySelectorAll('tr[data-emp]').forEach((tr) => { if (tr.querySelector('[data-acceso]').checked) actuales.set(Number(tr.dataset.emp), tr.querySelector('[data-rol]').value); }); tabla(selOrg.value); });
           caja.addEventListener('change', (e) => { if (e.target.matches('[data-acceso]')) e.target.closest('tr').querySelector('[data-rol]').hidden = !e.target.checked; });
           caja.addEventListener('click', (e) => {
@@ -245,14 +250,19 @@
           const firma = d.firma;
           delete d.firma;
           // Empresas marcadas en la tabla con su rol.
-          const elegidas = u.rol_id === 'superadministrador' ? [] : [...formRef.querySelectorAll('.us-empresas tr[data-emp]')]
+          // Super Administrador de la organización (lo decide el Global) o rol por empresa.
+          const seraSuper = u.es_global || ('super_org' in d ? !!d.super_org : u.rol_id === 'superadministrador');
+          delete d.super_org;
+          const elegidas = seraSuper ? [] : [...formRef.querySelectorAll('.us-empresas tr[data-emp]')]
             .filter((tr) => tr.querySelector('[data-acceso]').checked || Number(tr.dataset.emp) === d.localidad_principal_id)
             .map((tr) => ({ localidad_id: Number(tr.dataset.emp), rol_id: tr.querySelector('[data-rol]').value }));
-          if (u.rol_id !== 'superadministrador' && !elegidas.length) throw new Error('Marca al menos una empresa para el usuario.');
+          if (!seraSuper && !elegidas.length) throw new Error('Marca al menos una empresa para el usuario.');
+          if (seraSuper && u.rol_id !== 'superadministrador') d.rol_id = 'superadministrador';
+          if (!seraSuper && u.rol_id === 'superadministrador') d.rol_id = (elegidas.find((x) => x.localidad_id === d.localidad_principal_id) || elegidas[0]).rol_id;
           if (elegidas.some((x) => !x.rol_id)) throw new Error('Elige el rol de cada empresa marcada.');
           const cambiaOrg = d.organizacion_id !== u.organizacion_id;
           // La empresa activa sigue si aún tiene acceso; si no (o cambió la organización), pasa a la principal.
-          if (cambiaOrg || (u.rol_id !== 'superadministrador' && !elegidas.some((x) => x.localidad_id === u.localidad_id))) d.localidad_id = d.localidad_principal_id;
+          if (cambiaOrg || (!seraSuper && !elegidas.some((x) => x.localidad_id === u.localidad_id))) d.localidad_id = d.localidad_principal_id;
           if (cambiaOrg) d.localidades_adicionales = [];
           const { error } = await sb.from('perfiles').update(d).eq('id', u.id);
           if (error) {
@@ -265,7 +275,7 @@
           }
           // Empresas del usuario: se quitan las desmarcadas, se agregan las nuevas y se cambia el rol
           // (solo el Super Administrador) de las que ya tenía.
-          if (estado.pe && u.rol_id !== 'superadministrador') {
+          if (estado.pe && !seraSuper) {
             const { data: antes } = await sb.from('perfil_empresas').select('localidad_id, rol_id').eq('perfil_id', u.id);
             const previas = new Map((antes || []).map((x) => [x.localidad_id, x.rol_id]));
             // Solo se quitan empresas que se ven en la tabla (un usuario limitado a su empresa no toca las demás).

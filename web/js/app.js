@@ -29,6 +29,8 @@
     // Deben coincidir con public.es_admin() / public.es_superadmin() en Supabase
     esAdmin: () => !!perfil && perfil.activo && ['superadministrador', 'administrador'].includes(perfil.rol_id),
     esSuperAdmin: () => !!perfil && perfil.activo && perfil.rol_id === 'superadministrador',
+    // Super Administrador Global (único, script 99): acceso total a todas las organizaciones.
+    esGlobal: () => !!perfil && perfil.activo && perfil.rol_id === 'superadministrador' && !!perfil.es_global,
     urlSitio,
     // Empresas (localidades) a las que entra el usuario; null = todas.
     empresas: () => empresas,
@@ -205,6 +207,11 @@
     MODULOS.forEach((m) => { if (m.hereda && !permisos[m.id] && permisos[m.hereda]) permisos[m.id] = permisos[m.hereda]; });
     // Empresas del usuario con su rol (script 96). El Super Administrador entra a todas.
     empresas = null;
+    if (perfil.rol_id === 'superadministrador' && !perfil.es_global && perfil.organizacion_id) {
+      const desde = sb.__fromOriginal || sb.from.bind(sb);
+      const l = await desde('localidades').select('id, codigo, nombre_comercial, organizacion_id, activo').eq('organizacion_id', perfil.organizacion_id).eq('activo', true).order('codigo');
+      if (!l.error && l.data?.length) empresas = l.data.map((x) => ({ ...x, rol_id: 'superadministrador' }));
+    }
     if (perfil.rol_id !== 'superadministrador') {
       const pe = await sb.from('perfil_empresas').select('rol_id, localidad_id, localidades(id, codigo, nombre_comercial, organizacion_id, activo)').eq('perfil_id', perfil.id).eq('activo', true);
       if (!pe.error && pe.data?.length) empresas = pe.data.filter((x) => x.localidades?.activo !== false).map((x) => ({ ...x.localidades, rol_id: x.rol_id })).sort((x, y) => x.codigo.localeCompare(y.codigo));
@@ -222,7 +229,7 @@
 
   // ---------- Barra lateral ----------
   const visibles = () => MODULOS.filter((m) => permisos[m.id] && permisos[m.id].puede_ver);
-  const nombreRol = () => (roles.find((r) => r.id === perfil.rol_id) || {}).nombre || perfil.rol_id;
+  const nombreRol = () => perfil.es_global ? 'Super Administrador Global' : (roles.find((r) => r.id === perfil.rol_id) || {}).nombre || perfil.rol_id;
   const primerNombre = () => (perfil.nombre || perfil.correo).split(/[\s@]/)[0];
 
   function pintarLateral() {
@@ -298,17 +305,24 @@
 
   // Regla principal: todo usuario trabaja solo con la empresa a la que está conectado (empresa activa):
   // las consultas de empresas (localidades) y organizaciones de todas las pantallas se limitan a ella.
-  // El Super Administrador ve todas únicamente en el módulo Administración, para administrar el sistema.
+  // En el módulo Administración el Super Administrador Global ve todas las organizaciones, y el Super
+  // Administrador o administrador de una organización, todas las empresas de su organización.
   function aplicarAlcance() {
     if (!sb.__fromOriginal) sb.__fromOriginal = sb.from.bind(sb);
     const original = sb.__fromOriginal;
     if (!perfil.localidad_id) { sb.from = original; return; }
     const limite = { localidades: perfil.localidad_id, organizaciones: perfil.organizacion_id };
-    const enAdministracion = () => perfil.rol_id === 'superadministrador' && /^#\/administracion(\/|$)/.test(location.hash);
+    const enAdministracion = () => /^#\/administracion(\/|$)/.test(location.hash);
+    const adminOrg = ['superadministrador', 'administrador'].includes(perfil.rol_id);
     sb.from = (tabla) => {
       const q = original(tabla);
-      if (!(tabla in limite) || enAdministracion()) return q;
+      if (!(tabla in limite)) return q;
+      if (enAdministracion() && perfil.es_global && perfil.rol_id === 'superadministrador') return q;
       const select = q.select.bind(q);
+      if (enAdministracion() && adminOrg) {
+        q.select = (...args) => select(...args).eq(tabla === 'localidades' ? 'organizacion_id' : 'id', perfil.organizacion_id);
+        return q;
+      }
       q.select = (...args) => select(...args).eq('id', limite[tabla]);
       return q;
     };
@@ -319,7 +333,7 @@
   async function selectorEmpresa(nombre, donde = 'encabezado') {
     let lista = empresas;
     let grupos = null;
-    if (!lista && perfil.rol_id === 'superadministrador') {
+    if (!lista && perfil.rol_id === 'superadministrador' && perfil.es_global) {
       const desde = sb.__fromOriginal || sb.from.bind(sb);
       const [o, l] = await Promise.all([desde('organizaciones').select('id, codigo, nombre').eq('activo', true).order('codigo'),
         desde('localidades').select('id, codigo, nombre_comercial, organizacion_id').eq('activo', true).order('codigo')]);

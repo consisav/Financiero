@@ -46,9 +46,11 @@
     const errorClave = (c) => !c || c.length < 8 ? 'La clave debe tener al menos 8 caracteres.' : c.length > 72 ? 'La clave puede tener como máximo 72 caracteres.' : !/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(c) || !/[0-9]/.test(c) ? 'La clave debe tener letras y números.' : '';
 
     async function cargar(id) {
-      const { data, error } = await sb.from('perfiles').select('id, nombre, correo, usuario, activo, fecha_vence_clave').order('nombre');
+      const { data, error } = await sb.from('perfiles').select('id, nombre, correo, usuario, activo, fecha_vence_clave, organizacion_id').order('nombre');
       if (error) { cont.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
-      estado.filas = data;
+      // Quien no es el Super Administrador Global ve solo los usuarios de su organización.
+      const yoAhora = window.FIN.perfil();
+      estado.filas = window.FIN.esGlobal && window.FIN.esGlobal() ? data : data.filter((x) => !x.organizacion_id || x.organizacion_id === yoAhora.organizacion_id);
       estado.sel = data.find((u) => u.id === id) || (estado.sel && data.find((u) => u.id === estado.sel.id)) || data[0] || null;
       pintar();
     }
