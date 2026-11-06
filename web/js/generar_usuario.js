@@ -41,6 +41,9 @@
       return;
     }
     const estado = { filas: [], sel: null, buscar: '', clave: null, confirmar: false, nota: '' };
+    const superAdmin = window.FIN.esSuperAdmin();
+    const yo = window.FIN.perfil();
+    const errorClave = (c) => !c || c.length < 8 ? 'La clave debe tener al menos 8 caracteres.' : c.length > 72 ? 'La clave puede tener como máximo 72 caracteres.' : !/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(c) || !/[0-9]/.test(c) ? 'La clave debe tener letras y números.' : '';
 
     async function cargar(id) {
       const { data, error } = await sb.from('perfiles').select('id, nombre, correo, usuario, activo, fecha_vence_clave').order('nombre');
@@ -92,7 +95,22 @@
                     ? 'La clave actual dejará de funcionar. Pulsa de nuevo para confirmar.'
                     : 'La clave actual no se puede ver. «Generar clave» le pondrá una clave nueva.'}</small>
               </div>
-            </div>` : ''}
+            </div>
+            ${superAdmin || u.id === yo.id ? `
+            <div class="paso">
+              <span class="paso-num">3</span>
+              <div class="paso-cuerpo">
+                <h3>Clave personalizada ${u.id === yo.id ? '(tu clave)' : ''}</h3>
+                <form class="paso-fila clave-propia" data-clave-propia autocomplete="off">
+                  <input type="password" name="clave" class="codigo-usuario" placeholder="Clave nueva" autocomplete="new-password" minlength="8" aria-label="Clave nueva">
+                  <input type="password" name="repetir" class="codigo-usuario" placeholder="Repite la clave" autocomplete="new-password" aria-label="Repite la clave">
+                  <button type="button" class="icono-boton" data-accion="ver-clave" title="Mostrar u ocultar" aria-label="Mostrar u ocultar la clave"><i class="ti ti-eye" aria-hidden="true"></i></button>
+                  <button type="submit" class="boton primario-sm">Asignar clave</button>
+                </form>
+                ${u.id === yo.id ? '' : '<label class="pc-check clave-cambiar"><input type="checkbox" name="cambiar" checked> Pedir que la cambie al entrar</label>'}
+                <small>Mínimo 8 caracteres, con letras y números. ${u.id === yo.id ? 'Se guarda como tu clave y vence en 90 días.' : 'Comunícasela al usuario en persona; si marcas «Pedir que la cambie al entrar», creará una propia al entrar.'}</small>
+              </div>
+            </div>` : ''}` : ''}
         </section>`;
     }
 
@@ -110,6 +128,32 @@
       estado.sel = estado.filas.find((x) => x.id === e.target.value);
       Object.assign(estado, { clave: null, confirmar: false, nota: '' });
       pintar();
+    });
+    // Clave personalizada: para otro usuario la asigna el Super Administrador (asignar_clave, script 98);
+    // la propia se cambia en Supabase Auth y renueva su vencimiento.
+    cont.addEventListener('submit', async (e) => {
+      if (!e.target.matches('[data-clave-propia]')) return;
+      e.preventDefault();
+      const f = e.target;
+      const u = estado.sel;
+      const clave = f.elements.clave.value;
+      const malo = errorClave(clave) || (clave !== f.elements.repetir.value ? 'Las dos claves no coinciden.' : '');
+      if (malo) { window.FIN.aviso(malo); return; }
+      const boton = f.querySelector('[type=submit]');
+      boton.disabled = true;
+      let error;
+      if (u.id === yo.id) {
+        ({ error } = await sb.auth.updateUser({ password: clave }));
+        if (!error) await sb.rpc('renovar_vencimiento_clave');
+      } else {
+        const cambiar = cont.querySelector('.clave-cambiar input')?.checked ?? true;
+        ({ error } = await sb.rpc('asignar_clave', { p_usuario: u.id, p_clave: clave, p_cambiar: cambiar }));
+      }
+      boton.disabled = false;
+      if (error) { window.FIN.aviso(/asignar_clave/i.test(error.message) && /find|exist/i.test(error.message) ? 'Falta instalar el script 98 en Supabase.' : window.UI.traducirError(error)); return; }
+      f.reset();
+      window.FIN.aviso(u.id === yo.id ? 'Tu clave se cambió' : `Clave asignada a ${u.nombre || u.correo}`);
+      await cargar(u.id);
     });
     cont.addEventListener('click', async (e) => {
       const a = e.target.closest('[data-accion]');
@@ -139,6 +183,7 @@
         window.FIN.aviso('Clave generada');
         pintar();
       }
+      if (a.dataset.accion === 'ver-clave') { cont.querySelectorAll('[data-clave-propia] input').forEach((x) => { x.type = x.type === 'password' ? 'text' : 'password'; }); return; }
       if (a.dataset.accion === 'copiar') {
         try { await navigator.clipboard.writeText(estado.clave); window.FIN.aviso('Clave copiada'); }
         catch { cont.querySelector('.clave-visible').select(); }

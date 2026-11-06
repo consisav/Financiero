@@ -3427,3 +3427,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .emp-cod { font-weight: 700; color: var(--acento); min-width: 44px; }
 .emp-nom { flex: 1; display: grid; }
 .emp-nom small { color: var(--suave); font-size: 12.5px; }
+
+/* Generar clave: clave personalizada. */
+.clave-propia input { flex: 1; min-width: 0; }
+.clave-cambiar { display: inline-flex; margin: 6px 0 2px; font-size: 13px; }

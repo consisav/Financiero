@@ -139,6 +139,26 @@
     await cargarSesion();
   });
 
+  // Cambiar mi clave: cualquier usuario escribe su clave nueva (dos veces) y se renueva su vencimiento.
+  document.querySelectorAll('[data-mi-clave]').forEach((b) => b.addEventListener('click', () => {
+    const errorClave = (c) => !c || c.length < 8 ? 'La clave debe tener al menos 8 caracteres.' : c.length > 72 ? 'La clave puede tener como máximo 72 caracteres.' : !/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(c) || !/[0-9]/.test(c) ? 'La clave debe tener letras y números.' : '';
+    window.UI.formulario({
+      titulo: 'Cambiar mi clave',
+      campos: [
+        { nombre: 'clave', etiqueta: 'Clave nueva', tipo: 'clave', requerido: true, placeholder: 'Mínimo 8, con letras y números', ancho: 'completo' },
+        { nombre: 'repetir', etiqueta: 'Repite la clave nueva', tipo: 'clave', requerido: true, ancho: 'completo' }
+      ],
+      alGuardar: async (d) => {
+        const malo = errorClave(d.clave) || (d.clave !== d.repetir ? 'Las dos claves no coinciden.' : '');
+        if (malo) throw new Error(malo);
+        const { error } = await sb.auth.updateUser({ password: d.clave });
+        if (error) throw error;
+        await sb.rpc('renovar_vencimiento_clave');
+        aviso('Tu clave se cambió');
+      }
+    });
+  }));
+
   document.querySelectorAll('[data-salir]').forEach((b) => b.addEventListener('click', (e) => {
     e.preventDefault();
     recuperando = false;
