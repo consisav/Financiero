@@ -45,7 +45,7 @@
 
   // ===================== Proveedores =====================
   window.PANTALLAS.proveedores = function (cont) {
-    const ctx = montar(cont, { titulo: 'Proveedores', icono: 'ti-truck', clase: 'bk-proveedores cp-lado', grupo: 'Compras · Catálogos' });
+    const ctx = montar(cont, { titulo: 'Proveedores', icono: 'ti-truck', clase: 'bk-proveedores cb-apilado', grupo: 'Compras · Catálogos' });
     const { sb, yo } = ctx;
     const f = { estado: 'ACTIVO', tipo: '', formato: 'PDF' };
     let lista = [];
@@ -53,7 +53,7 @@
     let nuevo = false;
     let tipos = [], regimenes = [], bodegas = [], contables = [], centros = [], transacciones = [];
     let cuentasProv = [];
-    let pestana = 'CONTABLE';
+    let pestana = 'FICHA'; // FICHA (los tres bloques) o CUENTAS (varias cuentas)
     let buscar = '';
     const contable = (id) => contables.find((x) => x.id === id);
     const porCodigo = (cod) => contables.find((x) => x.codigo === String(cod || '').trim() && x.movimiento);
@@ -101,18 +101,29 @@
       await abrir(lista.find((p) => p.id === id) || (nuevo ? null : lista[0]) || null);
     }
 
+    // Lista a lo ancho con las columnas para comparar proveedores.
     function pintarLista() {
       const q = buscar.trim().toLowerCase();
       const filas = lista.filter((p) => !q || [p.codigo, p.nit, p.nombre_comercial, p.nombre_fiscal, p.contacto].some((v) => String(v || '').toLowerCase().includes(q)));
+      const tipo = (id) => tipos.find((t) => t.id === id)?.nombre.replace(/^PROVEEDOR (DEL |DE )?/, '') || '';
+      const reg = (id) => regimenes.find((t) => t.id === id);
+      const si = (x) => x ? '<i class="ti ti-check cb-si" aria-label="Sí"></i>' : '<span class="tk-tenue">—</span>';
       ctx.pMae.innerHTML = `
         <header class="tk-bandeja-cab cc-cab">
           <h2>Proveedores <small>${lista.length}</small></h2>
+          <span class="cb-resumen">${lista.filter((p) => p.nacional).length} nacionales · ${lista.filter((p) => !p.nacional).length} del exterior · ${lista.filter((p) => p.pendiente_revisar).length} pendientes de revisar</span>
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Código, NIT o nombre…" value="${esc(buscar)}" aria-label="Buscar proveedores"></label>
         </header>
         <div class="ta-tabla cc-tabla">
-          <table><thead><tr><th class="num">Proveedor</th><th>NIT</th><th>Nombre comercial</th><th>Estado</th></tr></thead>
-            <tbody>${filas.map((p) => `<tr data-id="${p.id}" class="${actual && actual.id === p.id ? 'actual' : ''}" tabindex="0"><td class="num fuerte">${p.codigo}</td><td>${esc(p.nit || '')}</td><td class="cc-nombre" title="${esc(p.nombre_comercial)}">${esc(p.nombre_comercial)}${p.pendiente_revisar ? ' <i class="ti ti-flag cp-revisar" title="Pendiente de revisar" aria-label="Pendiente de revisar"></i>' : ''}${p.servicio_critico ? ' <i class="ti ti-alert-triangle cp-critico" title="Servicio crítico" aria-label="Servicio crítico"></i>' : ''}</td><td>${marcaEstado(p.estado)}</td></tr>`).join('')
-              || `<tr><td colspan="4" class="tk-vacio"><i class="ti ti-truck" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : lista.length ? 'Ningún proveedor coincide con la búsqueda.' : `No hay proveedores${ctx.admin ? ': crea el primero con «Nuevo proveedor».' : '.'}`}</td></tr>`}</tbody></table>
+          <table><thead><tr><th class="num">Código</th><th>NIT</th><th>Nombre comercial</th><th>Nombre fiscal</th><th>Tipo</th><th>Régimen ISR</th><th class="num">Días</th><th class="cb-c">Retención</th><th>Cuenta gastos</th><th>Estado</th></tr></thead>
+            <tbody>${filas.map((p) => { const r = reg(p.regimen_isr_id); return `<tr data-id="${p.id}" class="${actual && actual.id === p.id ? 'actual' : ''}" tabindex="0">
+              <td class="num fuerte">${p.codigo}</td><td>${esc(p.nit || '')}</td>
+              <td class="cc-nombre fuerte" title="${esc(p.nombre_comercial)}">${esc(p.nombre_comercial)}${p.pendiente_revisar ? ' <i class="ti ti-flag cp-revisar" title="Pendiente de revisar" aria-label="Pendiente de revisar"></i>' : ''}${p.servicio_critico ? ' <i class="ti ti-alert-triangle cp-critico" title="Servicio crítico" aria-label="Servicio crítico"></i>' : ''}</td>
+              <td class="cc-nombre" title="${esc(p.nombre_fiscal || '')}">${esc(p.nombre_fiscal || '')}</td>
+              <td>${esc(tipo(p.tipo_proveedor_id))}</td><td class="cp-reg" title="${esc(r?.nombre || '')}">${r ? `${r.codigo} · ${esc(r.nombre)}` : p.regimen_isr_anterior ? `<span class="tk-tenue">${p.regimen_isr_anterior} (anterior)</span>` : '<span class="tk-tenue">—</span>'}</td>
+              <td class="num">${p.dias_credito || '<span class="tk-tenue">—</span>'}</td><td class="cb-c">${si(p.efectuar_retencion)}</td>
+              <td>${esc(contable(p.cuenta_gasto_id)?.codigo || p.cuenta_gasto_codigo || '')}</td><td>${marcaEstado(p.estado)}</td></tr>`; }).join('')
+              || `<tr><td colspan="10" class="tk-vacio"><i class="ti ti-truck" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : lista.length ? 'Ningún proveedor coincide con la búsqueda.' : `No hay proveedores${ctx.admin ? ': crea el primero con «Nuevo proveedor».' : '.'}`}</td></tr>`}</tbody></table>
         </div>`;
     }
 
@@ -127,8 +138,11 @@
       ctx.pMae.querySelectorAll('tr[data-id]').forEach((tr) => tr.classList.toggle('actual', !!p && tr.dataset.id === String(p.id)));
     }
 
-    const cuentaCampo = (name, etq, id, dis, clase = '') => { const k = contable(id); return `<label class="campo ${clase}"><span>${etq}</span><span class="cp-cta"><input list="cp-cuentas" name="${name}" value="${esc(k ? k.codigo : '')}" placeholder="Código" ${dis}><small data-nombre-de="${name}">${k ? esc(k.nombre) : ''}</small></span></label>`; };
+    // Cuenta del proveedor: la del catálogo vigente o, si está ligada a otra versión, su código guardado.
+    const cuentaCampo = (name, etq, id, dis, codigoGuardado) => { const k = contable(id); return `<label class="cb-linea"><span>${etq}</span><span class="cp-cta cb-cta"><input list="cp-cuentas" name="${name}" value="${esc(k ? k.codigo : codigoGuardado || '')}" placeholder="Código" ${dis}><small data-nombre-de="${name}">${k ? esc(k.nombre) : id && codigoGuardado ? 'Ligada a otra versión del catálogo' : ''}</small></span></label>`; };
 
+    // Ficha en tres bloques: proveedor, contacto y clasificación, contable y pago. «Varias cuentas»
+    // muestra la distribución del gasto en lugar de la ficha (los campos siguen en el formulario).
     function pintarDetalle(v0) {
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-truck'); return; }
       const p = actual;
@@ -136,77 +150,83 @@
       const dis = ctx.admin ? '' : 'disabled';
       const local = tipos.find((t) => /LOCAL/.test(t.nombre));
       const v = v0 || (p ? { ...p } : { estado: 'ACTIVO', nacional: true, servicio_critico: false, pendiente_revisar: false, tipo_proveedor_id: local?.id || null, regimen_isr_id: null, bodega_id: null, dias_credito: 0, efectuar_retencion: false, varias_cuentas: false, visualizar_en: 'AMBAS', forma_pago: 'CHEQUE', moneda_id: ctx.monedaBase()?.id, tipo_cuenta: 'MONETARIA' });
-      const sel = (name, opciones, val, extra = '') => `<select name="${name}" ${dis} ${extra}>${opciones}</select>`;
+      const sel = (name, opciones, etq = '') => `<select name="${name}" ${dis} ${etq ? `aria-label="${etq}"` : ''}>${opciones}</select>`;
       const chk = (name, etq, val) => `<label class="pc-check"><input type="checkbox" name="${name}" ${val ? 'checked' : ''} ${dis}> ${etq}</label>`;
-      const tabs = [['CONTABLE', 'Datos contables', 'ti-calculator'], ['PAGO', 'Datos de pago', 'ti-building-bank'], ['CUENTAS', 'Varias cuentas', 'ti-list-numbers']];
+      const txt = (name, etq, max, extra = '') => `<label class="cb-linea"><span>${etq}</span><input name="${name}" value="${esc(v[name] || '')}" maxlength="${max}" ${extra} ${dis}></label>`;
+      const conMas = (accion, titulo) => ctx.admin ? `<button type="button" class="icono-boton" data-accion="${accion}" title="${titulo}" aria-label="${titulo}"><i class="ti ti-plus" aria-hidden="true"></i></button>` : '';
+      const cuentas = pestana === 'CUENTAS';
       ctx.pDet.innerHTML = `
-        <form class="tk-form bm-form cp-form" novalidate>
-          <header class="tk-titulo bm-titulo">
+        <form class="tk-form cp-form cb-ficha cp-ficha" novalidate>
+          <header class="tk-titulo cb-titulo">
             <span class="tk-icono"><i class="ti ti-truck" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto"><small>${p ? `Proveedor ${p.codigo}` : 'Nuevo proveedor'}</small><h2>${p ? esc(p.nombre_comercial) : 'Datos del proveedor'}</h2></div>
             <div class="tk-marcas">${p ? marcaEstado(p.estado) : ''}${p?.pendiente_revisar ? '<span class="pc-marca pendiente"><i class="ti ti-flag" aria-hidden="true"></i> Pendiente de revisar</span>' : ''}</div>
+            ${p ? `<p class="cc-ingreso cb-audit"><i class="ti ti-user" aria-hidden="true"></i> Creó ${esc(p.creado_por_nombre || '')} · ${esc(fmt.fechaHora(p.creado_en))}${p.modificado_en ? ` · modificó ${esc(p.modificado_por_nombre || '')} ${esc(fmt.fechaHora(p.modificado_en))}` : ''}</p>` : ''}
+            <p class="modal-error tk-error" role="alert"></p>
             <div class="tk-titulo-acciones">
+              <button type="button" class="boton secundario-sm" data-pestana="${cuentas ? 'FICHA' : 'CUENTAS'}">${cuentas ? '<i class="ti ti-arrow-left" aria-hidden="true"></i> Volver a la ficha' : `<i class="ti ti-list-numbers" aria-hidden="true"></i> Varias cuentas${cuentasProv.length ? ` <b>${cuentasProv.length}</b>` : ''}`}</button>
               ${nuevo ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
               ${ctx.admin ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${p ? 'Guardar cambios' : 'Crear proveedor'}</button>` : ''}
             </div>
           </header>
-          <p class="modal-error tk-error" role="alert"></p>
-          <section class="bm-bloque cp-general">
-            <div class="cp-g cp-g6">
-              <div class="bs-req-num"><span>Código</span><b>${p ? p.codigo : 'Auto'}</b></div>
-              <label class="campo cp-c2"><span>NIT</span><input name="nit" value="${esc(v.nit || '')}" maxlength="20" placeholder="1234567-8 o CF" ${dis}></label>
-              <label class="campo cp-c3"><span>Nombre comercial *</span><input name="nombre_comercial" value="${esc(v.nombre_comercial || '')}" maxlength="150" ${dis}></label>
-              <label class="campo cp-c3"><span>Nombre fiscal (SAT)</span><input name="nombre_fiscal" value="${esc(v.nombre_fiscal || '')}" maxlength="150" placeholder="Si se deja vacío, el comercial" ${dis}></label>
-              <label class="campo cp-c3"><span>Nombre de emisión de documentos</span><input name="nombre_emision" value="${esc(v.nombre_emision || '')}" maxlength="150" placeholder="Si se deja vacío, el fiscal" ${dis}></label>
-              <label class="campo cp-c3"><span>Dirección</span><textarea name="direccion" rows="2" maxlength="300" ${dis}>${esc(v.direccion || '')}</textarea></label>
-              <label class="campo cp-c3"><span class="cp-req">Concepto de gastos *</span><textarea name="concepto_gastos" rows="2" maxlength="300" ${dis}>${esc(v.concepto_gastos || '')}</textarea></label>
-              <label class="campo cp-c2"><span>Teléfonos</span><input name="telefonos" value="${esc(v.telefonos || '')}" maxlength="60" ${dis}></label>
-              <label class="campo"><span>Ext.</span><input name="extension" value="${esc(v.extension || '')}" maxlength="10" ${dis}></label>
-              <label class="campo cp-c3"><span>Contacto</span><input name="contacto" value="${esc(v.contacto || '')}" maxlength="100" ${dis}></label>
-              <label class="campo cp-c3"><span>Correo</span><input type="email" name="correo" value="${esc(v.correo || '')}" maxlength="120" ${dis}></label>
-              <label class="campo"><span>Estado</span>${sel('estado', ESTADOS.map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join(''), v.estado)}</label>
-              <div class="cp-checks cp-c2">${chk('nacional', 'Proveedor nacional', v.nacional)}${chk('servicio_critico', 'Servicio crítico', v.servicio_critico)}${chk('pendiente_revisar', 'Pendiente de revisar', v.pendiente_revisar)}</div>
-              <label class="campo cp-c2"><span>Tipo de proveedor</span><span class="cp-con-mas">${sel('tipo_proveedor_id', `<option value="">—</option>${tipos.filter((t) => t.activo || t.id === v.tipo_proveedor_id).map((t) => `<option value="${t.id}" ${t.id === v.tipo_proveedor_id ? 'selected' : ''}>${t.codigo} · ${esc(t.nombre)}</option>`).join('')}`)}${ctx.admin ? '<button type="button" class="icono-boton" data-accion="nuevo-tipo" title="Agregar tipo de proveedor" aria-label="Agregar tipo de proveedor"><i class="ti ti-plus" aria-hidden="true"></i></button>' : ''}</span></label>
-              <label class="campo cp-c2"><span>Régimen ISR</span><span class="cp-con-mas">${sel('regimen_isr_id', `<option value="">—</option>${regimenes.filter((t) => t.activo || t.id === v.regimen_isr_id).map((t) => `<option value="${t.id}" ${t.id === v.regimen_isr_id ? 'selected' : ''}>${t.codigo} · ${esc(t.nombre)}</option>`).join('')}`)}${ctx.admin ? '<button type="button" class="icono-boton" data-accion="nuevo-regimen" title="Agregar régimen ISR" aria-label="Agregar régimen ISR"><i class="ti ti-plus" aria-hidden="true"></i></button>' : ''}</span></label>
-              <label class="campo cp-c2"><span>Bodega</span>${sel('bodega_id', `<option value="">—</option>${bodegas.filter((b) => b.estado === 'ACTIVO' || b.id === v.bodega_id).map((b) => `<option value="${b.id}" ${b.id === v.bodega_id ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}`)}</label>
-            </div>
-          </section>
-          <section class="bm-pestanas cp-tabs">
-            <div class="bm-tabs-barra"><div class="rp-pestanas" role="tablist">${tabs.map(([k, t, i]) => `<button type="button" role="tab" data-pestana="${k}" class="${pestana === k ? 'activa' : ''}" aria-selected="${pestana === k}"><i class="ti ${i}" aria-hidden="true"></i> ${t}${k === 'CUENTAS' && cuentasProv.length ? ` <b>${cuentasProv.length}</b>` : ''}</button>`).join('')}</div></div>
-            <div class="bm-panel cp-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
-              <div class="cp-g cp-g6">
-                <label class="campo cp-c2"><span>Días de crédito</span>${sel('dias_credito', DIAS.map(([d, t]) => `<option value="${d}" ${Number(v.dias_credito) === d ? 'selected' : ''}>${t}</option>`).join('') + (DIAS.some(([d]) => d === Number(v.dias_credito)) ? '' : `<option value="${v.dias_credito}" selected>${v.dias_credito} DÍAS</option>`))}</label>
-                <div class="cp-checks cp-c2">${chk('efectuar_retencion', 'Efectuar retención', v.efectuar_retencion)}${chk('varias_cuentas', 'Varias cuentas', v.varias_cuentas)}</div>
-                <label class="campo cp-c2"><span>Visualizar en</span>${sel('visualizar_en', VISUALIZAR.map((x) => `<option ${v.visualizar_en === x ? 'selected' : ''}>${x}</option>`).join(''))}</label>
-                ${cuentaCampo('cuenta_gasto', 'Cuenta contable de gastos', v.cuenta_gasto_id, dis, 'cp-c4')}
-                <div class="cp-c2 cp-ver"><button type="button" class="boton secundario-sm" data-accion="ver-cuentas" ${v.varias_cuentas ? '' : 'disabled'}><i class="ti ti-list-numbers" aria-hidden="true"></i> Ver cuentas</button></div>
-                <label class="campo cp-c3"><span>Transacción</span>${sel('transaccion_id', opcionesTrx(transacciones, v.transaccion_id))}</label>
-                <label class="campo cp-c3"><span>2da. transacción (exenciones)</span>${sel('transaccion_exencion_id', opcionesTrx(transacciones, v.transaccion_exencion_id))}</label>
+          <div class="cb-tres cp-tres" data-panel="FICHA" ${cuentas ? 'hidden' : ''}>
+            <section class="cb-bloque">
+              <h3 class="ta-col-titulo"><i class="ti ti-id" aria-hidden="true"></i> Proveedor ${p ? p.codigo : '(automático)'}</h3>
+              ${txt('nit', 'NIT', 20, 'placeholder="1234567-8 o CF"')}
+              ${txt('nombre_comercial', 'Nombre comercial *', 150)}
+              ${txt('nombre_fiscal', 'Nombre fiscal (SAT)', 150, 'placeholder="Si se deja vacío, el comercial"')}
+              ${txt('nombre_emision', 'Emisión de docs.', 150, 'placeholder="Si se deja vacío, el fiscal"')}
+              ${txt('direccion', 'Dirección', 300)}
+              <label class="cb-linea"><span class="cp-req">Concepto de gastos *</span><input name="concepto_gastos" value="${esc(v.concepto_gastos || '')}" maxlength="300" ${dis}></label>
+              ${p && (p.fax || p.acreditaciones) ? `<p class="cb-trx-ant">${p.fax ? `Fax ${esc(p.fax)}` : ''}${p.fax && p.acreditaciones ? ' · ' : ''}${p.acreditaciones ? `Acreditaciones ${esc(p.acreditaciones)}` : ''}</p>` : ''}
+            </section>
+            <section class="cb-bloque">
+              <h3 class="ta-col-titulo"><i class="ti ti-address-book" aria-hidden="true"></i> Contacto y clasificación</h3>
+              <div class="cb-par cp-tel">${txt('telefonos', 'Teléfonos', 60)}<label class="cb-linea"><span>Ext.</span><input name="extension" value="${esc(v.extension || '')}" maxlength="10" ${dis}></label></div>
+              ${txt('contacto', 'Contacto', 100)}
+              <label class="cb-linea"><span>Correo</span><input type="email" name="correo" value="${esc(v.correo || '')}" maxlength="120" ${dis}></label>
+              <label class="cb-linea"><span>Tipo de proveedor</span><span class="cp-con-mas">${sel('tipo_proveedor_id', `<option value="">—</option>${tipos.filter((t) => t.activo || t.id === v.tipo_proveedor_id).map((t) => `<option value="${t.id}" ${t.id === v.tipo_proveedor_id ? 'selected' : ''}>${t.codigo} · ${esc(t.nombre)}</option>`).join('')}`, 'Tipo de proveedor')}${conMas('nuevo-tipo', 'Agregar tipo de proveedor')}</span></label>
+              <label class="cb-linea"><span>Régimen ISR</span><span class="cp-con-mas">${sel('regimen_isr_id', `<option value="">${p?.regimen_isr_anterior && !v.regimen_isr_id ? `— (código anterior ${p.regimen_isr_anterior})` : '—'}</option>${regimenes.filter((t) => t.activo || t.id === v.regimen_isr_id).map((t) => `<option value="${t.id}" ${t.id === v.regimen_isr_id ? 'selected' : ''}>${t.codigo} · ${esc(t.nombre)}</option>`).join('')}`, 'Régimen ISR')}${conMas('nuevo-regimen', 'Agregar régimen ISR')}</span></label>
+              <div class="cb-par">
+                <label class="cb-linea"><span>Bodega</span>${sel('bodega_id', `<option value="">—</option>${bodegas.filter((b) => b.estado === 'ACTIVO' || b.id === v.bodega_id).map((b) => `<option value="${b.id}" ${b.id === v.bodega_id ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}`, 'Bodega')}</label>
+                <label class="cb-linea"><span>Estado</span>${sel('estado', ESTADOS.map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join(''), 'Estado')}</label>
               </div>
-            </div>
-            <div class="bm-panel cp-panel" data-panel="PAGO" ${pestana === 'PAGO' ? '' : 'hidden'}>
-              <div class="cp-g cp-g6">
-                <div class="campo cp-c2"><span>Forma de pago</span><div class="cc-radios">${[['CHEQUE', 'Cheque'], ['TRANSFERENCIA', 'Transferencia']].map(([k, t]) => `<label class="pc-check"><input type="radio" name="forma_pago" value="${k}" ${v.forma_pago === k ? 'checked' : ''} ${dis}> ${t}</label>`).join('')}</div></div>
-                <label class="campo cp-c2"><span>Moneda</span>${sel('moneda_id', ctx.monedas.map((m) => `<option value="${m.id}" ${m.id === v.moneda_id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join(''))}</label>
-                <label class="campo cp-c2"><span>Beneficiario del cheque</span><input name="beneficiario" value="${esc(v.beneficiario || '')}" maxlength="150" placeholder="Si se deja vacío, el nombre fiscal" ${dis}></label>
-                <label class="campo cp-c2"><span>Banco</span>${sel('banco_id', `<option value="">—</option>${ctx.bancosLoc().filter((b) => b.activo || b.id === v.banco_id).map((b) => `<option value="${b.id}" ${b.id === v.banco_id ? 'selected' : ''}>${esc(b.siglas || b.nombre)}</option>`).join('')}`)}</label>
-                <label class="campo cp-c2"><span>Cuenta bancaria</span><input name="cuenta_bancaria" value="${esc(v.cuenta_bancaria || '')}" maxlength="40" ${dis}></label>
-                <label class="campo cp-c2"><span>Tipo de cuenta</span>${sel('tipo_cuenta', `<option value="">—</option>${['MONETARIA', 'AHORRO'].map((x) => `<option ${v.tipo_cuenta === x ? 'selected' : ''}>${x}</option>`).join('')}`)}</label>
-                <label class="campo cp-c3"><span>Titular de la cuenta</span><input name="titular_cuenta" value="${esc(v.titular_cuenta || '')}" maxlength="150" ${dis}></label>
-                <label class="campo cp-c3"><span>Correo para avisos de pago</span><input type="email" name="correo_pagos" value="${esc(v.correo_pagos || '')}" maxlength="120" ${dis}></label>
+              <div class="cb-checks cp-checks3">${chk('nacional', 'Nacional', v.nacional)}${chk('servicio_critico', 'Servicio crítico', v.servicio_critico)}${chk('pendiente_revisar', 'Pendiente de revisar', v.pendiente_revisar)}</div>
+            </section>
+            <section class="cb-bloque">
+              <h3 class="ta-col-titulo"><i class="ti ti-calculator" aria-hidden="true"></i> Contable y pago</h3>
+              <div class="cb-par">
+                <label class="cb-linea"><span>Días de crédito</span>${sel('dias_credito', DIAS.map(([d, t]) => `<option value="${d}" ${Number(v.dias_credito) === d ? 'selected' : ''}>${t}</option>`).join('') + (DIAS.some(([d]) => d === Number(v.dias_credito)) ? '' : `<option value="${v.dias_credito}" selected>${v.dias_credito} DÍAS</option>`), 'Días de crédito')}</label>
+                <label class="cb-linea"><span>Visualizar</span>${sel('visualizar_en', VISUALIZAR.map((x) => `<option ${v.visualizar_en === x ? 'selected' : ''}>${x}</option>`).join(''), 'Visualizar en')}</label>
               </div>
-            </div>
-            <div class="bm-panel cp-panel" data-panel="CUENTAS" ${pestana === 'CUENTAS' ? '' : 'hidden'}>
-              ${v.varias_cuentas ? `<div class="pc-lineas"><table><thead><tr><th class="pc-n">Línea</th><th class="pc-cta">Cuenta</th><th>Nombre</th><th class="bm-centro">Centro</th><th class="num">%</th><th>Descripción</th><th></th></tr></thead>
-                <tbody>${cuentasProv.map((l, i) => `<tr data-cta="${i}"><td class="pc-n">${i + 1}</td><td class="pc-cta"><input list="cp-cuentas" data-c="codigo" value="${esc(l.codigo || '')}" ${dis} aria-label="Cuenta"></td><td class="pc-nombre" data-nombre>${esc(porCodigo(l.codigo)?.nombre || '')}</td>
-                  <td class="bm-centro"><input list="cp-centros" data-c="centro_codigo" value="${esc(l.centro_codigo || '')}" ${dis} aria-label="Centro"></td><td class="num"><input type="number" step="0.01" min="0" max="100" data-c="porcentaje" value="${l.porcentaje ?? ''}" ${dis} aria-label="Porcentaje"></td>
-                  <td><input data-c="descripcion" value="${esc(l.descripcion || '')}" maxlength="120" ${dis} aria-label="Descripción"></td><td>${dis ? '' : `<button type="button" class="icono-boton" data-quitar-cta="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>`}</td></tr>`).join('')
-                  || '<tr><td colspan="7" class="tk-vacio">Agrega las cuentas del proveedor.</td></tr>'}</tbody></table></div>
-                ${ctx.admin ? '<button type="button" class="boton secundario-sm cp-agregar" data-accion="agregar-cta"><i class="ti ti-plus" aria-hidden="true"></i> Cuenta</button>' : ''}`
-                : `<p class="tk-vacio cp-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Marca «Varias cuentas» en Datos contables para distribuir el gasto del proveedor en varias cuentas.</p>`}
-            </div>
+              <div class="cb-checks">${chk('efectuar_retencion', 'Efectuar retención', v.efectuar_retencion)}${chk('varias_cuentas', 'Varias cuentas', v.varias_cuentas)}</div>
+              ${cuentaCampo('cuenta_gasto', 'Cuenta de gastos', v.cuenta_gasto_id, dis, v.cuenta_gasto_codigo)}
+              <div class="cb-par">
+                <label class="cb-linea"><span>Transacción</span>${sel('transaccion_id', opcionesTrx(transacciones, v.transaccion_id), 'Transacción')}</label>
+                <label class="cb-linea" title="2da. transacción (exenciones)"><span>2da.</span>${sel('transaccion_exencion_id', opcionesTrx(transacciones, v.transaccion_exencion_id), '2da. transacción (exenciones)')}</label>
+              </div>
+              <div class="cb-par">
+                <div class="cb-linea"><span>Forma de pago</span><div class="cc-radios">${[['CHEQUE', 'Cheque'], ['TRANSFERENCIA', 'Transf.']].map(([k, t]) => `<label class="pc-check"><input type="radio" name="forma_pago" value="${k}" ${v.forma_pago === k ? 'checked' : ''} ${dis}> ${t}</label>`).join('')}</div></div>
+                <label class="cb-linea"><span>Moneda</span>${sel('moneda_id', ctx.monedas.map((m) => `<option value="${m.id}" ${m.id === v.moneda_id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join(''), 'Moneda')}</label>
+              </div>
+              <div class="cb-par">
+                <label class="cb-linea"><span>Banco</span>${sel('banco_id', `<option value="">—</option>${ctx.bancosLoc().filter((b) => b.activo || b.id === v.banco_id).map((b) => `<option value="${b.id}" ${b.id === v.banco_id ? 'selected' : ''}>${esc(b.siglas || b.nombre)}</option>`).join('')}`, 'Banco')}</label>
+                <label class="cb-linea"><span>Tipo cuenta</span>${sel('tipo_cuenta', `<option value="">—</option>${['MONETARIA', 'AHORRO'].map((x) => `<option ${v.tipo_cuenta === x ? 'selected' : ''}>${x}</option>`).join('')}`, 'Tipo de cuenta')}</label>
+              </div>
+              <div class="cb-par">${txt('cuenta_bancaria', 'Cuenta bancaria', 40)}${txt('titular_cuenta', 'Titular', 150)}</div>
+              <div class="cb-par">${txt('beneficiario', 'Beneficiario', 150, 'placeholder="El nombre fiscal"')}<label class="cb-linea"><span>Correo pagos</span><input type="email" name="correo_pagos" value="${esc(v.correo_pagos || '')}" maxlength="120" ${dis}></label></div>
+            </section>
+          </div>
+          <section class="cb-bloque cp-cuentas" data-panel="CUENTAS" ${cuentas ? '' : 'hidden'}>
+            <h3 class="ta-col-titulo"><i class="ti ti-list-numbers" aria-hidden="true"></i> Varias cuentas · distribución del gasto</h3>
+            ${v.varias_cuentas ? `<div class="pc-lineas"><table><thead><tr><th class="pc-n">Línea</th><th class="pc-cta">Cuenta</th><th>Nombre</th><th class="bm-centro">Centro</th><th class="num">%</th><th>Descripción</th><th></th></tr></thead>
+              <tbody>${cuentasProv.map((l, i) => `<tr data-cta="${i}"><td class="pc-n">${i + 1}</td><td class="pc-cta"><input list="cp-cuentas" data-c="codigo" value="${esc(l.codigo || '')}" ${dis} aria-label="Cuenta"></td><td class="pc-nombre" data-nombre>${esc(porCodigo(l.codigo)?.nombre || '')}</td>
+                <td class="bm-centro"><input list="cp-centros" data-c="centro_codigo" value="${esc(l.centro_codigo || '')}" ${dis} aria-label="Centro"></td><td class="num"><input type="number" step="0.01" min="0" max="100" data-c="porcentaje" value="${l.porcentaje ?? ''}" ${dis} aria-label="Porcentaje"></td>
+                <td><input data-c="descripcion" value="${esc(l.descripcion || '')}" maxlength="120" ${dis} aria-label="Descripción"></td><td>${dis ? '' : `<button type="button" class="icono-boton" data-quitar-cta="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>`}</td></tr>`).join('')
+                || '<tr><td colspan="7" class="tk-vacio">Agrega las cuentas del proveedor.</td></tr>'}</tbody></table></div>
+              ${ctx.admin ? '<button type="button" class="boton secundario-sm cp-agregar" data-accion="agregar-cta"><i class="ti ti-plus" aria-hidden="true"></i> Cuenta</button>' : ''}`
+              : `<p class="tk-vacio cp-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Marca «Varias cuentas» en Contable y pago para distribuir el gasto del proveedor en varias cuentas.</p>`}
           </section>
-          ${p ? `<p class="cc-ingreso"><i class="ti ti-user" aria-hidden="true"></i> Creó ${esc(p.creado_por_nombre || '')} · ${esc(fmt.fechaHora(p.creado_en))}${p.modificado_en ? ` · modificó ${esc(p.modificado_por_nombre || '')} ${esc(fmt.fechaHora(p.modificado_en))}` : ''}</p>` : ''}
           <datalist id="cp-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
           <datalist id="cp-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
         </form>`;
@@ -223,7 +243,9 @@
       const t = (n) => el[n].value.trim() || null;
       const id = (n) => el[n].value ? Number(el[n].value) : null;
       const cg = el.cuenta_gasto.value.trim();
-      const k = porCodigo(cg);
+      // Si el código no cambió y la cuenta es de otra versión del catálogo, se conserva la que tenía.
+      const igual = actual?.cuenta_gasto_id && cg && cg === (contable(actual.cuenta_gasto_id)?.codigo || actual.cuenta_gasto_codigo);
+      const k = igual ? { id: actual.cuenta_gasto_id } : porCodigo(cg);
       return {
         nit: t('nit'), nombre_comercial: el.nombre_comercial.value.trim(), nombre_fiscal: t('nombre_fiscal'), nombre_emision: t('nombre_emision'),
         direccion: t('direccion'), concepto_gastos: el.concepto_gastos.value.trim(), telefonos: t('telefonos'), extension: t('extension'), contacto: t('contacto'), correo: t('correo'),
@@ -244,8 +266,8 @@
       const foco = (n, txt) => { error.textContent = txt; form.elements[n]?.focus(); };
       if (!v.nombre_comercial) return foco('nombre_comercial', 'Escribe el nombre comercial del proveedor.');
       if (!v.concepto_gastos) return foco('concepto_gastos', 'Escribe el concepto de gastos del proveedor.');
-      if (v._cg && !v.cuenta_gasto_id) { pestana = 'CONTABLE'; repintar(); return ctx.pDet.querySelector('.modal-error').textContent = 'La cuenta de gastos no es de movimiento en el catálogo de la localidad.'; }
-      if (v.forma_pago === 'TRANSFERENCIA' && !v.cuenta_bancaria) { pestana = 'PAGO'; repintar(); return ctx.pDet.querySelector('.modal-error').textContent = 'Para pagar por transferencia escribe la cuenta bancaria del proveedor.'; }
+      if (v._cg && !v.cuenta_gasto_id) { pestana = 'FICHA'; repintar(); return ctx.pDet.querySelector('.modal-error').textContent = 'La cuenta de gastos no es de movimiento en el catálogo de la localidad.'; }
+      if (v.forma_pago === 'TRANSFERENCIA' && !v.cuenta_bancaria) { pestana = 'FICHA'; repintar(); return ctx.pDet.querySelector('.modal-error').textContent = 'Para pagar por transferencia escribe la cuenta bancaria del proveedor.'; }
       const ls = v.varias_cuentas ? cuentasProv.filter((l) => l.codigo) : [];
       const mala = ls.find((l) => !porCodigo(l.codigo) || (l.centro_codigo && !centros.find((c) => c.codigo === l.centro_codigo && c.movimiento)));
       if (mala) { pestana = 'CUENTAS'; repintar(); return ctx.pDet.querySelector('.modal-error').textContent = `La línea ${cuentasProv.indexOf(mala) + 1} tiene una cuenta o un centro que no es de movimiento.`; }
@@ -336,7 +358,7 @@
     });
     cont.addEventListener('click', (e) => {
       const tab = e.target.closest('[data-pestana]');
-      if (tab) { pestana = tab.dataset.pestana; ctx.pDet.querySelectorAll('[data-pestana]').forEach((b) => { b.classList.toggle('activa', b === tab); b.setAttribute('aria-selected', b === tab); }); ctx.pDet.querySelectorAll('[data-panel]').forEach((x) => { x.hidden = x.dataset.panel !== pestana; }); return; }
+      if (tab) { pestana = tab.dataset.pestana; return repintar(); }
       const fila = e.target.closest('tr[data-id]');
       if (fila && ctx.pMae.contains(fila)) { nuevo = false; return abrir(lista.find((p) => String(p.id) === fila.dataset.id)); }
       const q = e.target.closest('[data-quitar-cta]');
@@ -344,7 +366,7 @@
       const ac = e.target.closest('[data-accion]');
       if (!ac) return;
       const a = ac.dataset.accion;
-      if (a === 'nuevo') { nuevo = true; actual = null; cuentasProv = []; pestana = 'CONTABLE'; ctx.pMae.querySelectorAll('tr.actual').forEach((tr) => tr.classList.remove('actual')); pintarDetalle(); return ctx.pDet.querySelector('[name=nit]')?.focus(); }
+      if (a === 'nuevo') { nuevo = true; actual = null; cuentasProv = []; pestana = 'FICHA'; ctx.pMae.querySelectorAll('tr.actual').forEach((tr) => tr.classList.remove('actual')); pintarDetalle(); return ctx.pDet.querySelector('[name=nit]')?.focus(); }
       if (a === 'cancelar') { nuevo = false; return abrir(lista[0] || null); }
       if (a === 'listado') return listado();
       if (a === 'ver-cuentas') { pestana = 'CUENTAS'; return repintar(); }

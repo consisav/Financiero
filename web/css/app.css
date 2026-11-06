@@ -3353,3 +3353,27 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cb-ficha .cb-enc-par { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr); }
 .cb-ficha .cb-pt .cp-cta { flex-direction: row; justify-content: flex-start; }
 .cb-ficha .cb-pt .cp-cta small { min-height: 0; }
+
+/* Compras · Proveedores: lista a lo ancho arriba y ficha en tres bloques abajo (sin pestañas). */
+.bk-proveedores.cb-apilado .bk-filtros { grid-template-columns: auto minmax(220px, 340px) repeat(3, minmax(120px, 190px)) 1fr; }
+.bk-proveedores.cb-apilado .cc-tabla .cc-nombre { max-width: 260px; }
+.cp-reg { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.cp-tres { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr); }
+.cp-ficha .cb-linea { grid-template-columns: 112px minmax(0, 1fr); }
+.cp-ficha .cb-par .cb-linea, .cp-ficha .cb-par .cb-linea:last-child { grid-template-columns: auto minmax(0, 1fr); }
+.cp-ficha .cb-par .cb-linea:first-child { grid-template-columns: 112px minmax(0, 1fr); }
+.cp-ficha .cp-tel { grid-template-columns: minmax(0, 1.6fr) minmax(0, .7fr); }
+.cp-ficha .cp-con-mas { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.cp-ficha .cp-con-mas select { flex: 1; }
+.cp-ficha .cp-con-mas .icono-boton { width: 26px; height: 26px; flex-shrink: 0; }
+.cp-checks3 { grid-template-columns: repeat(3, auto); justify-content: start; }
+.cp-ficha .cb-cta { display: flex; flex-direction: row; align-items: center; gap: 8px; min-width: 0; }
+.cp-ficha .cb-cta input { max-width: 130px; }
+.cp-ficha .cb-cta small { font-size: 11.5px; color: var(--suave); min-height: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-ficha .cc-radios { flex-wrap: nowrap; gap: 10px; font-size: 12.5px; }
+.cp-cuentas { min-height: 200px; }
+.cp-cuentas .pc-lineas { max-height: 300px; overflow: auto; }
+.cp-ficha .cb-linea, .cp-ficha .cb-par .cb-linea:first-child { grid-template-columns: 136px minmax(0, 1fr); }
+.cp-ficha .cb-bloque { gap: 3px; padding: 6px 12px 8px; }
+.cp-ficha input:not([type=checkbox]):not([type=radio]), .cp-ficha select { height: 26px; }
+.cp-ficha .cp-con-mas .icono-boton { width: 24px; height: 24px; }
