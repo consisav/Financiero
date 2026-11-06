@@ -146,20 +146,19 @@
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Número, beneficiario, descripción…" value="${esc(f.buscar)}" aria-label="Buscar cheques"></label>
         </header>
         <div class="ta-tabla cc-tabla">
-          <table><thead><tr>${ordenTh('numero', 'Cheque', 'num')}${ordenTh('fecha', 'Fecha')}<th>Cuenta bancaria</th><th>A favor de</th><th>Descripción</th>${ordenTh('valor', 'Valor', 'num')}<th class="num">Valor Q</th><th>Estado</th><th>Conciliado</th><th>Partida</th><th class="num" title="Compras que liquidó">Compras</th><th class="cq-acc"></th></tr></thead>
-            <tbody>${filas.map((d) => { const cb = cuenta(d.cuenta_bancaria_id); return `<tr data-cheque="${d.id}" class="${sel && sel.id === d.id ? 'actual' : ''} ${d.estado === 'ANULADO' ? 'pc-anulada' : ''}" tabindex="0">
+          <table class="cqc-tabla"><colgroup><col class="w-num"><col class="w-fecha"><col><col class="w-cta"><col class="w-valor"><col class="w-estado"><col class="w-compras"><col class="w-acc"></colgroup>
+            <thead><tr>${ordenTh('numero', 'Cheque', 'num')}${ordenTh('fecha', 'Fecha')}<th>A favor de · descripción</th><th>Cuenta bancaria</th>${ordenTh('valor', 'Valor', 'num')}<th>Estado</th><th class="num" title="Compras que liquidó">Compras</th><th aria-label="Consultar"></th></tr></thead>
+            <tbody>${filas.map((d) => { const cb = cuenta(d.cuenta_bancaria_id); const quien = d.deposito_por || d.tercero_nombre || ''; return `<tr data-cheque="${d.id}" class="${sel && sel.id === d.id ? 'actual' : ''} ${d.estado === 'ANULADO' ? 'pc-anulada' : ''}" tabindex="0">
               <td class="num fuerte">${esc(d.numero_documento || '')}<small class="cq-ant">folio ${d.folio}</small></td>
               <td>${esc(fmt.fechaDia(d.fecha))}</td>
-              <td title="${esc(cb ? ctx.nombreCuentaBancaria(cb) : '')}">${esc(cb ? cb.numero : '')}</td>
-              <td class="cc-nombre" title="${esc(d.deposito_por || d.tercero_nombre || '')}">${esc(d.deposito_por || d.tercero_nombre || '')}</td>
-              <td class="cc-nombre cqc-desc" title="${esc(d.descripcion || '')}">${esc(d.descripcion || '')}</td>
-              <td class="num">${esc(sim(d))} ${fmt.monto(d.valor)}</td><td class="num">${fmt.monto(d.valor_ml)}</td>
-              <td><span class="pc-marca ${d.estado === 'ANULADO' ? 'anulada' : 'aprobada'}">${d.estado === 'ANULADO' ? 'Anulado' : 'Vigente'}</span></td>
-              <td>${d.conciliado ? '<span class="pc-marca definitiva">Conciliado</span>' : '<span class="tk-tenue">No</span>'}</td>
-              <td>${d.partida_id ? `<span class="pc-tipo">${esc(partida(d.partida_id))}</span>` : d.origen_anterior ? '<span class="tk-tenue" title="Cheque del sistema anterior">Sist. anterior</span>' : '<span class="tk-tenue">—</span>'}</td>
+              <td class="cqc-quien" title="${esc(quien)}${d.descripcion ? ` · ${esc(d.descripcion)}` : ''}"><b>${esc(quien || '—')}</b><small>${esc(d.descripcion || '')}</small></td>
+              <td class="cqc-cta" title="${esc(cb ? ctx.nombreCuentaBancaria(cb) : '')}">${esc(cb ? cb.numero : '')}<small>${esc(cb ? ctx.banco(cb.banco_id)?.siglas || ctx.banco(cb.banco_id)?.nombre || '' : '')}</small></td>
+              <td class="num"><b>${esc(sim(d))} ${fmt.monto(d.valor)}</b>${d.moneda_id !== ctx.monedaBase()?.id ? `<small>Q ${fmt.monto(d.valor_ml)}</small>` : ''}</td>
+              <td class="cqc-estado"><span class="pc-marca ${d.estado === 'ANULADO' ? 'anulada' : 'aprobada'}">${d.estado === 'ANULADO' ? 'Anulado' : 'Vigente'}</span>${d.conciliado ? ' <span class="pc-marca definitiva">Conciliado</span>' : ''}
+                <small>${d.partida_id ? `Partida ${esc(partida(d.partida_id))}` : d.origen_anterior ? 'Sistema anterior' : 'Sin partida'}</small></td>
               <td class="num">${compras.get(d.id) || '<span class="tk-tenue">—</span>'}</td>
-              <td class="cq-acc"><button type="button" class="boton secundario-sm" data-consultar="${d.id}" title="Abrir el cheque en Emisión de cheques"><i class="ti ti-eye" aria-hidden="true"></i> Consultar</button></td></tr>`; }).join('')
-              || `<tr><td colspan="12" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : !cheques.length && rango ? `No hay cheques entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> cheques, del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton primario-sm" data-ver-todos>Ver todos</button>` : 'No hay cheques con estos parámetros.'}</td></tr>`}</tbody></table>
+              <td class="cq-acc"><button type="button" class="icono-boton cqc-ver" data-consultar="${d.id}" title="Consultar: abrir el cheque en Emisión de cheques" aria-label="Consultar el cheque ${esc(d.numero_documento || '')}"><i class="ti ti-eye" aria-hidden="true"></i></button></td></tr>`; }).join('')
+              || `<tr><td colspan="8" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : !cheques.length && rango ? `No hay cheques entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> cheques, del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton primario-sm" data-ver-todos>Ver todos</button>` : 'No hay cheques con estos parámetros.'}</td></tr>`}</tbody></table>
         </div>`;
     }
 
