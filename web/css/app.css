@@ -3628,3 +3628,4 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-abono-liq td { background: color-mix(in srgb, var(--fondo) 60%, var(--panel)); }
 .cf-mi, .cf-excedente { display: block; font-size: 11px; color: var(--tenue); font-weight: 500; }
 .cf-excedente { color: var(--ambar-t); }
+.cf-version { margin-left: 4px; font-size: 10.5px; }

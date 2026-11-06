@@ -49,7 +49,10 @@
     let buscar = '';
 
     const editable = () => ctx.admin && (!actual || (modificando && actual.estado === 'ACTIVA'));
-    const contable = (id) => contables.find((x) => x.id === id);
+    // Las líneas migradas pueden usar cuentas de otra versión (activa) del catálogo de la localidad: se buscan
+    // aparte para mostrar su código y nombre, y se conservan al guardar si no se cambian.
+    let otrasCuentas = [];
+    const contable = (id) => contables.find((x) => x.id === id) || otrasCuentas.find((x) => x.id === id);
     const porCodigo = (cod) => contables.find((x) => x.codigo === String(cod || '').trim() && x.movimiento);
     const proveedor = (id) => proveedores.find((p) => p.id === id);
     const tipoDoc = (id) => tiposDoc.find((x) => x.id === id);
@@ -125,6 +128,7 @@
       const tv = loc ? await sb.from('localidades').select('tipo_venta').eq('id', loc).maybeSingle() : { data: null };
       tipoVenta = tv.error ? null : tv.data?.tipo_venta || null;
       [cuentas, contables, centros, transacciones] = await Promise.all([ctx.cuentasBancarias(), ctx.cuentasContables(), C.centrosLocalidad(sb, loc), C.transaccionesLocalidad(sb, loc)]);
+      otrasCuentas = [];
       await consultar();
     }
 
@@ -204,7 +208,12 @@
           sb.from('compra_documentos_banco').select('*').eq('compra_id', c.id).order('tipo').order('numero')
         ]);
         items = (i.data || []).map((x) => ({ descripcion: x.descripcion, cantidad: Number(x.cantidad), costo_total: Number(x.costo_total) }));
-        lineas = (l.data || []).map((x) => ({ cuenta_id: x.cuenta_id, codigo: contable(x.cuenta_id)?.codigo || '', centro_id: x.centro_id, debe: Number(x.debe), haber: Number(x.haber) }));
+        const faltan = [...new Set((l.data || []).map((x) => x.cuenta_id).filter((id) => id && !contables.some((k) => k.id === id) && !otrasCuentas.some((k) => k.id === id)))];
+        if (faltan.length) {
+          const o = await sb.from('cuentas').select('id, codigo, nombre, vigente, catalogo_id, catalogos_cuentas(version, localidad_id)').in('id', faltan);
+          otrasCuentas.push(...(o.data || []).map((k) => ({ ...k, movimiento: true, version: k.catalogos_cuentas?.version, otraVersion: true })));
+        }
+        lineas = (l.data || []).map((x) => ({ cuenta_id: x.cuenta_id, codigo: contable(x.cuenta_id)?.codigo || x.cuenta_codigo_anterior || '', codigo_anterior: x.cuenta_codigo_anterior, centro_id: x.centro_id, debe: Number(x.debe), haber: Number(x.haber) }));
         pagos = d.data || [];
         liquidaciones = lq.error ? [] : lq.data || [];
         docsBanco = db.error ? [] : db.data || [];
@@ -497,13 +506,18 @@
         </div>`;
     }
 
+    const nombreCuenta = (l, k) => k
+      ? `${esc(k.nombre)}${k.otraVersion ? ` <span class="pc-tipo cf-version" title="Cuenta del catálogo versión ${k.version ?? '?'} de la empresa (con que se migró la compra). Se conserva al guardar; para pasarla al catálogo vigente escribe la cuenta de nuevo.">catálogo v${k.version ?? '?'}</span>` : ''}`
+      : l.codigo || l.codigo_anterior
+        ? `<span class="pc-error" title="Para corregirlo: crea la cuenta ${esc(l.codigo || l.codigo_anterior)} como cuenta de movimiento en Contabilidad › Catálogos › Cuentas contables, o escribe aquí otra cuenta de movimiento y guarda la compra.">La cuenta ${esc(l.codigo || l.codigo_anterior)} no existe en el catálogo de la empresa: créala en Contabilidad › Catálogos › Cuentas contables o escribe otra.</span>`
+        : '';
     function filaLinea(l, i, dis) {
       const k = contable(l.cuenta_id);
       const cc = centros.find((x) => x.id === l.centro_id);
       return `<tr data-linea="${i}">
         <td class="pc-n">${i + 1}</td>
         <td class="pc-cta"><input list="cf-cuentas" data-campo="cuenta" value="${esc(k ? k.codigo : l.codigo || '')}" ${dis} aria-label="Cuenta"></td>
-        <td class="pc-nombre" data-nombre>${k ? esc(k.nombre) : ''}</td>
+        <td class="pc-nombre" data-nombre>${nombreCuenta(l, k)}</td>
         <td class="num"><input type="number" step="0.01" min="0" data-campo="debe" value="${l.debe || ''}" ${dis} aria-label="Debe"></td>
         <td class="num"><input type="number" step="0.01" min="0" data-campo="haber" value="${l.haber || ''}" ${dis} aria-label="Haber"></td>
         <td class="bm-centro"><input list="cf-centros" data-campo="centro" value="${esc(cc ? cc.codigo : l.centro_codigo || '')}" ${dis} aria-label="Centro de costo"></td>
@@ -514,9 +528,10 @@
       ctx.pDet.querySelectorAll('tr[data-linea]').forEach((tr) => {
         const l = lineas[Number(tr.dataset.linea)];
         const cod = tr.querySelector('[data-campo=cuenta]').value.trim();
-        const k = porCodigo(cod);
+        const previa = contable(l.cuenta_id);
+        const k = previa?.otraVersion && previa.codigo === cod ? previa : porCodigo(cod);
         l.cuenta_id = k ? k.id : null; l.codigo = cod;
-        tr.querySelector('[data-nombre]').innerHTML = k ? esc(k.nombre) : cod ? '<span class="pc-error">No es una cuenta de movimiento de la localidad</span>' : '';
+        tr.querySelector('[data-nombre]').innerHTML = k ? nombreCuenta(l, k) : cod ? '<span class="pc-error">No es una cuenta de movimiento de la localidad</span>' : '';
         const codC = tr.querySelector('[data-campo=centro]').value.trim();
         const cc = centros.find((x) => x.codigo === codC && x.movimiento);
         l.centro_id = cc ? cc.id : null; l.centro_codigo = codC;
