@@ -9,7 +9,7 @@ window.GRUPOS = [
   { id: 'ayuda', nombre: 'Ayuda', icono: 'ti-help' }
 ];
 
-// Subgrupos desplegables de Catálogos. Los comunes (usuarios, módulos, parámetros, geografía) solo
+// Subgrupos desplegables de Catálogos. Los comunes (usuarios, módulos, geografía y organizaciones) solo
 // aparecen en el módulo con "comunes: true" (Administración); cada módulo agrega los suyos en
 // "subgrupos.catalogos". "separador: true" dibuja una línea
 // debajo de la opción. Una opción con "subgrupo" y "pantallas" es un subgrupo anidado.
@@ -34,8 +34,6 @@ window.CATALOGOS_COMUNES = [
     subgrupo: 'Parámetros',
     icono: 'ti-adjustments',
     pantallas: [
-      { id: 'parametros', nombre: 'Parámetros generales', icono: 'ti-settings', descripcion: 'Parámetros de tiempo, impuestos, monedas y firmantes de cada localidad.' },
-      { id: 'monedas-y-tipos-de-cambio', nombre: 'Tipos de cambio', icono: 'ti-currency-dollar', descripcion: 'Monedas que maneja el sistema y su tipo de cambio por fecha.' },
       { id: 'geografia', nombre: 'Geografía', icono: 'ti-world', descripcion: 'Países, estados o departamentos y ciudades o municipios.' },
       { id: 'organizaciones', nombre: 'Organizaciones', icono: 'ti-building', descripcion: 'Organizaciones y sus localidades.' }
     ]
@@ -130,6 +128,14 @@ window.MODULOS = [
         }
       ],
       catalogos: [
+        {
+          subgrupo: 'Parámetros',
+          icono: 'ti-adjustments',
+          pantallas: [
+            { id: 'parametros', nombre: 'Parámetros generales', icono: 'ti-settings', descripcion: 'Parámetros de tiempo, impuestos, nómina, retenciones, cuentas de estados financieros y firmantes de cada localidad.' },
+            { id: 'monedas-y-tipos-de-cambio', nombre: 'Tipos de cambio', icono: 'ti-currency-dollar', descripcion: 'Monedas que maneja el sistema y su tipo de cambio por fecha.' }
+          ]
+        },
         {
           subgrupo: 'Cuentas y CC',
           icono: 'ti-sitemap',

@@ -22,7 +22,7 @@
     };
   }
 
-  // Parámetros adicionales del sistema anterior (script 85), por pestaña: [columna, etiqueta, tipo]
+  // Parámetros adicionales del sistema anterior (script 85), por bloque: [columna, etiqueta, tipo]
   // con tipo n = número, i = entero, t = texto, d = fecha.
   const GRUPOS = {
     cuentas: [
@@ -31,31 +31,32 @@
       ['cuenta_principal_perdida', 'Cuenta principal de pérdida', 't'], ['cuenta_dummy', 'Cuenta dummy', 't'],
       ['cuenta_dif_cambiario', 'Cuenta diferencial cambiario', 't'], ['cuenta_idp', 'Cuenta IDP', 't'],
       ['cta_iva_retenido', 'Cuenta IVA retenido', 't'], ['cta_isr_retenido', 'Cuenta ISR retenido', 't'],
-      ['cta_iva_factura_especial', 'Cuenta IVA factura especial', 't'], ['cta_isr_factura_especial', 'Cuenta ISR factura especial', 't'],
-      ['descripcion_poliza_resultados', 'Descripción póliza de resultados', 't'], ['descripcion_poliza_balance', 'Descripción póliza de balance', 't'],
-      ['descripcion_poliza_distrib', 'Descripción póliza de distribución', 't'], ['descripcion_poliza_apertura', 'Descripción póliza de apertura', 't']
+      ['cta_iva_factura_especial', 'Cuenta IVA fact. especial', 't'], ['cta_isr_factura_especial', 'Cuenta ISR fact. especial', 't']
     ],
     nomina: [
       ['pct_igss', '% IGSS laboral', 'n'], ['cuota_patronal', '% Cuota patronal', 'n'], ['pct_irtra', '% IRTRA', 'n'],
       ['pct_indemnizacion', '% Indemnización', 'n'], ['pct_aguinaldo', '% Aguinaldo', 'n'], ['pct_bono14', '% Bono 14', 'n'],
-      ['pct_vacaciones', '% Vacaciones', 'n'], ['nombre_planillas', 'Nombre de planillas', 't'], ['nombre_caja_chica', 'Nombre de caja chica', 't']
+      ['pct_vacaciones', '% Vacaciones', 'n']
     ],
     retenciones: [
       ['pct_retencion', '% Retención', 'n'], ['pct_retencion_agente', '% Retención agente', 'n'], ['no_establecimiento', 'No. establecimiento', 'i'],
       ['no_ini_retencion', 'No. inicial de retención', 'i'], ['no_fin_retencion', 'No. final de retención', 'i'], ['registro_contador', 'Registro del contador', 't'],
-      ['correo_retenciones', 'Correo de retenciones', 't'], ['correo_copia_o_ret', 'Correo copia de retenciones', 't'], ['correo_aviso_nocuadre', 'Correo aviso de no cuadre', 't'],
+      ['correo_retenciones', 'Correo de retenciones', 't'], ['correo_copia_o_ret', 'Correo copia', 't'], ['correo_aviso_nocuadre', 'Correo aviso no cuadre', 't'],
       ['nombre_envio', 'Nombre de envío', 't'], ['puesto_envio', 'Puesto de envío', 't'], ['prefijo_archivo', 'Prefijo de archivo', 't'],
-      ['sufijo_archivo', 'Sufijo de archivo', 't'], ['path_retenciones', 'Ruta de retenciones', 't'], ['path_retenciones_net', 'Ruta de retenciones (red)', 't'],
-      ['path_retenciones_envio', 'Ruta de envío de retenciones', 't']
+      ['sufijo_archivo', 'Sufijo de archivo', 't']
     ],
     otros: [
-      ['cheque_inicial', 'Cheque inicial', 'i'], ['cheque_final', 'Cheque final', 'i'], ['fecha_ini_anticipos', 'Fecha inicio de anticipos', 'd'],
-      ['version_actual_nomenclatura', 'Versión nomenclatura (sist. anterior)', 'i'], ['fecha_version', 'Fecha de la versión', 'd'],
-      ['meses_max_presenta_compras', 'Meses máx. para presentar compras', 'i'], ['path_archivos', 'Ruta de archivos', 't'],
-      ['path_backup_bdd', 'Ruta respaldo base de datos', 't'], ['path_backup_apl', 'Ruta respaldo aplicación', 't']
+      ['cheque_inicial', 'Cheque inicial', 'i'], ['cheque_final', 'Cheque final', 'i'],
+      ['fecha_ini_anticipos', 'Inicio de anticipos', 'd'], ['meses_max_presenta_compras', 'Meses máx. compras', 'i'],
+      ['version_actual_nomenclatura', 'Versión nomencl. ant.', 'i'], ['fecha_version', 'Fecha de la versión', 'd'],
+      ['nombre_planillas', 'Nombre de planillas', 't'], ['nombre_caja_chica', 'Nombre caja chica', 't'],
+      ['descripcion_poliza_resultados', 'Póliza de resultados', 't'], ['descripcion_poliza_balance', 'Póliza de balance', 't'],
+      ['descripcion_poliza_distrib', 'Póliza de distribución', 't'], ['descripcion_poliza_apertura', 'Póliza de apertura', 't'],
+      ['path_retenciones', 'Ruta retenciones', 't'], ['path_retenciones_net', 'Ruta retenciones (red)', 't'],
+      ['path_retenciones_envio', 'Ruta envío retenciones', 't'], ['path_archivos', 'Ruta de archivos', 't'],
+      ['path_backup_bdd', 'Ruta respaldo BD', 't'], ['path_backup_apl', 'Ruta respaldo aplicación', 't']
     ]
   };
-  const PESTANAS = [['autorizaciones', 'Autorizaciones'], ['cuentas', 'Cuentas estados financieros'], ['nomina', 'Nómina'], ['retenciones', 'Retenciones'], ['otros', 'Otros']];
 
   const v = (x) => (x === null || x === undefined ? '' : esc(x));
   const fecha = (n, p, et) => `<label class="campo-linea"><span>${et}</span><input type="date" name="${n}" value="${v(p[n])}"></label>`;
@@ -70,7 +71,7 @@
   window.PANTALLAS.parametros = async function (cont, m) {
     const sb = window.FIN.sb;
     const editable = window.FIN.puedeEditarCatalogos();
-    const estado = { orgs: [], locs: [], org: null, loc: null, param: null, firmantes: [], usuarios: [], version: null, pestana: 'autorizaciones' };
+    const estado = { orgs: [], locs: [], org: null, loc: null, param: null, firmantes: [], usuarios: [], version: null };
 
     const [o, l, us] = await Promise.all([
       sb.from('organizaciones').select('id, codigo, nombre').eq('activo', true).order('codigo'),
@@ -82,7 +83,7 @@
     estado.locs = l.data;
     estado.usuarios = us.data || [];
     if (!estado.locs.length) {
-      cont.innerHTML = `<p class="vacio">Los parámetros son por localidad: primero crea una en <a href="#/${m.id}/organizaciones">Catálogos · Organizaciones</a>.</p>`;
+      cont.innerHTML = `<p class="vacio">Los parámetros son por localidad: primero crea una en <a href="#/administracion/organizaciones">Administración · Catálogos · Organizaciones</a>.</p>`;
       return;
     }
     const yo = window.FIN.perfil();
@@ -110,89 +111,67 @@
       if (!p.nit && locAct && locAct.nit) p.nit = locAct.nit;
       const firmantes = estado.firmantes.length || estado.firmantesEditados ? estado.firmantes
         : [{ tipo: 'Contador general' }, { tipo: 'Representante legal' }];
+      const org = estado.orgs.find((x) => x.id === estado.org) || {};
+      const bloque = (titulo, icono, cuerpo, clase = '') => `
+            <section class="pg-b ${clase}"><h3><i class="ti ${icono}" aria-hidden="true"></i> ${titulo}</h3>${cuerpo}</section>`;
+      const grupo = (id) => GRUPOS[id].map((c) => campoGrupo(c, p)).join('');
       cont.innerHTML = `
-        <form id="f-parametros" class="parametros">
-          <section class="panel cabecera-param cc-encabezado">
-            ${window.UI.barraContexto({
-              clave: 'parametros',
-              resumen: `<b>${esc((estado.orgs.find((x) => x.id === estado.org) || {}).nombre || '')}</b>${locAct ? ` · ${esc(locAct.codigo)} ${esc(locAct.nombre_comercial)}` : ''}`,
-              panel: `
-                <label class="selector-org">Organización <select data-org>${estado.orgs.map((x) => `<option value="${x.id}" ${x.id === estado.org ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select></label>
-                <label class="selector-org">Localidad <select data-loc>${locsOrg.map((x) => `<option value="${x.id}" ${x.id === estado.loc ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</select></label>`
-            })}
+        <form id="f-parametros" class="parametros pg">
+          <header class="pg-barra">
+            <label class="us-filtro"><span>Organización</span><select data-org>${estado.orgs.map((x) => `<option value="${x.id}" ${x.id === estado.org ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select></label>
+            <label class="us-filtro"><span>Localidad</span><select data-loc>${locsOrg.map((x) => `<option value="${x.id}" ${x.id === estado.loc ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</select></label>
             ${estado.param && estado.param.id
-              ? window.UI.auditoria({ ...estado.param, activo: true }, false, 'param')
-              :`<p class="aviso-param"><i class="ti ti-info-circle" aria-hidden="true"></i> Esta localidad todavía no tiene parámetros. Se muestran valores sugeridos${editable ? '; revísalos y pulsa Guardar cambios' : ''}.</p>`}
-          </section>
+              ? `<span class="pg-audit">Grabado por <b>${esc(estado.param.creado_por_nombre || 'sistema')}</b> el ${window.UI.fecha(estado.param.creado_en)}${estado.param.modificado_en ? ` · modificado por <b>${esc(estado.param.modificado_por_nombre || 'sistema')}</b> el ${window.UI.fecha(estado.param.modificado_en)}` : ''}</span>`
+              : `<span class="pg-aviso"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(org.nombre || '')} · ${esc(locAct ? locAct.codigo : '')} todavía no tiene parámetros: se muestran valores sugeridos${editable ? '; revísalos y pulsa Guardar cambios' : ''}.</span>`}
+            <p class="modal-error" role="alert"></p>
+            <button type="button" class="icono-boton" data-accion="param-actualizar" title="Actualizar" aria-label="Actualizar"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+            ${editable ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar cambios</button>' : ''}
+          </header>
 
-          <div class="param-grid">
-            <section class="panel">
-              <div class="panel-cab"><h2>Parámetros de tiempo</h2></div>
+          <div class="pg-grid">
+            ${bloque('Tiempo', 'ti-calendar', `
               ${numero('anio_actual', p, 'Año actual', '1')}
               ${mes('mes_actual', p, 'Mes actual')}
-              ${fecha('proximo_cierre', p, 'Próximo cierre')}
               ${fecha('ultimo_cierre', p, 'Último cierre')}
+              ${fecha('proximo_cierre', p, 'Próximo cierre')}
               ${fecha('inicio_periodo_actual', p, 'Inicio período actual')}
               ${fecha('fin_periodo_actual', p, 'Fin período actual')}
               ${fecha('inicio_periodo_fiscal', p, 'Inicio período fiscal')}
-              ${fecha('fin_periodo_fiscal', p, 'Fin período fiscal')}
-            </section>
-
-            <div class="param-columna">
-              <section class="panel">
-                <div class="panel-cab"><h2>Parámetros de uso de pantallas</h2></div>
-                <div class="uso-pantallas">
-                  <div>
-                    ${casilla('aplicar_iva', p, 'Aplicar IVA')}
-                    ${casilla('incluir_centros_costo', p, 'Incluir centros de costo')}
-                  </div>
-                  <fieldset class="radios">
-                    <legend>Modo de migración de estados de cuenta de bancos</legend>
-                    <label><input type="radio" name="migracion_bancos" value="MANUAL" ${p.migracion_bancos !== 'AUTOMATICA' ? 'checked' : ''}> Manual</label>
-                    <label><input type="radio" name="migracion_bancos" value="AUTOMATICA" ${p.migracion_bancos === 'AUTOMATICA' ? 'checked' : ''}> Automática</label>
-                  </fieldset>
-                </div>
-              </section>
-              <div class="param-dos">
-                <section class="panel">
-                  <div class="panel-cab"><h2>Impuestos básicos (%)</h2></div>
-                  ${[1, 2, 3, 4].map((i) => `
-                    <div class="impuesto">
-                      <span>Impuesto ${i}</span>
-                      <input type="number" step="0.01" min="0" name="impuesto${i}" value="${v(p['impuesto' + i])}" aria-label="Porcentaje impuesto ${i}">
-                      <input type="text" name="nombre_impuesto${i}" value="${v(p['nombre_impuesto' + i])}" aria-label="Nombre impuesto ${i}">
-                    </div>`).join('')}
-                </section>
-                <section class="panel">
-                  <div class="panel-cab"><h2>Impuestos combustible · IDP</h2></div>
-                  ${numero('idp_super', p, 'Súper')}
-                  ${numero('idp_regular', p, 'Regular')}
-                  ${numero('idp_diesel', p, 'Diésel')}
-                </section>
+              ${fecha('fin_periodo_fiscal', p, 'Fin período fiscal')}`)}
+            ${bloque('Impuestos · IDP · uso', 'ti-receipt-tax', `
+              ${[1, 2, 3, 4].map((i) => `
+                <div class="pg-imp">
+                  <span>Impuesto ${i}</span>
+                  <input type="text" name="nombre_impuesto${i}" value="${v(p['nombre_impuesto' + i])}" aria-label="Nombre impuesto ${i}">
+                  <input type="number" step="0.01" min="0" name="impuesto${i}" value="${v(p['impuesto' + i])}" aria-label="Porcentaje impuesto ${i}"><em>%</em>
+                </div>`).join('')}
+              <div class="pg-idp"><span>IDP</span>
+                ${[['idp_super', 'Súper'], ['idp_regular', 'Regular'], ['idp_diesel', 'Diésel']].map(([n, et]) => `<label>${et}<input type="number" step="0.01" min="0" name="${n}" value="${v(p[n])}"></label>`).join('')}
               </div>
-            </div>
-          </div>
-
-          <section class="panel">
-            <div class="param-otros">
-              ${numero('valor_cheques_autorizacion', p, 'Valor de cheques para solicitar autorización')}
+              <div class="pg-uso">
+                ${casilla('aplicar_iva', p, 'Aplicar IVA')}
+                ${casilla('incluir_centros_costo', p, 'Centros de costo')}
+              </div>
+              <div class="pg-uso" role="radiogroup" aria-label="Modo de migración de estados de cuenta de bancos">
+                <span>Migración estados de cuenta</span>
+                <label><input type="radio" name="migracion_bancos" value="MANUAL" ${p.migracion_bancos !== 'AUTOMATICA' ? 'checked' : ''}> Manual</label>
+                <label><input type="radio" name="migracion_bancos" value="AUTOMATICA" ${p.migracion_bancos === 'AUTOMATICA' ? 'checked' : ''}> Automática</label>
+              </div>`)}
+            ${bloque('General', 'ti-building', `
+              ${texto('nit', p, 'NIT', 'placeholder="8136624-8"')}
               ${texto('moneda_integracion', p, 'Moneda integración')}
               ${texto('moneda_ingreso', p, 'Moneda ingreso información')}
-              ${texto('nit', p, 'NIT', 'placeholder="8136624-8"')}
               ${mes('primer_mes_contable', p, 'Primer mes contable')}
               ${mes('ultimo_mes_contable', p, 'Último mes contable')}
-              <label class="campo-linea"><span>Versión actual nomenclatura</span><input type="text" value="${estado.version || '—'}" readonly tabindex="-1"></label>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="pestanas" role="tablist">
-              ${PESTANAS.map(([id, nombre]) => `<button type="button" role="tab" class="pestana ${estado.pestana === id ? 'activa' : ''}" data-pestana="${id}" aria-selected="${estado.pestana === id}">${nombre}</button>`).join('')}
-            </div>
-            <div ${estado.pestana === 'autorizaciones' ? '' : 'hidden'}>
-              <div class="tabla-desplazable">
-                <table class="tabla firmantes">
-                  <thead><tr><th>Firma como</th><th>Personas que firman</th><th>Cargo</th><th># Registro</th><th>Usuario</th><th></th></tr></thead>
+              ${numero('valor_cheques_autorizacion', p, 'Valor cheques a autorizar')}
+              <label class="campo-linea"><span>Versión actual nomenclatura</span><input type="text" value="${estado.version || '—'}" readonly tabindex="-1"></label>`)}
+            ${bloque('Nómina', 'ti-users', grupo('nomina'))}
+            ${bloque('Cuentas estados financieros', 'ti-report-money', grupo('cuentas'))}
+            ${bloque('Retenciones', 'ti-receipt', grupo('retenciones'))}
+            <div class="pg-ancho">
+              ${bloque('Autorizaciones · personas que firman', 'ti-signature', `
+                <table class="pg-firmantes">
+                  <thead><tr><th>Firma como</th><th>Persona que firma</th><th>Cargo</th><th># Registro</th><th>Usuario</th><th></th></tr></thead>
                   <tbody>
                     ${firmantes.map((f, i) => `
                       <tr data-fila="${i}" data-anterior="${v(f.usuario_anterior)}">
@@ -200,25 +179,17 @@
                         <td><input type="text" name="nombre" value="${v(f.nombre)}" aria-label="Nombre"></td>
                         <td><input type="text" name="cargo" value="${v(f.cargo)}" aria-label="Cargo"></td>
                         <td><input type="text" name="registro" value="${v(f.registro)}" aria-label="Número de registro"></td>
-                        <td><select name="perfil_id" aria-label="Usuario"><option value="">—</option>${estado.usuarios.map((u) => `<option value="${u.id}" ${u.id === f.perfil_id ? 'selected' : ''}>${esc(u.usuario || '')} ${esc(u.nombre)}</option>`).join('')}</select></td>
+                        <td><select name="perfil_id" aria-label="Usuario"><option value="">${f.usuario_anterior ? `${v(f.usuario_anterior)} (sin cuenta)` : '—'}</option>${estado.usuarios.map((u) => `<option value="${u.id}" ${u.id === f.perfil_id ? 'selected' : ''}>${esc(u.usuario || '')} ${esc(u.nombre)}</option>`).join('')}</select></td>
                         <td class="acciones"><button type="button" class="icono-editar" data-quitar-firmante="${i}" aria-label="Quitar firmante"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
                       </tr>`).join('')}
                   </tbody>
                 </table>
-              </div>
-              ${editable ? '<button type="button" class="boton secundario-sm agregar-firmante" data-accion="agregar-firmante">+ Firmante</button>' : ''}
+                ${editable ? '<button type="button" class="rp-enlace" data-accion="agregar-firmante"><i class="ti ti-plus" aria-hidden="true"></i> Agregar firmante</button>' : ''}`, 'pg-autoriza')}
+              ${bloque('Otros', 'ti-dots', `<div class="pg-dos">${grupo('otros')}</div>`)}
             </div>
-            ${Object.entries(GRUPOS).map(([id, campos]) => `
-              <div class="param-extra" ${estado.pestana === id ? '' : 'hidden'}>${campos.map((c) => campoGrupo(c, p)).join('')}</div>`).join('')}
-          </section>
-
-          ${editable ? `
-            <div class="barra-guardar">
-              <p class="modal-error" role="alert"></p>
-              <button type="submit" class="boton primario-sm">Guardar cambios</button>
-            </div>` : ''}
+          </div>
         </form>`;
-      // Solo lectura: se puede cambiar de localidad y de pestaña, pero no los valores.
+      // Solo lectura: se puede cambiar de localidad, pero no los valores.
       if (!editable) {
         cont.querySelectorAll('#f-parametros input, #f-parametros select, [data-quitar-firmante]').forEach((el) => {
           if (!el.matches('[data-org], [data-loc]')) el.disabled = true;
@@ -307,8 +278,6 @@
     });
     cont.addEventListener('click', async (e) => {
       const form = cont.querySelector('#f-parametros');
-      const pes = e.target.closest('[data-pestana]');
-      if (pes) { recordarFirmantes(form); estado.pestana = pes.dataset.pestana; return pintar(); }
       const q = e.target.closest('[data-quitar-firmante]');
       if (q) { recordarFirmantes(form); estado.firmantes.splice(Number(q.dataset.quitarFirmante), 1); return pintar(); }
       const a = e.target.closest('[data-accion]');

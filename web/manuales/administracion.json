@@ -31,8 +31,7 @@
       "Cada usuario puede tener excepciones a los permisos de su rol.",
       "Un rol con acceso total ve todas las pantallas." ] },
     { "tipo": "pantalla", "titulo": "Parámetros", "subtitulo": "Catálogos › Parámetros", "puntos": [
-      "Parámetros generales: tiempo, uso de pantallas, impuestos, monedas y firmantes de cada localidad («Guardar cambios»).",
-      "Tipos de cambio: las monedas y su tasa de compra y venta por fecha («Tasa cambio actual»).",
+      "Parámetros generales y Tipos de cambio están en Contabilidad › Catálogos › Parámetros.",
       "Geografía: países, departamentos y municipios, y regiones por país.",
       "Organizaciones: cada organización con sus localidades, datos fiscales, venta de productos y organización o empresa anterior." ] },
     { "tipo": "pasos", "titulo": "Atender un ticket", "subtitulo": "Tickets", "pasos": [

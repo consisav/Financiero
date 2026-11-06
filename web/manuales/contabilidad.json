@@ -6,6 +6,7 @@
   "diapositivas": [
     { "tipo": "portada", "titulo": "Módulo de Contabilidad y presupuesto", "subtitulo": "La contabilidad de cada empresa: catálogo, pólizas, presupuesto y cierres", "nota": "CONSISAV Financiero · manual de operación" },
     { "tipo": "indice", "titulo": "Contenido", "puntos": [
+      "Catálogos › Parámetros: parámetros generales y tipos de cambio de cada localidad",
       "Catálogos › Cuentas y CC: tipos de cuenta, cuentas contables, centros de costo, tipos de partida y rubros",
       "Catálogos › Objetos contables: definición de objetos y transacciones (plantillas de partida)",
       "Catálogos › Replicación: empresa y parámetros, nomenclatura y centros de costo",
@@ -18,6 +19,11 @@
       "Bancos, Compras y Cajas generan sus pólizas con esas transacciones; las demás se registran a mano.",
       "Las partidas se aprueban, se hacen definitivas y el mes se cierra.",
       "El presupuesto compara lo presupuestado con lo ejecutado por rubro." ] },
+    { "tipo": "pantalla", "titulo": "Parámetros de la empresa", "subtitulo": "Catálogos › Parámetros", "puntos": [
+      "Parámetros generales: todo en una sola vista, por organización y localidad, y se guarda con «Guardar cambios».",
+      "Tiempo, impuestos e IDP, uso de pantallas, datos generales y porcentajes de nómina.",
+      "Cuentas de estados financieros, retenciones, personas que firman y otros datos del sistema anterior.",
+      "Tipos de cambio: las monedas y su tasa de compra y venta por fecha («Tasa cambio actual»)." ] },
     { "tipo": "pantalla", "titulo": "Catálogo de cuentas", "subtitulo": "Catálogos › Cuentas y CC › Cuentas contables", "puntos": [
       "Se elige la organización, la localidad y la versión del catálogo.",
       "Árbol de tres bloques: cuenta principal, subcuentas y sus niveles, con una ficha única por cuenta.",
