@@ -3940,3 +3940,88 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .rx-excel:hover { background: linear-gradient(180deg, #1f8a52, #176c40); }
 .rx-excel .ti { font-size: 16px; }
 .rx-par { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+
+/* Conciliación bancaria (opción A): cuentas en tarjetas arriba; la conciliación como ecuación con el control a la
+   derecha; los movimientos con filtros. */
+.bk-espacio.bc-a .ta-cuerpo { grid-template-rows: auto minmax(0, 1fr) !important; gap: 10px; }
+.bc-a .bk-maestro { overflow: visible; min-height: 0; padding: 10px 14px; }
+.bca-cuentas-cab { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+.bca-cuentas-cab h2 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--m-t, var(--acento)); }
+.bca-cuenta-res { font-size: 12px; color: var(--tenue); }
+.bca-cuenta-res b { color: var(--texto); }
+.bca-tarjetas { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.bca-tarjeta { flex: 0 0 auto; min-width: 230px; max-width: 290px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 11px; border: 1px solid var(--borde); background: var(--panel); text-align: left; cursor: pointer; font: inherit; color: var(--texto); position: relative; }
+.bca-tarjeta:hover { border-color: var(--acento); }
+.bca-tarjeta.actual { background: var(--acento-fondo); border-color: var(--acento); box-shadow: 0 0 0 1px var(--acento) inset; }
+.bca-tarjeta.actual .bk-cod { background: var(--acento); color: #fff; }
+.bca-t-txt { display: flex; flex-direction: column; min-width: 0; }
+.bca-t-txt b { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bca-t-txt small { font-size: 11px; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bca-t-est { font-size: 10.5px; font-weight: 700; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; padding: 2px 7px; border-radius: 7px; }
+.bca-t-est small { font-weight: 500; font-size: 10px; color: var(--tenue); }
+.bca-tarjeta.sin .bca-t-est { color: var(--tenue); background: var(--fondo); }
+.bca-tarjeta.abierta .bca-t-est { color: #1f7a45; background: #e3f4ea; }
+.bca-tarjeta.cerrada .bca-t-est { color: #3b4a63; background: #e6ebf3; }
+.bca-form { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.bca-cabecera { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 1fr); gap: 12px; margin-bottom: 10px; }
+.bca-ecuacion { border: 1px solid var(--borde); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; background: var(--panel); }
+.bca-datos { display: grid; grid-template-columns: 200px 160px minmax(0, 1fr); gap: 10px; }
+.bca-datos .campo input { width: 100%; }
+.bca-pasos { display: grid; grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr) 18px minmax(0, 1fr) 18px minmax(0, 1fr) 22px minmax(0, 1fr); align-items: center; gap: 4px; }
+.bca-pasos > div { display: flex; flex-direction: column; align-items: flex-end; padding: 6px 10px; border-radius: 10px; background: var(--fondo); min-width: 0; }
+.bca-pasos span { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bca-pasos b { font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bca-pasos small { font-size: 10.5px; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bca-pasos .bca-ajustado { background: var(--acento-fondo); }
+.bca-pasos .bca-ajustado b { color: var(--acento); }
+.bca-op { font-style: normal; font-weight: 800; color: var(--tenue); text-align: center; font-size: 15px; }
+.bca-resultado { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 11px; font-weight: 700; }
+.bca-resultado .ti { font-size: 20px; }
+.bca-resultado b { font-size: 17px; font-variant-numeric: tabular-nums; }
+.bca-resultado small { margin-left: auto; font-weight: 500; font-size: 11.5px; }
+.bca-resultado.cuadra { background: #e3f4ea; color: #1f7a45; }
+.bca-resultado.descuadre { background: #fdeceb; color: #b23a32; }
+.bca-resultado small { color: var(--tenue); }
+.bca-control { margin: 0; }
+.bca-control dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bca-pestanas { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.bca-pestanas .bm-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.bca-pestanas .bm-panel[hidden] { display: none; }
+.bca-filtros { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.bca-chips { display: inline-flex; gap: 4px; background: var(--fondo); border-radius: 10px; padding: 3px; }
+.bca-chip { border: 0; background: none; padding: 5px 10px; border-radius: 8px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--tenue); cursor: pointer; }
+.bca-chip b { font-weight: 700; color: var(--texto); margin-left: 3px; }
+.bca-chip.activo { background: var(--panel); color: var(--acento); box-shadow: 0 1px 3px rgba(15, 27, 45, .12); }
+.bca-tipo-sel { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--borde); border-radius: 9px; background: var(--panel); }
+.bca-buscar { min-width: 260px; flex: 0 1 320px; }
+.bca-suma { font-size: 12.5px; font-weight: 700; color: var(--texto); }
+.bca-filtros .bm-aplicado { margin-left: auto; }
+.bca-movs { flex: 1; min-height: 160px; overflow: auto; }
+.bca-movs table { table-layout: fixed; width: 100%; }
+.bca-movs th:nth-child(1) { width: 86px; } .bca-movs th:nth-child(2) { width: 120px; } .bca-movs th:nth-child(3) { width: 70px; }
+.bca-movs th:nth-child(4) { width: 130px; } .bca-movs th:nth-child(5) { width: 128px; } .bca-movs th:nth-child(7), .bca-movs th:nth-child(8) { width: 130px; }
+.bca-movs td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.bca-movs .bca-ck { text-align: center; }
+.bca-quien b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.bca-quien small { display: block; font-size: 11px; color: var(--tenue); overflow: hidden; text-overflow: ellipsis; }
+.bca-tipo { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: var(--fondo); }
+.bca-CHEQUE, .bca-NOTA_DEBITO { color: #b23a32; background: #fdeceb; }
+.bca-DEPOSITO, .bca-NOTA_CREDITO { color: #1f7a45; background: #e3f4ea; }
+.bca-ant { font-size: 10px; color: var(--ambar-t); font-weight: 700; }
+.bca-movs tr.bca-conc td { background: color-mix(in srgb, #23955a 6%, transparent); }
+.bca-mas { text-align: center; font-size: 12.5px; color: var(--tenue); margin: 8px 0; }
+.bca-nota { font-size: 12.5px; color: var(--tenue); margin: 0 0 8px; display: flex; gap: 6px; align-items: center; }
+.bca-saldo td { font-weight: 700; }
+@media (max-width: 1250px) { .bca-cabecera { grid-template-columns: 1fr; } .bca-pasos { grid-template-columns: 1fr 1fr; } .bca-op { display: none; } }
+.bca-cabecera > .bca-ecuacion { grid-column: 1 !important; grid-row: 1 !important; }
+.bca-cabecera > .bca-control { grid-column: 2 !important; grid-row: 1 !important; padding: 10px 12px; }
+.bca-control dl { gap: 4px 12px; }
+.bca-control .bm-comprobante { margin-top: 8px; }
+.bca-tarjeta { min-width: 270px; }
+.bc-a .bk-detalle { overflow: hidden; display: flex; flex-direction: column; }
+.bc-a .bk-detalle > .bca-form { flex: 1; min-height: 0; }
+@media (max-width: 1250px) { .bca-cabecera > .bca-control { grid-column: 1 !important; grid-row: auto !important; } }
+.bca-ecuacion { padding: 10px 12px; gap: 8px; }
+.bca-pasos > div { padding: 4px 10px; }
+.bca-resultado { padding: 6px 12px; }
+.bca-pestanas .bm-tabs-barra { margin-bottom: 6px; }
