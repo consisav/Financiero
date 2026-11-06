@@ -247,7 +247,7 @@
     }
 
     const tabs = (bienes) => bienes ? [
-      ['ARTICULOS', 'Artículos', 'ti-package', articulos.length], ['LISTADO', 'Listado de facturas', 'ti-list-search', compras.length], ['LIQUIDAR', 'Abonos', 'ti-receipt-refund', pagos.length],
+      ['ARTICULOS', 'Artículos', 'ti-package', articulos.length], ['LISTADO', 'Listado de facturas', 'ti-list-search', compras.length], ['LIQUIDAR', 'Abonos', 'ti-receipt-refund', pagos.length + liquidaciones.filter((x) => x.aplica_saldo !== false && Number(x.abono_aplicado) > 0).length],
       ...(liquidaciones.length || docsBanco.length ? [['LIQUIDACIONES', 'Liquidaciones (sist. anterior)', 'ti-history', liquidaciones.length + docsBanco.length]] : []),
       ['CONTABLE', 'Contabilidad', 'ti-list-details', lineas.length], ['OTRAS', 'Otras funciones, integración', 'ti-plug-connected', 0], ['ORDENES', 'Órdenes de compra', 'ti-clipboard-list', 0]
     ] : [
@@ -267,6 +267,11 @@
       const k = calcular(v);
       const sim = simbolo(v.moneda_id);
       const pagado = c ? Number(c.pagado) : 0;
+      const abonosLiq = liquidaciones.filter((x) => x.aplica_saldo !== false && Number(x.abono_aplicado || x.abono || 0) > 0 && x.abono_aplicado !== undefined);
+      const filasLiq = () => abonosLiq.map((x) => `<tr class="cf-abono-liq"><td>${x.numero_cheque ? 'Cheque' : x.nota != null && x.nota >= 0 ? 'Nota' : 'Documento'} <span class="pc-tipo" title="Documento de liquidación del sistema anterior">anterior</span></td>
+        <td class="fuerte">${esc(x.numero_cheque || (x.nota != null && x.nota >= 0 ? String(x.nota) : String(x.documento)))}</td><td>${esc(fmt.fechaDia(x.fecha))}</td><td>${esc(x.cuenta_bancaria || '')}</td><td>${esc(x.usuario || '')}</td><td>Migrado</td>
+        <td class="num">Q ${fmt.monto(x.valor)}${x.valor_mi != null ? `<small class="cf-mi">$ ${fmt.monto(x.valor_mi)}</small>` : ''}</td>
+        <td class="num">${esc(sim)} ${fmt.monto(x.abono_aplicado)}${Number(x.excedente) > 0.004 ? `<small class="cf-excedente" title="Pasaba del neto de la compra: no se aplica al saldo">excedente ${esc(sim)} ${fmt.monto(x.excedente)}</small>` : ''}</td></tr>`).join('');
       const consulta = c && !modificando;
       const p = proveedor(v.proveedor_id);
       const disC = ed && !c?.partida_id ? '' : 'disabled';
@@ -418,11 +423,12 @@
                 </div>
                 <div class="pc-lineas"><table><thead><tr><th>Tipo</th><th>Número</th><th>Fecha</th><th>Cuenta</th><th>A favor de</th><th>Estado</th><th class="num">Abono</th><th class="num">Abono en la compra</th></tr></thead>
                   <tbody>${pagos.map((d) => { const m = d.movimientos_bancarios || {}; const cb = cuentas.find((x) => x.id === m.cuenta_bancaria_id); return `<tr class="${m.estado === 'ANULADO' ? 'pc-anulada' : ''}"><td>${m.tipo === 'CHEQUE' ? 'Cheque' : 'Transferencia'}</td><td class="fuerte">${esc(m.numero_documento || m.folio)}</td><td>${esc(fmt.fechaDia(m.fecha))}</td><td>${esc(cb ? cb.numero : '')}</td><td>${esc(m.deposito_por || '')}</td><td>${esc(m.estado || '')}</td><td class="num">${esc(simbolo(m.moneda_id))} ${fmt.monto(d.abono)}</td><td class="num">${esc(sim)} ${fmt.monto(d.abono_compra)}</td></tr>`; }).join('')
-                    || '<tr><td colspan="8" class="tk-vacio">Sin pagos todavía: se paga en Caja y Bancos › Generación cheques o Generación transferencias.</td></tr>'}</tbody></table></div>
+                    + filasLiq() || '<tr><td colspan="8" class="tk-vacio">Sin pagos todavía: se paga en Caja y Bancos › Generación cheques o Generación transferencias.</td></tr>'}</tbody></table></div>
+                ${abonosLiq.length ? `<p class="cc-ingreso"><i class="ti ti-info-circle" aria-hidden="true"></i> Los documentos «anterior» son la liquidación del sistema anterior (${abonosLiq.length}): se aplican al saldo hasta el neto de la compra.</p>` : ''}
               </div>
             </div>
             <div class="bm-panel" data-panel="LIQUIDACIONES" ${pestana === 'LIQUIDACIONES' ? '' : 'hidden'}>
-              <p class="cc-ingreso"><i class="ti ti-info-circle" aria-hidden="true"></i> Documentos con que se liquidó la compra en el sistema anterior. Son historial: el saldo sale de los pagos de la pestaña ${bienes ? 'Abonos' : 'Doctos. a liquidar'}.</p>
+              <p class="cc-ingreso"><i class="ti ti-info-circle" aria-hidden="true"></i> Documentos con que se liquidó la compra en el sistema anterior. Se aplican como abonos en la pestaña ${bienes ? 'Abonos' : 'Doctos. a liquidar'} hasta el neto de la compra (lo que pasa queda como excedente).</p>
               <div class="pc-lineas"><table><thead><tr><th class="pc-n">Docto.</th><th>Tipo</th><th>Cuenta bancaria</th><th>Cheque</th><th>Nota</th><th class="num">Valor liquidado</th><th class="num">Valor MI</th><th>Usuario</th><th>Fecha</th></tr></thead>
                 <tbody>${liquidaciones.length ? '' : '<tr><td colspan="9" class="tk-vacio">Sin documentos de liquidación.</td></tr>'}${liquidaciones.map((x) => `<tr><td class="pc-n">${x.documento}</td><td>${x.tipo_documento === 'C' ? 'Cheque' : x.tipo_documento === 'I' ? 'Ingreso' : esc(x.tipo_documento || '')}</td>
                   <td>${esc(x.cuenta_bancaria || '')}</td><td class="fuerte">${esc(x.numero_cheque || '')}</td><td>${x.nota != null && x.nota >= 0 ? x.nota : ''}</td>

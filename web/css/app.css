@@ -3624,3 +3624,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-articulos .cf-art-tabla td.num input { max-width: none; }
 .cf-art-tabla td.cf-fecha input { padding: 2px 4px; font-size: 12.5px; }
 .cf-art-tabla td.fuerte { overflow-wrap: anywhere; }
+/* Ingreso de compras · Abonos: abonos de la liquidación del sistema anterior. */
+.cf-abono-liq td { background: color-mix(in srgb, var(--fondo) 60%, var(--panel)); }
+.cf-mi, .cf-excedente { display: block; font-size: 11px; color: var(--tenue); font-weight: 500; }
+.cf-excedente { color: var(--ambar-t); }
