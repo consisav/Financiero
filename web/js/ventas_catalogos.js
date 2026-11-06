@@ -330,10 +330,11 @@
         tabla: 'clasificaciones_producto', codigo: '#', contables: () => contables,
         columnas: [
           { k: 'nombre', t: 'Descripción', req: true, max: 100 },
-          { k: 'tipo', t: 'Tipo', tipo: 'select', ancho: '130px', opciones: [['PRODUCTO', 'Producto'], ['SERVICIO', 'Servicio']] },
-          { k: 'cuenta_id', t: 'Cuenta', tipo: 'cuenta', ancho: '260px' },
-          { k: 'tipo_servicio', t: 'Tipo servicio', tipo: 'select', ancho: '130px', opciones: [['INTERNO', 'Interno'], ['EXTERNO', 'Externo']] },
-          { k: 'inventario', t: 'Inv.', tipo: 'check', defecto: true }, { k: 'laboratorio', t: 'Lab.', tipo: 'check' }
+          { k: 'tipo', t: 'Tipo', tipo: 'select', ancho: '112px', opciones: [['PRODUCTO', 'Producto'], ['SERVICIO', 'Servicio']] },
+          { k: 'cuenta_id', t: 'Cuenta', tipo: 'cuenta', ancho: '190px' },
+          { k: 'tipo_servicio', t: 'Servicio', tipo: 'select', ancho: '104px', opciones: [['INTERNO', 'Interno'], ['EXTERNO', 'Externo']] },
+          { k: 'inventario', t: 'Inv.', tipo: 'check', defecto: true }, { k: 'laboratorio', t: 'Lab.', tipo: 'check' },
+          { k: 'utilizar_lote', t: 'Lote', tipo: 'check', ayuda: 'Los productos de esta clasificación se controlan por lote (script 102).' }
         ],
         filtro: (q) => ctx.sel.loc ? q.eq('localidad_id', ctx.sel.loc) : null,
         extra: () => ctx.sel.loc ? { organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc } : null,
@@ -343,10 +344,10 @@
       lt = lista(ctx.pDet.querySelector('[data-caja=tipos]'), {
         tabla: 'tipos_producto', codigo: 'Tipo', contables: () => contables, unico: false,
         columnas: [
-          { k: 'siglas', t: 'Siglas', ancho: '110px', max: 6 },
+          { k: 'siglas', t: 'Siglas', ancho: '84px', max: 6 },
           { k: 'nombre', t: 'Descripción', req: true, max: 120 },
-          { k: 'cuenta_inventario_id', t: 'Cuenta inventarios', tipo: 'cuenta', ancho: '240px' },
-          { k: 'cuenta_facturacion_id', t: 'Cuenta facturación', tipo: 'cuenta', ancho: '240px' }
+          { k: 'cuenta_inventario_id', t: 'Cuenta inventarios', tipo: 'cuenta', ancho: '180px' },
+          { k: 'cuenta_facturacion_id', t: 'Cuenta facturación', tipo: 'cuenta', ancho: '180px' }
         ],
         filtro: (q) => clasif?.id ? q.eq('clasificacion_id', clasif.id) : null,
         extra: () => { if (!clasif?.id) { window.FIN.aviso('Guarda y elige primero la clasificación'); return null; } return { clasificacion_id: clasif.id, organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc }; },
@@ -375,9 +376,9 @@
   // Las mismas pantallas se abren desde Compras › Catálogos › Generales (script 101): el rótulo dice de dónde.
   const grupoCat = () => location.hash.startsWith('#/compras/') ? 'Compras · Catálogos' : 'Ventas · Catálogos';
   const LOCAL = { local: true, script: '59 (catálogos de ventas y productos)', get grupo() { return grupoCat(); } };
-  window.PANTALLAS['tipos-de-medida'] = (cont) => window.CATALOGO_GRID(cont, { ...LOCAL, tabla: 'tipos_medida', titulo: 'Tipos de medida', icono: 'ti-ruler-measure', codigo: 'Tipo',
+  window.PANTALLAS['tipos-de-medida'] = (cont) => window.CATALOGO_GRID(cont, { ...LOCAL, tabla: 'tipos_medida', titulo: 'Tipos de medida', icono: 'ti-ruler-measure', codigo: 'Tipo', enColumnas: 3,
     descripcion: 'Unidades de medida con que se venden y se controlan los productos.', columnas: [{ k: 'nombre', t: 'Descripción', req: true, max: 80 }] });
-  window.PANTALLAS['presentaciones-productos'] = (cont) => window.CATALOGO_GRID(cont, { ...LOCAL, tabla: 'presentaciones_producto', titulo: 'Presentaciones de productos', icono: 'ti-package', codigo: '#',
+  window.PANTALLAS['presentaciones-productos'] = (cont) => window.CATALOGO_GRID(cont, { ...LOCAL, tabla: 'presentaciones_producto', titulo: 'Presentaciones de productos', icono: 'ti-package', codigo: '#', enColumnas: 3,
     descripcion: 'Presentación en que viene el producto: caja, bolsa, unidad, rollo…', columnas: [{ k: 'nombre', t: 'Descripción', req: true, max: 80 }] });
   window.PANTALLAS['tipos-de-precio'] = (cont) => window.CATALOGO_GRID(cont, { ...LOCAL, tabla: 'tipos_precio', titulo: 'Administración de tipos de precios', icono: 'ti-currency-dollar', codigo: 'Tipo precio',
     descripcion: 'Listas de precio de venta: el % de utilidad sobre el costo y el % de descuento.',

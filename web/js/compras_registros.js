@@ -22,7 +22,7 @@
     const ed = window.FIN.puedeEditarCatalogos();
     let filas = [];
     let buscar = '';
-    cont.innerHTML = `<div class="cg-espacio"><section class="panel cg-panel cl-clasico"></section></div>`;
+    cont.innerHTML = `<div class="cg-espacio ${cfg.enColumnas ? 'cg-espacio-cols' : ''}"><section class="panel cg-panel cl-clasico"></section></div>`;
     const panel = cont.querySelector('.cg-panel');
     const loc = () => localidades?.find((l) => l.id === seleccion.loc);
 
@@ -42,6 +42,25 @@
     const datos = (x) => Object.fromEntries([...cfg.columnas.map((c) => [c.k, x[c.k] ?? (c.tipo === 'check' ? false : '')]), ['activo', x.activo !== false]]);
     const cambiadas = () => filas.filter((x) => !x.id || JSON.stringify(datos(x)) !== x._orig);
 
+    // Tabla del catálogo. cfg.enColumnas (catálogos de una sola descripción, como Tipos de medida y
+    // Presentaciones): las filas se reparten en varias columnas para verlas todas sin desplazarse.
+    const cabeza = () => `<thead><tr><th class="cg-cod">${esc(cfg.codigo)}</th>${cfg.columnas.map((c) => `<th class="${c.tipo === 'check' ? 'cg-chk' : ''}" ${c.ancho ? `style="width:${c.ancho}"` : ''} title="${esc(c.ayuda || '')}">${esc(c.t)}${c.req ? ' *' : ''}</th>`).join('')}<th class="cg-chk">Activo</th></tr></thead>`;
+    const filaHtml = (x) => { const i = filas.indexOf(x); return `<tr data-fila="${i}" class="${!x.id ? 'cg-nueva' : JSON.stringify(datos(x)) !== x._orig ? 'cg-cambio' : ''} ${x.activo === false ? 'cg-inactiva' : ''}">
+            <td class="cg-cod">${x.codigo ?? '<span class="tk-tenue">Nuevo</span>'}</td>
+            ${cfg.columnas.map((c) => `<td class="${c.tipo === 'check' ? 'cg-chk' : ''}">${c.tipo === 'check' ? `<input type="checkbox" data-k="${c.k}" ${x[c.k] ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`
+              : c.tipo === 'numero' ? `<input type="number" step="0.01" min="0" ${c.maximo ? `max="${c.maximo}"` : ''} data-k="${c.k}" value="${esc(String(x[c.k] ?? 0))}" class="cg-num" ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`
+              : c.tipo === 'select' ? `<select data-k="${c.k}" ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">${c.opciones.map(([v, t]) => `<option value="${v}" ${x[c.k] === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`
+              : `<input data-k="${c.k}" value="${esc(x[c.k] ?? '')}" maxlength="${c.max || 120}" ${c.k === 'siglas' ? 'class="cg-siglas"' : ''} ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`}</td>`).join('')}
+            <td class="cg-chk"><input type="checkbox" data-k="activo" ${x.activo !== false ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Activo"></td></tr>`; };
+    const vacioHtml = () => `<tr><td colspan="${cfg.columnas.length + 2}" class="tk-vacio">${filas.length ? 'Nada coincide con la búsqueda.' : 'No hay registros.'}</td></tr>`;
+    function cuerpo(vis) {
+      const k = cfg.enColumnas ? Math.max(1, Math.min(cfg.enColumnas, Math.ceil(vis.length / 12))) : 1;
+      if (k === 1) return `<div class="pc-lineas cg-tabla ${cfg.enColumnas ? 'cg-una' : ''}"><table>${cabeza()}<tbody>${vis.map(filaHtml).join('') || vacioHtml()}</tbody></table></div>`;
+      const por = Math.ceil(vis.length / k);
+      return `<div class="cg-columnas" style="--cg-k:${k}">${Array.from({ length: k }, (_, j) => vis.slice(j * por, (j + 1) * por)).map((parte) =>
+        `<div class="pc-lineas cg-tabla"><table>${cabeza()}<tbody>${parte.map(filaHtml).join('')}</tbody></table></div>`).join('')}</div>`;
+    }
+
     function pintar() {
       const q = buscar.trim().toLowerCase();
       const vis = filas.filter((x) => !q || [x.codigo, ...cfg.columnas.map((c) => x[c.k])].some((v) => String(v ?? '').toLowerCase().includes(q)));
@@ -50,24 +69,14 @@
         <div class="cl-banda">${esc(cfg.titulo)}</div>
         <header class="cg-cab">
           <span class="tk-icono"><i class="ti ${cfg.icono}" aria-hidden="true"></i></span>
-          <div class="cg-titulo"><small>${esc(cfg.grupo || 'Compras · Catálogos')} · ${filas.length} registros</small><p>${esc(cfg.descripcion)}</p></div>
+          <div class="cg-titulo"><small>${esc(cfg.grupo || 'Compras · Catálogos')} · ${filas.length} registros${filas.some((x) => x.activo === false) ? ` · ${filas.filter((x) => x.activo !== false).length} activos` : ''}</small><p>${esc(cfg.descripcion)}</p></div>
           ${cfg.local ? `<label class="campo cg-empresa"><span>Empresa</span><select data-empresa>${organizaciones.map((o) => ({ o, ls: localidades.filter((l) => l.organizacion_id === o.id) })).filter((g) => g.ls.length).map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.ls.map((l) => `<option value="${l.id}" ${l.id === seleccion.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('')}</optgroup>`).join('')}</select></label>` : ''}
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar…" value="${esc(buscar)}" aria-label="Buscar"></label>
           ${ed ? `<button type="button" class="boton secundario-sm" data-accion="agregar"><i class="ti ti-plus" aria-hidden="true"></i> Agregar</button>
             <button type="button" class="boton primario-sm" data-accion="guardar" ${n ? '' : 'disabled'}><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar cambios${n ? ` (${n})` : ''}</button>` : ''}
         </header>
         <p class="modal-error tk-error cg-error" role="alert"></p>
-        <div class="pc-lineas cg-tabla"><table>
-          <thead><tr><th class="cg-cod">${esc(cfg.codigo)}</th>${cfg.columnas.map((c) => `<th class="${c.tipo === 'check' ? 'cg-chk' : ''}" ${c.ancho ? `style="width:${c.ancho}"` : ''} title="${esc(c.ayuda || '')}">${esc(c.t)}${c.req ? ' *' : ''}</th>`).join('')}<th class="cg-chk">Activo</th></tr></thead>
-          <tbody>${vis.map((x) => { const i = filas.indexOf(x); return `<tr data-fila="${i}" class="${!x.id ? 'cg-nueva' : JSON.stringify(datos(x)) !== x._orig ? 'cg-cambio' : ''} ${x.activo === false ? 'cg-inactiva' : ''}">
-            <td class="cg-cod">${x.codigo ?? '<span class="tk-tenue">Nuevo</span>'}</td>
-            ${cfg.columnas.map((c) => `<td class="${c.tipo === 'check' ? 'cg-chk' : ''}">${c.tipo === 'check' ? `<input type="checkbox" data-k="${c.k}" ${x[c.k] ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`
-              : c.tipo === 'numero' ? `<input type="number" step="0.01" min="0" ${c.maximo ? `max="${c.maximo}"` : ''} data-k="${c.k}" value="${esc(String(x[c.k] ?? 0))}" class="cg-num" ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`
-              : c.tipo === 'select' ? `<select data-k="${c.k}" ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">${c.opciones.map(([v, t]) => `<option value="${v}" ${x[c.k] === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`
-              : `<input data-k="${c.k}" value="${esc(x[c.k] ?? '')}" maxlength="${c.max || 120}" ${c.k === 'siglas' ? 'class="cg-siglas"' : ''} ${ed ? '' : 'disabled'} aria-label="${esc(c.t)}">`}</td>`).join('')}
-            <td class="cg-chk"><input type="checkbox" data-k="activo" ${x.activo !== false ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Activo"></td></tr>`; }).join('')
-            || `<tr><td colspan="${cfg.columnas.length + 2}" class="tk-vacio">${filas.length ? 'Nada coincide con la búsqueda.' : 'No hay registros.'}</td></tr>`}</tbody>
-        </table></div>
+        ${cuerpo(vis)}
         <footer class="cg-pie">${cfg.leyenda || ''}</footer>`;
     }
 
@@ -120,7 +129,7 @@
     panel.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-buscar]')) e.preventDefault(); });
     panel.addEventListener('click', (e) => {
       const a = e.target.closest('[data-accion]')?.dataset.accion;
-      if (a === 'agregar') { buscar = ''; filas.push({ codigo: null, ...Object.fromEntries(cfg.columnas.map((c) => [c.k, c.defecto ?? (c.tipo === 'check' ? false : '')])), activo: true }); pintar(); const ins = panel.querySelectorAll('tr.cg-nueva [data-k=nombre]'); ins[ins.length - 1]?.focus(); }
+      if (a === 'agregar') { buscar = ''; filas.push({ codigo: null, ...Object.fromEntries(cfg.columnas.map((c) => [c.k, c.defecto ?? (c.tipo === 'check' ? false : '')])), activo: true }); pintar(); const ins = panel.querySelectorAll('tr.cg-nueva [data-k=nombre]'); ins[ins.length - 1]?.scrollIntoView({ block: 'nearest' }); ins[ins.length - 1]?.focus(); }
       if (a === 'guardar') guardar();
     });
     cargar();
