@@ -16,7 +16,7 @@
   const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
   window.PANTALLAS['consultar-compras'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Consultar Compras', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado', grupo: 'Compras · Mantenimientos' });
+    const ctx = montar(cont, { titulo: 'Consultar Compras', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado', grupo: 'Compras · Procesar Compras' });
     const { sb } = ctx;
     const [anio] = fmt.hoy().split('-');
     const f = { proveedor: '', clasificacion: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
