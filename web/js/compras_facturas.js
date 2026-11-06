@@ -32,7 +32,7 @@
     let proveedores = [], bodegas = [], regimenes = [], rubros = [], tiposDoc = [], clasificaciones = [], cuentas = [], contables = [], centros = [], transacciones = [];
     let params = {};
     let actual = null;
-    let items = [], lineas = [], pagos = [], cuentasProv = [], liquidaciones = [];
+    let items = [], lineas = [], pagos = [], cuentasProv = [], liquidaciones = [], docsBanco = [];
     let articulos = [], productos = [], ingresosLibres = [], ingresoVincular = null;
     // Medicamentos y perecederos llevan lote, fabricación y vencimiento en los artículos; no perecederos, serie.
     let tipoVenta = null;
@@ -145,20 +145,22 @@
     async function abrir(c, editar = false) {
       actual = c;
       modificando = !!c && editar && c.estado === 'ACTIVA' && ctx.admin;
-      items = []; lineas = []; pagos = []; articulos = []; liquidaciones = []; ingresoVincular = null;
+      items = []; lineas = []; pagos = []; articulos = []; liquidaciones = []; docsBanco = []; ingresoVincular = null;
       if (c) {
         const ar = await sb.from('compra_articulos').select('*').eq('compra_id', c.id).order('linea');
         articulos = ar.error ? [] : (ar.data || []).map((x) => ({ ...x, cantidad: Number(x.cantidad), costo_unitario: Number(x.costo_unitario), descuento: Number(x.descuento), costo_extra: Number(x.costo_extra) }));
-        const [i, l, d, lq] = await Promise.all([
+        const [i, l, d, lq, db] = await Promise.all([
           sb.from('compra_items').select('*').eq('compra_id', c.id).order('linea'),
           sb.from('compra_lineas').select('*').eq('compra_id', c.id).order('linea'),
           sb.from('movimiento_documentos').select('abono, abono_compra, movimientos_bancarios(tipo, numero_documento, folio, fecha, estado, moneda_id, cuenta_bancaria_id, deposito_por)').eq('compra_id', c.id),
-          sb.from('compra_liquidaciones').select('*').eq('compra_id', c.id).order('documento')
+          sb.from('compra_liquidaciones').select('*').eq('compra_id', c.id).order('documento'),
+          sb.from('compra_documentos_banco').select('*').eq('compra_id', c.id).order('tipo').order('numero')
         ]);
         items = (i.data || []).map((x) => ({ descripcion: x.descripcion, cantidad: Number(x.cantidad), costo_total: Number(x.costo_total) }));
         lineas = (l.data || []).map((x) => ({ cuenta_id: x.cuenta_id, codigo: contable(x.cuenta_id)?.codigo || '', centro_id: x.centro_id, debe: Number(x.debe), haber: Number(x.haber) }));
         pagos = d.data || [];
         liquidaciones = lq.error ? [] : lq.data || [];
+        docsBanco = db.error ? [] : db.data || [];
       }
       await cargarCuentasProv(c?.proveedor_id);
       pintarDetalle();
@@ -199,11 +201,11 @@
 
     const tabs = (bienes) => bienes ? [
       ['ARTICULOS', 'Artículos', 'ti-package', articulos.length], ['LISTADO', 'Listado de facturas', 'ti-list-search', compras.length], ['LIQUIDAR', 'Abonos', 'ti-receipt-refund', pagos.length],
-      ...(liquidaciones.length ? [['LIQUIDACIONES', 'Liquidaciones (sist. anterior)', 'ti-history', liquidaciones.length]] : []),
+      ...(liquidaciones.length || docsBanco.length ? [['LIQUIDACIONES', 'Liquidaciones (sist. anterior)', 'ti-history', liquidaciones.length + docsBanco.length]] : []),
       ['CONTABLE', 'Contabilidad', 'ti-list-details', lineas.length], ['OTRAS', 'Otras funciones, integración', 'ti-plug-connected', 0], ['ORDENES', 'Órdenes de compra', 'ti-clipboard-list', 0]
     ] : [
       ['ITEMS', 'Compras varias', 'ti-list', items.length], ['CONTABLE', 'Detalle contable', 'ti-list-details', lineas.length], ['LIQUIDAR', 'Doctos. a liquidar', 'ti-receipt-refund', pagos.length],
-      ...(liquidaciones.length ? [['LIQUIDACIONES', 'Liquidaciones (sist. anterior)', 'ti-history', liquidaciones.length]] : []),
+      ...(liquidaciones.length || docsBanco.length ? [['LIQUIDACIONES', 'Liquidaciones (sist. anterior)', 'ti-history', liquidaciones.length + docsBanco.length]] : []),
       ['OTRAS', 'Otras funciones, integración', 'ti-plug-connected', 0], ['ORDENES', 'Órdenes de compra', 'ti-clipboard-list', 0], ['LISTADO', 'Listado de compras', 'ti-list-search', compras.length]
     ];
 
@@ -226,7 +228,7 @@
       const bienes = esBienes(v);
       if (bienes && pestana === 'ITEMS') pestana = 'ARTICULOS';
       if (!bienes && pestana === 'ARTICULOS') pestana = 'ITEMS';
-      if (pestana === 'LIQUIDACIONES' && !liquidaciones.length) pestana = bienes ? 'ARTICULOS' : 'ITEMS';
+      if (pestana === 'LIQUIDACIONES' && !liquidaciones.length && !docsBanco.length) pestana = bienes ? 'ARTICULOS' : 'ITEMS';
       const mi = tasaMI();
       const cambio = aBase(v.moneda_id, v.tipo_cambio);
       const totArt = fmt.redondear(articulos.reduce((t, a) => t + totalArt(a), 0));
@@ -372,10 +374,16 @@
             <div class="bm-panel" data-panel="LIQUIDACIONES" ${pestana === 'LIQUIDACIONES' ? '' : 'hidden'}>
               <p class="cc-ingreso"><i class="ti ti-info-circle" aria-hidden="true"></i> Documentos con que se liquidó la compra en el sistema anterior. Son historial: el saldo sale de los pagos de la pestaña ${bienes ? 'Abonos' : 'Doctos. a liquidar'}.</p>
               <div class="pc-lineas"><table><thead><tr><th class="pc-n">Docto.</th><th>Tipo</th><th>Cuenta bancaria</th><th>Cheque</th><th>Nota</th><th class="num">Valor liquidado</th><th class="num">Valor MI</th><th>Usuario</th><th>Fecha</th></tr></thead>
-                <tbody>${liquidaciones.map((x) => `<tr><td class="pc-n">${x.documento}</td><td>${x.tipo_documento === 'C' ? 'Cheque' : x.tipo_documento === 'I' ? 'Ingreso' : esc(x.tipo_documento || '')}</td>
+                <tbody>${liquidaciones.length ? '' : '<tr><td colspan="9" class="tk-vacio">Sin documentos de liquidación.</td></tr>'}${liquidaciones.map((x) => `<tr><td class="pc-n">${x.documento}</td><td>${x.tipo_documento === 'C' ? 'Cheque' : x.tipo_documento === 'I' ? 'Ingreso' : esc(x.tipo_documento || '')}</td>
                   <td>${esc(x.cuenta_bancaria || '')}</td><td class="fuerte">${esc(x.numero_cheque || '')}</td><td>${x.nota != null && x.nota >= 0 ? x.nota : ''}</td>
                   <td class="num">Q ${fmt.monto(x.valor)}</td><td class="num">${x.valor_mi != null ? `$ ${fmt.monto(x.valor_mi)}` : ''}</td><td>${esc(x.usuario || '')}</td><td>${esc(fmt.fechaHora(x.fecha))}</td></tr>`).join('')}</tbody>
                 <tfoot><tr><td colspan="5">Total liquidado</td><td class="num">Q ${fmt.monto(liquidaciones.reduce((t, x) => t + Number(x.valor || 0), 0))}</td><td class="num">$ ${fmt.monto(liquidaciones.reduce((t, x) => t + Number(x.valor_mi || 0), 0))}</td><td colspan="2"></td></tr></tfoot></table></div>
+              ${docsBanco.length ? `<h4 class="cf-sub"><i class="ti ti-building-bank" aria-hidden="true"></i> Cheques y notas del banco que la liquidaron</h4>
+              <div class="pc-lineas"><table><thead><tr><th>Tipo</th><th>Cuenta bancaria</th><th class="num">Número</th><th class="num">Liquidación</th><th>Tipo docto.</th><th class="num">Valor liquidado</th><th>Movimiento en el sistema</th></tr></thead>
+                <tbody>${docsBanco.map((x) => `<tr><td>${x.tipo === 'CHEQUE' ? 'Cheque' : 'Nota'}</td><td>${esc(x.cuenta_bancaria || '')}</td><td class="num fuerte">${x.numero}</td><td class="num">${x.liquidacion}</td>
+                  <td>${x.tipo_documento === 'C' ? 'Cheque' : x.tipo_documento === 'I' ? 'Ingreso' : esc(x.tipo_documento || '')}</td><td class="num">${fmt.monto(x.valor)}</td>
+                  <td>${x.movimiento_id ? '<span class="pc-marca aprobada">Ligado</span>' : '<span class="tk-tenue">Pendiente de migrar bancos</span>'}</td></tr>`).join('')}</tbody>
+                <tfoot><tr><td colspan="5">Total</td><td class="num">${fmt.monto(docsBanco.reduce((t, x) => t + Number(x.valor || 0), 0))}</td><td></td></tr></tfoot></table></div>` : ''}
             </div>
             <div class="bm-panel" data-panel="OTRAS" ${pestana === 'OTRAS' ? '' : 'hidden'}>
               <div class="cf-otras">

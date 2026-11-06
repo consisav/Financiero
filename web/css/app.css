@@ -3380,3 +3380,4 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 
 /* Ingreso de compras: artículos migrados sin producto en el catálogo. */
 .cf-sin-prod { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--ambar-f); color: var(--ambar-t); }
+.cf-sub { margin: 10px 0 4px; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--acento); display: flex; align-items: center; gap: 6px; }
