@@ -36,7 +36,7 @@
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
         <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
-        '<button type="button" class="boton secundario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>');
+        '<button type="button" class="boton secundario-sm cqc-excel" data-accion="excel" title="Descargar los cheques en Excel" aria-label="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i></button>');
     }
 
     async function iniciar() {

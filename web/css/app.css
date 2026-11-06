@@ -3746,3 +3746,10 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-consulta-cheques .bk-filtros { grid-template-columns: auto minmax(190px, 1fr) minmax(190px, 1fr) minmax(160px, .8fr) repeat(4, minmax(118px, 150px)) auto; }
 .bk-consultar .cq-lineas .cc-nombre { min-width: 300px; }
 .bk-consulta-cheques .cq-lineas .cc-nombre { min-width: 0; max-width: 260px; }
+/* Consulta de Cheques: encabezado compacto; más ancho para Empresa y Beneficiario. */
+.bk-consulta-cheques .bk-filtros { grid-template-columns: auto minmax(250px, 1.6fr) minmax(170px, .9fr) minmax(240px, 1.6fr) 138px 138px 112px 132px auto; gap: 8px; }
+.bk-consulta-cheques .bk-filtros .ta-titulo h2 { white-space: nowrap; font-size: 16px; }
+.bk-consulta-cheques .bk-filtros .ta-titulo small { white-space: nowrap; }
+.bk-consulta-cheques .bk-filtros input[type=date] { padding-left: 8px; padding-right: 6px; }
+.bk-consulta-cheques .cqc-excel { padding: 7px 10px; }
+.bk-consulta-cheques .cqc-excel .ti { font-size: 18px; margin: 0; }
