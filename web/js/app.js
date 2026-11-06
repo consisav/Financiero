@@ -305,19 +305,20 @@
 
   // Regla principal: todo usuario trabaja solo con la empresa a la que está conectado (empresa activa):
   // las consultas de empresas (localidades) y organizaciones de todas las pantallas se limitan a ella.
-  // En el módulo Administración el Super Administrador Global ve todas las organizaciones, y el Super
-  // Administrador o administrador de una organización, todas las empresas de su organización.
+  // Única excepción: el Super Administrador Global ve todas las organizaciones y empresas en todas las
+  // pantallas (cada una empieza en la empresa conectada). En el módulo Administración, el Super
+  // Administrador o administrador de una organización ve todas las empresas de su organización.
   function aplicarAlcance() {
     if (!sb.__fromOriginal) sb.__fromOriginal = sb.from.bind(sb);
     const original = sb.__fromOriginal;
     if (!perfil.localidad_id) { sb.from = original; return; }
+    if (perfil.es_global && perfil.rol_id === 'superadministrador') { sb.from = original; return; }
     const limite = { localidades: perfil.localidad_id, organizaciones: perfil.organizacion_id };
     const enAdministracion = () => /^#\/administracion(\/|$)/.test(location.hash);
     const adminOrg = ['superadministrador', 'administrador'].includes(perfil.rol_id);
     sb.from = (tabla) => {
       const q = original(tabla);
       if (!(tabla in limite)) return q;
-      if (enAdministracion() && perfil.es_global && perfil.rol_id === 'superadministrador') return q;
       const select = q.select.bind(q);
       if (enAdministracion() && adminOrg) {
         q.select = (...args) => select(...args).eq(tabla === 'localidades' ? 'organizacion_id' : 'id', perfil.organizacion_id);
@@ -377,7 +378,7 @@
     caja.innerHTML = `<span class="cx-icono"><i class="ti ti-building-community" aria-hidden="true"></i></span>
       <div class="cx-texto"><small>Conectado a la empresa</small>
         <b>${esc(loc.codigo)} · ${esc(loc.nombre_comercial)}</b>
-        <span>${esc(org ? `${org.codigo} · ${org.nombre}` : '')} · Rol: <b>${esc(nombreRol())}</b>. Todos los módulos y operaciones corresponden a esta empresa.</span></div>
+        <span>${esc(org ? `${org.codigo} · ${org.nombre}` : '')} · Rol: <b>${esc(nombreRol())}</b>. ${perfil.es_global ? 'Como Super Administrador Global ves todas las organizaciones y empresas; cada pantalla empieza en esta.' : 'Todos los módulos y operaciones corresponden a esta empresa.'}</span></div>
       ${varias ? `<div class="cx-cambiar"><span>Cambiar de empresa</span>${selector}</div>` : ''}`;
     conectarSelector(caja.querySelector('[data-empresa-activa]'));
     caja.hidden = false;
