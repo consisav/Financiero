@@ -3521,3 +3521,30 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .rm2-mod { grid-template-columns: 36px minmax(0, 1fr) auto; }
 .rm2-mod-nombre { font-size: 12.5px; }
 .rm2-copiar select { width: 100%; box-sizing: border-box; min-width: 0; }
+
+/* Compras · Parámetros módulo (diseño A): encabezado con la empresa y tres bloques. */
+.pcm { padding: 18px 20px; }
+.pcm-cab { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--borde); }
+.pcm-titulo { flex: 1; min-width: 220px; }
+.pcm-titulo small { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--m-t, var(--acento)); }
+.pcm-titulo h2 { margin: 2px 0 0; font-size: 18px; }
+.pcm-empresa { display: grid; gap: 1px; padding: 6px 14px; border-left: 3px solid var(--m-t, var(--acento)); background: var(--fondo); }
+.pcm-empresa span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.pcm-empresa b { font-size: 14px; }
+.pcm-empresa small { font-size: 12px; color: var(--suave); }
+.pcm-acciones { display: flex; align-items: center; gap: 8px; }
+.pcm-estado { font-size: 12px; color: var(--suave); }
+.pcm-estado.pendientes { color: var(--ambar-t); font-weight: 600; }
+.pcm-error:empty { display: none; }
+.pcm-bloques { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.pcm-bloque { border: 1px solid var(--borde); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; align-content: start; }
+.pcm-bloque h3 { margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--m-t, var(--acento)); display: flex; align-items: center; gap: 6px; }
+.pcm-bloque h3 .ti { font-size: 17px; }
+.pcm-ayuda { margin: -4px 0 2px; font-size: 12px; color: var(--suave); }
+.pcm-bloque .campo { margin: 0; }
+.pcm-bloque textarea { resize: vertical; min-height: 64px; font: inherit; }
+.pcm-encargado { display: grid; grid-template-columns: 92px minmax(0, 1.3fr) minmax(0, 1fr); gap: 4px 10px; align-items: end; padding: 10px 0; border-top: 1px dashed var(--borde); }
+.pcm-encargado:first-of-type { border-top: 0; padding-top: 0; }
+.pcm-etq { align-self: center; font-size: 13px; font-weight: 700; color: var(--texto); }
+.pcm-encargado small { grid-column: 2 / 4; font-size: 11px; color: var(--tenue); }
+.pcm-nota { margin: 0; font-size: 12px; color: var(--tenue); }

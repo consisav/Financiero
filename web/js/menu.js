@@ -282,6 +282,21 @@ window.MODULOS = [
     subgrupos: {
       catalogos: [
         {
+          // Generales (script 101): las 4 de productos son las mismas pantallas y tablas de Facturación.
+          subgrupo: 'Generales',
+          icono: 'ti-settings',
+          pantallas: [
+            { id: 'clasificaciones-compra', nombre: 'Clasificación compras', icono: 'ti-tags', descripcion: 'Clasificaciones fiscales de las compras: siglas, libro de compras y si aplica IVA.' },
+            { id: 'tipos-documento-compra', nombre: 'Tipo documento', icono: 'ti-file-description', descripcion: 'Tipos de documento de las compras y cómo se calcula su IVA.', separador: true },
+            { id: 'tipos-de-medida', nombre: 'Tipos de medida', icono: 'ti-ruler-measure', descripcion: 'Unidades de medida de los productos (las mismas de Facturación).' },
+            { id: 'clasificaciones-y-tipos', nombre: 'Clasificación de productos', icono: 'ti-category', descripcion: 'Clasificaciones de productos y servicios con su cuenta, y los tipos de productos de cada clasificación.' },
+            { id: 'presentaciones-productos', nombre: 'Presentaciones', icono: 'ti-box', descripcion: 'Presentaciones en que vienen los productos.' },
+            { id: 'tipos-de-precio', nombre: 'Tipos de precios', icono: 'ti-currency-dollar', descripcion: 'Listas de precio: % de utilidad, % de descuento, factor y estado.' },
+            { id: 'productos-y-servicios', nombre: 'Productos y servicios', icono: 'ti-package', descripcion: 'Definición de artículos (el mismo catálogo de Facturación): clasificación y tipo, proveedor, presentación, medida, punto mínimo, costo, ubicación, bodega, precios e imagen.', separador: true },
+            { id: 'parametros-compras', nombre: 'Parámetros módulo', icono: 'ti-adjustments', descripcion: 'Encargados de compras, pedidos y facturación, quién recibe traslados, transacción principal de ventas y avisos por correo.' }
+          ]
+        },
+        {
           subgrupo: 'Proveedores',
           icono: 'ti-truck',
           pantallas: [
@@ -295,8 +310,6 @@ window.MODULOS = [
           subgrupo: 'Compras',
           icono: 'ti-file-invoice',
           pantallas: [
-            { id: 'clasificaciones-compra', nombre: 'Clasificación compras', icono: 'ti-tags', descripcion: 'Clasificaciones fiscales de las compras: siglas, libro de compras y si aplica IVA.' },
-            { id: 'tipos-documento-compra', nombre: 'Tipo documento', icono: 'ti-file-description', descripcion: 'Tipos de documento de las compras y cómo se calcula su IVA.', separador: true },
             {
               subgrupo: 'Órdenes de compra',
               icono: 'ti-clipboard-list',
@@ -345,7 +358,7 @@ window.MODULOS = [
       ]
     },
     opciones: {
-      catalogos: ['Productos y servicios de compra', 'Compradores', 'Condiciones de pago'],
+      catalogos: ['Compradores', 'Condiciones de pago'],
       mantenimientos: ['Series de documentos', 'Listas de precios de proveedores'],
       procesos: ['Aprobación de órdenes de compra', 'Anulación de documentos', 'Antigüedad de saldos'],
       reportes: ['Compras por período', 'Compras por proveedor', 'Cuentas por pagar', 'Gráfica de compras'],

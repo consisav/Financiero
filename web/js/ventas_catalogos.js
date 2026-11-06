@@ -311,7 +311,7 @@
 
   // ===================== Clasificaciones y tipos =====================
   window.PANTALLAS['clasificaciones-y-tipos'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Clasificaciones y tipos de productos', icono: 'ti-category', clase: 'bk-clasif-tipos', grupo: 'Ventas · Catálogos' });
+    const ctx = montar(cont, { titulo: 'Clasificaciones y tipos de productos', icono: 'ti-category', clase: 'bk-clasif-tipos', grupo: grupoCat() });
     const { sb } = ctx;
     let contables = [];
     let clasif = null;
@@ -372,7 +372,9 @@
   };
 
   // ===================== Tipos de medida, Tipos de precio y Presentación productos =====================
-  const LOCAL = { local: true, grupo: 'Ventas · Catálogos', script: '59 (catálogos de ventas y productos)' };
+  // Las mismas pantallas se abren desde Compras › Catálogos › Generales (script 101): el rótulo dice de dónde.
+  const grupoCat = () => location.hash.startsWith('#/compras/') ? 'Compras · Catálogos' : 'Ventas · Catálogos';
+  const LOCAL = { local: true, script: '59 (catálogos de ventas y productos)', get grupo() { return grupoCat(); } };
   window.PANTALLAS['tipos-de-medida'] = (cont) => window.CATALOGO_GRID(cont, { ...LOCAL, tabla: 'tipos_medida', titulo: 'Tipos de medida', icono: 'ti-ruler-measure', codigo: 'Tipo',
     descripcion: 'Unidades de medida con que se venden y se controlan los productos.', columnas: [{ k: 'nombre', t: 'Descripción', req: true, max: 80 }] });
   window.PANTALLAS['presentaciones-productos'] = (cont) => window.CATALOGO_GRID(cont, { ...LOCAL, tabla: 'presentaciones_producto', titulo: 'Presentaciones de productos', icono: 'ti-package', codigo: '#',
@@ -385,7 +387,7 @@
 
   // ===================== Productos y servicios =====================
   window.PANTALLAS['productos-y-servicios'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Definición de artículos', icono: 'ti-package', clase: 'bk-productos cp-lado', grupo: 'Ventas · Catálogos' });
+    const ctx = montar(cont, { titulo: 'Definición de artículos', icono: 'ti-package', clase: 'bk-productos cp-lado', grupo: grupoCat() });
     const { sb } = ctx;
     const f = { estado: 'ACTIVO', clasificacion: '', formato: 'PDF' };
     let lista0 = [], clasificaciones = [], tipos = [], medidas = [], presentaciones = [], precios = [], proveedores = [], bodegas = [];
