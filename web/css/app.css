@@ -3857,3 +3857,8 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ta-total.cqc-tn-NC b { color: #1f7a45; }
 .ta-total.cqc-tn-ND b { color: #b23a32; }
 .cqc-con-tipo .cqc-tabla col.w-num { width: 124px; }
+
+/* Localidad sin logo o eslogan propio: se muestra el de la organización, atenuado, con una nota. */
+.imagen-marco img.imagen-heredada { opacity: .45; max-height: calc(100% - 26px); }
+.imagen-marco .imagen-nota { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 11.5px; color: var(--tenue); display: flex; gap: 5px; justify-content: center; align-items: center; }
+.imagen-marco { position: relative; }

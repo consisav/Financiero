@@ -295,12 +295,14 @@
       document.head.appendChild(s);
     });
 
-    // Logo de la organización (organizaciones.logo_ruta en Storage), como base64 para incrustarlo.
+    // Logo de la localidad (o, si no tiene, el de la organización), en Storage, como base64 para incrustarlo.
     async function logoOrganizacion(orgId) {
       try {
         const { data: o } = await sb.from('organizaciones').select('codigo, nombre, logo_ruta').eq('id', orgId).maybeSingle();
-        if (!o?.logo_ruta) return { org: o, logo: null };
-        const url = sb.storage.from('organizaciones').getPublicUrl(o.logo_ruta).data.publicUrl;
+        const { data: l, error: el } = await sb.from('localidades').select('logo_ruta').eq('id', ctx.sel.loc).maybeSingle();
+        const ruta = (!el && l?.logo_ruta) || o?.logo_ruta;
+        if (!ruta) return { org: o, logo: null };
+        const url = sb.storage.from('organizaciones').getPublicUrl(ruta).data.publicUrl;
         const blob = await (await fetch(url)).blob();
         const ext = /png/.test(blob.type) ? 'png' : /jpe?g/.test(blob.type) ? 'jpeg' : /gif/.test(blob.type) ? 'gif' : null;
         if (!ext) return { org: o, logo: null };

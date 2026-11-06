@@ -248,14 +248,21 @@
     pintarMarca();
   }
 
-  // Logo de la organización del usuario (lo más grande que permite la barra superior), después su
-  // eslogan y, a la par, el nombre de su localidad. Sin logo, o si la imagen no carga, se muestran
-  // las iniciales; sin eslogan, ese espacio no aparece.
+  // Logo de la localidad con que el usuario está conectado (lo más grande que permite la barra
+  // superior), después su eslogan y, a la par, el nombre de la localidad. Si la localidad no tiene
+  // logo o eslogan (o la imagen no carga) se usan los de su organización; sin ninguno, las iniciales
+  // y sin eslogan ese espacio no aparece.
   async function pintarMarca() {
     const caja = $('marca-empresa');
+    const leerLoc = async () => {
+      if (!perfil.localidad_id) return { data: null };
+      const r = await sb.from('localidades').select('codigo, nombre_comercial, logo_ruta, eslogan_ruta').eq('id', perfil.localidad_id).maybeSingle();
+      // Sin el script 114 la localidad aún no tiene logo: se lee sin esas columnas.
+      return r.error ? sb.from('localidades').select('codigo, nombre_comercial').eq('id', perfil.localidad_id).maybeSingle() : r;
+    };
     const [o, l] = await Promise.all([
       perfil.organizacion_id ? sb.from('organizaciones').select('codigo, nombre, logo_ruta, eslogan_ruta').eq('id', perfil.organizacion_id).maybeSingle() : { data: null },
-      perfil.localidad_id ? sb.from('localidades').select('codigo, nombre_comercial').eq('id', perfil.localidad_id).maybeSingle() : { data: null }
+      leerLoc()
     ]);
     const org = o.data;
     const loc = l.data;
@@ -265,18 +272,24 @@
     const palabras = base.split(/\s+/).filter((x) => x.length > 2);
     const iniciales = esc((palabras.length > 1 ? palabras.slice(0, 2).map((x) => x[0]).join('') : base.slice(0, 2)).toUpperCase());
     const url = (ruta) => ruta ? sb.storage.from('organizaciones').getPublicUrl(ruta).data.publicUrl : null;
-    const logo = url(org && org.logo_ruta);
-    const eslogan = url(org && org.eslogan_ruta);
+    const logoOrg = url(org && org.logo_ruta);
+    const esloganOrg = url(org && org.eslogan_ruta);
+    const logo = url(loc && loc.logo_ruta) || logoOrg;
+    const eslogan = url(loc && loc.eslogan_ruta) || esloganOrg;
     caja.innerHTML = `
-      ${logo ? `<img class="marca-logo" src="${esc(logo)}" alt="Logo de ${esc(org.nombre)}">` : ''}
+      ${logo ? `<img class="marca-logo" src="${esc(logo)}" alt="Logo de ${esc(nombre)}">` : ''}
       <span class="marca-iniciales" ${logo ? 'hidden' : ''}>${iniciales}</span>
-      ${eslogan ? `<img class="marca-eslogan" src="${esc(eslogan)}" alt="Eslogan de ${esc(org.nombre)}">` : ''}
+      ${eslogan ? `<img class="marca-eslogan" src="${esc(eslogan)}" alt="Eslogan de ${esc(nombre)}">` : ''}
       <span class="marca-texto">${await selectorEmpresa(nombre)}<small>${esc([loc && loc.codigo, org && org.nombre].filter(Boolean).join(' · '))}</small></span>`;
     conectarSelector(caja.querySelector('[data-empresa-activa]'));
+    // Si la imagen de la localidad no carga, se prueba la de la organización; si tampoco, las iniciales.
     const img = caja.querySelector('.marca-logo');
-    if (img) img.addEventListener('error', () => { img.remove(); caja.querySelector('.marca-iniciales').hidden = false; });
+    if (img) img.addEventListener('error', () => {
+      if (logoOrg && img.src !== logoOrg) { img.src = logoOrg; return; }
+      img.remove(); caja.querySelector('.marca-iniciales').hidden = false;
+    });
     const esl = caja.querySelector('.marca-eslogan');
-    if (esl) esl.addEventListener('error', () => esl.remove());
+    if (esl) esl.addEventListener('error', () => { if (esloganOrg && esl.src !== esloganOrg) { esl.src = esloganOrg; return; } esl.remove(); });
     caja.hidden = false;
   }
 

@@ -21,8 +21,9 @@
   const urlImagen = (ruta) => ruta ? window.FIN.sb.storage.from(BUCKET).getPublicUrl(ruta).data.publicUrl : null;
   const imagen = (ruta, clase) => ruta ? `<img class="${clase}" src="${esc(urlImagen(ruta))}" alt="">` : '';
 
-  // Sube, reemplaza o quita las imágenes de una organización ya guardada.
-  async function guardarImagenes(sb, id, anterior, datos) {
+  // Sube, reemplaza o quita las imágenes de una organización (o de una localidad) ya guardada.
+  // Las de la localidad van en la carpeta de su organización: <org>/localidad-<id>/.
+  async function guardarImagenes(sb, id, anterior, datos, tabla = 'organizaciones', carpeta = String(id)) {
     const cambios = {};
     const viejas = [];
     for (const im of IMAGENES) {
@@ -31,14 +32,14 @@
       if (anterior && anterior[im.columna]) viejas.push(anterior[im.columna]);
       if (v.archivo) {
         const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[v.archivo.type];
-        const ruta = `${id}/${im.campo}-${Date.now()}.${ext}`;
+        const ruta = `${carpeta}/${im.campo}-${Date.now()}.${ext}`;
         const { error } = await sb.storage.from(BUCKET).upload(ruta, v.archivo, { contentType: v.archivo.type, cacheControl: '31536000' });
         if (error) throw new Error(`No se pudo subir el ${im.etiqueta.toLowerCase()}: ${error.message || error.error || 'error del almacenamiento'}.`);
         cambios[im.columna] = ruta;
       } else cambios[im.columna] = null;
     }
     if (!Object.keys(cambios).length) return;
-    const { error } = await sb.from('organizaciones').update(cambios).eq('id', id);
+    const { error } = await sb.from(tabla).update(cambios).eq('id', id);
     if (error) throw error;
     if (viejas.length) await sb.storage.from(BUCKET).remove(viejas);
   }
@@ -199,13 +200,23 @@
               ${dato('Estado / departamento', l.departamento && esc(l.departamento.nombre))}
               ${dato('Ciudad / municipio', l.municipio && esc(l.municipio.nombre))}
             </div>
+            <div class="imagenes-org">
+              ${IMAGENES.map((im) => `
+                <figure class="imagen-org">
+                  <figcaption>${im.etiqueta} de la localidad</figcaption>
+                  <div class="imagen-marco">${imagen(l[im.columna], '') || (estado.org[im.columna]
+                    ? `${imagen(estado.org[im.columna], 'imagen-heredada')}<span class="imagen-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Sin ${im.etiqueta.toLowerCase()} propio: se usa el de la organización</span>`
+                    : `<span class="sin-imagen"><i class="ti ti-photo" aria-hidden="true"></i> Sin ${im.etiqueta.toLowerCase()}</span>`)}</div>
+                </figure>`).join('')}
+            </div>
           </div>` : ''}`;
       filtrar(pLocs, estado.buscar.locs || '');
     }
 
     function formLoc(fila) {
       const o = estado.org;
-      const valores = fila || { activo: true, pais_id: o.pais_id, departamento_id: o.departamento_id, municipio_id: o.municipio_id };
+      const valores = fila ? { ...fila, logo: urlImagen(fila.logo_ruta), eslogan: urlImagen(fila.eslogan_ruta) }
+        : { activo: true, pais_id: o.pais_id, departamento_id: o.departamento_id, municipio_id: o.municipio_id };
       formulario({
         titulo: fila ? `Modificar localidad · ${fila.codigo}` : `Nueva localidad de ${o.codigo} · ${o.nombre}`,
         valores,
@@ -219,16 +230,23 @@
           { nombre: 'correos', etiqueta: 'Correos', ancho: 'completo' },
           { nombre: 'direccion', etiqueta: 'Dirección', tipo: 'area', ancho: 'completo' },
           ...camposUbicacion,
-          { nombre: 'activo', etiqueta: 'Activa', tipo: 'casilla' }
+          { nombre: 'activo', etiqueta: 'Activa', tipo: 'casilla' },
+          { nombre: 'logo', etiqueta: 'Logo de la localidad (sin logo se usa el de la organización)', tipo: 'imagen' },
+          { nombre: 'eslogan', etiqueta: 'Eslogan de la localidad (sin eslogan se usa el de la organización)', tipo: 'imagen' }
         ],
         alPreparar: (form) => cascadaUbicacion(form, valores),
         alGuardar: async (d) => {
+          const imagenes = { logo: d.logo, eslogan: d.eslogan };
+          delete d.logo;
+          delete d.eslogan;
           d.organizacion_id = o.id;
           d.tipo_venta = d.tipo_venta || null;
           const r = fila ? await sb.from('localidades').update(d).eq('id', fila.id).select('id').single()
                          : await sb.from('localidades').insert(d).select('id').single();
           if (r.error) throw r.error;
-          window.FIN.aviso('Localidad guardada');
+          let fallo = null;
+          try { await guardarImagenes(sb, r.data.id, fila, imagenes, 'localidades', `${o.id}/localidad-${r.data.id}`); } catch (err) { fallo = err; }
+          window.FIN.aviso(fallo ? `Localidad guardada, pero ${fallo.message.charAt(0).toLowerCase()}${fallo.message.slice(1)}` : 'Localidad guardada');
           await cargarLocs(r.data.id);
         }
       });
