@@ -197,6 +197,7 @@
         <div class="datos">
           ${dato('Razón social', esc(l.razon_social), true)}
           ${dato('NIT', esc(l.nit))}
+          ${dato('Siglas', esc(l.siglas || ''))}
           ${dato('Empresa anterior', esc(l.empresa_anterior))}
           ${dato('Venta de productos', esc(VENTA[l.tipo_venta] || ''))}
           ${dato('Teléfonos', esc(l.telefonos))}
@@ -219,6 +220,7 @@
         campos: [
           { nombre: 'nombre_comercial', etiqueta: 'Nombre comercial', requerido: true, ancho: 'completo' },
           { nombre: 'razon_social', etiqueta: 'Razón social', ancho: 'completo' },
+          { nombre: 'siglas', etiqueta: 'Siglas', placeholder: 'MSA (se usan en los correlativos)' },
           { nombre: 'empresa_anterior', etiqueta: 'Empresa anterior', placeholder: 'Código en el sistema anterior (migración)' },
           { nombre: 'nit', etiqueta: 'NIT', placeholder: '1234567-8' },
           { nombre: 'tipo_venta', etiqueta: 'Venta de productos', tipo: 'select', vacio: 'Sin definir', opciones: Object.entries(VENTA).map(([valor, texto]) => ({ valor, texto })) },
@@ -237,8 +239,11 @@
           delete d.eslogan;
           d.organizacion_id = o.id;
           d.tipo_venta = d.tipo_venta || null;
-          const r = fila ? await sb.from('localidades').update(d).eq('id', fila.id).select('id').single()
-                         : await sb.from('localidades').insert(d).select('id').single();
+          if ('siglas' in d) d.siglas = (d.siglas || '').trim().toUpperCase() || null;
+          const guardarLoc = (x) => fila ? sb.from('localidades').update(x).eq('id', fila.id).select('id').single() : sb.from('localidades').insert(x).select('id').single();
+          let r = await guardarLoc(d);
+          // Sin el script 117 la localidad aún no tiene siglas: se guarda sin ellas.
+          if (r.error && /siglas/.test(r.error.message || '')) { delete d.siglas; r = await guardarLoc(d); }
           if (r.error) throw r.error;
           let fallo = null;
           try { await guardarImagenes(sb, r.data.id, fila, imagenes, 'localidades', `${o.id}/localidad-${r.data.id}`); } catch (err) { fallo = err; }

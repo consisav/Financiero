@@ -4091,3 +4091,68 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bca-pestanas .bca-buscar { min-width: 170px; flex: 0 1 230px; }
 .bca-control .bm-sin-imagen { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 @media (max-width: 1700px) { .bca-suma { display: none; } }
+
+/* Disponibilidad bancaria (opción A): parámetros en la barra, tablero con la generación, indicadores, cuentas por
+   banco y resumen por banco. Consulta de Disponibilidad: histórico arriba y el mismo tablero abajo. */
+.dsp-proceso .bk-maestro { display: none; }
+.bk-espacio.dsp-proceso .ta-cuerpo { grid-template-rows: minmax(0, 1fr) !important; }
+.dsp-proceso .bk-detalle { overflow: auto; }
+.dsp-generar { display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 4px 16px 4px 12px; border-radius: 10px; }
+.dsp-generar .ti { font-size: 20px; }
+.dsp-generar span { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.dsp-generar b { font-size: 13.5px; } .dsp-generar small { font-size: 10.5px; opacity: .85; font-weight: 500; }
+.dsp-proceso .bk-filtros .campo input[type=date] { min-width: 150px; }
+.dsp-tablero { display: flex; flex-direction: column; gap: 10px; height: 100%; min-height: 0; }
+.dsp-fila1 { display: grid; grid-template-columns: minmax(300px, 1.5fr) repeat(4, minmax(0, 1fr)) auto; gap: 10px; align-items: stretch; }
+.dsp-gen { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; gap: 4px 10px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--borde); background: var(--panel); }
+.dsp-gen > div small { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
+.dsp-gen .dsp-corr { font-size: 19px; font-weight: 800; color: var(--acento); letter-spacing: .02em; }
+.dsp-gen .dsp-par { text-transform: none !important; letter-spacing: 0 !important; font-weight: 500 !important; font-size: 11.5px !important; }
+.dsp-gen dl { grid-column: 1 / -1; display: grid; grid-template-columns: auto auto; gap: 2px 16px; margin: 2px 0 0; }
+.dsp-gen dt { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); }
+.dsp-gen dd { margin: 0; font-size: 13px; font-weight: 600; } .dsp-gen dd small { display: block; font-size: 11px; color: var(--tenue); font-weight: 500; }
+.dsp-kpi { display: flex; flex-direction: column; justify-content: center; align-items: flex-end; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--borde); background: var(--fondo); min-width: 0; }
+.dsp-kpi span { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; }
+.dsp-kpi b { font-size: 19px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dsp-kpi small { font-size: 11px; color: var(--tenue); text-align: right; }
+.dsp-kpi.principal { background: var(--acento-fondo); border-color: color-mix(in srgb, var(--acento) 30%, var(--borde)); }
+.dsp-kpi.principal b { color: var(--acento); }
+.dsp-kpi.alerta { background: #fdeceb; } .dsp-kpi.alerta b { color: #b23a32; }
+.dsp-kpi.ok b { color: #1f7a45; }
+.dsp-acciones { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.dsp-acciones .boton { display: inline-flex; align-items: center; gap: 9px; height: 42px; padding: 4px 14px 4px 11px; border-radius: 10px; }
+.dsp-acciones .boton .ti { font-size: 20px; } .dsp-acciones .boton span { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.dsp-acciones .boton b { font-size: 12.5px; } .dsp-acciones .boton small { font-size: 10px; opacity: .85; font-weight: 500; }
+.dsp-fila2 { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 10px; flex: 1; min-height: 0; }
+.dsp-cuentas { overflow: auto; min-height: 0; }
+.dsp-cuentas td small { display: block; font-size: 11px; color: var(--tenue); font-weight: 500; }
+.dsp-cuentas td b { font-weight: 700; }
+.dsp-cuentas tr.dsp-banco td { background: var(--acento-fondo); font-weight: 700; color: var(--acento); }
+.dsp-cuentas tr.dsp-banco small { display: inline; margin-left: 6px; }
+.dsp-cuentas tr.dsp-banco .bk-cod { margin-right: 6px; }
+.dsp-cuentas tr.dsp-sub td { font-weight: 700; border-top: 1px solid var(--borde); }
+.dsp-cuentas tr.dsp-bajo td { background: color-mix(in srgb, #e4574c 7%, transparent); }
+.dsp-bancos { border: 1px solid var(--borde); border-radius: 14px; padding: 10px 12px; overflow: auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.dsp-barra > div { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; }
+.dsp-barra > div span { font-variant-numeric: tabular-nums; font-weight: 700; }
+.dsp-barra i { display: block; height: 8px; border-radius: 6px; background: var(--fondo); margin: 4px 0 2px; position: relative; overflow: hidden; }
+.dsp-barra i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--p); border-radius: 6px; background: var(--acento); }
+.dsp-barra i.neg::after { background: #e4574c; }
+.dsp-barra small { font-size: 11px; color: var(--tenue); }
+.dsp-vacio { height: 100%; display: flex; align-items: center; justify-content: center; }
+.dsp-consulta .bk-detalle { overflow: auto; }
+.dsp-lista td small { display: block; font-size: 11px; color: var(--tenue); }
+.bk-espacio.dsp-consulta .ta-cuerpo { grid-template-rows: minmax(170px, 34%) minmax(0, 1fr) !important; }
+.dsp-consulta .dsp-tablero { padding: 4px; }
+@media (max-width: 1400px) { .dsp-fila1 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .dsp-gen { grid-column: 1 / -1; } .dsp-fila2 { grid-template-columns: 1fr; } }
+.dsp-cuentas table { table-layout: fixed; width: 100%; }
+.dsp-cuentas th:nth-child(1) { width: 22%; } .dsp-cuentas th:nth-child(2) { width: 72px; }
+.dsp-cuentas td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.dsp-cuentas td small { overflow: hidden; text-overflow: ellipsis; }
+.dsp-cuentas tr.dsp-banco td { padding: 6px 8px; }
+.dsp-cuentas tr.dsp-banco td > .bk-cod { display: inline-flex; vertical-align: middle; width: 26px; height: 22px; font-size: 11px; }
+.dsp-cuentas th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dsp-proceso .bk-filtros { align-items: end; }
+.dsp-fila1 { grid-template-columns: minmax(280px, 1.4fr) repeat(4, minmax(0, 1fr)) auto; }
+.dsp-kpi { padding: 8px 10px; }
+.dsp-cuentas th { white-space: normal; line-height: 1.2; vertical-align: bottom; }

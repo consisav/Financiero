@@ -200,7 +200,8 @@ window.MODULOS = [
             { id: 'notas-debito', nombre: 'Notas de débito / transferencias', icono: 'ti-file-minus', descripcion: 'Notas de débito y transferencias enviadas a proveedores.' },
             { id: 'consulta-de-notas', nombre: 'Consulta de Notas', icono: 'ti-file-search', descripcion: 'Resumen de las notas de crédito y débito de la empresa por cuenta, tipo, cliente o proveedor, fechas y estado, con su detalle contable y sus documentos.', separador: true },
             { id: 'conciliacion-bancaria', nombre: 'Conciliación bancaria', icono: 'ti-scale', descripcion: 'Conciliación mensual de cada cuenta bancaria con el saldo del banco y el contable.' },
-            { id: 'disponibilidad-bancaria', nombre: 'Disponibilidad bancaria', icono: 'ti-chart-line', descripcion: 'Movimiento y disponibilidad de cada cuenta bancaria en un rango de fechas.', separador: true },
+            { id: 'disponibilidad-bancaria', nombre: 'Disponibilidad bancaria', icono: 'ti-chart-line', descripcion: 'Proceso: disponibilidad de un banco o todos, una cuenta o todas, a una fecha; cada generación se guarda con su correlativo, usuario y fecha y hora.' },
+            { id: 'consulta-de-disponibilidad', nombre: 'Consulta de Disponibilidad', icono: 'ti-file-search', descripcion: 'Histórico de las disponibilidades generadas: correlativo, fecha de corte, usuario y fecha y hora, con el detalle de cada una en PDF y Excel.', separador: true },
             { id: 'disponibilidad-integrada', nombre: 'Disponibilidad integrada', icono: 'ti-chart-pie', descripcion: 'Disponibilidad consolidada de todas las cuentas de la organización, en quetzales.' }
           ]
         }
