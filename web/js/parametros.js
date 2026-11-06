@@ -22,11 +22,48 @@
     };
   }
 
+  // Parámetros adicionales del sistema anterior (script 85), por pestaña: [columna, etiqueta, tipo]
+  // con tipo n = número, i = entero, t = texto, d = fecha.
+  const GRUPOS = {
+    cuentas: [
+      ['cuenta_principal_ingresos', 'Cuenta principal de ingresos', 't'], ['cuenta_principal_egresos', 'Cuenta principal de egresos', 't'],
+      ['cuenta_resultado_ejercicio', 'Cuenta resultado del ejercicio', 't'], ['cuenta_principal_ganancia', 'Cuenta principal de ganancia', 't'],
+      ['cuenta_principal_perdida', 'Cuenta principal de pérdida', 't'], ['cuenta_dummy', 'Cuenta dummy', 't'],
+      ['cuenta_dif_cambiario', 'Cuenta diferencial cambiario', 't'], ['cuenta_idp', 'Cuenta IDP', 't'],
+      ['cta_iva_retenido', 'Cuenta IVA retenido', 't'], ['cta_isr_retenido', 'Cuenta ISR retenido', 't'],
+      ['cta_iva_factura_especial', 'Cuenta IVA factura especial', 't'], ['cta_isr_factura_especial', 'Cuenta ISR factura especial', 't'],
+      ['descripcion_poliza_resultados', 'Descripción póliza de resultados', 't'], ['descripcion_poliza_balance', 'Descripción póliza de balance', 't'],
+      ['descripcion_poliza_distrib', 'Descripción póliza de distribución', 't'], ['descripcion_poliza_apertura', 'Descripción póliza de apertura', 't']
+    ],
+    nomina: [
+      ['pct_igss', '% IGSS laboral', 'n'], ['cuota_patronal', '% Cuota patronal', 'n'], ['pct_irtra', '% IRTRA', 'n'],
+      ['pct_indemnizacion', '% Indemnización', 'n'], ['pct_aguinaldo', '% Aguinaldo', 'n'], ['pct_bono14', '% Bono 14', 'n'],
+      ['pct_vacaciones', '% Vacaciones', 'n'], ['nombre_planillas', 'Nombre de planillas', 't'], ['nombre_caja_chica', 'Nombre de caja chica', 't']
+    ],
+    retenciones: [
+      ['pct_retencion', '% Retención', 'n'], ['pct_retencion_agente', '% Retención agente', 'n'], ['no_establecimiento', 'No. establecimiento', 'i'],
+      ['no_ini_retencion', 'No. inicial de retención', 'i'], ['no_fin_retencion', 'No. final de retención', 'i'], ['registro_contador', 'Registro del contador', 't'],
+      ['correo_retenciones', 'Correo de retenciones', 't'], ['correo_copia_o_ret', 'Correo copia de retenciones', 't'], ['correo_aviso_nocuadre', 'Correo aviso de no cuadre', 't'],
+      ['nombre_envio', 'Nombre de envío', 't'], ['puesto_envio', 'Puesto de envío', 't'], ['prefijo_archivo', 'Prefijo de archivo', 't'],
+      ['sufijo_archivo', 'Sufijo de archivo', 't'], ['path_retenciones', 'Ruta de retenciones', 't'], ['path_retenciones_net', 'Ruta de retenciones (red)', 't'],
+      ['path_retenciones_envio', 'Ruta de envío de retenciones', 't']
+    ],
+    otros: [
+      ['cheque_inicial', 'Cheque inicial', 'i'], ['cheque_final', 'Cheque final', 'i'], ['fecha_ini_anticipos', 'Fecha inicio de anticipos', 'd'],
+      ['version_actual_nomenclatura', 'Versión nomenclatura (sist. anterior)', 'i'], ['fecha_version', 'Fecha de la versión', 'd'],
+      ['meses_max_presenta_compras', 'Meses máx. para presentar compras', 'i'], ['path_archivos', 'Ruta de archivos', 't'],
+      ['path_backup_bdd', 'Ruta respaldo base de datos', 't'], ['path_backup_apl', 'Ruta respaldo aplicación', 't']
+    ]
+  };
+  const PESTANAS = [['autorizaciones', 'Autorizaciones'], ['cuentas', 'Cuentas estados financieros'], ['nomina', 'Nómina'], ['retenciones', 'Retenciones'], ['otros', 'Otros']];
+
   const v = (x) => (x === null || x === undefined ? '' : esc(x));
   const fecha = (n, p, et) => `<label class="campo-linea"><span>${et}</span><input type="date" name="${n}" value="${v(p[n])}"></label>`;
   const numero = (n, p, et, paso = '0.01') => `<label class="campo-linea"><span>${et}</span><input type="number" step="${paso}" min="0" name="${n}" value="${v(p[n])}"></label>`;
   const texto = (n, p, et, extra = '') => `<label class="campo-linea"><span>${et}</span><input type="text" name="${n}" value="${v(p[n])}" ${extra}></label>`;
   const mes = (n, p, et) => `<label class="campo-linea"><span>${et}</span><select name="${n}">${MESES.map((m, i) => `<option value="${i + 1}" ${p[n] === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>`;
+  const campoGrupo = ([n, et, tipo], p) => tipo === 'd' ? fecha(n, p, et)
+    : tipo === 'n' ? numero(n, p, et) : tipo === 'i' ? numero(n, p, et, '1') : texto(n, p, et);
   const casilla = (n, p, et) => `<label class="casilla-linea"><input type="checkbox" name="${n}" ${p[n] ? 'checked' : ''}> ${et}</label>`;
 
   window.PANTALLAS = window.PANTALLAS || {};
@@ -150,8 +187,7 @@
 
           <section class="panel">
             <div class="pestanas" role="tablist">
-              <button type="button" role="tab" class="pestana ${estado.pestana === 'autorizaciones' ? 'activa' : ''}" data-pestana="autorizaciones" aria-selected="${estado.pestana === 'autorizaciones'}">Autorizaciones</button>
-              <button type="button" role="tab" class="pestana ${estado.pestana === 'cuentas' ? 'activa' : ''}" data-pestana="cuentas" aria-selected="${estado.pestana === 'cuentas'}">Cuentas estados financieros</button>
+              ${PESTANAS.map(([id, nombre]) => `<button type="button" role="tab" class="pestana ${estado.pestana === id ? 'activa' : ''}" data-pestana="${id}" aria-selected="${estado.pestana === id}">${nombre}</button>`).join('')}
             </div>
             <div ${estado.pestana === 'autorizaciones' ? '' : 'hidden'}>
               <div class="tabla-desplazable">
@@ -159,7 +195,7 @@
                   <thead><tr><th>Firma como</th><th>Personas que firman</th><th>Cargo</th><th># Registro</th><th>Usuario</th><th></th></tr></thead>
                   <tbody>
                     ${firmantes.map((f, i) => `
-                      <tr data-fila="${i}">
+                      <tr data-fila="${i}" data-anterior="${v(f.usuario_anterior)}">
                         <td><select name="tipo">${TIPOS_FIRMA.map((t) => `<option ${t === f.tipo ? 'selected' : ''}>${t}</option>`).join('')}</select></td>
                         <td><input type="text" name="nombre" value="${v(f.nombre)}" aria-label="Nombre"></td>
                         <td><input type="text" name="cargo" value="${v(f.cargo)}" aria-label="Cargo"></td>
@@ -172,9 +208,8 @@
               </div>
               ${editable ? '<button type="button" class="boton secundario-sm agregar-firmante" data-accion="agregar-firmante">+ Firmante</button>' : ''}
             </div>
-            <div ${estado.pestana === 'cuentas' ? '' : 'hidden'}>
-              <p class="vacio">Aquí se asignarán las cuentas contables que alimentan el balance general y el estado de resultados (utilidad del ejercicio, capital, etc.), cuando se definan.</p>
-            </div>
+            ${Object.entries(GRUPOS).map(([id, campos]) => `
+              <div class="param-extra" ${estado.pestana === id ? '' : 'hidden'}>${campos.map((c) => campoGrupo(c, p)).join('')}</div>`).join('')}
           </section>
 
           ${editable ? `
@@ -200,6 +235,7 @@
         'valor_cheques_autorizacion', 'primer_mes_contable', 'ultimo_mes_contable'].forEach((n) => { d[n] = num(n); });
       ['proximo_cierre', 'ultimo_cierre', 'inicio_periodo_actual', 'fin_periodo_actual', 'inicio_periodo_fiscal', 'fin_periodo_fiscal',
         'moneda_integracion', 'moneda_ingreso', 'nit'].forEach((n) => { d[n] = txt(n); });
+      Object.values(GRUPOS).flat().forEach(([n, , tipo]) => { if (form.elements[n]) d[n] = tipo === 'n' || tipo === 'i' ? num(n) : txt(n); });
       [1, 2, 3, 4].forEach((i) => { d['nombre_impuesto' + i] = (form.elements['nombre_impuesto' + i].value.trim() || ['IVA', 'ISR', 'OTRO', 'INGUAT'][i - 1]).toUpperCase(); });
       d.aplicar_iva = form.elements.aplicar_iva.checked;
       d.incluir_centros_costo = form.elements.incluir_centros_costo.checked;
@@ -209,7 +245,8 @@
         nombre: tr.querySelector('[name=nombre]').value.trim().toUpperCase() || null,
         cargo: tr.querySelector('[name=cargo]').value.trim().toUpperCase() || null,
         registro: tr.querySelector('[name=registro]').value.trim() || null,
-        perfil_id: tr.querySelector('[name=perfil_id]').value || null
+        perfil_id: tr.querySelector('[name=perfil_id]').value || null,
+        usuario_anterior: tr.dataset.anterior || null
       })).filter((f) => f.nombre || f.cargo || f.registro || f.perfil_id);
       return { d, firmantes };
     }
@@ -220,7 +257,7 @@
       estado.firmantes =[...form.querySelectorAll('tr[data-fila]')].map((tr) => ({
         tipo: tr.querySelector('[name=tipo]').value, nombre: tr.querySelector('[name=nombre]').value,
         cargo: tr.querySelector('[name=cargo]').value, registro: tr.querySelector('[name=registro]').value,
-        perfil_id: tr.querySelector('[name=perfil_id]').value || null
+        perfil_id: tr.querySelector('[name=perfil_id]').value || null, usuario_anterior: tr.dataset.anterior || null
       }));
       const { d } = leer(form);
       estado.param = { ...(estado.param || {}), ...d };
