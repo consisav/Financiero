@@ -262,14 +262,7 @@
       <span class="marca-iniciales" ${logo ? 'hidden' : ''}>${iniciales}</span>
       ${eslogan ? `<img class="marca-eslogan" src="${esc(eslogan)}" alt="Eslogan de ${esc(org.nombre)}">` : ''}
       <span class="marca-texto">${await selectorEmpresa(nombre)}<small>${esc([loc && loc.codigo, org && org.nombre].filter(Boolean).join(' · '))}</small></span>`;
-    const selEmp = caja.querySelector('[data-empresa-activa]');
-    if (selEmp) selEmp.addEventListener('change', async () => {
-      selEmp.disabled = true;
-      const { error } = await sb.rpc('cambiar_empresa_activa', { p_localidad: Number(selEmp.value) });
-      if (error) { selEmp.disabled = false; selEmp.value = String(perfil.localidad_id); return aviso(error.message); }
-      try { sessionStorage.setItem(CLAVE_EMPRESA, selEmp.value); } catch (e) { /* sin almacenamiento */ }
-      location.reload();
-    });
+    conectarSelector(caja.querySelector('[data-empresa-activa]'));
     const img = caja.querySelector('.marca-logo');
     if (img) img.addEventListener('error', () => { img.remove(); caja.querySelector('.marca-iniciales').hidden = false; });
     const esl = caja.querySelector('.marca-eslogan');
@@ -303,16 +296,18 @@
     return true;
   }
 
-  // Usuario que no es Super Administrador: ve y trabaja solo con la información de su empresa activa.
-  // Las consultas de empresas (localidades) y organizaciones de todas las pantallas se limitan a ellas.
+  // Regla principal: todo usuario trabaja solo con la empresa a la que está conectado (empresa activa):
+  // las consultas de empresas (localidades) y organizaciones de todas las pantallas se limitan a ella.
+  // El Super Administrador ve todas únicamente en el módulo Administración, para administrar el sistema.
   function aplicarAlcance() {
     if (!sb.__fromOriginal) sb.__fromOriginal = sb.from.bind(sb);
     const original = sb.__fromOriginal;
-    if (perfil.rol_id === 'superadministrador' || !perfil.localidad_id || !empresas) { sb.from = original; return; }
+    if (!perfil.localidad_id) { sb.from = original; return; }
     const limite = { localidades: perfil.localidad_id, organizaciones: perfil.organizacion_id };
+    const enAdministracion = () => perfil.rol_id === 'superadministrador' && /^#\/administracion(\/|$)/.test(location.hash);
     sb.from = (tabla) => {
       const q = original(tabla);
-      if (!(tabla in limite)) return q;
+      if (!(tabla in limite) || enAdministracion()) return q;
       const select = q.select.bind(q);
       q.select = (...args) => select(...args).eq('id', limite[tabla]);
       return q;
@@ -321,12 +316,13 @@
 
   // Empresa activa: selector con las empresas del usuario y su rol (el Super Administrador, todas las
   // activas por organización). Con una sola empresa, solo su nombre.
-  async function selectorEmpresa(nombre) {
+  async function selectorEmpresa(nombre, donde = 'encabezado') {
     let lista = empresas;
     let grupos = null;
     if (!lista && perfil.rol_id === 'superadministrador') {
-      const [o, l] = await Promise.all([sb.from('organizaciones').select('id, codigo, nombre').eq('activo', true).order('codigo'),
-        sb.from('localidades').select('id, codigo, nombre_comercial, organizacion_id').eq('activo', true).order('codigo')]);
+      const desde = sb.__fromOriginal || sb.from.bind(sb);
+      const [o, l] = await Promise.all([desde('organizaciones').select('id, codigo, nombre').eq('activo', true).order('codigo'),
+        desde('localidades').select('id, codigo, nombre_comercial, organizacion_id').eq('activo', true).order('codigo')]);
       lista = l.data || [];
       grupos = (o.data || []).map((x) => ({ o: x, locs: lista.filter((y) => y.organizacion_id === x.id) })).filter((g) => g.locs.length);
     }
@@ -334,7 +330,43 @@
     const rolDe = (r) => (roles.find((x) => x.id === r) || {}).nombre || r;
     const opcion = (x) => `<option value="${x.id}" ${x.id === perfil.localidad_id ? 'selected' : ''}>${esc(x.nombre_comercial)} · ${esc(x.codigo)}${x.rol_id ? ` — ${esc(rolDe(x.rol_id))}` : ''}</option>`;
     return `<label class="empresa-activa" title="Empresa activa: al cambiarla se aplican tu rol y permisos en ella"><span class="oculto">Empresa activa</span>
-      <select data-empresa-activa aria-label="Empresa activa">${grupos ? grupos.map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.locs.map(opcion).join('')}</optgroup>`).join('') : lista.map(opcion).join('')}</select></label>`;
+      <select data-empresa-activa="${donde}" aria-label="Empresa activa">${grupos ? grupos.map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.locs.map(opcion).join('')}</optgroup>`).join('') : lista.map(opcion).join('')}</select></label>`;
+  }
+
+  // Cambiar la empresa conectada desde un selector (encabezado o Inicio): aplica su rol y recarga.
+  function conectarSelector(selEmp) {
+    if (!selEmp) return;
+    selEmp.addEventListener('change', async () => {
+      selEmp.disabled = true;
+      const { error } = await sb.rpc('cambiar_empresa_activa', { p_localidad: Number(selEmp.value) });
+      if (error) { selEmp.disabled = false; selEmp.value = String(perfil.localidad_id); return aviso(error.message); }
+      try { sessionStorage.setItem(CLAVE_EMPRESA, selEmp.value); } catch (e) { /* sin almacenamiento */ }
+      location.hash = '#/';
+      location.reload();
+    });
+  }
+
+  // Inicio: la empresa a la que está conectado el usuario, su rol y el cambio de empresa.
+  async function pintarConexion() {
+    const caja = vista.querySelector('[data-conexion]');
+    if (!caja) return;
+    const desde = sb.__fromOriginal || sb.from.bind(sb);
+    const [l, o] = await Promise.all([
+      perfil.localidad_id ? desde('localidades').select('codigo, nombre_comercial').eq('id', perfil.localidad_id).maybeSingle() : { data: null },
+      perfil.organizacion_id ? desde('organizaciones').select('codigo, nombre').eq('id', perfil.organizacion_id).maybeSingle() : { data: null }
+    ]);
+    const loc = l.data;
+    const org = o.data;
+    if (!loc || !caja.isConnected) return;
+    const selector = await selectorEmpresa(loc.nombre_comercial, 'inicio');
+    const varias = selector.includes('data-empresa-activa');
+    caja.innerHTML = `<span class="cx-icono"><i class="ti ti-building-community" aria-hidden="true"></i></span>
+      <div class="cx-texto"><small>Conectado a la empresa</small>
+        <b>${esc(loc.codigo)} · ${esc(loc.nombre_comercial)}</b>
+        <span>${esc(org ? `${org.codigo} · ${org.nombre}` : '')} · Rol: <b>${esc(nombreRol())}</b>. Todos los módulos y operaciones corresponden a esta empresa.</span></div>
+      ${varias ? `<div class="cx-cambiar"><span>Cambiar de empresa</span>${selector}</div>` : ''}`;
+    conectarSelector(caja.querySelector('[data-empresa-activa]'));
+    caja.hidden = false;
   }
 
   function marcarActivo(ruta) {
@@ -362,6 +394,7 @@
   function inicio() {
     migas.innerHTML = '<span>Panel ejecutivo</span>';
     const lista = visibles();
+    setTimeout(pintarConexion, 0); // después de pintar el panel
     vista.innerHTML = `
       <div class="titulo">
         <div>
@@ -369,6 +402,7 @@
           <p>Resumen general de la empresa y acceso a los módulos.</p>
         </div>
       </div>
+      <section class="conexion" data-conexion hidden></section>
 
       <div class="indicadores">
         ${INDICADORES.map((k) => `

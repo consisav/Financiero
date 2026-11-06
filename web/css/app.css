@@ -3431,3 +3431,14 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 /* Generar clave: clave personalizada. */
 .clave-propia input { flex: 1; min-width: 0; }
 .clave-cambiar { display: inline-flex; margin: 6px 0 2px; font-size: 13px; }
+
+/* Inicio: empresa conectada y cambio de empresa. */
+.conexion { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--borde); border-left: 4px solid var(--acento); border-radius: 0 12px 12px 0; padding: 14px 18px; margin: 0 0 18px; }
+.cx-icono { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--acento-fondo); color: var(--acento); font-size: 22px; flex-shrink: 0; }
+.cx-texto { flex: 1; display: grid; gap: 2px; min-width: 260px; }
+.cx-texto small { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); font-weight: 600; }
+.cx-texto > b { font-size: 18px; }
+.cx-texto span { font-size: 13px; color: var(--suave); }
+.cx-cambiar { display: grid; gap: 4px; }
+.cx-cambiar > span { font-size: 12px; font-weight: 600; color: var(--suave); }
+.cx-cambiar .empresa-activa select { font-size: 14px; font-weight: 600; border-color: var(--borde); background: var(--panel); padding: 7px 10px; margin: 0; max-width: 420px; }
