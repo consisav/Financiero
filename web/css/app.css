@@ -3917,3 +3917,20 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-consulta-cheques.cqc-compras .cq-det .pc-lineas { overflow-x: auto; }
 .bk-consulta-cheques.cqc-compras .cq-det td { white-space: nowrap; }
 .bk-consulta-cheques.cqc-compras .cq-det td.cc-nombre { max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Consultar Compras: tabla compacta sin desplazamiento horizontal (documento y tipo, proveedor y NIT,
+   total e IVA, y estado con contabilización en una sola celda de dos líneas). */
+.bk-consulta-cheques.cqc-compras .bk-maestro .ta-tabla { overflow-x: hidden; }
+.ccq-tabla { table-layout: fixed; width: 100%; min-width: 0 !important; }
+.ccq-tabla col.w-num { width: 74px; } .ccq-tabla col.w-fecha { width: 96px; } .ccq-tabla col.w-doc { width: 190px; }
+.ccq-tabla col.w-clas { width: 130px; } .ccq-tabla col.w-total { width: 128px; } .ccq-tabla col.w-saldo { width: 104px; }
+.ccq-tabla col.w-estado { width: 170px; } .ccq-tabla col.w-acc { width: 112px; }
+.ccq-tabla td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.ccq-tabla td b { display: block; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.ccq-tabla td small { display: block; font-size: 11px; color: var(--tenue); overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.ccq-tabla .ccq-doc { font-weight: 500; }
+.ccq-estado .pc-marca { font-size: 10.5px; }
+.ccq-ver { padding: 5px 10px; }
+.ccq-tabla col.w-acc { width: 122px; } .ccq-tabla col.w-estado { width: 160px; }
+.ccq-tabla td.cq-acc { overflow: visible; text-align: right; padding-right: 12px; }
+.ccq-ver { font-size: 12.5px; padding: 4px 9px; }

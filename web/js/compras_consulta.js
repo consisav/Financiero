@@ -165,17 +165,20 @@
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Compra, documento, proveedor, NIT…" value="${esc(f.buscar)}" aria-label="Buscar compras"></label>
         </header>
         <div class="ta-tabla cc-tabla">
-          <table><thead><tr>${ordenTh('numero', 'Compra', 'num')}<th>Tipo</th><th>Documento</th>${ordenTh('fecha', 'Fecha')}<th>Proveedor</th><th>Clasificación</th>${ordenTh('total', 'Total', 'num')}<th class="num">IVA</th><th class="num">Saldo</th><th>Estado</th><th>Contabilizada</th><th>Mes</th><th class="cq-acc"></th></tr></thead>
-            <tbody>${filas.map((c) => { const b = bloqueo(c); const sim = ctx.moneda(c.moneda_id)?.simbolo || 'Q'; return `<tr data-compra="${c.id}" class="${sel && sel.id === c.id ? 'actual' : ''} ${c.estado === 'ANULADA' ? 'pc-anulada' : ''}" tabindex="0">
+          <table class="ccq-tabla"><colgroup><col class="w-num"><col class="w-fecha"><col class="w-doc"><col><col class="w-clas"><col class="w-total"><col class="w-saldo"><col class="w-estado"><col class="w-acc"></colgroup>
+            <thead><tr>${ordenTh('numero', 'Compra', 'num')}${ordenTh('fecha', 'Fecha')}<th>Documento</th><th>Proveedor · NIT</th><th>Clasificación</th>${ordenTh('total', 'Total · IVA', 'num')}<th class="num">Saldo</th><th>Estado</th><th aria-label="Consultar"></th></tr></thead>
+            <tbody>${filas.map((c) => { const b = bloqueo(c); const sim = ctx.moneda(c.moneda_id)?.simbolo || 'Q'; const tipo = (c.tipo_dte || c.tipo_documento || '').replace('FACTURA ', 'F. '); return `<tr data-compra="${c.id}" class="${sel && sel.id === c.id ? 'actual' : ''} ${c.estado === 'ANULADA' ? 'pc-anulada' : ''}" tabindex="0">
               <td class="num fuerte">${c.numero}${c.origen_anterior ? `<small class="cq-ant" title="Compra ${c.origen_anterior === 'VARIAS' ? 'varia' : 'de medicamentos'} ${c.compra_anterior} del sistema anterior${c.compra_varia_anterior ? ` · compra varia ${c.compra_varia_anterior}` : ''}">ant. ${c.compra_anterior}</small>` : ''}</td>
-              <td><span class="pc-tipo">${esc((c.tipo_dte || c.tipo_documento || '').replace('FACTURA ', 'F. '))}</span></td><td>${esc(docTxt(c))}</td><td>${esc(fmt.fechaDia(c.fecha_documento))}</td>
-              <td class="cc-nombre" title="${esc(c.proveedor_nombre)}">${esc(c.proveedor_codigo ? `${c.proveedor_codigo} · ` : '')}${esc(c.proveedor_nombre)}</td><td>${esc(c.clasificacion || '')}</td>
-              <td class="num">${esc(sim)} ${fmt.monto(c.valor_total)}</td><td class="num">${fmt.monto(c.iva)}</td><td class="num ${c.pendiente > 0 && c.estado === 'ACTIVA' ? 'cq-saldo' : ''}">${c.estado === 'ACTIVA' ? fmt.monto(c.pendiente) : '—'}</td>
-              <td><span class="pc-marca ${c.estado === 'ANULADA' ? 'anulada' : c.pendiente <= 0 ? 'definitiva' : 'pendiente'}">${c.estado === 'ANULADA' ? 'Anulada' : c.pendiente <= 0 ? 'Pagada' : 'Por pagar'}</span></td>
-              <td>${contabilizada(c) ? `<span class="pc-marca aprobada" title="${c.partida_id ? 'Partida generada en el sistema' : 'Contabilizada en el sistema anterior'}">${c.partida_id ? 'Partida' : 'Sist. anterior'}</span>` : '<span class="tk-tenue">No</span>'}</td>
-              <td>${cerrado(c) ? '<span class="pc-marca anulada">Cerrado</span>' : '<span class="tk-tenue">Abierto</span>'}</td>
-              <td class="cq-acc">${ctx.admin ? `<button type="button" class="boton secundario-sm" data-consultar="${c.id}" title="${esc(b ? `Abrir en Ingreso de compras para consultarla (no se puede modificar: ${b})` : 'Abrir en Ingreso de compras para consultarla')}"><i class="ti ti-eye" aria-hidden="true"></i> Consultar</button>` : ''}</td></tr>`; }).join('')
-              || `<tr><td colspan="13" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : 'No hay compras con estos parámetros.'}</td></tr>`}</tbody></table>
+              <td>${esc(fmt.fechaDia(c.fecha_documento))}</td>
+              <td title="${esc(`${tipo} ${docTxt(c)}`)}"><b class="ccq-doc">${esc(docTxt(c))}</b><small>${esc(tipo)}</small></td>
+              <td class="cc-nombre" title="${esc(c.proveedor_nombre)}"><b>${esc(c.proveedor_nombre)}</b><small>${esc([c.proveedor_codigo && `Cód. ${c.proveedor_codigo}`, c.nit && `NIT ${c.nit}`].filter(Boolean).join(' · '))}</small></td>
+              <td title="${esc(c.clasificacion || '')}">${esc(c.clasificacion || '')}</td>
+              <td class="num"><b>${esc(sim)} ${fmt.monto(c.valor_total)}</b><small>IVA ${fmt.monto(c.iva)}</small></td>
+              <td class="num ${c.pendiente > 0 && c.estado === 'ACTIVA' ? 'cq-saldo' : ''}">${c.estado === 'ACTIVA' ? fmt.monto(c.pendiente) : '—'}</td>
+              <td class="ccq-estado"><span class="pc-marca ${c.estado === 'ANULADA' ? 'anulada' : c.pendiente <= 0 ? 'definitiva' : 'pendiente'}">${c.estado === 'ANULADA' ? 'Anulada' : c.pendiente <= 0 ? 'Pagada' : 'Por pagar'}</span>${cerrado(c) ? ' <span class="pc-marca anulada" title="Mes cerrado">Cerrado</span>' : ''}
+                <small title="${contabilizada(c) ? (c.partida_id ? 'Partida generada en el sistema' : 'Contabilizada en el sistema anterior') : 'Sin contabilizar'}">${contabilizada(c) ? (c.partida_id ? 'Con partida' : 'Contab. sistema anterior') : 'Sin contabilizar'}</small></td>
+              <td class="cq-acc">${ctx.admin ? `<button type="button" class="boton secundario-sm ccq-ver" data-consultar="${c.id}" title="${esc(b ? `Abrir en Ingreso de compras para consultarla (no se puede modificar: ${b})` : 'Abrir en Ingreso de compras para consultarla')}"><i class="ti ti-eye" aria-hidden="true"></i> Consultar</button>` : ''}</td></tr>`; }).join('')
+              || `<tr><td colspan="9" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : 'No hay compras con estos parámetros.'}</td></tr>`}</tbody></table>
         </div>`;
     }
 
