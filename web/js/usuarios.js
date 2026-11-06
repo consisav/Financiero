@@ -44,6 +44,8 @@
       const { data, error } = await sb.from('perfiles').select('*').order('usuario', { nullsFirst: false }).order('nombre');
       if (error) { panel.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       estado.filas = data;
+      const pe = await sb.from('perfil_empresas').select('perfil_id, localidad_id, rol_id, activo');
+      estado.pe = pe.error ? null : pe.data || [];
       if (admin) {
         const pm = await sb.from('usuarios_migrados').select('*').is('perfil_id', null).order('usuario_anterior');
         estado.migrados = pm.error ? [] : pm.data;
@@ -58,9 +60,19 @@
       (!estado.filtroOrg || u.organizacion_id === Number(estado.filtroOrg)) &&
       (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc) || (u.localidades_adicionales || []).includes(Number(estado.filtroLoc))));
 
+    // Empresas a las que entra el usuario con su rol en cada una; sin el script 96, la empresa del
+    // perfil y sus localidades adicionales con el mismo rol.
+    const empresasDe = (u) => estado.pe
+      ? estado.pe.filter((x) => x.perfil_id === u.id && x.activo).sort((a, b) => ((loc(a.localidad_id) || {}).codigo || '').localeCompare((loc(b.localidad_id) || {}).codigo || ''))
+      : [u.localidad_id, ...(u.localidades_adicionales || [])].filter(Boolean).map((id) => ({ localidad_id: id, rol_id: u.rol_id }));
     const visibles = () => estado.filas.filter((u) =>
       (!estado.filtroOrg || u.organizacion_id === Number(estado.filtroOrg)) &&
-      (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc) || (u.localidades_adicionales || []).includes(Number(estado.filtroLoc))));
+      (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc) || empresasDe(u).some((x) => x.localidad_id === Number(estado.filtroLoc))));
+    // «+N» con las otras empresas del usuario y su rol en cada una.
+    const masEmpresas = (u) => {
+      const otras = empresasDe(u).filter((x) => x.localidad_id !== u.localidad_id);
+      return otras.length ? ` <span class="us-mas" title="También en ${esc(otras.map((x) => `${(loc(x.localidad_id) || {}).codigo} (${rol(x.rol_id)})`).join(', '))}">+${otras.length}</span>` : '';
+    };
 
     const empresa = (idOrg, idLoc) => idLoc
       ? `<span class="codigo">${esc((loc(idLoc) || {}).codigo || '')}</span> ${esc((loc(idLoc) || {}).nombre_comercial || '')}`
@@ -107,7 +119,7 @@
                   <td class="angosta"><span class="codigo">${esc(f.usuario) || '—'}</span></td>
                   <td class="fuerte">${esc(f.nombre) || '—'}</td>
                   <td>${esc(f.correo)}</td>
-                  <td>${empresa(f.organizacion_id, f.localidad_id)}${mas(f.localidades_adicionales)}</td>
+                  <td>${empresa(f.organizacion_id, f.localidad_id)}${masEmpresas(f)}</td>
                   <td>${esc(rol(f.rol_id))}</td>
                   <td>${window.UI.estado(f.activo)}${f.fecha_vence_clave && f.fecha_vence_clave < hoy() ? ' <span class="estado vencida">Clave vencida</span>' : ''}</td>
                   <td class="acciones">${puedeModificar(f) ? `<button type="button" class="icono-editar" data-editar="${f.id}" aria-label="Modificar"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}</td>
@@ -133,9 +145,8 @@
               <div><b>${esc(u.nombre) || '—'}</b><small><span class="codigo">${esc(u.usuario) || '—'}</span> · ${esc(u.correo)}</small></div>
             </div>
             <dl class="us-ficha-datos">
-              <div><dt>Rol</dt><dd>${esc(rol(u.rol_id))}</dd></div>
-              <div><dt>Empresa</dt><dd>${u.organizacion_id ? `${org(u.organizacion_id).codigo} · ` : ''}${empresa(u.organizacion_id, u.localidad_id)}</dd></div>
-              ${adicionales(u.localidades_adicionales).length ? `<div><dt>También en</dt><dd>${esc(adicionales(u.localidades_adicionales).join(', '))}</dd></div>` : ''}
+              <div><dt>Empresa activa · rol</dt><dd>${u.organizacion_id ? `${org(u.organizacion_id).codigo} · ` : ''}${empresa(u.organizacion_id, u.localidad_id)} · ${esc(rol(u.rol_id))}</dd></div>
+              ${empresasDe(u).length > 1 ? `<div><dt>Empresas y roles</dt><dd class="us-roles">${empresasDe(u).map((x) => `<span class="${x.localidad_id === u.localidad_principal_id ? 'principal' : ''}" title="${x.localidad_id === u.localidad_principal_id ? 'Empresa principal' : ''}">${esc((loc(x.localidad_id) || {}).codigo || '')} ${esc(rol(x.rol_id))}</span>`).join('')}</dd></div>` : ''}
               <div><dt>Creado</dt><dd>${u.creado_en ? new Date(u.creado_en).toLocaleDateString('es-GT', { timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-') : '—'}</dd></div>
               <div><dt>Vence clave</dt><dd class="${vencida ? 'pc-rojo' : ''}">${fechaCorta(u.fecha_vence_clave) || '—'}</dd></div>
               <div><dt>Empleado</dt><dd>${esc(u.empleado) || '—'}</dd></div>
@@ -166,24 +177,27 @@
     }
     window.addEventListener('resize', function alto() { if (!panel.isConnected) return window.removeEventListener('resize', alto); ajustarAlto(); });
 
+    let formRef = null; // formulario abierto de Modificar usuario (para leer su tabla de empresas)
     function formUsuario(u) {
       if (!puedeModificar(u)) { window.FIN.aviso('Solo el Super Administrador puede modificar a un Super Administrador.'); return; }
       const propio = u.id === yo.id;
-      const rolesActivos = roles.filter((r) => r.activo !== false || r.id === u.rol_id);
+      // Roles activos más los que el usuario ya tiene en alguna empresa (aunque se hayan desactivado).
+      const usados = new Set([u.rol_id, ...empresasDe(u).map((x) => x.rol_id)]);
+      const rolesActivos = roles.filter((r) => r.activo !== false || usados.has(r.id));
       const firmaActual = estado.sel && estado.sel.id === u.id ? estado.firma : null;
       formulario({
         titulo: `Modificar usuario · ${u.nombre || u.correo}`,
-        valores: { ...u, firma: firmaActual },
+        valores: { ...u, localidad_principal_id: u.localidad_principal_id || u.localidad_id, firma: firmaActual },
         campos: [
           { nombre: 'usuario', etiqueta: 'Usuario (código)', patron: '[A-Za-z0-9]{2,20}', max: 20,
             placeholder: window.UI.proponerUsuario ? window.UI.proponerUsuario(u.nombre || '', []) || 'Oasturias' : 'Oasturias' },
           { nombre: 'nombre', etiqueta: 'Nombre', requerido: true },
           { nombre: 'organizacion_id', etiqueta: 'Organización', tipo: 'select-numero', requerido: true,
             opciones: estado.orgs.map((x) => ({ valor: x.id, texto: `${x.codigo} · ${x.nombre}` })) },
-          { nombre: 'localidad_id', etiqueta: 'Localidad', tipo: 'select-numero', requerido: true, opciones: [] },
-          // El rol solo lo cambia el Super Administrador (también el suyo; la base de datos impide
-          // quitarle el rol al último Super Administrador).
-          ...(superAdmin ? [{ nombre: 'rol_id', etiqueta: 'Rol', tipo: 'select', requerido: true, opciones: rolesActivos.map((r) => ({ valor: r.id, texto: r.nombre })) }] : []),
+          { nombre: 'localidad_principal_id', etiqueta: 'Empresa principal', tipo: 'select-numero', requerido: true, opciones: [] },
+          // El rol de cada empresa va en la tabla de empresas; el Super Administrador lo es en todas y su
+          // rol se cambia aquí (la base de datos impide quitarle el rol al último Super Administrador).
+          ...(superAdmin && u.rol_id === 'superadministrador' ? [{ nombre: 'rol_id', etiqueta: 'Rol (en todas las empresas)', tipo: 'select', requerido: true, opciones: rolesActivos.map((r) => ({ valor: r.id, texto: r.nombre })) }] : []),
           ...(propio ? [] : [{ nombre: 'activo', etiqueta: 'Activo', tipo: 'casilla' }]),
           { nombre: 'fecha_vence_clave', etiqueta: 'Fecha vence clave', tipo: 'fecha' },
           { nombre: 'empleado', etiqueta: 'Empleado' },
@@ -191,21 +205,55 @@
           { nombre: 'firma', etiqueta: 'Firma', tipo: 'imagen' }
         ],
         alPreparar: (form) => {
+          formRef = form;
           const selOrg = form.elements.organizacion_id;
-          const selLoc = form.elements.localidad_id;
+          const selLoc = form.elements.localidad_principal_id;
           const llenar = (idOrg, valor) => {
             const lista = estado.locs.filter((x) => x.organizacion_id === Number(idOrg));
             selLoc.innerHTML = '<option value="">Seleccionar…</option>' + lista.map((x) =>
               `<option value="${x.id}" ${x.id === valor ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('');
           };
-          llenar(u.organizacion_id, u.localidad_id);
-          selOrg.addEventListener('change', () => llenar(selOrg.value));
+          // Tabla: empresas de la organización, acceso y rol en cada una (el Super Administrador, todas).
+          const caja = document.createElement('div');
+          caja.className = 'campo completo us-empresas';
+          selLoc.closest('label, .campo').after(caja);
+          const actuales = new Map(empresasDe(u).map((x) => [x.localidad_id, x.rol_id]));
+          const opcionesRol = (val) => rolesActivos.filter((r) => r.id !== 'superadministrador').map((r) => `<option value="${r.id}" ${r.id === val ? 'selected' : ''}>${esc(r.nombre)}</option>`).join('');
+          const tabla = (idOrg) => {
+            const lista = estado.locs.filter((x) => x.organizacion_id === Number(idOrg));
+            const principal = Number(selLoc.value) || null;
+            if (u.rol_id === 'superadministrador') { caja.innerHTML = '<span>Empresas</span><p class="us-nota"><i class="ti ti-shield-check" aria-hidden="true"></i> Super Administrador: entra a todas las empresas con todos los permisos.</p>'; return; }
+            caja.innerHTML = `<span>Empresas y rol en cada una</span>
+              <div class="us-emp-tabla"><table><thead><tr><th>Acceso</th><th>Empresa</th><th>Rol en la empresa</th></tr></thead>
+                <tbody>${lista.map((x) => { const tiene = actuales.has(x.id) || x.id === principal; return `<tr data-emp="${x.id}">
+                  <td><input type="checkbox" data-acceso ${tiene ? 'checked' : ''} ${x.id === principal ? 'disabled title="La empresa principal siempre tiene acceso"' : ''} aria-label="Acceso a ${esc(x.codigo)}"></td>
+                  <td>${esc(x.codigo)} · ${esc(x.nombre_comercial)}${x.id === principal ? ' <span class="us-mas">principal</span>' : ''}${x.id === u.localidad_id ? ' <span class="us-mas">activa</span>' : ''}</td>
+                  <td><select data-rol ${superAdmin ? '' : 'disabled title="Solo el Super Administrador cambia roles"'} ${tiene ? '' : 'hidden'} aria-label="Rol en ${esc(x.codigo)}">${opcionesRol(actuales.get(x.id) || u.rol_id)}</select></td></tr>`; }).join('') || '<tr><td colspan="3" class="vacio">La organización no tiene empresas.</td></tr>'}</tbody></table></div>
+              <div class="us-emp-acc"><button type="button" class="boton secundario-sm" data-todas>Todas las empresas</button>${superAdmin ? '<button type="button" class="boton secundario-sm" data-mismo-rol>Mismo rol en todas</button>' : ''}</div>`;
+          };
+          llenar(u.organizacion_id, u.localidad_principal_id || u.localidad_id);
+          tabla(u.organizacion_id);
+          selOrg.addEventListener('change', () => { actuales.clear(); llenar(selOrg.value); tabla(selOrg.value); });
+          selLoc.addEventListener('change', () => { caja.querySelectorAll('tr[data-emp]').forEach((tr) => { if (tr.querySelector('[data-acceso]').checked) actuales.set(Number(tr.dataset.emp), tr.querySelector('[data-rol]').value); }); tabla(selOrg.value); });
+          caja.addEventListener('change', (e) => { if (e.target.matches('[data-acceso]')) e.target.closest('tr').querySelector('[data-rol]').hidden = !e.target.checked; });
+          caja.addEventListener('click', (e) => {
+            if (e.target.closest('[data-todas]')) caja.querySelectorAll('tr[data-emp]').forEach((tr) => { tr.querySelector('[data-acceso]').checked = true; tr.querySelector('[data-rol]').hidden = false; });
+            if (e.target.closest('[data-mismo-rol]')) { const p = caja.querySelector(`tr[data-emp="${selLoc.value}"] [data-rol]`) || caja.querySelector('[data-rol]'); caja.querySelectorAll('[data-rol]').forEach((x) => { x.value = p.value; }); }
+          });
         },
         alGuardar: async (d) => {
           const firma = d.firma;
           delete d.firma;
-          // Al cambiar de organización, las localidades adicionales (de la anterior) se quitan.
-          if (d.organizacion_id && d.organizacion_id !== u.organizacion_id) d.localidades_adicionales = [];
+          // Empresas marcadas en la tabla con su rol.
+          const elegidas = u.rol_id === 'superadministrador' ? [] : [...formRef.querySelectorAll('.us-empresas tr[data-emp]')]
+            .filter((tr) => tr.querySelector('[data-acceso]').checked || Number(tr.dataset.emp) === d.localidad_principal_id)
+            .map((tr) => ({ localidad_id: Number(tr.dataset.emp), rol_id: tr.querySelector('[data-rol]').value }));
+          if (u.rol_id !== 'superadministrador' && !elegidas.length) throw new Error('Marca al menos una empresa para el usuario.');
+          if (elegidas.some((x) => !x.rol_id)) throw new Error('Elige el rol de cada empresa marcada.');
+          const cambiaOrg = d.organizacion_id !== u.organizacion_id;
+          // La empresa activa sigue si aún tiene acceso; si no (o cambió la organización), pasa a la principal.
+          if (cambiaOrg || (u.rol_id !== 'superadministrador' && !elegidas.some((x) => x.localidad_id === u.localidad_id))) d.localidad_id = d.localidad_principal_id;
+          if (cambiaOrg) d.localidades_adicionales = [];
           const { error } = await sb.from('perfiles').update(d).eq('id', u.id);
           if (error) {
             if (/perfiles_usuario_key|perfiles_usuario_unico|duplicate/i.test(error.message)) throw new Error(`Ya existe otro usuario con el código ${d.usuario}.`);
@@ -214,6 +262,22 @@
             if (/perfiles_activo_con_localidad/i.test(error.message)) throw new Error('Un usuario activo debe tener organización y localidad.');
             if (/perfiles_localidad_fkey/i.test(error.message)) throw new Error('La localidad no pertenece a la organización elegida.');
             throw error;
+          }
+          // Empresas del usuario: se quitan las desmarcadas, se agregan las nuevas y se cambia el rol
+          // (solo el Super Administrador) de las que ya tenía.
+          if (estado.pe && u.rol_id !== 'superadministrador') {
+            const { data: antes } = await sb.from('perfil_empresas').select('localidad_id, rol_id').eq('perfil_id', u.id);
+            const previas = new Map((antes || []).map((x) => [x.localidad_id, x.rol_id]));
+            const quitar = [...previas.keys()].filter((id) => !elegidas.some((x) => x.localidad_id === id));
+            if (quitar.length) { const r = await sb.from('perfil_empresas').delete().eq('perfil_id', u.id).in('localidad_id', quitar); if (r.error) throw r.error; }
+            const nuevas = elegidas.filter((x) => !previas.has(x.localidad_id));
+            if (nuevas.length) { const r = await sb.from('perfil_empresas').insert(nuevas.map((x) => ({ perfil_id: u.id, localidad_id: x.localidad_id, rol_id: superAdmin ? x.rol_id : (d.rol_id || u.rol_id) }))); if (r.error) throw r.error; }
+            if (superAdmin) {
+              for (const x of elegidas.filter((y) => previas.has(y.localidad_id) && previas.get(y.localidad_id) !== y.rol_id)) {
+                const r = await sb.from('perfil_empresas').update({ rol_id: x.rol_id }).eq('perfil_id', u.id).eq('localidad_id', x.localidad_id);
+                if (r.error) throw r.error;
+              }
+            }
           }
           let fallo = null;
           if (firma && (firma.archivo || firma.quitar)) {
@@ -231,8 +295,8 @@
             } catch (err) { fallo = err; }
           }
           window.FIN.aviso(fallo ? `Usuario guardado, pero no se pudo guardar la firma: ${fallo.message}` : 'Usuario guardado');
-          // Si cambió su propio rol, se recarga para aplicar los nuevos permisos.
-          if (propio && d.rol_id && d.rol_id !== u.rol_id) { location.reload(); return; }
+          // Si cambió su propio rol o su empresa, se recarga para aplicar los nuevos permisos.
+          if (propio) { const { data: yoAhora } = await sb.from('perfiles').select('rol_id, localidad_id').eq('id', u.id).maybeSingle(); if (yoAhora && (yoAhora.rol_id !== u.rol_id || yoAhora.localidad_id !== u.localidad_id)) { location.reload(); return; } }
           await cargar(u.id);
         }
       });

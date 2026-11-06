@@ -3402,3 +3402,19 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cq-orden { cursor: pointer; user-select: none; white-space: nowrap; }
 .cq-orden:hover, .cq-orden.activo { color: var(--acento); }
 .cq-orden i { font-size: 13px; vertical-align: -2px; }
+
+/* Encabezado: empresa activa (rol por empresa). */
+.empresa-activa select { font: inherit; font-size: 17px; font-weight: 700; color: var(--texto); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 1px 4px; margin-left: -5px; max-width: 360px; cursor: pointer; }
+.empresa-activa select:hover, .empresa-activa select:focus { border-color: var(--borde); background: var(--panel); }
+/* Usuarios: tabla de empresas y rol en cada una. */
+.us-empresas .us-emp-tabla { max-height: 190px; overflow: auto; border: 1px solid var(--borde); border-radius: 8px; }
+.us-empresas table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.us-empresas th { text-align: left; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); padding: 6px 8px; position: sticky; top: 0; background: var(--panel); }
+.us-empresas td { padding: 4px 8px; border-top: 1px solid var(--borde); }
+.us-empresas select { font: inherit; font-size: 13px; padding: 3px 6px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); color: var(--texto); }
+.us-emp-acc { display: flex; gap: 8px; margin-top: 6px; }
+.us-nota { margin: 4px 0 0; font-size: 13px; color: var(--suave); display: flex; gap: 6px; align-items: center; }
+.us-roles { display: flex; flex-wrap: wrap; gap: 4px; white-space: normal; }
+.us-roles span { font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--fondo); border: 1px solid var(--borde); }
+.us-roles span.principal { background: var(--acento-fondo); color: var(--acento); border-color: transparent; }
+.empresa-activa .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -68,6 +68,13 @@
       }
       ctx.organizaciones = o.data || [];
       ctx.localidades = l.data || [];
+      // Solo las empresas a las que entra el usuario (rol por empresa, script 96).
+      const permitidas = window.FIN.empresas && window.FIN.empresas();
+      if (permitidas) {
+        const ids = new Set(permitidas.map((x) => x.id));
+        ctx.localidades = ctx.localidades.filter((x) => ids.has(x.id));
+        ctx.organizaciones = ctx.organizaciones.filter((x) => ctx.localidades.some((y) => y.organizacion_id === x.id));
+      }
       ctx.monedas = (m.data || []).map((x) => ({ ...x, cambio: x.iso === 'GTQ' ? 1 : Number((tc.data || []).find((c) => c.moneda_id === x.id)?.valor_venta || 1) }));
       ctx.bancos = b.data || [];
       if (!seleccion.org) seleccion.org = ctx.organizaciones[0]?.id || null;

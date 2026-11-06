@@ -15,6 +15,7 @@
   let perfil = null;      // fila de public.perfiles del usuario actual
   let permisos = {};      // modulo -> { puede_ver, puede_editar }
   let roles = [];
+  let empresas = null;    // empresas del usuario [{ id, codigo, nombre_comercial, organizacion_id, rol_id }]; null = todas (Super Administrador o sin script 96)
 
   // Lo que necesitan las pantallas de catálogos (js/geografia.js, js/organizaciones.js…)
   window.PANTALLAS = window.PANTALLAS || {};
@@ -27,6 +28,8 @@
     esAdmin: () => !!perfil && perfil.activo && ['superadministrador', 'administrador'].includes(perfil.rol_id),
     esSuperAdmin: () => !!perfil && perfil.activo && perfil.rol_id === 'superadministrador',
     urlSitio,
+    // Empresas (localidades) a las que entra el usuario; null = todas.
+    empresas: () => empresas,
     // Debe coincidir con public.puede_editar_catalogos() en Supabase
     puedeEditarCatalogos: () => !!perfil && perfil.activo && ['superadministrador', 'administrador'].includes(perfil.rol_id)
   };
@@ -168,6 +171,12 @@
     permisos = Object.fromEntries((pm || []).map((x) => [x.modulo, x]));
     // Un módulo nuevo sin permisos propios todavía (falta su script) usa los del módulo que indica "hereda".
     MODULOS.forEach((m) => { if (m.hereda && !permisos[m.id] && permisos[m.hereda]) permisos[m.id] = permisos[m.hereda]; });
+    // Empresas del usuario con su rol (script 96). El Super Administrador entra a todas.
+    empresas = null;
+    if (perfil.rol_id !== 'superadministrador') {
+      const pe = await sb.from('perfil_empresas').select('rol_id, localidad_id, localidades(id, codigo, nombre_comercial, organizacion_id, activo)').eq('perfil_id', perfil.id).eq('activo', true);
+      if (!pe.error && pe.data?.length) empresas = pe.data.filter((x) => x.localidades?.activo !== false).map((x) => ({ ...x.localidades, rol_id: x.rol_id })).sort((x, y) => x.codigo.localeCompare(y.codigo));
+    }
     roles = (rs || []).sort((a, b) => (a.orden ?? 99) - (b.orden ?? 99) || a.nombre.localeCompare(b.nombre));
 
     $('acceso').hidden = true;
@@ -217,12 +226,37 @@
       ${logo ? `<img class="marca-logo" src="${esc(logo)}" alt="Logo de ${esc(org.nombre)}">` : ''}
       <span class="marca-iniciales" ${logo ? 'hidden' : ''}>${iniciales}</span>
       ${eslogan ? `<img class="marca-eslogan" src="${esc(eslogan)}" alt="Eslogan de ${esc(org.nombre)}">` : ''}
-      <span class="marca-texto"><b title="${esc(nombre)}">${esc(nombre)}</b><small>${esc([loc && loc.codigo, org && org.nombre].filter(Boolean).join(' · '))}</small></span>`;
+      <span class="marca-texto">${await selectorEmpresa(nombre)}<small>${esc([loc && loc.codigo, org && org.nombre].filter(Boolean).join(' · '))}</small></span>`;
+    const selEmp = caja.querySelector('[data-empresa-activa]');
+    if (selEmp) selEmp.addEventListener('change', async () => {
+      selEmp.disabled = true;
+      const { error } = await sb.rpc('cambiar_empresa_activa', { p_localidad: Number(selEmp.value) });
+      if (error) { selEmp.disabled = false; selEmp.value = String(perfil.localidad_id); return aviso(error.message); }
+      location.reload();
+    });
     const img = caja.querySelector('.marca-logo');
     if (img) img.addEventListener('error', () => { img.remove(); caja.querySelector('.marca-iniciales').hidden = false; });
     const esl = caja.querySelector('.marca-eslogan');
     if (esl) esl.addEventListener('error', () => esl.remove());
     caja.hidden = false;
+  }
+
+  // Empresa activa: selector con las empresas del usuario y su rol (el Super Administrador, todas las
+  // activas por organización). Con una sola empresa, solo su nombre.
+  async function selectorEmpresa(nombre) {
+    let lista = empresas;
+    let grupos = null;
+    if (!lista && perfil.rol_id === 'superadministrador') {
+      const [o, l] = await Promise.all([sb.from('organizaciones').select('id, codigo, nombre').eq('activo', true).order('codigo'),
+        sb.from('localidades').select('id, codigo, nombre_comercial, organizacion_id').eq('activo', true).order('codigo')]);
+      lista = l.data || [];
+      grupos = (o.data || []).map((x) => ({ o: x, locs: lista.filter((y) => y.organizacion_id === x.id) })).filter((g) => g.locs.length);
+    }
+    if (!lista || lista.length < 2) return `<b title="${esc(nombre)}">${esc(nombre)}</b>`;
+    const rolDe = (r) => (roles.find((x) => x.id === r) || {}).nombre || r;
+    const opcion = (x) => `<option value="${x.id}" ${x.id === perfil.localidad_id ? 'selected' : ''}>${esc(x.nombre_comercial)} · ${esc(x.codigo)}${x.rol_id ? ` — ${esc(rolDe(x.rol_id))}` : ''}</option>`;
+    return `<label class="empresa-activa" title="Empresa activa: al cambiarla se aplican tu rol y permisos en ella"><span class="oculto">Empresa activa</span>
+      <select data-empresa-activa aria-label="Empresa activa">${grupos ? grupos.map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.locs.map(opcion).join('')}</optgroup>`).join('') : lista.map(opcion).join('')}</select></label>`;
   }
 
   function marcarActivo(ruta) {
