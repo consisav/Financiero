@@ -19,6 +19,7 @@
     const f = { cuenta: '', tercero: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
     let cuentas = [], cheques = [], sel = null, partidas = {}, compras = new Map();
     let consulta = 0;
+    let rango = null;
     let detalle = { lineas: [], liquida: [], facturas: [] };
 
     const cuenta = (id) => cuentas.find((c) => c.id === id);
@@ -59,6 +60,13 @@
       if (yo !== consulta) return;
       if (r.error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(r.error.message)}</p>`; return; }
       const lista = r.data || [];
+      rango = null;
+      if (!lista.length) {
+        let qr = sb.from('movimientos_bancarios').select('fecha', { count: 'exact' }).eq('localidad_id', loc).eq('tipo', 'CHEQUE');
+        if (f.cuenta) qr = qr.eq('cuenta_bancaria_id', Number(f.cuenta));
+        const [a, b] = await Promise.all([qr.order('fecha').limit(1), sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', loc).eq('tipo', 'CHEQUE').order('fecha', { ascending: false }).limit(1)]);
+        if (a.count) rango = { n: a.count, desde: a.data?.[0]?.fecha, hasta: b.data?.[0]?.fecha };
+      }
       // Partidas y compras liquidadas de cada cheque, por partes.
       partidas = {}; compras = new Map();
       const ids = lista.map((d) => d.id);
@@ -146,7 +154,7 @@
               <td>${d.partida_id ? `<span class="pc-tipo">${esc(partida(d.partida_id))}</span>` : d.origen_anterior ? '<span class="tk-tenue" title="Cheque del sistema anterior">Sist. anterior</span>' : '<span class="tk-tenue">—</span>'}</td>
               <td class="num">${compras.get(d.id) || '<span class="tk-tenue">—</span>'}</td>
               <td class="cq-acc"><button type="button" class="boton secundario-sm" data-consultar="${d.id}" title="Abrir el cheque en Emisión de cheques"><i class="ti ti-eye" aria-hidden="true"></i> Consultar</button></td></tr>`; }).join('')
-              || `<tr><td colspan="12" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : 'No hay cheques con estos parámetros.'}</td></tr>`}</tbody></table>
+              || `<tr><td colspan="12" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : !cheques.length && rango ? `No hay cheques entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> cheques, del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton primario-sm" data-ver-todos>Ver todos</button>` : 'No hay cheques con estos parámetros.'}</td></tr>`}</tbody></table>
         </div>`;
     }
 
@@ -228,6 +236,7 @@
     cont.addEventListener('click', (e) => {
       const q = e.target.closest('[data-consultar]');
       if (q) { location.hash = `#/caja-bancos/emision-de-cheques/${q.dataset.consultar}`; return; }
+      if (e.target.closest('[data-ver-todos]') && rango) { f.desde = rango.desde; f.hasta = rango.hasta > fmt.hoy() ? rango.hasta : fmt.hoy(); sel = null; pintarFiltros(); return consultar(); }
       const th = e.target.closest('[data-ordenar]');
       if (th) { const campo = th.dataset.ordenar; f.dir = f.orden === campo && f.dir === 'desc' ? 'asc' : 'desc'; f.orden = campo; const o = ctx.pFil.querySelector('[name=orden]'); if (o) o.value = `${f.orden}:${f.dir}`; return pintarMaestro(); }
       const tr = e.target.closest('tr[data-cheque]');

@@ -94,6 +94,7 @@
     let documentos = [];    // { tipo, numero, tercero, nombre, valor, fecha, estado }
     let lineas = [];        // { cuenta_id, debe, haber }
     let buscar = '';
+    let rango = null;       // si el período está vacío: cuántos documentos tiene la empresa y sus fechas
 
     const cuentaBancaria = (id) => cuentas.find((c) => c.id === id);
     let otrasCuentas = [];
@@ -176,6 +177,14 @@
       const { data, error } = await q;
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       docs = data;
+      // Sin documentos en el período: cuántos tiene la empresa y entre qué fechas (para ofrecer verlos).
+      rango = null;
+      if (!docs.length) {
+        let qr = sb.from('movimientos_bancarios').select('fecha', { count: 'exact' }).eq('localidad_id', ctx.sel.loc).eq('tipo', cfg.tipo);
+        if (f.cuenta) qr = qr.eq('cuenta_bancaria_id', Number(f.cuenta));
+        const [a, b] = await Promise.all([qr.order('fecha').limit(1), sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', ctx.sel.loc).eq('tipo', cfg.tipo).order('fecha', { ascending: false }).limit(1)]);
+        if (a.count) rango = { n: a.count, desde: a.data?.[0]?.fecha, hasta: b.data?.[0]?.fecha };
+      }
       const ids = [...new Set(docs.map((d) => d.partida_id).filter(Boolean))];
       partidas = {};
       if (ids.length) {
@@ -228,7 +237,7 @@
                     <button type="button" class="tk-accion-btn" data-modificar="${d.id}"><i class="ti ${abierto ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i> ${abierto ? 'Modificar' : 'Ver'}</button>
                     <button type="button" class="tk-accion-btn peligro" data-eliminar="${d.id}" ${ctx.superAdmin && !d.partida_id && !cfg.cheque ? '' : 'disabled'} title="${cfg.cheque ? 'Un cheque no se elimina: anúlalo' : !ctx.superAdmin ? 'Solo el Super Administrador' : d.partida_id ? 'Ya generó su partida: anúlalo' : 'Eliminar'}"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>
                   </td></tr>`;
-              }).join('') || `<tr><td colspan="12" class="tk-vacio"><i class="ti ${cfg.icono}" aria-hidden="true"></i>${!cuentas.length ? 'La localidad no tiene cuentas bancarias: créalas en Bancos · Cuentas bancarias.' : docs.length ? 'Ningún documento coincide con la búsqueda.' : 'No hay documentos en ese rango de fechas.'}</td></tr>`}
+              }).join('') || `<tr><td colspan="12" class="tk-vacio"><i class="ti ${cfg.icono}" aria-hidden="true"></i>${!cuentas.length ? 'La localidad no tiene cuentas bancarias: créalas en Bancos · Cuentas bancarias.' : docs.length ? 'Ningún documento coincide con la búsqueda.' : rango ? `No hay ${esc(cfg.plural)} entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> ${esc(cfg.plural)}, del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton primario-sm" data-ver-todos>Ver todos</button>` : 'No hay documentos en ese rango de fechas.'}</td></tr>`}
             </tbody>
           </table>
         </div>`;
@@ -822,6 +831,10 @@
       if (bm) { await abrir(docs.find((d) => String(d.id) === bm.dataset.modificar), true); return ctx.pDet.querySelector('[name=numero_documento]')?.focus(); }
       const be = e.target.closest('[data-eliminar]');
       if (be) { actual = docs.find((d) => String(d.id) === be.dataset.eliminar); return procesar('ELIMINAR'); }
+      if (e.target.closest('[data-ver-todos]') && rango) {
+        f.desde = rango.desde; f.hasta = rango.hasta > fmt.hoy() ? rango.hasta : fmt.hoy(); actual = null;
+        pintarFiltros(); return consultar();
+      }
       const fila = e.target.closest('tr[data-doc]');
       if (fila) return abrir(docs.find((d) => String(d.id) === fila.dataset.doc));
       const px = e.target.closest('[data-proximamente]');
