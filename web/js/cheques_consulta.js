@@ -1,7 +1,8 @@
 // Caja y Bancos · Cheques · Consulta de Cheques: resumen de los cheques de una empresa (organización y
 // localidad) en un rango de fechas, como Consultar Compras: arriba el maestro con sus totales y abajo el
 // detalle del cheque elegido (detalle contable, compras que liquidó y facturas pagadas).
-// Filtros: cuenta bancaria, beneficiario o proveedor, fechas, estado (vigentes, anulados, conciliados, sin
+// Filtros: cuenta bancaria, beneficiario o proveedor, fechas (la inicial, por omisión, la del primer cheque
+// emitido de la empresa), estado (vigentes, anulados, conciliados, sin
 // conciliar, sin partida) y orden (número, fecha o valor, ascendente o descendente; también con clic en el
 // encabezado). «Consultar» abre el cheque en Emisión de cheques.
 (function () {
@@ -45,6 +46,10 @@
     async function cargarLocalidad() {
       cuentas = await ctx.cuentasBancarias();
       if (f.cuenta && !cuenta(Number(f.cuenta))) f.cuenta = '';
+      // Fecha inicial por omisión: la del primer cheque emitido de la empresa (sin cheques, el 1 de enero).
+      const pr = ctx.sel.loc ? await sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', ctx.sel.loc).eq('tipo', 'CHEQUE').order('fecha').limit(1) : { data: [] };
+      f.desde = pr.data?.[0]?.fecha || `${anio}-01-01`;
+      if (f.hasta < f.desde) f.hasta = fmt.hoy();
       pintarFiltros();
       await consultar();
     }

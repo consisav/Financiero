@@ -1,6 +1,7 @@
 // Compras · Mantenimientos · Consultar Compras: resumen de los ingresos de compras de una empresa
 // (organización y localidad), un proveedor y un rango de fechas: arriba el maestro de compras con sus
 // totales y abajo el detalle de la compra elegida (artículos o compras varias y su detalle contable).
+// Fecha inicial por omisión: la de la primera compra de la empresa.
 // Filtros: clasificación y orden (compra, fecha o total, ascendente o descendente; también con clic en
 // el encabezado de esas columnas). «Consultar» abre la compra en Ingreso de compras; «Modificar ingreso de compra» abre la compra en Registros · Ingreso de compras para
 // modificarla si su mes está abierto y no generó partida en el sistema (lo contabilizado en el sistema
@@ -58,6 +59,10 @@
         loc ? sb.from('cierres_mes').select('anio, mes, cerrado').eq('localidad_id', loc).eq('cerrado', true) : { data: [] }
       ]);
       proveedores = p.data || [];
+      // Fecha inicial por omisión: la de la primera compra de la empresa (sin compras, el 1 de enero).
+      const pr = loc ? await sb.from('compras').select('fecha_documento').eq('localidad_id', loc).order('fecha_documento').limit(1) : { data: [] };
+      f.desde = pr.data?.[0]?.fecha_documento || `${anio}-01-01`;
+      if (f.hasta < f.desde) f.hasta = fmt.hoy();
       cerrados = new Set((k.error ? [] : k.data || []).map((x) => `${x.anio}-${String(x.mes).padStart(2, '0')}`));
       pintarFiltros();
       await consultar();
