@@ -158,6 +158,10 @@
       const { data } = ctx.sel.loc ? await sb.from('transacciones_contables').select('id, numero, descripcion, estado, aplica_poliza, tipo_operacion').eq('localidad_id', ctx.sel.loc).eq('estado', 'ACTIVO').order('numero') : { data: [] };
       transacciones = data || [];
       if (cfg.cheque) await cargarSolicitudes();
+      // Fecha inicial por omisión: la del primer documento de la empresa (sin documentos, el inicio del mes).
+      const pr = ctx.sel.loc ? await sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', ctx.sel.loc).eq('tipo', cfg.tipo).order('fecha').limit(1) : { data: [] };
+      f.desde = pr.data?.[0]?.fecha || `${anio}-${mes}-01`;
+      if (f.hasta < f.desde) f.hasta = fmt.hoy();
     }
 
     async function centrosLocalidad() {
@@ -171,11 +175,17 @@
 
     async function consultar() {
       if (!ctx.sel.loc) { docs = []; pintarMaestro(); return abrir(null); }
-      let q = sb.from('movimientos_bancarios').select('*').eq('localidad_id', ctx.sel.loc).eq('tipo', cfg.tipo).gte('fecha', f.desde).lte('fecha', f.hasta).order('fecha', { ascending: false }).order('folio', { ascending: false });
-      if (f.cuenta) q = q.eq('cuenta_bancaria_id', Number(f.cuenta));
-      if (f.estado) q = q.eq('estado', f.estado);
-      const { data, error } = await q;
-      if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
+      // Por páginas de 1,000 (el servidor devuelve como máximo 1,000 filas por consulta), hasta 10,000.
+      const data = [];
+      for (let p = 0; p < 10000; p += 1000) {
+        let q = sb.from('movimientos_bancarios').select('*').eq('localidad_id', ctx.sel.loc).eq('tipo', cfg.tipo).gte('fecha', f.desde).lte('fecha', f.hasta).order('fecha', { ascending: false }).order('folio', { ascending: false }).range(p, p + 999);
+        if (f.cuenta) q = q.eq('cuenta_bancaria_id', Number(f.cuenta));
+        if (f.estado) q = q.eq('estado', f.estado);
+        const { data: pag, error } = await q;
+        if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
+        data.push(...(pag || []));
+        if ((pag || []).length < 1000) break;
+      }
       docs = data;
       // Sin documentos en el período: cuántos tiene la empresa y entre qué fechas (para ofrecer verlos).
       rango = null;
