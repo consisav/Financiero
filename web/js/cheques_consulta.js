@@ -36,7 +36,7 @@
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
         <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
-        '<button type="button" class="boton secundario-sm cqc-excel" data-accion="excel" title="Descargar los cheques en Excel" aria-label="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i></button>');
+        '<button type="button" class="boton secundario-sm cqc-excel" data-accion="excel" title="Reporte en Excel: resumido o detallado" aria-label="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i></button>');
     }
 
     async function iniciar() {
@@ -207,9 +207,180 @@
         </div>`;
     }
 
+    // ---------- Reporte en Excel ----------
+    // Antes de generarlo se elige el tipo: Resumido (el listado de cheques) o Detallado (cada cheque con su
+    // detalle contable). El archivo (.xlsx, con ExcelJS) lleva un encabezado: a la izquierda el logo y el
+    // nombre de la empresa, al centro los parámetros del reporte y a la derecha la fecha y hora de
+    // generación con el usuario; una línea de separación y después los datos. Si la librería no carga, se
+    // genera el CSV de siempre.
     function excel() {
       const filas = visibles();
       if (!filas.length) return window.FIN.aviso('No hay cheques con estos parámetros');
+      let formRef = null;
+      window.UI.formulario({
+        titulo: 'Reporte de cheques en Excel',
+        campos: [],
+        alPreparar: (form) => {
+          formRef = form;
+          form.querySelector('.modal-cuerpo').innerHTML = `
+            <fieldset class="cqc-tipos"><legend>Tipo de reporte</legend>
+              <label class="cqc-tipo"><input type="radio" name="tipo" value="RESUMIDO" checked><i class="ti ti-list" aria-hidden="true"></i><span><b>Resumido</b><small>Solo el listado general de los ${filas.length.toLocaleString('es-GT')} cheques.</small></span></label>
+              <label class="cqc-tipo"><input type="radio" name="tipo" value="DETALLADO"><i class="ti ti-list-details" aria-hidden="true"></i><span><b>Detallado</b><small>Cada cheque con el detalle de su contabilización.</small></span></label>
+            </fieldset>
+            <p class="bu-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Con los filtros de la pantalla: ${esc(parametros().join(' · '))}.</p>`;
+          form.querySelector('[type=submit]').innerHTML = '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel';
+        },
+        alGuardar: async () => {
+          const tipo = formRef?.elements.tipo?.value || 'RESUMIDO';
+          await generarExcel(filas, tipo);
+        }
+      });
+    }
+
+    // Parámetros del reporte, tal como están en la pantalla.
+    function parametros() {
+      const emp = ctx.localidad(ctx.sel.loc);
+      const cb = cuenta(Number(f.cuenta));
+      const orden = ORDENES.find(([k]) => k === `${f.orden}:${f.dir}`)?.[1] || '';
+      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`,
+        `Cuenta: ${cb ? `${cb.numero} · ${cb.nombre}` : 'Todas'}`, `Beneficiario: ${f.tercero.trim() || 'Todos'}`, `Estado: ${f.estado}`, `Orden: ${orden}`,
+        ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
+    }
+
+    const cargarExcelJS = () => window.ExcelJS ? Promise.resolve(window.ExcelJS) : new Promise((ok, mal) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+      s.onload = () => window.ExcelJS ? ok(window.ExcelJS) : mal(new Error('ExcelJS'));
+      s.onerror = () => mal(new Error('No se pudo cargar la librería de Excel'));
+      document.head.appendChild(s);
+    });
+
+    // Logo de la organización (organizaciones.logo_ruta en Storage), como base64 para incrustarlo.
+    async function logoOrganizacion(orgId) {
+      try {
+        const { data: o } = await sb.from('organizaciones').select('codigo, nombre, logo_ruta').eq('id', orgId).maybeSingle();
+        if (!o?.logo_ruta) return { org: o, logo: null };
+        const url = sb.storage.from('organizaciones').getPublicUrl(o.logo_ruta).data.publicUrl;
+        const blob = await (await fetch(url)).blob();
+        const ext = /png/.test(blob.type) ? 'png' : /jpe?g/.test(blob.type) ? 'jpeg' : /gif/.test(blob.type) ? 'gif' : null;
+        if (!ext) return { org: o, logo: null };
+        const b64 = await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.readAsDataURL(blob); });
+        const dim = await new Promise((ok) => { const i = new Image(); i.onload = () => ok({ w: i.naturalWidth, h: i.naturalHeight }); i.onerror = () => ok({ w: 160, h: 80 }); i.src = URL.createObjectURL(blob); });
+        return { org: o, logo: { base64: b64, extension: ext, ...dim } };
+      } catch { return { org: null, logo: null }; }
+    }
+
+    async function generarExcel(filas, tipo) {
+      const emp = ctx.localidad(ctx.sel.loc);
+      let ExcelJS;
+      try { ExcelJS = await cargarExcelJS(); } catch (err) { window.FIN.aviso(`${err.message}: se descarga en CSV`); return excelCsv(filas); }
+      window.FIN.aviso('Generando el reporte…');
+      // Detallado: líneas contables de todos los cheques, por partes.
+      const lineasDe = new Map();
+      if (tipo === 'DETALLADO') {
+        const ids = filas.map((d) => d.id);
+        for (let i = 0; i < ids.length; i += 200) {
+          const { data } = await sb.from('movimiento_lineas').select('movimiento_id, linea, debe, haber, cuentas(codigo, nombre), centros_costo(codigo)').in('movimiento_id', ids.slice(i, i + 200)).order('linea');
+          (data || []).forEach((l) => { if (!lineasDe.has(l.movimiento_id)) lineasDe.set(l.movimiento_id, []); lineasDe.get(l.movimiento_id).push(l); });
+        }
+      }
+      const { org, logo } = await logoOrganizacion(emp?.organizacion_id);
+      const yo = window.FIN.perfil();
+      const ahora = new Date().toLocaleString('es-GT', { timeZone: 'America/Guatemala', hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '');
+
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'Financiero CONSISAV';
+      const ws = wb.addWorksheet(tipo === 'DETALLADO' ? 'Cheques detallado' : 'Cheques', { views: [{ state: 'frozen', ySplit: 7, showGridLines: false }], pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+      const COLS = [['Cheque', 10], ['Folio', 8], ['Fecha', 11], ['Cuenta bancaria', 16], ['A favor de', 34], ['Descripción', 46], ['Moneda', 8], ['Valor', 14], ['Valor Q', 14], ['Estado', 11], ['Conciliado', 11], ['Partida', 10]];
+      ws.columns = COLS.map(([, w]) => ({ width: w }));
+      const ultima = COLS.length;
+      const azul = 'FF1F3A5F';
+      // a) Izquierda: logo y nombre de la empresa.
+      if (logo) {
+        const id = wb.addImage({ base64: logo.base64, extension: logo.extension });
+        const alto = 64; const ancho = Math.round(alto * (logo.w / (logo.h || 1)));
+        ws.addImage(id, { tl: { col: 0.1, row: 0.15 }, ext: { width: Math.min(ancho, 150), height: alto } });
+      }
+      const izq = logo ? 3 : 1;
+      ws.mergeCells(1, izq, 1, 4); ws.getCell(1, izq).value = org?.nombre || '';
+      ws.getCell(1, izq).font = { bold: true, size: 13, color: { argb: azul } };
+      ws.mergeCells(2, izq, 2, 4); ws.getCell(2, izq).value = emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '';
+      ws.getCell(2, izq).font = { size: 10, color: { argb: 'FF555555' } };
+      // b) Centro: título y parámetros.
+      const par = parametros();
+      ws.mergeCells(1, 5, 1, 9); ws.getCell(1, 5).value = `Consulta de Cheques · ${tipo === 'DETALLADO' ? 'Detallado' : 'Resumido'}`;
+      ws.getCell(1, 5).font = { bold: true, size: 14, color: { argb: azul } };
+      [par.slice(0, 2).join('   ·   '), par.slice(2, 4).join('   ·   '), par.slice(4).join('   ·   ')].forEach((t, i) => {
+        ws.mergeCells(2 + i, 5, 2 + i, 9); ws.getCell(2 + i, 5).value = t; ws.getCell(2 + i, 5).font = { size: 9.5, color: { argb: 'FF444444' } };
+      });
+      for (let r = 1; r <= 4; r += 1) ws.getCell(r, 5).alignment = { horizontal: 'center', vertical: 'middle' };
+      // c) Derecha: fecha y hora de generación, y el usuario.
+      ws.mergeCells(1, 10, 1, ultima); ws.getCell(1, 10).value = `Fecha: ${ahora}`;
+      ws.mergeCells(2, 10, 2, ultima); ws.getCell(2, 10).value = `Usuario: ${(yo.usuario || '').toUpperCase()}${yo.nombre ? ` · ${yo.nombre}` : ''}`;
+      [1, 2].forEach((r) => { ws.getCell(r, 10).alignment = { horizontal: 'right' }; ws.getCell(r, 10).font = { size: 9.5, color: { argb: 'FF444444' } }; });
+      ws.getRow(1).height = 22; [2, 3, 4].forEach((r) => { ws.getRow(r).height = 15; });
+      // Línea de separación.
+      for (let c = 1; c <= ultima; c += 1) ws.getCell(5, c).border = { bottom: { style: 'medium', color: { argb: azul } } };
+      ws.getRow(5).height = 6;
+      // Encabezado de columnas (fila 7).
+      const cab = ws.getRow(7);
+      COLS.forEach(([t], i) => { const c = cab.getCell(i + 1); c.value = t; c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: azul } }; c.alignment = { vertical: 'middle', horizontal: i >= 7 && i <= 8 ? 'right' : 'left' }; });
+      cab.height = 18;
+      const monto = '#,##0.00';
+      let fila = 8;
+      let total = 0;
+      for (const d of filas) {
+        const cb = cuenta(d.cuenta_bancaria_id);
+        const r = ws.getRow(fila);
+        r.values = [d.numero_documento, d.folio, fmt.fechaDia(d.fecha), cb?.numero || '', d.deposito_por || d.tercero_nombre || '', d.descripcion || '', sim(d), Number(d.valor || 0), Number(d.valor_ml || 0),
+          d.estado === 'ANULADO' ? 'Anulado' : 'Vigente', d.conciliado ? 'Sí' : 'No', partida(d.partida_id) || (d.origen_anterior ? 'Sist. ant.' : '')];
+        r.getCell(8).numFmt = monto; r.getCell(9).numFmt = monto;
+        if (d.estado === 'ANULADO') r.font = { color: { argb: 'FF999999' }, strike: true };
+        if (tipo === 'DETALLADO') { r.font = { ...(r.font || {}), bold: true }; r.eachCell((c) => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF0F7' } }; }); }
+        if (d.estado === 'ACTIVO') total += Number(d.valor_ml || 0);
+        fila += 1;
+        if (tipo === 'DETALLADO') {
+          const ls = lineasDe.get(d.id) || [];
+          const sub = ws.getRow(fila);
+          sub.values = ['', 'Línea', 'Cuenta', '', 'Nombre de la cuenta', 'Centro', '', 'Debe', 'Haber'];
+          sub.font = { italic: true, size: 9, color: { argb: 'FF666666' } };
+          fila += 1;
+          let tDebe = 0; let tHaber = 0;
+          for (const l of ls) {
+            const x = ws.getRow(fila);
+            x.values = ['', l.linea, l.cuentas?.codigo || '', '', l.cuentas?.nombre || '', l.centros_costo?.codigo || '', '', Number(l.debe) || null, Number(l.haber) || null];
+            x.getCell(8).numFmt = monto; x.getCell(9).numFmt = monto; x.font = { size: 9.5 };
+            tDebe += Number(l.debe || 0); tHaber += Number(l.haber || 0);
+            fila += 1;
+          }
+          if (!ls.length) { ws.getRow(fila).getCell(5).value = 'Sin detalle contable'; ws.getRow(fila).font = { italic: true, size: 9, color: { argb: 'FF999999' } }; fila += 1; }
+          else {
+            const t = ws.getRow(fila);
+            t.values = ['', '', '', '', Math.abs(tDebe - tHaber) < 0.005 ? 'Totales · cuadra' : 'Totales · NO CUADRA', '', '', tDebe, tHaber];
+            t.getCell(8).numFmt = monto; t.getCell(9).numFmt = monto; t.font = { bold: true, size: 9.5 };
+            [8, 9].forEach((c) => { t.getCell(c).border = { top: { style: 'thin' } }; });
+            fila += 1;
+          }
+          fila += 1;
+        }
+      }
+      // Total general de los vigentes.
+      const tg = ws.getRow(fila + (tipo === 'DETALLADO' ? 0 : 1));
+      tg.getCell(6).value = `Total de ${filas.filter((d) => d.estado === 'ACTIVO').length} cheques vigentes (de ${filas.length})`;
+      tg.getCell(9).value = total; tg.getCell(9).numFmt = monto; tg.font = { bold: true };
+      for (let c = 1; c <= ultima; c += 1) tg.getCell(c).border = { top: { style: 'medium', color: { argb: azul } } };
+      ws.autoFilter = tipo === 'DETALLADO' ? undefined : { from: { row: 7, column: 1 }, to: { row: 7, column: ultima } };
+
+      const buf = await wb.xlsx.writeBuffer();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      a.download = `cheques_${tipo === 'DETALLADO' ? 'detallado' : 'resumido'}_${emp?.codigo || ''}_${f.desde}_${f.hasta}.xlsx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+      window.FIN.aviso(`Reporte ${tipo === 'DETALLADO' ? 'detallado' : 'resumido'} generado: ${filas.length.toLocaleString('es-GT')} cheques`);
+    }
+
+    function excelCsv(filas) {
       const emp = ctx.localidad(ctx.sel.loc);
       const cab = ['Cheque', 'Folio', 'Fecha', 'Cuenta bancaria', 'A favor de', 'Proveedor', 'Descripción', 'Moneda', 'Valor', 'Valor Q', 'Estado', 'Conciliado', 'Partida', 'Compras'];
       const datos = filas.map((d) => [d.numero_documento, d.folio, d.fecha, cuenta(d.cuenta_bancaria_id)?.numero || '', d.deposito_por || '', d.tercero_nombre || '', d.descripcion || '', sim(d), d.valor, d.valor_ml,
