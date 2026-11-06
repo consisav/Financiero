@@ -208,11 +208,11 @@ window.MODULOS = [
           subgrupo: 'Cheques',
           icono: 'ti-writing',
           pantallas: [
-            { id: 'solicitud-de-cheques', nombre: 'Solicitud de cheques', icono: 'ti-file-dollar', descripcion: 'Requisición de cheques: beneficiario, monto y motivo del pago, con su aprobación y seguimiento hasta la emisión.' },
+            { id: 'solicitud-de-cheques', nombre: 'Solicitud de cheques', icono: 'ti-file-dollar', descripcion: 'Requisición de cheques: beneficiario, monto y motivo del pago, con su aprobación y seguimiento hasta la emisión.', separador: true },
             { id: 'emision-de-cheques', nombre: 'Emisión de cheques', icono: 'ti-writing', descripcion: 'Cheques de cada cuenta bancaria con el número de su chequera, beneficiario, detalle contable, facturas pagadas e impresión.' },
-            { id: 'consulta-de-cheques', nombre: 'Consulta de Cheques', icono: 'ti-file-search', descripcion: 'Resumen de los cheques de la empresa por cuenta, beneficiario, fechas y estado (vigentes, anulados, conciliados, sin partida), con su detalle contable y las compras que liquidó.' },
+            { id: 'consulta-de-cheques', nombre: 'Consulta de Cheques', icono: 'ti-file-search', descripcion: 'Resumen de los cheques de la empresa por cuenta, beneficiario, fechas y estado (vigentes, anulados, conciliados, sin partida), con su detalle contable y las compras que liquidó.', separador: true },
             { id: 'generacion-cheques', nombre: 'Generación cheques', icono: 'ti-files', descripcion: 'Cheques automáticos de las facturas y recibos de compra pendientes de pago, uno por proveedor o por factura.' },
-            { id: 'generacion-transferencias', nombre: 'Generación transferencias', icono: 'ti-arrows-exchange', descripcion: 'Transferencias bancarias automáticas a los proveedores por sus facturas pendientes, con el lote para el banco.' },
+            { id: 'generacion-transferencias', nombre: 'Generación transferencias', icono: 'ti-arrows-exchange', descripcion: 'Transferencias bancarias automáticas a los proveedores por sus facturas pendientes, con el lote para el banco.', separador: true },
             { id: 'facturas-de-compra', nombre: 'Facturas de compra por pagar', icono: 'ti-file-invoice', descripcion: 'Facturas y recibos de compra: proveedor, importe, bonificaciones, notas, forma de pago y detalle contable.' }
           ]
         }

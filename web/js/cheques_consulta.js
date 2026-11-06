@@ -36,7 +36,7 @@
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
         <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
-        '<button type="button" class="boton secundario-sm cqc-excel" data-accion="excel" title="Reporte en Excel: resumido o detallado" aria-label="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i></button>');
+        '<button type="button" class="boton cqc-excel" data-accion="excel" title="Reporte en Excel (.xlsx): resumido o detallado, con el encabezado de la empresa"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Resumido o detallado</small></span></button>');
     }
 
     async function iniciar() {
