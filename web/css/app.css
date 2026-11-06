@@ -3377,3 +3377,6 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cp-ficha .cb-bloque { gap: 3px; padding: 6px 12px 8px; }
 .cp-ficha input:not([type=checkbox]):not([type=radio]), .cp-ficha select { height: 26px; }
 .cp-ficha .cp-con-mas .icono-boton { width: 24px; height: 24px; }
+
+/* Ingreso de compras: artículos migrados sin producto en el catálogo. */
+.cf-sin-prod { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--ambar-f); color: var(--ambar-t); }

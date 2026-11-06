@@ -32,7 +32,7 @@
     let proveedores = [], bodegas = [], regimenes = [], rubros = [], tiposDoc = [], clasificaciones = [], cuentas = [], contables = [], centros = [], transacciones = [];
     let params = {};
     let actual = null;
-    let items = [], lineas = [], pagos = [], cuentasProv = [];
+    let items = [], lineas = [], pagos = [], cuentasProv = [], liquidaciones = [];
     let articulos = [], productos = [], ingresosLibres = [], ingresoVincular = null;
     // Medicamentos y perecederos llevan lote, fabricación y vencimiento en los artículos; no perecederos, serie.
     let tipoVenta = null;
@@ -145,18 +145,20 @@
     async function abrir(c, editar = false) {
       actual = c;
       modificando = !!c && editar && c.estado === 'ACTIVA' && ctx.admin;
-      items = []; lineas = []; pagos = []; articulos = []; ingresoVincular = null;
+      items = []; lineas = []; pagos = []; articulos = []; liquidaciones = []; ingresoVincular = null;
       if (c) {
         const ar = await sb.from('compra_articulos').select('*').eq('compra_id', c.id).order('linea');
         articulos = ar.error ? [] : (ar.data || []).map((x) => ({ ...x, cantidad: Number(x.cantidad), costo_unitario: Number(x.costo_unitario), descuento: Number(x.descuento), costo_extra: Number(x.costo_extra) }));
-        const [i, l, d] = await Promise.all([
+        const [i, l, d, lq] = await Promise.all([
           sb.from('compra_items').select('*').eq('compra_id', c.id).order('linea'),
           sb.from('compra_lineas').select('*').eq('compra_id', c.id).order('linea'),
-          sb.from('movimiento_documentos').select('abono, abono_compra, movimientos_bancarios(tipo, numero_documento, folio, fecha, estado, moneda_id, cuenta_bancaria_id, deposito_por)').eq('compra_id', c.id)
+          sb.from('movimiento_documentos').select('abono, abono_compra, movimientos_bancarios(tipo, numero_documento, folio, fecha, estado, moneda_id, cuenta_bancaria_id, deposito_por)').eq('compra_id', c.id),
+          sb.from('compra_liquidaciones').select('*').eq('compra_id', c.id).order('documento')
         ]);
         items = (i.data || []).map((x) => ({ descripcion: x.descripcion, cantidad: Number(x.cantidad), costo_total: Number(x.costo_total) }));
         lineas = (l.data || []).map((x) => ({ cuenta_id: x.cuenta_id, codigo: contable(x.cuenta_id)?.codigo || '', centro_id: x.centro_id, debe: Number(x.debe), haber: Number(x.haber) }));
         pagos = d.data || [];
+        liquidaciones = lq.error ? [] : lq.data || [];
       }
       await cargarCuentasProv(c?.proveedor_id);
       pintarDetalle();
@@ -197,9 +199,11 @@
 
     const tabs = (bienes) => bienes ? [
       ['ARTICULOS', 'Artículos', 'ti-package', articulos.length], ['LISTADO', 'Listado de facturas', 'ti-list-search', compras.length], ['LIQUIDAR', 'Abonos', 'ti-receipt-refund', pagos.length],
+      ...(liquidaciones.length ? [['LIQUIDACIONES', 'Liquidaciones (sist. anterior)', 'ti-history', liquidaciones.length]] : []),
       ['CONTABLE', 'Contabilidad', 'ti-list-details', lineas.length], ['OTRAS', 'Otras funciones, integración', 'ti-plug-connected', 0], ['ORDENES', 'Órdenes de compra', 'ti-clipboard-list', 0]
     ] : [
       ['ITEMS', 'Compras varias', 'ti-list', items.length], ['CONTABLE', 'Detalle contable', 'ti-list-details', lineas.length], ['LIQUIDAR', 'Doctos. a liquidar', 'ti-receipt-refund', pagos.length],
+      ...(liquidaciones.length ? [['LIQUIDACIONES', 'Liquidaciones (sist. anterior)', 'ti-history', liquidaciones.length]] : []),
       ['OTRAS', 'Otras funciones, integración', 'ti-plug-connected', 0], ['ORDENES', 'Órdenes de compra', 'ti-clipboard-list', 0], ['LISTADO', 'Listado de compras', 'ti-list-search', compras.length]
     ];
 
@@ -222,6 +226,7 @@
       const bienes = esBienes(v);
       if (bienes && pestana === 'ITEMS') pestana = 'ARTICULOS';
       if (!bienes && pestana === 'ARTICULOS') pestana = 'ITEMS';
+      if (pestana === 'LIQUIDACIONES' && !liquidaciones.length) pestana = bienes ? 'ARTICULOS' : 'ITEMS';
       const mi = tasaMI();
       const cambio = aBase(v.moneda_id, v.tipo_cambio);
       const totArt = fmt.redondear(articulos.reduce((t, a) => t + totalArt(a), 0));
@@ -314,7 +319,7 @@
             <div class="bm-panel cf-articulos" data-panel="ARTICULOS" ${pestana === 'ARTICULOS' ? '' : 'hidden'}>
               <div class="pc-lineas"><table><thead><tr>${conLote() ? '<th class="pc-n">Prod</th><th>Cód. prod</th><th>Nombre producto</th><th>Lote</th><th>Fecha fabricación</th><th>Fecha vencimiento</th>' : '<th class="pc-n">ID</th><th>Código producto</th><th>Nombre producto</th><th>Serie</th>'}<th class="num">Cantidad</th><th class="num">Costo unitario</th><th class="num">Descuento</th><th class="num">Costo total</th><th class="num">C/U MI</th><th class="num">Costo total MI</th><th class="cc-det" title="Va a inventario">Inv?</th>${conLote() ? '<th class="cc-det" title="Controla fecha de vencimiento">Fecha</th>' : '<th class="cc-det" title="Exento">Exen?</th>'}<th></th></tr></thead>
                 <tbody>${articulos.map((a, i) => { const pd = prod(a.producto_id); const fijo = a.inventariado; const d2 = ed && !fijo ? '' : 'disabled'; const tq = totalArt(a) * cambio; return `<tr data-art="${i}" class="${fijo ? 'cf-inventariado' : ''}">
-                  <td class="pc-n">${conLote() ? esc(String(pd?.codigo ?? '')) : a.linea || i + 1}</td><td class="fuerte">${esc(pd?.codigo_producto || String(pd?.codigo || ''))}</td><td class="cc-nombre" title="${esc(pd?.nombre || '')}">${esc(pd?.nombre || '')}${a.ingreso_linea_id ? ' <i class="ti ti-truck-delivery cf-del-ingreso" title="Viene del ingreso de la orden" aria-label="Del ingreso"></i>' : ''}</td>
+                  <td class="pc-n">${conLote() ? esc(String(pd?.codigo ?? a.producto_anterior ?? '')) : a.linea || i + 1}</td><td class="fuerte">${esc(pd?.codigo_producto || String(pd?.codigo || '') || a.producto_codigo || '')}</td><td class="cc-nombre" title="${esc(pd?.nombre || '')}">${pd ? esc(pd.nombre || '') : '<span class="cf-sin-prod" title="El producto aún no está en el catálogo: se liga solo cuando se cree con este código">Producto por migrar</span>'}${a.ingreso_linea_id ? ' <i class="ti ti-truck-delivery cf-del-ingreso" title="Viene del ingreso de la orden" aria-label="Del ingreso"></i>' : ''}</td>
                   <td><input data-a="serie" value="${esc(a.serie || '')}" maxlength="40" ${ed ? '' : 'disabled'} aria-label="${conLote() ? 'Lote' : 'Serie'}"></td>
                   ${conLote() ? `<td class="cf-fecha"><input type="date" data-a="fecha_fabricacion" value="${esc(a.fecha_fabricacion || '')}" ${ed ? '' : 'disabled'} aria-label="Fecha de fabricación"></td><td class="cf-fecha"><input type="date" data-a="fecha_vencimiento" value="${esc(a.fecha_vencimiento || '')}" ${ed ? '' : 'disabled'} aria-label="Fecha de vencimiento" class="${a.control_fecha && !a.fecha_vencimiento ? 'cf-falta' : ''}"></td>` : ''}
                   <td class="num"><input type="number" step="0.0001" min="0" data-a="cantidad" value="${a.cantidad || ''}" ${d2} aria-label="Cantidad"></td>
@@ -331,7 +336,10 @@
               <div class="cf-art-acc">${(() => {
                 const activa = consulta && ctx.admin && c?.estado === 'ACTIVA';
                 const b = (accion, icono, texto, ok, extra = '') => `<button type="button" class="boton secundario-sm" data-accion="${accion}" ${ok ? '' : 'disabled'} ${extra}><i class="ti ${icono}" aria-hidden="true"></i> ${texto}</button>`;
-                return `<div class="cf-art-grupo">${b('cargar-inv', 'ti-package-import', 'Cargar inventario', activa && pendInv, 'title="Carga a la bodega los artículos marcados en Inv?"')}${b('revertir-inv', 'ti-arrow-back-up', 'Revertir carga', activa && hayInv)}</div>
+                // Compra migrada: su inventario quedó en el sistema anterior (sus movimientos no se migraron).
+                const migrada = !!c?.origen_anterior;
+                const tm = migrada ? 'title="Compra migrada del sistema anterior: su inventario no se carga ni se revierte aquí"' : '';
+                return `<div class="cf-art-grupo">${b('cargar-inv', 'ti-package-import', 'Cargar inventario', activa && pendInv && !migrada, tm || 'title="Carga a la bodega los artículos marcados en Inv?"')}${b('revertir-inv', 'ti-arrow-back-up', 'Revertir carga', activa && hayInv && !migrada, tm)}</div>
                   <div class="cf-art-grupo">${b('anular', 'ti-ban', 'Anular', activa && !pagado && !hayInv)}</div>
                   <div class="cf-art-grupo">${b('imprimir', 'ti-printer', 'Imprimir', !!c)}${b('costos-extra', 'ti-truck', 'Costos extras', ed && articulos.length, 'title="Prorratea fletes, seguros u otros costos entre los artículos"')}${b('crear-producto', 'ti-plus', 'Crear producto', ed)}
                   ${conLote() ? b('crear-conta', 'ti-calculator', 'Crear compra conta', ed && !disC && articulos.length, 'title="Genera el detalle contable de la compra (pestaña Contabilidad)"')
@@ -360,6 +368,14 @@
                   <tbody>${pagos.map((d) => { const m = d.movimientos_bancarios || {}; const cb = cuentas.find((x) => x.id === m.cuenta_bancaria_id); return `<tr class="${m.estado === 'ANULADO' ? 'pc-anulada' : ''}"><td>${m.tipo === 'CHEQUE' ? 'Cheque' : 'Transferencia'}</td><td class="fuerte">${esc(m.numero_documento || m.folio)}</td><td>${esc(fmt.fechaDia(m.fecha))}</td><td>${esc(cb ? cb.numero : '')}</td><td>${esc(m.deposito_por || '')}</td><td>${esc(m.estado || '')}</td><td class="num">${esc(simbolo(m.moneda_id))} ${fmt.monto(d.abono)}</td><td class="num">${esc(sim)} ${fmt.monto(d.abono_compra)}</td></tr>`; }).join('')
                     || '<tr><td colspan="8" class="tk-vacio">Sin pagos todavía: se paga en Caja y Bancos › Generación cheques o Generación transferencias.</td></tr>'}</tbody></table></div>
               </div>
+            </div>
+            <div class="bm-panel" data-panel="LIQUIDACIONES" ${pestana === 'LIQUIDACIONES' ? '' : 'hidden'}>
+              <p class="cc-ingreso"><i class="ti ti-info-circle" aria-hidden="true"></i> Documentos con que se liquidó la compra en el sistema anterior. Son historial: el saldo sale de los pagos de la pestaña ${bienes ? 'Abonos' : 'Doctos. a liquidar'}.</p>
+              <div class="pc-lineas"><table><thead><tr><th class="pc-n">Docto.</th><th>Tipo</th><th>Cuenta bancaria</th><th>Cheque</th><th>Nota</th><th class="num">Valor liquidado</th><th class="num">Valor MI</th><th>Usuario</th><th>Fecha</th></tr></thead>
+                <tbody>${liquidaciones.map((x) => `<tr><td class="pc-n">${x.documento}</td><td>${x.tipo_documento === 'C' ? 'Cheque' : x.tipo_documento === 'I' ? 'Ingreso' : esc(x.tipo_documento || '')}</td>
+                  <td>${esc(x.cuenta_bancaria || '')}</td><td class="fuerte">${esc(x.numero_cheque || '')}</td><td>${x.nota != null && x.nota >= 0 ? x.nota : ''}</td>
+                  <td class="num">Q ${fmt.monto(x.valor)}</td><td class="num">${x.valor_mi != null ? `$ ${fmt.monto(x.valor_mi)}` : ''}</td><td>${esc(x.usuario || '')}</td><td>${esc(fmt.fechaHora(x.fecha))}</td></tr>`).join('')}</tbody>
+                <tfoot><tr><td colspan="5">Total liquidado</td><td class="num">Q ${fmt.monto(liquidaciones.reduce((t, x) => t + Number(x.valor || 0), 0))}</td><td class="num">$ ${fmt.monto(liquidaciones.reduce((t, x) => t + Number(x.valor_mi || 0), 0))}</td><td colspan="2"></td></tr></tfoot></table></div>
             </div>
             <div class="bm-panel" data-panel="OTRAS" ${pestana === 'OTRAS' ? '' : 'hidden'}>
               <div class="cf-otras">
@@ -612,6 +628,8 @@
       if (bienes && sinFecha) { pestana = 'ARTICULOS'; error.textContent = `Escribe la fecha de vencimiento de ${prod(sinFecha.producto_id)?.nombre || 'un artículo'}.`; return; }
       const malFecha = conLote() && articulos.find((a) => a.fecha_fabricacion && a.fecha_vencimiento && a.fecha_vencimiento < a.fecha_fabricacion);
       if (bienes && malFecha) { pestana = 'ARTICULOS'; error.textContent = `El vencimiento de ${prod(malFecha.producto_id)?.nombre || 'un artículo'} es anterior a su fabricación.`; return; }
+      const sinProd = bienes && articulos.find((a) => !a.producto_id);
+      if (sinProd) { pestana = 'ARTICULOS'; error.textContent = `El artículo ${sinProd.producto_codigo || sinProd.producto_anterior || ''} aún no está en el catálogo de productos: créalo con «Crear producto» (mismo código) o migra los productos antes de modificar la compra.`; return; }
       if (bienes && malArt) { pestana = 'ARTICULOS'; error.textContent = `Revisa la cantidad y el descuento de ${prod(malArt.producto_id)?.nombre || 'un artículo'}.`; return; }
       if (bienes && articulos.some((a) => a.inventario && !a.inventariado) && !v.bodega_id) return foco('bodega_id', 'Elige la bodega a la que entran los artículos.');
       const ls = lineas.filter((l) => l.cuenta_id && (l.debe || l.haber));
