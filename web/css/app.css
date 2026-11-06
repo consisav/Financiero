@@ -3610,3 +3610,17 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cpa-pest .pc-lineas th { white-space: normal; line-height: 1.15; }
 .cpa-b .campo :is(input, select) { height: 26px; }
 .cpa-g { gap: 3px 8px; }
+
+/* Ingreso de compras · Artículos: anchos fijos para ver el contenido completo de cada campo. */
+.cf-art-tabla { table-layout: fixed; width: 100%; min-width: 1240px; }
+.cf-art-tabla col.w-prod { width: 50px; } .cf-art-tabla col.w-cod { width: 84px; }
+.cf-art-tabla col.w-lote { width: 120px; } .cf-art-tabla col.w-fecha { width: 132px; }
+.cf-art-tabla col.w-cant { width: 92px; } .cf-art-tabla col.w-cu { width: 100px; } .cf-art-tabla col.w-desc { width: 88px; }
+.cf-art-tabla col.w-tot { width: 112px; } .cf-art-tabla col.w-cumi { width: 76px; }
+.cf-art-tabla col.w-chk { width: 46px; } .cf-art-tabla col.w-x { width: 32px; }
+.cf-art-tabla th { white-space: normal; line-height: 1.15; vertical-align: bottom; }
+.cf-art-tabla td { vertical-align: middle; }
+.cf-articulos .cf-art-tabla .cc-nombre { max-width: none; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.25; font-size: 12.5px; }
+.cf-articulos .cf-art-tabla td.num input { max-width: none; }
+.cf-art-tabla td.cf-fecha input { padding: 2px 4px; font-size: 12.5px; }
+.cf-art-tabla td.fuerte { overflow-wrap: anywhere; }
