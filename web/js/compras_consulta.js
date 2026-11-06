@@ -2,7 +2,7 @@
 // (organización y localidad), un proveedor y un rango de fechas: arriba el maestro de compras con sus
 // totales y abajo el detalle de la compra elegida (artículos o compras varias y su detalle contable).
 // Filtros: clasificación y orden (compra, fecha o total, ascendente o descendente; también con clic en
-// el encabezado de esas columnas). «Modificar» abre la compra en Registros · Ingreso de compras para
+// el encabezado de esas columnas). «Consultar» abre la compra en Ingreso de compras; «Modificar ingreso de compra» abre la compra en Registros · Ingreso de compras para
 // modificarla si su mes está abierto y no generó partida en el sistema (lo contabilizado en el sistema
 // anterior se muestra como dato, no impide modificarla).
 (function () {
@@ -168,7 +168,7 @@
               <td><span class="pc-marca ${c.estado === 'ANULADA' ? 'anulada' : c.pendiente <= 0 ? 'definitiva' : 'pendiente'}">${c.estado === 'ANULADA' ? 'Anulada' : c.pendiente <= 0 ? 'Pagada' : 'Por pagar'}</span></td>
               <td>${contabilizada(c) ? `<span class="pc-marca aprobada" title="${c.partida_id ? 'Partida generada en el sistema' : 'Contabilizada en el sistema anterior'}">${c.partida_id ? 'Partida' : 'Sist. anterior'}</span>` : '<span class="tk-tenue">No</span>'}</td>
               <td>${cerrado(c) ? '<span class="pc-marca anulada">Cerrado</span>' : '<span class="tk-tenue">Abierto</span>'}</td>
-              <td class="cq-acc">${ctx.admin ? `<button type="button" class="boton secundario-sm" data-modificar="${c.id}" ${b ? 'disabled' : ''} title="${esc(b || 'Abrir en Ingreso de compras para modificarla')}"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>` : ''}</td></tr>`; }).join('')
+              <td class="cq-acc">${ctx.admin ? `<button type="button" class="boton secundario-sm" data-consultar="${c.id}" title="${esc(b ? `Abrir en Ingreso de compras para consultarla (no se puede modificar: ${b})` : 'Abrir en Ingreso de compras para consultarla')}"><i class="ti ti-eye" aria-hidden="true"></i> Consultar</button>` : ''}</td></tr>`; }).join('')
               || `<tr><td colspan="13" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : 'No hay compras con estos parámetros.'}</td></tr>`}</tbody></table>
         </div>`;
     }
@@ -264,6 +264,8 @@
       if (e.key === 'Enter' && e.target.matches('tr[data-compra]')) e.target.click();
     });
     cont.addEventListener('click', (e) => {
+      const q = e.target.closest('[data-consultar]');
+      if (q) { location.hash = `#/compras/facturas-compra/${q.dataset.consultar}`; return; }
       const m = e.target.closest('[data-modificar]');
       if (m) return modificar(m.dataset.modificar);
       const th = e.target.closest('[data-ordenar]');
