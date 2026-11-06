@@ -3383,3 +3383,18 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-sub { margin: 10px 0 4px; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--acento); display: flex; align-items: center; gap: 6px; }
 .cf-rango { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 6px; }
 .cf-rango .boton { margin-left: auto; }
+
+/* Compras · Mantenimientos · Consultar Compras: maestro arriba y detalle (artículos o compras varias y contable) abajo. */
+.bk-consultar .bk-filtros { grid-template-columns: auto minmax(220px, 300px) minmax(220px, 1.2fr) repeat(3, minmax(130px, 170px)) 1fr; }
+.bk-consultar .cc-tabla .cc-nombre { max-width: 260px; }
+.cq-ant { display: block; font-size: 10.5px; font-weight: 600; color: var(--tenue); }
+.cq-acc { width: 112px; text-align: right; }
+.cq-acc .boton { padding: 3px 10px; min-height: 0; }
+.cq-saldo { color: var(--coral-t); font-weight: 600; }
+.cq-ficha { padding: 10px 14px 12px; gap: 8px; display: flex; flex-direction: column; min-height: 0; }
+.cq-datos { display: flex; gap: 4px 18px; flex-wrap: wrap; margin: 0 0 0 auto; }
+.cq-datos dt { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); font-weight: 600; }
+.cq-datos dd { margin: 0; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.cq-bloqueo { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--coral-t); background: var(--coral-f); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.cq-det { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: 10px; min-height: 0; }
+.cq-det .pc-lineas { max-height: 230px; overflow: auto; }

@@ -23,7 +23,7 @@
   const sumaDias = (fecha, dias) => { if (!fecha) return ''; const d = new Date(`${fecha}T12:00:00`); d.setDate(d.getDate() + Number(dias || 0)); return d.toISOString().slice(0, 10); };
 
   window.PANTALLAS = window.PANTALLAS || {};
-  window.PANTALLAS['facturas-compra'] = function (cont) {
+  window.PANTALLAS['facturas-compra'] = function (cont, m, extra) {
     const ctx = montar(cont, { titulo: 'Ingreso de compras', icono: 'ti-file-invoice', clase: 'bk-movimientos bk-compras cf-compras', grupo: 'Compras · Registros' });
     const { sb, yo } = ctx;
     const [anio, mes] = fmt.hoy().split('-');
@@ -38,6 +38,14 @@
     let tipoVenta = null;
     const conLote = () => tipoVenta !== 'NO PERECEDEROS';
     let modificando = false;
+    let cerradoMes = false; // el mes de la compra abierta está cerrado (cierres_mes)
+    // Una compra se modifica si está activa, no está contabilizada (partida en el sistema o en el sistema
+    // anterior) y su mes no está cerrado. Devuelve el motivo cuando no se puede.
+    const bloqueoMod = (c) => !c ? '' : c.estado !== 'ACTIVA' ? 'La compra está anulada.'
+      : c.partida_id ? 'La compra ya generó su partida contable.'
+        : c.fecha_contabilizacion || c.poliza_numero ? 'La compra se contabilizó en el sistema anterior.'
+          : cerradoMes ? 'El mes de la compra está cerrado.' : '';
+    const [enlaceId, enlaceAccion] = String(extra || '').split(':');
     let pestana = 'ITEMS';
     let buscar = '';
 
@@ -72,7 +80,20 @@
     }
 
     async function iniciar() {
+      // Compra pedida en el enlace: su empresa y un período que la incluya.
+      let pedida = null;
+      if (Number(enlaceId)) {
+        const r = await sb.from('compras').select('id, organizacion_id, localidad_id, fecha_documento').eq('id', Number(enlaceId)).maybeSingle();
+        pedida = r.data || null;
+        if (pedida) {
+          ctx.sel.org = pedida.organizacion_id; ctx.sel.loc = pedida.localidad_id;
+          f.estado = 'TODAS';
+          if (pedida.fecha_documento < f.desde) f.desde = pedida.fecha_documento;
+          if (pedida.fecha_documento > f.hasta) f.hasta = pedida.fecha_documento;
+        }
+      }
       if (!(await ctx.cargarBase())) return;
+      if (pedida) iniciar.pedida = pedida;
       const prueba = await sb.from('compras_saldo').select('id, tipo_dte, tipo_documento_id').limit(1);
       if (prueba.error) { ctx.espacio.innerHTML = `<section class="panel"><p class="vacio">${/tipo_documento_id/.test(prueba.error.message) ? 'Falta instalar el script 58 (clasificaciones, tipos de documento y contraseñas de pago) en Supabase.' : /tipo_dte|proveedor/.test(prueba.error.message) ? 'Falta instalar el script 57 (proveedores, bodegas y facturas de compra) en Supabase.' : /compras/.test(prueba.error.message) ? 'Falta instalar el script 53 (facturas de compra) en Supabase.' : esc(prueba.error.message)}</p></section>`; return; }
       const [r, u, t, k] = await Promise.all([sb.from('regimenes_isr').select('*').order('codigo'), sb.from('rubros_presupuesto').select('id, codigo, nombre, activo').order('codigo'),
@@ -80,6 +101,12 @@
       regimenes = r.data || []; rubros = u.data || []; tiposDoc = t.data || []; clasificaciones = k.data || [];
       pintarFiltros();
       await cargarLocalidad();
+      if (iniciar.pedida) {
+        const c = compras.find((x) => x.id === iniciar.pedida.id);
+        if (c) await abrir(c, enlaceAccion === 'modificar');
+        if (c && enlaceAccion === 'modificar' && !modificando) window.FIN.aviso(bloqueoMod(c) || 'La compra no se puede modificar.');
+        iniciar.pedida = null;
+      }
     }
     async function cargarLocalidad() {
       actual = null;
@@ -153,12 +180,20 @@
 
     async function abrir(c, editar = false) {
       actual = c;
-      modificando = !!c && editar && c.estado === 'ACTIVA' && ctx.admin;
+      modificando = false;
       items = []; lineas = []; pagos = []; articulos = []; liquidaciones = []; docsBanco = []; ingresoVincular = null;
       if (c && !('origen_anterior' in c)) {
-        const o = await sb.from('compras').select('origen_anterior, compra_anterior, compra_varia_anterior').eq('id', c.id).maybeSingle();
+        const o = await sb.from('compras').select('origen_anterior, compra_anterior, compra_varia_anterior, fecha_contabilizacion, poliza_numero').eq('id', c.id).maybeSingle();
         if (!o.error && o.data) Object.assign(c, o.data);
+        else Object.assign(c, { origen_anterior: null });
       }
+      cerradoMes = false;
+      if (c?.fecha_documento) {
+        const [y, mm] = c.fecha_documento.split('-');
+        const k = await sb.from('cierres_mes').select('cerrado').eq('localidad_id', c.localidad_id).eq('anio', Number(y)).eq('mes', Number(mm)).eq('cerrado', true).limit(1);
+        cerradoMes = !k.error && !!k.data?.length;
+      }
+      modificando = !!c && editar && ctx.admin && !bloqueoMod(c);
       if (c) {
         const ar = await sb.from('compra_articulos').select('*').eq('compra_id', c.id).order('linea');
         articulos = ar.error ? [] : (ar.data || []).map((x) => ({ ...x, cantidad: Number(x.cantidad), costo_unitario: Number(x.costo_unitario), descuento: Number(x.descuento), costo_extra: Number(x.costo_extra) }));
@@ -449,7 +484,7 @@
         <div class="cf-botones">
           ${consulta && ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>' : ''}
           ${consulta ? '<button type="button" class="icono-boton cf-imprimir" data-accion="imprimir" title="Imprimir la compra" aria-label="Imprimir la compra"><i class="ti ti-printer" aria-hidden="true"></i></button>' : ''}
-          ${consulta && ctx.admin && c.estado === 'ACTIVA' ? '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
+          ${consulta && ctx.admin && c.estado === 'ACTIVA' ? (bloqueoMod(c) ? `<span class="cq-bloqueo" title="${esc(bloqueoMod(c))}"><i class="ti ti-lock" aria-hidden="true"></i> ${esc(bloqueoMod(c).replace(/^La compra /, '').replace(/\.$/, ''))}</span>` : '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>') : ''}
           ${modificando || (!c && compras.length) ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
           ${ed ? `<button type="submit" form="cf-form" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${c ? 'Guardar' : 'Registrar compra'}</button>` : ''}
         </div>`;
@@ -927,7 +962,7 @@
       if (a === 'crear-producto') return crearProducto();
       if (a === 'total-articulos') { leerFilas(); const form = ctx.pDet.querySelector('.cf-form'); form.elements.valor_total.value = fmt.redondear(articulos.reduce((t, x) => t + totalArt(x), 0) - Number(form.elements.bonificaciones.value || 0)); return actualizar(form); }
       if (a === 'nuevo') { actual = null; modificando = false; items = []; lineas = []; pagos = []; cuentasProv = []; articulos = []; ingresoVincular = null; pestana = 'ITEMS'; pintarDetalle(); return ctx.pDet.querySelector('[name=proveedor]')?.focus(); }
-      if (a === 'modificar') { modificando = true; return repintar(); }
+      if (a === 'modificar') { if (bloqueoMod(actual)) return window.FIN.aviso(bloqueoMod(actual)); modificando = true; return repintar(); }
       if (a === 'cancelar') return actual ? abrir(actual) : abrir(compras[0] || null);
       if (a === 'imprimir') return imprimirCompra();
       if (a === 'imprimir-contrasena') return imprimirContrasena();
