@@ -359,7 +359,7 @@
 
   // ===================== Bodegas =====================
   window.PANTALLAS.bodegas = function (cont) {
-    const ctx = montar(cont, { titulo: 'Administración de bodegas', icono: 'ti-building-warehouse', clase: 'bk-bodegas cp-lado', grupo: 'Compras · Catálogos' });
+    const ctx = montar(cont, { titulo: 'Administración de bodegas', icono: 'ti-building-warehouse', clase: 'bk-bodegas cb-apilado', grupo: 'Compras · Catálogos' });
     const { sb } = ctx;
     const f = { estado: 'ACTIVO' };
     const TRX = [['trx_entradas_id', 'Entradas'], ['trx_ajuste_mas_id', 'Ajuste (+)'], ['trx_ajuste_menos_id', 'Ajuste (−)'], ['trx_despachos_id', 'Despachos'], ['trx_traslados_id', 'Traslados']];
@@ -406,21 +406,28 @@
       const raiz = vis.filter((b) => b.tipo === 'GENERAL' || !vis.some((x) => x.id === b.bodega_mayor_id));
       return raiz.flatMap((b) => [b, ...vis.filter((x) => x.tipo === 'SUB-BODEGA' && x.bodega_mayor_id === b.id && x !== b)]);
     }
+    // Lista a lo ancho: generales con sus sub-bodegas debajo y las columnas para comparar bodegas.
     function pintarLista() {
       const q = buscar.trim().toLowerCase();
       const filas = arbol().filter((b) => !q || [b.codigo, b.nombre, b.siglas, b.encargado_nombre].some((v) => String(v || '').toLowerCase().includes(q)));
+      const generales = lista.filter((b) => b.tipo === 'GENERAL').length;
+      const si = (x) => x ? '<i class="ti ti-check cb-si" aria-label="Sí"></i>' : '<span class="tk-tenue">—</span>';
       ctx.pMae.innerHTML = `
         <header class="tk-bandeja-cab cc-cab">
           <h2>Bodegas <small>${lista.length}</small></h2>
+          <span class="cb-resumen">${generales} generales · ${lista.length - generales} sub-bodegas · ${lista.filter((b) => b.estado === 'ACTIVO').length} activas</span>
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar bodega…" value="${esc(buscar)}" aria-label="Buscar bodegas"></label>
         </header>
         <div class="ta-tabla cc-tabla">
-          <table><thead><tr><th class="num">Bodega</th><th>Nombre</th><th>Tipo</th><th>Bodega mayor</th><th>Modalidad</th><th>Estado</th></tr></thead>
+          <table><thead><tr><th class="num">Bodega</th><th>Nombre</th><th>Siglas</th><th>Tipo</th><th>Bodega mayor</th><th>Modalidad</th><th>Precio</th><th>Encargado</th><th class="cb-c">Carga directa</th><th class="cb-c">Ventas</th><th class="cb-c">Licitación</th><th>Estado</th></tr></thead>
             <tbody>${filas.map((b) => { const m = bodega(b.bodega_mayor_id); const sub = b.tipo === 'SUB-BODEGA'; return `<tr data-id="${b.id}" class="${actual && actual.id === b.id ? 'actual' : ''} ${b.estado === 'INACTIVO' ? 'pc-anulada' : ''}" tabindex="0">
-              <td class="num fuerte">${b.codigo}</td><td class="cc-nombre ${sub ? 'cp-sub' : 'fuerte'}" title="${esc(b.nombre)}">${sub ? '<i class="ti ti-corner-down-right" aria-hidden="true"></i> ' : ''}${esc(b.nombre)}${b.siglas ? ` <span class="tk-tenue">${esc(b.siglas)}</span>` : ''}</td>
+              <td class="num fuerte">${b.codigo}</td><td class="cc-nombre ${sub ? 'cp-sub' : 'fuerte'}" title="${esc(b.nombre)}">${sub ? '<i class="ti ti-corner-down-right" aria-hidden="true"></i> ' : ''}${esc(b.nombre)}</td>
+              <td>${esc(b.siglas || '')}</td>
               <td><span class="pc-tipo ${sub ? '' : 'cp-general'}">${sub ? 'SUB-BODEGA' : 'GENERAL'}</span></td><td>${m ? `${m.codigo} · ${esc(m.nombre)}` : '<span class="tk-tenue">—</span>'}</td>
-              <td>${esc(b.modalidad)}</td><td><span class="pc-marca ${b.estado === 'ACTIVO' ? 'aprobada' : 'pendiente'}">${b.estado === 'ACTIVO' ? 'Activa' : 'Inactiva'}</span></td></tr>`; }).join('')
-              || `<tr><td colspan="6" class="tk-vacio"><i class="ti ti-building-warehouse" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : lista.length ? 'Ninguna bodega coincide.' : `No hay bodegas${ctx.admin ? ': crea la primera con «Nueva bodega».' : '.'}`}</td></tr>`}</tbody></table>
+              <td>${esc(b.modalidad)}</td><td>${esc(b.tipo_precio)}</td><td class="cb-enc" title="${esc(b.encargado_nombre || '')}">${esc(b.encargado_nombre || '') || '<span class="tk-tenue">—</span>'}</td>
+              <td class="cb-c">${si(b.carga_directa)}</td><td class="cb-c">${si(b.permite_ventas)}</td><td class="cb-c">${si(b.licitacion)}</td>
+              <td><span class="pc-marca ${b.estado === 'ACTIVO' ? 'aprobada' : 'pendiente'}">${b.estado === 'ACTIVO' ? 'Activa' : 'Inactiva'}</span></td></tr>`; }).join('')
+              || `<tr><td colspan="12" class="tk-vacio"><i class="ti ti-building-warehouse" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : lista.length ? 'Ninguna bodega coincide.' : `No hay bodegas${ctx.admin ? ': crea la primera con «Nueva bodega».' : '.'}`}</td></tr>`}</tbody></table>
         </div>`;
     }
     function abrir(b) {
@@ -429,6 +436,7 @@
       ctx.pMae.querySelectorAll('tr[data-id]').forEach((tr) => tr.classList.toggle('actual', !!b && tr.dataset.id === String(b.id)));
     }
 
+    // Ficha en tres bloques: datos de la bodega, configuración y definiciones contables.
     function pintarDetalle(v0) {
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-building-warehouse'); return; }
       const b = actual;
@@ -436,47 +444,62 @@
       const dis = ctx.admin ? '' : 'disabled';
       const v = v0 || (b ? { ...b } : { tipo: 'GENERAL', bodega_mayor_id: null, modalidad: 'NORMAL', tipo_precio: 'DISTRIBUIDOR', estado: 'ACTIVO', carga_directa: true, permite_ventas: false, consignacion: false, licitacion: false });
       const chk = (name, etq) => `<label class="pc-check"><input type="checkbox" name="${name}" ${v[name] ? 'checked' : ''} ${dis}> ${etq}</label>`;
-      const trxSel = ([k, t]) => `<label class="campo"><span>${t}</span><select name="${k}" ${dis}>${opcionesTrx(transacciones, v[k])}</select></label>`;
       const mayores = lista.filter((x) => x.tipo === 'GENERAL' && (!b || x.id !== b.id));
       const pt = contable(v.cuenta_pt_id);
+      const sn = (x) => x === true ? 'Sí' : x === false ? 'No' : '—';
+      // Datos del sistema anterior (script 87): solo se muestran si la bodega los trae.
+      const anteriores = b ? [
+        ['Secuencia', b.secuencia_orden], ['Escoger serie', b.escoger_serie != null ? sn(b.escoger_serie) : null],
+        ['Desglose despacho', b.calcular_desg_despacho != null ? sn(b.calcular_desg_despacho) : null], ['Aplica conta', b.aplica_conta != null ? sn(b.aplica_conta) : null],
+        ['COVID', b.bodega_covid != null ? sn(b.bodega_covid) : null], ['Precio (código)', b.tipo_precio_anterior],
+        ['Cuenta PT ant.', b.cuenta_pt_codigo && !pt ? b.cuenta_pt_codigo : null], ['Cuenta PT sumin.', b.cuenta_pt_sumi]
+      ].filter(([, x]) => x != null && x !== '') : [];
       ctx.pDet.innerHTML = `
-        <form class="tk-form bm-form cp-form cb-form" novalidate>
-          <header class="tk-titulo bm-titulo">
+        <form class="tk-form cp-form cb-form cb-ficha" novalidate>
+          <header class="tk-titulo cb-titulo">
             <span class="tk-icono"><i class="ti ti-building-warehouse" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto"><small>${b ? `Bodega ${b.codigo}` : 'Nueva bodega'}</small><h2>${b ? esc(b.nombre) : 'Datos de la bodega'}</h2></div>
             <div class="tk-marcas">${b ? `<span class="pc-marca ${b.estado === 'ACTIVO' ? 'aprobada' : 'pendiente'}">${b.estado === 'ACTIVO' ? 'Activa' : 'Inactiva'}</span><span class="pc-marca definitiva">${esc(b.tipo)}</span>` : ''}</div>
+            ${b ? `<p class="cc-ingreso cb-audit"><i class="ti ti-user" aria-hidden="true"></i> Creó ${esc(b.creado_por_nombre || '')} · ${esc(fmt.fechaHora(b.creado_en))}${b.modificado_en ? ` · modificó ${esc(b.modificado_por_nombre || '')} ${esc(fmt.fechaHora(b.modificado_en))}` : ''}</p>` : ''}
+            <p class="modal-error tk-error" role="alert"></p>
             <div class="tk-titulo-acciones">
               ${nuevo ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
               ${ctx.admin ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${b ? 'Guardar cambios' : 'Crear bodega'}</button>` : ''}
             </div>
           </header>
-          <p class="modal-error tk-error" role="alert"></p>
-          <section class="bm-bloque">
-            <h3 class="ta-col-titulo"><i class="ti ti-id" aria-hidden="true"></i> Bodega</h3>
-            <div class="cp-g cp-g6">
-              <div class="bs-req-num"><span>Bodega</span><b>${b ? b.codigo : 'Auto'}</b></div>
-              <label class="campo cp-c3"><span>Nombre *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="100" ${dis}></label>
-              <label class="campo"><span>Siglas</span><input name="siglas" value="${esc(v.siglas || '')}" maxlength="6" ${dis}></label>
-              <label class="campo"><span>Estado</span><select name="estado" ${dis}>${['ACTIVO', 'INACTIVO'].map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
-              <label class="campo cp-c2"><span>Tipo</span><select name="tipo" ${dis}>${['GENERAL', 'SUB-BODEGA'].map((e) => `<option ${v.tipo === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
-              <label class="campo cp-c4"><span>Bodega mayor${v.tipo === 'SUB-BODEGA' ? ' *' : ''}</span><select name="bodega_mayor_id" ${dis}><option value="">${v.tipo === 'SUB-BODEGA' ? 'Elige la bodega general' : '— (es bodega principal)'}</option>${mayores.map((x) => `<option value="${x.id}" ${x.id === v.bodega_mayor_id ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select></label>
-              <label class="campo cp-c6"><span>Dirección</span><input name="direccion" value="${esc(v.direccion || '')}" maxlength="200" ${dis}></label>
-              <div class="campo cp-c3"><span>Tipo de bodega</span><div class="cc-radios">${MODALIDADES.map(([k, t]) => `<label class="pc-check"><input type="radio" name="modalidad" value="${k}" ${v.modalidad === k ? 'checked' : ''} ${dis}> ${t}</label>`).join('')}</div></div>
-              <label class="campo cp-c3"><span>Tipo de precio por defecto</span><select name="tipo_precio" ${dis}>${PRECIOS.map((x) => `<option ${v.tipo_precio === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-              <div class="cp-checks cp-c6">${chk('carga_directa', '¿Permitir carga directa?')}${chk('consignacion', '¿Bodega de consignación?')}${chk('licitacion', '¿Bodega de licitación?')}${chk('permite_ventas', '¿Permitir ventas?')}</div>
-              <label class="campo"><span>Encargado</span><input name="encargado_codigo" value="${esc(v.encargado_codigo || '')}" maxlength="20" placeholder="Código" ${dis}></label>
-              <label class="campo cp-c5"><span>Nombre del encargado</span><input name="encargado_nombre" value="${esc(v.encargado_nombre || '')}" maxlength="120" ${dis}></label>
-            </div>
-          </section>
-          <section class="bm-bloque cb-contable">
-            <h3 class="ta-col-titulo"><i class="ti ti-calculator" aria-hidden="true"></i> Definiciones contables por bodega</h3>
-            <div class="cb-dos">
-              <fieldset class="cc-fiscal"><legend>Transacciones</legend><div class="cp-g cp-g2">${TRX.map(trxSel).join('')}</div></fieldset>
-              <fieldset class="cc-fiscal"><legend>Reversiones</legend><div class="cp-g cp-g2">${REV.map(trxSel).join('')}
-                <label class="campo"><span>Cuenta PT</span><span class="cp-cta"><input list="cb-cuentas" name="cuenta_pt" value="${esc(pt ? pt.codigo : '')}" placeholder="Código" ${dis}><small data-nombre-de="cuenta_pt">${pt ? esc(pt.nombre) : ''}</small></span></label></div></fieldset>
-            </div>
-          </section>
-          ${b ? `<p class="cc-ingreso"><i class="ti ti-user" aria-hidden="true"></i> Creó ${esc(b.creado_por_nombre || '')} · ${esc(fmt.fechaHora(b.creado_en))}${b.modificado_en ? ` · modificó ${esc(b.modificado_por_nombre || '')} ${esc(fmt.fechaHora(b.modificado_en))}` : ''}</p>` : ''}
+          <div class="cb-tres">
+            <section class="cb-bloque">
+              <h3 class="ta-col-titulo"><i class="ti ti-id" aria-hidden="true"></i> Bodega ${b ? b.codigo : '(automático)'}</h3>
+              <label class="cb-linea"><span>Nombre *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="100" ${dis}></label>
+              <div class="cb-par">
+                <label class="cb-linea"><span>Siglas</span><input name="siglas" value="${esc(v.siglas || '')}" maxlength="6" ${dis}></label>
+                <label class="cb-linea"><span>Estado</span><select name="estado" ${dis}>${['ACTIVO', 'INACTIVO'].map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
+              </div>
+              <label class="cb-linea"><span>Tipo</span><select name="tipo" ${dis}>${['GENERAL', 'SUB-BODEGA'].map((e) => `<option ${v.tipo === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
+              <label class="cb-linea"><span>Bodega mayor${v.tipo === 'SUB-BODEGA' ? ' *' : ''}</span><select name="bodega_mayor_id" ${dis}><option value="">${v.tipo === 'SUB-BODEGA' ? 'Elige la bodega general' : '— (es bodega principal)'}</option>${mayores.map((x) => `<option value="${x.id}" ${x.id === v.bodega_mayor_id ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select></label>
+              <label class="cb-linea"><span>Dirección</span><input name="direccion" value="${esc(v.direccion || '')}" maxlength="200" ${dis}></label>
+              <div class="cb-par cb-enc-par">
+                <label class="cb-linea"><span>Encargado</span><input name="encargado_codigo" value="${esc(v.encargado_codigo || '')}" maxlength="20" placeholder="Código" ${dis}></label>
+                <label class="cb-linea cb-sin-et"><input name="encargado_nombre" value="${esc(v.encargado_nombre || '')}" maxlength="120" placeholder="Nombre del encargado" aria-label="Nombre del encargado" ${dis}></label>
+              </div>
+            </section>
+            <section class="cb-bloque">
+              <h3 class="ta-col-titulo"><i class="ti ti-adjustments" aria-hidden="true"></i> Configuración</h3>
+              <div class="cb-linea"><span>Tipo de bodega</span><div class="cc-radios">${MODALIDADES.map(([k, t]) => `<label class="pc-check"><input type="radio" name="modalidad" value="${k}" ${v.modalidad === k ? 'checked' : ''} ${dis}> ${t}</label>`).join('')}</div></div>
+              <label class="cb-linea"><span>Precio por defecto</span><select name="tipo_precio" ${dis}>${PRECIOS.map((x) => `<option ${v.tipo_precio === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+              <div class="cb-checks">${chk('carga_directa', 'Permitir carga directa')}${chk('permite_ventas', 'Permitir ventas')}${chk('consignacion', 'Bodega de consignación')}${chk('licitacion', 'Bodega de licitación')}</div>
+              ${anteriores.length ? `<dl class="cb-anterior"><dt>Sistema anterior</dt>${anteriores.map(([k, x]) => `<dd><span>${k}</span> ${esc(String(x))}</dd>`).join('')}</dl>` : ''}
+            </section>
+            <section class="cb-bloque">
+              <h3 class="ta-col-titulo"><i class="ti ti-calculator" aria-hidden="true"></i> Definiciones contables</h3>
+              <div class="cb-trx-cab"><span></span><span>Transacción</span><span>Reversión</span></div>
+              ${[['Entradas', 'trx_entradas_id', 'rev_entradas_id'], ['Ajuste (+)', 'trx_ajuste_mas_id', 'rev_ajustes_id'], ['Ajuste (−)', 'trx_ajuste_menos_id', null],
+                 ['Despachos', 'trx_despachos_id', 'rev_despachos_id'], ['Traslados', 'trx_traslados_id', 'rev_traslados_id']].map(([t, k, r]) => `
+                <div class="cb-trx"><span>${t}</span><select name="${k}" aria-label="${t}" ${dis}>${opcionesTrx(transacciones, v[k])}</select>${r ? `<select name="${r}" aria-label="Reversión de ${t.toLowerCase()}" ${dis}>${opcionesTrx(transacciones, v[r])}</select>` : `<span class="tk-tenue cb-rev-nota">${t === 'Ajuste (−)' ? 'Rev. con ajustes' : ''}</span>`}</div>`).join('')}
+              <label class="cb-linea cb-pt"><span>Cuenta PT</span><span class="cp-cta"><input list="cb-cuentas" name="cuenta_pt" value="${esc(pt ? pt.codigo : '')}" placeholder="Código" ${dis}><small data-nombre-de="cuenta_pt">${pt ? esc(pt.nombre) : ''}</small></span></label>
+              ${b && b.transacciones_anteriores ? `<p class="cb-trx-ant" title="${esc(b.transacciones_anteriores)}"><i class="ti ti-history" aria-hidden="true"></i> ${esc(b.transacciones_anteriores)}</p>` : ''}
+            </section>
+          </div>
           <datalist id="cb-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
         </form>`;
     }
