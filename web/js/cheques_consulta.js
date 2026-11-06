@@ -1,10 +1,12 @@
-// Caja y Bancos · Cheques · Consulta de Cheques: resumen de los cheques de una empresa (organización y
-// localidad) en un rango de fechas, como Consultar Compras: arriba el maestro con sus totales y abajo el
-// detalle del cheque elegido (detalle contable, compras que liquidó y facturas pagadas).
-// Filtros: cuenta bancaria, beneficiario o proveedor, fechas (la inicial, por omisión, la del primer cheque
-// emitido de la empresa), estado (vigentes, anulados, conciliados, sin
-// conciliar, sin partida) y orden (número, fecha o valor, ascendente o descendente; también con clic en el
-// encabezado). «Consultar» abre el cheque en Emisión de cheques.
+// Caja y Bancos · Consultas de documentos bancarios, con un mismo diseño:
+//   Cheques · Consulta de Cheques, Bancos · Consulta de Depósitos Monetarios y Bancos · Consulta de Notas
+//   (de crédito y de débito). Resumen de los documentos de una empresa (organización y localidad) en un rango
+//   de fechas, como Consultar Compras: arriba el maestro con sus totales y abajo el detalle del documento
+//   elegido (detalle contable y las compras, facturas o recibos que tiene).
+// Filtros: cuenta bancaria, tipo (solo en notas), beneficiario/cliente/proveedor, fechas (la inicial, por
+// omisión, la del primer documento de la empresa), estado (vigentes, anulados, conciliados, sin conciliar,
+// sin partida) y orden (número, fecha o valor; también con clic en el encabezado). «Consultar» abre el
+// documento en su pantalla de registro.
 (function () {
   const { esc } = window.UI;
   const { montar, fmt } = window.BANCOS;
@@ -12,9 +14,30 @@
 
   const ORDENES = [['fecha:desc', 'Fecha ↓'], ['fecha:asc', 'Fecha ↑'], ['numero:desc', 'Número ↓'], ['numero:asc', 'Número ↑'], ['valor:desc', 'Valor ↓'], ['valor:asc', 'Valor ↑']];
   const ESTADOS = ['TODOS', 'VIGENTES', 'ANULADOS', 'CONCILIADOS', 'SIN CONCILIAR', 'SIN PARTIDA'];
+  const TIPOS_NOTA = { NOTA_CREDITO: { corto: 'NC', nombre: 'Crédito', ruta: 'notas-credito' }, NOTA_DEBITO: { corto: 'ND', nombre: 'Débito', ruta: 'notas-debito' } };
 
-  window.PANTALLAS['consulta-de-cheques'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Consulta de Cheques', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques', grupo: 'Cheques' });
+  const CONSULTAS = {
+    'consulta-de-cheques': {
+      tipos: ['CHEQUE'], titulo: 'Consulta de Cheques', grupo: 'Cheques', icono: 'ti-writing', plural: 'cheques', Plural: 'Cheques', uno: 'cheque', el: 'el cheque',
+      numero: 'Cheque', quien: 'A favor de', etqTercero: 'Beneficiario o proveedor', colDocs: 'Compras', tituloDocs: 'Compras y facturas pagadas', colTercero: 'Proveedor',
+      sinDocs: 'El cheque no liquidó compras ni facturas.', ruta: () => 'emision-de-cheques', pantalla: 'Emisión de cheques', anulados: 'anulados', vigentes: 'vigentes'
+    },
+    'consulta-de-depositos': {
+      tipos: ['DEPOSITO'], titulo: 'Consulta de Depósitos Monetarios', grupo: 'Bancos', icono: 'ti-cash-banknote', plural: 'depósitos', Plural: 'Depósitos', uno: 'depósito', el: 'el depósito',
+      numero: 'Depósito', quien: 'Cliente o depositante', etqTercero: 'Cliente o depositante', colDocs: 'Docs.', tituloDocs: 'Facturas y recibos depositados', colTercero: 'Cliente',
+      sinDocs: 'El depósito no tiene facturas ni recibos.', ruta: () => 'depositos', pantalla: 'Depósitos multimoneda', anulados: 'anulados', vigentes: 'vigentes'
+    },
+    'consulta-de-notas': {
+      tipos: ['NOTA_CREDITO', 'NOTA_DEBITO'], titulo: 'Consulta de Notas', grupo: 'Bancos', icono: 'ti-file-invoice', plural: 'notas', Plural: 'Notas', uno: 'nota', el: 'la nota',
+      numero: 'Nota', quien: 'Cliente o proveedor', etqTercero: 'Cliente o proveedor', colDocs: 'Docs.', tituloDocs: 'Facturas, recibos y compras', colTercero: 'Cliente / prov.',
+      sinDocs: 'La nota no tiene facturas, recibos ni compras.', ruta: (d) => TIPOS_NOTA[d.tipo]?.ruta || 'notas-credito', pantalla: 'su pantalla de notas', anulados: 'anuladas', vigentes: 'vigentes', conTipo: true
+    }
+  };
+
+  Object.entries(CONSULTAS).forEach(([id, cfg]) => { window.PANTALLAS[id] = (cont) => pantallaConsulta(cont, cfg); });
+
+  function pantallaConsulta(cont, cfg) {
+    const ctx = montar(cont, { titulo: cfg.titulo, icono: 'ti-file-search', clase: `bk-movimientos bk-consultar cb-apilado bk-consulta-cheques ${cfg.conTipo ? 'cqc-con-tipo' : ''}`, grupo: cfg.grupo });
     const { sb } = ctx;
     const [anio] = fmt.hoy().split('-');
     const f = { cuenta: '', tercero: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
@@ -27,11 +50,17 @@
     const numero = (d) => Number(d.numero_documento) || 0;
     const partida = (id) => partidas[id] ? `${String(partidas[id].mes).padStart(2, '0')}-${partidas[id].numero}` : '';
     const sim = (d) => ctx.moneda(d.moneda_id)?.simbolo || 'Q';
+    // Quién: en cheques el beneficiario; en depósitos y notas el cliente o proveedor (o quien depositó / ordenó).
+    const quienDe = (d) => cfg.tipos[0] === 'CHEQUE' ? d.deposito_por || d.tercero_nombre || ''
+      : d.clientes_varios ? 'CLIENTES VARIOS' : d.tercero_nombre || d.deposito_por || (d.tercero_codigo ? `Código ${d.tercero_codigo}` : '');
+    const tipoNota = (d) => TIPOS_NOTA[d.tipo];
+    f.tipo = 'TODOS';
 
     function pintarFiltros() {
       ctx.filtros(`
         <label class="campo"><span>Cuenta bancaria</span><select name="cuenta"><option value="">Todas</option>${cuentas.map((c) => `<option value="${c.id}" ${String(f.cuenta) === String(c.id) ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(c))}</option>`).join('')}</select></label>
-        <label class="campo cq-prov"><span>Beneficiario o proveedor</span><input name="tercero" value="${esc(f.tercero)}" placeholder="Todos (nombre o código)"></label>
+        ${cfg.conTipo ? `<label class="campo"><span>Tipo de nota</span><select name="tipo">${[['TODOS', 'Crédito y débito'], ['NOTA_CREDITO', 'Notas de crédito'], ['NOTA_DEBITO', 'Notas de débito']].map(([k, t]) => `<option value="${k}" ${f.tipo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
+        <label class="campo cq-prov"><span>${esc(cfg.etqTercero)}</span><input name="tercero" value="${esc(f.tercero)}" placeholder="Todos (nombre o código)"></label>
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
         <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
@@ -46,8 +75,8 @@
     async function cargarLocalidad() {
       cuentas = await ctx.cuentasBancarias();
       if (f.cuenta && !cuenta(Number(f.cuenta))) f.cuenta = '';
-      // Fecha inicial por omisión: la del primer cheque emitido de la empresa (sin cheques, el 1 de enero).
-      const pr = ctx.sel.loc ? await sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', ctx.sel.loc).eq('tipo', 'CHEQUE').order('fecha').limit(1) : { data: [] };
+      // Fecha inicial por omisión: la del primer documento de la empresa (sin documentos, el 1 de enero).
+      const pr = ctx.sel.loc ? await sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', ctx.sel.loc).in('tipo', cfg.tipos).order('fecha').limit(1) : { data: [] };
       f.desde = pr.data?.[0]?.fecha || `${anio}-01-01`;
       if (f.hasta < f.desde) f.hasta = fmt.hoy();
       pintarFiltros();
@@ -57,19 +86,27 @@
     async function consultar(id = sel?.id) {
       const loc = ctx.sel.loc;
       if (!loc) { cheques = []; pintar(); return; }
-      let q = sb.from('movimientos_bancarios').select('*').eq('localidad_id', loc).eq('tipo', 'CHEQUE').gte('fecha', f.desde).lte('fecha', f.hasta)
-        .order('fecha', { ascending: false }).order('folio', { ascending: false }).limit(5000);
-      if (f.cuenta) q = q.eq('cuenta_bancaria_id', Number(f.cuenta));
+      // Por páginas de 1,000 (el servidor devuelve como máximo 1,000 filas por consulta), hasta 10,000.
+      const pagina = (desde) => {
+        let q = sb.from('movimientos_bancarios').select('*').eq('localidad_id', loc).in('tipo', cfg.tipos).gte('fecha', f.desde).lte('fecha', f.hasta)
+          .order('fecha', { ascending: false }).order('id', { ascending: false }).range(desde, desde + 999);
+        if (f.cuenta) q = q.eq('cuenta_bancaria_id', Number(f.cuenta));
+        return q;
+      };
       const yo = ++consulta;
-      const r = await q;
-      if (yo !== consulta) return;
-      if (r.error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(r.error.message)}</p>`; return; }
-      const lista = r.data || [];
+      const lista = [];
+      for (let p = 0; p < 10000; p += 1000) {
+        const r = await pagina(p);
+        if (yo !== consulta) return;
+        if (r.error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(r.error.message)}</p>`; return; }
+        lista.push(...(r.data || []));
+        if ((r.data || []).length < 1000) break;
+      }
       rango = null;
       if (!lista.length) {
-        let qr = sb.from('movimientos_bancarios').select('fecha', { count: 'exact' }).eq('localidad_id', loc).eq('tipo', 'CHEQUE');
+        let qr = sb.from('movimientos_bancarios').select('fecha', { count: 'exact' }).eq('localidad_id', loc).in('tipo', cfg.tipos);
         if (f.cuenta) qr = qr.eq('cuenta_bancaria_id', Number(f.cuenta));
-        const [a, b] = await Promise.all([qr.order('fecha').limit(1), sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', loc).eq('tipo', 'CHEQUE').order('fecha', { ascending: false }).limit(1)]);
+        const [a, b] = await Promise.all([qr.order('fecha').limit(1), sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', loc).in('tipo', cfg.tipos).order('fecha', { ascending: false }).limit(1)]);
         if (a.count) rango = { n: a.count, desde: a.data?.[0]?.fecha, hasta: b.data?.[0]?.fecha };
       }
       // Partidas y compras liquidadas de cada cheque, por partes.
@@ -83,7 +120,8 @@
       for (let i = 0; i < ids.length; i += 300) {
         const [a, b] = await Promise.all([
           sb.from('compra_documentos_banco').select('movimiento_id').in('movimiento_id', ids.slice(i, i + 300)),
-          sb.from('movimiento_documentos').select('movimiento_id').in('movimiento_id', ids.slice(i, i + 300)).not('compra_id', 'is', null)
+          cfg.tipos[0] === 'CHEQUE' ? sb.from('movimiento_documentos').select('movimiento_id').in('movimiento_id', ids.slice(i, i + 300)).not('compra_id', 'is', null)
+            : sb.from('movimiento_documentos').select('movimiento_id').in('movimiento_id', ids.slice(i, i + 300))
         ]);
         [...(a.error ? [] : a.data || []), ...(b.data || [])].forEach((x) => compras.set(x.movimiento_id, (compras.get(x.movimiento_id) || 0) + 1));
       }
@@ -97,7 +135,7 @@
     const visibles = () => {
       const q = f.buscar.trim().toLowerCase();
       const t = f.tercero.trim().toLowerCase();
-      return cheques.filter((d) => (f.estado === 'TODOS' || (f.estado === 'VIGENTES' && d.estado === 'ACTIVO') || (f.estado === 'ANULADOS' && d.estado === 'ANULADO')
+      return cheques.filter((d) => (f.tipo === 'TODOS' || d.tipo === f.tipo) && (f.estado === 'TODOS' || (f.estado === 'VIGENTES' && d.estado === 'ACTIVO') || (f.estado === 'ANULADOS' && d.estado === 'ANULADO')
         || (f.estado === 'CONCILIADOS' && d.conciliado) || (f.estado === 'SIN CONCILIAR' && d.estado === 'ACTIVO' && !d.conciliado) || (f.estado === 'SIN PARTIDA' && d.estado === 'ACTIVO' && !d.partida_id))
         && (!t || [d.deposito_por, d.tercero_nombre, d.tercero_codigo].some((v) => String(v || '').toLowerCase().includes(t)))
         && (!q || [d.numero_documento, d.folio, d.deposito_por, d.tercero_nombre, d.descripcion, d.documento_mig].some((v) => String(v || '').toLowerCase().includes(q))))
@@ -114,11 +152,11 @@
       sel = d;
       detalle = { lineas: [], liquida: [], facturas: [] };
       if (d) {
-        ctx.pDet.innerHTML = ctx.vacio('Cargando el detalle del cheque…', 'ti-loader-2');
+        ctx.pDet.innerHTML = ctx.vacio(`Cargando el detalle de ${cfg.el}…`, 'ti-loader-2');
         const [l, c, m] = await Promise.all([
           sb.from('movimiento_lineas').select('linea, debe, haber, cuentas(codigo, nombre, catalogos_cuentas(version)), centros_costo(codigo, nombre)').eq('movimiento_id', d.id).order('linea'),
           sb.from('compra_documentos_banco').select('valor, liquidacion, compras(id, numero, serie, documento, fecha_documento, proveedor_nombre, valor_total, moneda_id)').eq('movimiento_id', d.id),
-          sb.from('movimiento_documentos').select('tipo, serie, numero, nombre, valor, abono, compra_id').eq('movimiento_id', d.id).order('id')
+          sb.from('movimiento_documentos').select('tipo, serie, numero, tercero, nombre, valor, abono, fecha, compra_id').eq('movimiento_id', d.id).order('id')
         ]);
         if (sel !== d) return;
         detalle = { lineas: l.data || [], liquida: c.error ? [] : c.data || [], facturas: m.data || [] };
@@ -135,21 +173,22 @@
       const total = vivos.reduce((t, d) => t + Number(d.valor_ml || 0), 0);
       ctx.pMae.innerHTML = `
         <header class="tk-bandeja-cab cc-cab">
-          <h2>Cheques <small>${filas.length}</small></h2>
+          <h2>${esc(cfg.Plural)} <small>${filas.length}</small></h2>
           <div class="ta-totales pc-resumen">
-            <span class="ta-total"><b>Q ${fmt.monto(total)}</b> vigentes (${vivos.length})</span>
-            <span class="ta-total"><b>${filas.length - vivos.length}</b> anulados</span>
+            ${cfg.conTipo ? ['NOTA_CREDITO', 'NOTA_DEBITO'].map((k) => { const v = vivos.filter((d) => d.tipo === k); return `<span class="ta-total cqc-tn-${TIPOS_NOTA[k].corto}"><b>Q ${fmt.monto(v.reduce((t, d) => t + Number(d.valor_ml || 0), 0))}</b> ${TIPOS_NOTA[k].nombre.toLowerCase()} (${v.length})</span>`; }).join('')
+              : `<span class="ta-total"><b>Q ${fmt.monto(total)}</b> ${cfg.vigentes} (${vivos.length})</span>`}
+            <span class="ta-total"><b>${filas.length - vivos.length}</b> ${cfg.anulados}</span>
             <span class="ta-total"><b>${vivos.filter((d) => d.conciliado).length}</b> conciliados</span>
             <span class="ta-total sin"><b>${vivos.filter((d) => !d.conciliado).length}</b> sin conciliar</span>
             <span class="ta-total sin"><b>${vivos.filter((d) => !d.partida_id).length}</b> sin partida</span>
           </div>
-          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Número, beneficiario, descripción…" value="${esc(f.buscar)}" aria-label="Buscar cheques"></label>
+          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Número, ${esc(cfg.quien.toLowerCase())}, descripción…" value="${esc(f.buscar)}" aria-label="Buscar ${esc(cfg.plural)}"></label>
         </header>
         <div class="ta-tabla cc-tabla">
           <table class="cqc-tabla"><colgroup><col class="w-num"><col class="w-fecha"><col><col class="w-cta"><col class="w-valor"><col class="w-estado"><col class="w-compras"><col class="w-acc"></colgroup>
-            <thead><tr>${ordenTh('numero', 'Cheque', 'num')}${ordenTh('fecha', 'Fecha')}<th>A favor de · descripción</th><th>Cuenta bancaria</th>${ordenTh('valor', 'Valor', 'num')}<th>Estado</th><th class="num" title="Compras que liquidó">Compras</th><th aria-label="Consultar"></th></tr></thead>
-            <tbody>${filas.map((d) => { const cb = cuenta(d.cuenta_bancaria_id); const quien = d.deposito_por || d.tercero_nombre || ''; return `<tr data-cheque="${d.id}" class="${sel && sel.id === d.id ? 'actual' : ''} ${d.estado === 'ANULADO' ? 'pc-anulada' : ''}" tabindex="0">
-              <td class="num fuerte">${esc(d.numero_documento || '')}<small class="cq-ant">folio ${d.folio}</small></td>
+            <thead><tr>${ordenTh('numero', cfg.numero, 'num')}${ordenTh('fecha', 'Fecha')}<th>${esc(cfg.quien)} · descripción</th><th>Cuenta bancaria</th>${ordenTh('valor', 'Valor', 'num')}<th>Estado</th><th class="num" title="${esc(cfg.tituloDocs)}">${esc(cfg.colDocs)}</th><th aria-label="Consultar"></th></tr></thead>
+            <tbody>${filas.map((d) => { const cb = cuenta(d.cuenta_bancaria_id); const quien = quienDe(d); const tn = tipoNota(d); return `<tr data-cheque="${d.id}" class="${sel && sel.id === d.id ? 'actual' : ''} ${d.estado === 'ANULADO' ? 'pc-anulada' : ''}" tabindex="0">
+              <td class="num fuerte">${tn ? `<span class="cqc-tn cqc-tn-${tn.corto}" title="Nota de ${tn.nombre.toLowerCase()}">${tn.corto}</span> ` : ''}${esc(d.numero_documento || '')}<small class="cq-ant">folio ${d.folio}</small></td>
               <td>${esc(fmt.fechaDia(d.fecha))}</td>
               <td class="cqc-quien" title="${esc(quien)}${d.descripcion ? ` · ${esc(d.descripcion)}` : ''}"><b>${esc(quien || '—')}</b><small>${esc(d.descripcion || '')}</small></td>
               <td class="cqc-cta" title="${esc(cb ? ctx.nombreCuentaBancaria(cb) : '')}">${esc(cb ? cb.numero : '')}<small>${esc(cb ? ctx.banco(cb.banco_id)?.siglas || ctx.banco(cb.banco_id)?.nombre || '' : '')}</small></td>
@@ -157,23 +196,25 @@
               <td class="cqc-estado"><span class="pc-marca ${d.estado === 'ANULADO' ? 'anulada' : 'aprobada'}">${d.estado === 'ANULADO' ? 'Anulado' : 'Vigente'}</span>${d.conciliado ? ' <span class="pc-marca definitiva">Conciliado</span>' : ''}
                 <small>${d.partida_id ? `Partida ${esc(partida(d.partida_id))}` : d.origen_anterior ? 'Sistema anterior' : 'Sin partida'}</small></td>
               <td class="num">${compras.get(d.id) || '<span class="tk-tenue">—</span>'}</td>
-              <td class="cq-acc"><button type="button" class="icono-boton cqc-ver" data-consultar="${d.id}" title="Consultar: abrir el cheque en Emisión de cheques" aria-label="Consultar el cheque ${esc(d.numero_documento || '')}"><i class="ti ti-eye" aria-hidden="true"></i></button></td></tr>`; }).join('')
-              || `<tr><td colspan="8" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : !cheques.length && rango ? `No hay cheques entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> cheques, del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton primario-sm" data-ver-todos>Ver todos</button>` : 'No hay cheques con estos parámetros.'}</td></tr>`}</tbody></table>
+              <td class="cq-acc"><button type="button" class="icono-boton cqc-ver" data-consultar="${d.id}" title="Consultar: abrir ${esc(cfg.el)} en ${esc(cfg.pantalla)}" aria-label="Consultar ${esc(cfg.el)} ${esc(d.numero_documento || '')}"><i class="ti ti-eye" aria-hidden="true"></i></button></td></tr>`; }).join('')
+              || `<tr><td colspan="8" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : !cheques.length && rango ? `No hay ${esc(cfg.plural)} entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> ${esc(cfg.plural)}, del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton primario-sm" data-ver-todos>Ver todos</button>` : `No hay ${esc(cfg.plural)} con estos parámetros.`}</td></tr>`}</tbody></table>
         </div>`;
     }
 
     function pintarDetalle() {
       const d = sel;
-      if (!d) { ctx.pDet.innerHTML = ctx.vacio(ctx.sel.loc ? 'Elige un cheque para ver su detalle.' : 'Elige la empresa.', 'ti-file-search'); return; }
+      if (!d) { ctx.pDet.innerHTML = ctx.vacio(ctx.sel.loc ? `Elige ${cfg.uno === 'nota' ? 'una' : 'un'} ${cfg.uno} para ver su detalle.` : 'Elige la empresa.', 'ti-file-search'); return; }
       const { lineas, liquida, facturas } = detalle;
       const cb = cuenta(d.cuenta_bancaria_id);
+      const tn = tipoNota(d);
+      const nombreDoc = tn ? `Nota de ${tn.nombre.toLowerCase()}` : cfg.numero;
       const debe = lineas.reduce((t, l) => t + Number(l.debe || 0), 0);
       const haber = lineas.reduce((t, l) => t + Number(l.haber || 0), 0);
       ctx.pDet.innerHTML = `
         <div class="tk-form cq-ficha">
           <header class="tk-titulo cb-titulo">
-            <span class="tk-icono"><i class="ti ti-writing" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>Cheque ${esc(d.numero_documento || '')} · folio ${d.folio}${d.origen_anterior ? ' · del sistema anterior' : ''}${cb ? ` · ${esc(ctx.nombreCuentaBancaria(cb))}` : ''}</small><h2>${esc(d.deposito_por || d.tercero_nombre || 'Sin beneficiario')}</h2></div>
+            <span class="tk-icono"><i class="ti ${tn ? (d.tipo === 'NOTA_DEBITO' ? 'ti-file-minus' : 'ti-file-plus') : cfg.icono}" aria-hidden="true"></i></span>
+            <div class="tk-titulo-texto"><small>${esc(nombreDoc)} ${esc(d.numero_documento || '')} · folio ${d.folio}${d.origen_anterior ? ' · del sistema anterior' : ''}${cb ? ` · ${esc(ctx.nombreCuentaBancaria(cb))}` : ''}</small><h2>${esc(quienDe(d) || (cfg.tipos[0] === 'CHEQUE' ? 'Sin beneficiario' : 'Sin cliente ni proveedor'))}</h2></div>
             <dl class="cq-datos">
               <div><dt>Fecha</dt><dd>${esc(fmt.fechaDia(d.fecha))}</dd></div>
               <div><dt>Valor</dt><dd>${esc(sim(d))} ${fmt.monto(d.valor)}${d.moneda_id !== ctx.monedaBase()?.id ? ` · Q ${fmt.monto(d.valor_ml)}` : ''}</dd></div>
@@ -182,7 +223,7 @@
               <div><dt>Operador</dt><dd>${esc(d.usuario || '—')}</dd></div>
             </dl>
             <div class="tk-titulo-acciones">
-              <a class="boton primario-sm" href="#/caja-bancos/emision-de-cheques/${d.id}"><i class="ti ti-eye" aria-hidden="true"></i> Ver en Emisión de cheques</a>
+              <a class="boton primario-sm" href="#/caja-bancos/${cfg.ruta(d)}/${d.id}"><i class="ti ti-eye" aria-hidden="true"></i> Ver en ${esc(tn ? `Notas de ${tn.nombre.toLowerCase()}` : cfg.pantalla)}</a>
             </div>
           </header>
           ${d.descripcion || d.estado === 'ANULADO' ? `<p class="cqc-concepto"><i class="ti ti-file-text" aria-hidden="true"></i> ${esc(d.descripcion || '')}${d.estado === 'ANULADO' && d.motivo_anulacion ? ` <span class="pc-rojo">· Anulación: ${esc(d.motivo_anulacion)}</span>` : ''}</p>` : ''}
@@ -194,13 +235,13 @@
                 <tfoot><tr><td colspan="4">Totales</td><td class="num">${fmt.monto(debe)}</td><td class="num">${fmt.monto(haber)}</td></tr></tfoot></table></div>
             </section>
             <section class="cb-bloque cq-lineas">
-              <h3 class="ta-col-titulo"><i class="ti ti-shopping-cart" aria-hidden="true"></i> Compras y facturas pagadas <small>${liquida.length + facturas.length}</small></h3>
-              <div class="pc-lineas"><table><thead><tr><th>Compra</th><th>Documento</th><th>Fecha</th><th>Proveedor</th><th class="num">Total compra</th><th class="num">Liquidado</th><th></th></tr></thead>
-                <tbody>${[...liquida.map((x) => ({ c: x.compras, valor: x.valor, nota: x.liquidacion ? `liq. ${x.liquidacion}` : '' })), ...facturas.map((x) => ({ c: null, doc: `${x.serie ? `${x.serie}-` : ''}${x.numero}`, nombre: x.nombre, valor: x.abono || x.valor, compraId: x.compra_id, nota: x.tipo }))].map((x) => `<tr>
-                  <td class="fuerte">${x.c ? x.c.numero : x.compraId ? '—' : ''}</td><td>${esc(x.c ? `${x.c.serie ? `${x.c.serie}-` : ''}${x.c.documento}` : x.doc || '')}</td><td>${esc(x.c ? fmt.fechaDia(x.c.fecha_documento) : '')}</td>
-                  <td class="cc-nombre">${esc(x.c ? x.c.proveedor_nombre : x.nombre || '')}</td><td class="num">${x.c ? fmt.monto(x.c.valor_total) : ''}</td><td class="num fuerte">${fmt.monto(x.valor)}</td>
-                  <td>${x.c ? `<a class="rp-enlace" href="#/compras/facturas-compra/${x.c.id}" title="Abrir la compra"><i class="ti ti-external-link" aria-hidden="true"></i></a>` : `<small class="tk-tenue">${esc(x.nota || '')}</small>`}</td></tr>`).join('') || '<tr><td colspan="7" class="tk-vacio">El cheque no liquidó compras ni facturas.</td></tr>'}</tbody>
-                <tfoot><tr><td colspan="5">Total liquidado</td><td class="num">${fmt.monto([...liquida, ...facturas].reduce((t, x) => t + Number(x.abono || x.valor || 0), 0))}</td><td></td></tr></tfoot></table></div>
+              <h3 class="ta-col-titulo"><i class="ti ${cfg.tipos[0] === 'CHEQUE' ? 'ti-shopping-cart' : 'ti-receipt'}" aria-hidden="true"></i> ${esc(cfg.tituloDocs)} <small>${liquida.length + facturas.length}</small></h3>
+              <div class="pc-lineas"><table><thead><tr><th>${cfg.tipos[0] === 'CHEQUE' ? 'Compra' : 'Tipo'}</th><th>Documento</th><th>Fecha</th><th>${esc(cfg.colTercero)}</th><th class="num">${cfg.tipos[0] === 'CHEQUE' ? 'Total compra' : 'Valor'}</th><th class="num">${cfg.tipos[0] === 'CHEQUE' ? 'Liquidado' : 'Aplicado'}</th><th></th></tr></thead>
+                <tbody>${[...liquida.map((x) => ({ c: x.compras, valor: x.valor, nota: x.liquidacion ? `liq. ${x.liquidacion}` : '' })), ...facturas.map((x) => ({ c: null, tipo: x.tipo, doc: `${x.serie ? `${x.serie}-` : ''}${x.numero}`, fecha: x.fecha, nombre: x.nombre || x.tercero, total: x.valor, valor: x.abono || x.valor, compraId: x.compra_id, nota: x.tipo }))].map((x) => `<tr>
+                  <td class="fuerte">${x.c ? x.c.numero : cfg.tipos[0] === 'CHEQUE' ? (x.compraId ? '—' : '') : `<span class="pc-tipo">${esc((x.tipo || '').toLowerCase())}</span>`}</td><td>${esc(x.c ? `${x.c.serie ? `${x.c.serie}-` : ''}${x.c.documento}` : x.doc || '')}</td><td>${esc(x.c ? fmt.fechaDia(x.c.fecha_documento) : x.fecha ? fmt.fechaDia(x.fecha) : '')}</td>
+                  <td class="cc-nombre">${esc(x.c ? x.c.proveedor_nombre : x.nombre || '')}</td><td class="num">${x.c ? fmt.monto(x.c.valor_total) : cfg.tipos[0] === 'CHEQUE' ? '' : fmt.monto(x.total)}</td><td class="num fuerte">${fmt.monto(x.valor)}</td>
+                  <td>${x.c ? `<a class="rp-enlace" href="#/compras/facturas-compra/${x.c.id}" title="Abrir la compra"><i class="ti ti-external-link" aria-hidden="true"></i></a>` : cfg.tipos[0] === 'CHEQUE' ? `<small class="tk-tenue">${esc(x.nota || '')}</small>` : ''}</td></tr>`).join('') || `<tr><td colspan="7" class="tk-vacio">${esc(cfg.sinDocs)}</td></tr>`}</tbody>
+                <tfoot><tr><td colspan="5">${cfg.tipos[0] === 'CHEQUE' ? 'Total liquidado' : 'Total aplicado'}</td><td class="num">${fmt.monto([...liquida, ...facturas].reduce((t, x) => t + Number(x.abono || x.valor || 0), 0))}</td><td></td></tr></tfoot></table></div>
             </section>
           </div>
         </div>`;
@@ -214,17 +255,17 @@
     // genera el CSV de siempre.
     function excel() {
       const filas = visibles();
-      if (!filas.length) return window.FIN.aviso('No hay cheques con estos parámetros');
+      if (!filas.length) return window.FIN.aviso(`No hay ${cfg.plural} con estos parámetros`);
       let formRef = null;
       window.UI.formulario({
-        titulo: 'Reporte de cheques en Excel',
+        titulo: `Reporte de ${cfg.plural} en Excel`,
         campos: [],
         alPreparar: (form) => {
           formRef = form;
           form.querySelector('.modal-cuerpo').innerHTML = `
             <fieldset class="cqc-tipos"><legend>Tipo de reporte</legend>
-              <label class="cqc-tipo"><input type="radio" name="tipo" value="RESUMIDO" checked><i class="ti ti-list" aria-hidden="true"></i><span><b>Resumido</b><small>Solo el listado general de los ${filas.length.toLocaleString('es-GT')} cheques.</small></span></label>
-              <label class="cqc-tipo"><input type="radio" name="tipo" value="DETALLADO"><i class="ti ti-list-details" aria-hidden="true"></i><span><b>Detallado</b><small>Cada cheque con el detalle de su contabilización.</small></span></label>
+              <label class="cqc-tipo"><input type="radio" name="tipo" value="RESUMIDO" checked><i class="ti ti-list" aria-hidden="true"></i><span><b>Resumido</b><small>Solo el listado general de ${cfg.uno === 'nota' ? 'las' : 'los'} ${filas.length.toLocaleString('es-GT')} ${esc(cfg.plural)}.</small></span></label>
+              <label class="cqc-tipo"><input type="radio" name="tipo" value="DETALLADO"><i class="ti ti-list-details" aria-hidden="true"></i><span><b>Detallado</b><small>Cada ${esc(cfg.uno)} con el detalle de su contabilización.</small></span></label>
             </fieldset>
             <p class="bu-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Con los filtros de la pantalla: ${esc(parametros().join(' · '))}.</p>`;
           form.querySelector('[type=submit]').innerHTML = '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel';
@@ -242,7 +283,7 @@
       const cb = cuenta(Number(f.cuenta));
       const orden = ORDENES.find(([k]) => k === `${f.orden}:${f.dir}`)?.[1] || '';
       return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`,
-        `Cuenta: ${cb ? `${cb.numero} · ${cb.nombre}` : 'Todas'}`, `Beneficiario: ${f.tercero.trim() || 'Todos'}`, `Estado: ${f.estado}`, `Orden: ${orden}`,
+        `Cuenta: ${cb ? `${cb.numero} · ${cb.nombre}` : 'Todas'}`, ...(cfg.conTipo ? [`Tipo: ${f.tipo === 'TODOS' ? 'Crédito y débito' : TIPOS_NOTA[f.tipo].nombre}`] : []), `${cfg.etqTercero}: ${f.tercero.trim() || 'Todos'}`, `Estado: ${f.estado}`, `Orden: ${orden}`,
         ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
     }
 
@@ -289,8 +330,8 @@
 
       const wb = new ExcelJS.Workbook();
       wb.creator = 'Financiero CONSISAV';
-      const ws = wb.addWorksheet(tipo === 'DETALLADO' ? 'Cheques detallado' : 'Cheques', { views: [{ state: 'frozen', ySplit: 7, showGridLines: false }], pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
-      const COLS = [['Cheque', 10], ['Folio', 8], ['Fecha', 11], ['Cuenta bancaria', 16], ['A favor de', 34], ['Descripción', 46], ['Moneda', 8], ['Valor', 14], ['Valor Q', 14], ['Estado', 11], ['Conciliado', 11], ['Partida', 10]];
+      const ws = wb.addWorksheet(tipo === 'DETALLADO' ? `${cfg.Plural} detallado` : cfg.Plural, { views: [{ state: 'frozen', ySplit: 7, showGridLines: false }], pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+      const COLS = [[cfg.conTipo ? 'Tipo · nota' : cfg.numero, cfg.conTipo ? 14 : 10], ['Folio', 8], ['Fecha', 11], ['Cuenta bancaria', 16], [cfg.quien, 34], ['Descripción', 46], ['Moneda', 8], ['Valor', 14], ['Valor Q', 14], ['Estado', 11], ['Conciliado', 11], ['Partida', 10]];
       ws.columns = COLS.map(([, w]) => ({ width: w }));
       const ultima = COLS.length;
       const azul = 'FF1F3A5F';
@@ -307,7 +348,7 @@
       ws.getCell(2, izq).font = { size: 10, color: { argb: 'FF555555' } };
       // b) Centro: título y parámetros.
       const par = parametros();
-      ws.mergeCells(1, 5, 1, 9); ws.getCell(1, 5).value = `Consulta de Cheques · ${tipo === 'DETALLADO' ? 'Detallado' : 'Resumido'}`;
+      ws.mergeCells(1, 5, 1, 9); ws.getCell(1, 5).value = `${cfg.titulo} · ${tipo === 'DETALLADO' ? 'Detallado' : 'Resumido'}`;
       ws.getCell(1, 5).font = { bold: true, size: 14, color: { argb: azul } };
       [par.slice(0, 2).join('   ·   '), par.slice(2, 4).join('   ·   '), par.slice(4).join('   ·   ')].forEach((t, i) => {
         ws.mergeCells(2 + i, 5, 2 + i, 9); ws.getCell(2 + i, 5).value = t; ws.getCell(2 + i, 5).font = { size: 9.5, color: { argb: 'FF444444' } };
@@ -331,7 +372,7 @@
       for (const d of filas) {
         const cb = cuenta(d.cuenta_bancaria_id);
         const r = ws.getRow(fila);
-        r.values = [d.numero_documento, d.folio, fmt.fechaDia(d.fecha), cb?.numero || '', d.deposito_por || d.tercero_nombre || '', d.descripcion || '', sim(d), Number(d.valor || 0), Number(d.valor_ml || 0),
+        r.values = [tipoNota(d) ? `${tipoNota(d).corto} ${d.numero_documento || ''}` : d.numero_documento, d.folio, fmt.fechaDia(d.fecha), cb?.numero || '', quienDe(d), d.descripcion || '', sim(d), Number(d.valor || 0), Number(d.valor_ml || 0),
           d.estado === 'ANULADO' ? 'Anulado' : 'Vigente', d.conciliado ? 'Sí' : 'No', partida(d.partida_id) || (d.origen_anterior ? 'Sist. ant.' : '')];
         r.getCell(8).numFmt = monto; r.getCell(9).numFmt = monto;
         if (d.estado === 'ANULADO') r.font = { color: { argb: 'FF999999' }, strike: true };
@@ -365,7 +406,7 @@
       }
       // Total general de los vigentes.
       const tg = ws.getRow(fila + (tipo === 'DETALLADO' ? 0 : 1));
-      tg.getCell(6).value = `Total de ${filas.filter((d) => d.estado === 'ACTIVO').length} cheques vigentes (de ${filas.length})`;
+      tg.getCell(6).value = `Total de ${filas.filter((d) => d.estado === 'ACTIVO').length} ${cfg.plural} ${cfg.vigentes} (de ${filas.length})`;
       tg.getCell(9).value = total; tg.getCell(9).numFmt = monto; tg.font = { bold: true };
       for (let c = 1; c <= ultima; c += 1) tg.getCell(c).border = { top: { style: 'medium', color: { argb: azul } } };
       ws.autoFilter = tipo === 'DETALLADO' ? undefined : { from: { row: 7, column: 1 }, to: { row: 7, column: ultima } };
@@ -373,18 +414,18 @@
       const buf = await wb.xlsx.writeBuffer();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-      a.download = `cheques_${tipo === 'DETALLADO' ? 'detallado' : 'resumido'}_${emp?.codigo || ''}_${f.desde}_${f.hasta}.xlsx`;
+      a.download = `${cfg.plural.normalize('NFD').replace(/[̀-ͯ]/g, '')}_${tipo === 'DETALLADO' ? 'detallado' : 'resumido'}_${emp?.codigo || ''}_${f.desde}_${f.hasta}.xlsx`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 30000);
-      window.FIN.aviso(`Reporte ${tipo === 'DETALLADO' ? 'detallado' : 'resumido'} generado: ${filas.length.toLocaleString('es-GT')} cheques`);
+      window.FIN.aviso(`Reporte ${tipo === 'DETALLADO' ? 'detallado' : 'resumido'} generado: ${filas.length.toLocaleString('es-GT')} ${cfg.plural}`);
     }
 
     function excelCsv(filas) {
       const emp = ctx.localidad(ctx.sel.loc);
-      const cab = ['Cheque', 'Folio', 'Fecha', 'Cuenta bancaria', 'A favor de', 'Proveedor', 'Descripción', 'Moneda', 'Valor', 'Valor Q', 'Estado', 'Conciliado', 'Partida', 'Compras'];
-      const datos = filas.map((d) => [d.numero_documento, d.folio, d.fecha, cuenta(d.cuenta_bancaria_id)?.numero || '', d.deposito_por || '', d.tercero_nombre || '', d.descripcion || '', sim(d), d.valor, d.valor_ml,
+      const cab = [cfg.conTipo ? 'Tipo · nota' : cfg.numero, 'Folio', 'Fecha', 'Cuenta bancaria', cfg.quien, 'Cliente o proveedor', 'Descripción', 'Moneda', 'Valor', 'Valor Q', 'Estado', 'Conciliado', 'Partida', 'Compras'];
+      const datos = filas.map((d) => [tipoNota(d) ? `${tipoNota(d).corto} ${d.numero_documento || ''}` : d.numero_documento, d.folio, d.fecha, cuenta(d.cuenta_bancaria_id)?.numero || '', quienDe(d), d.tercero_nombre || '', d.descripcion || '', sim(d), d.valor, d.valor_ml,
         d.estado === 'ANULADO' ? 'ANULADO' : 'VIGENTE', d.conciliado ? 'SÍ' : 'NO', partida(d.partida_id), compras.get(d.id) || 0]);
-      window.COMPRAS_CAT.descargarCsv(`consulta_cheques_${emp?.codigo || ''}_${f.desde}_${f.hasta}.csv`, [cab, ...datos]);
+      window.COMPRAS_CAT.descargarCsv(`consulta_${cfg.plural.normalize('NFD').replace(/[̀-ͯ]/g, '')}_${emp?.codigo || ''}_${f.desde}_${f.hasta}.csv`, [cab, ...datos]);
     }
 
     cont.addEventListener('change', (e) => {
@@ -392,7 +433,7 @@
       if (cambio === 'org' || cambio === 'loc') { sel = null; return cargarLocalidad(); }
       if (cambio === 'otro') {
         const n = e.target.name;
-        if (n === 'estado' || n === 'tercero') { f[n] = e.target.value; pintarMaestro(); return elegir(visibles().find((d) => d.id === sel?.id) || visibles()[0] || null); }
+        if (n === 'estado' || n === 'tercero' || n === 'tipo') { f[n] = e.target.value; pintarMaestro(); return elegir(visibles().find((d) => d.id === sel?.id) || visibles()[0] || null); }
         if (n === 'orden') { [f.orden, f.dir] = e.target.value.split(':'); return pintarMaestro(); }
         if (n === 'cuenta' || n === 'desde' || n === 'hasta') { f[n] = e.target.value; sel = null; return consultar(); }
       }
@@ -410,7 +451,7 @@
     });
     cont.addEventListener('click', (e) => {
       const q = e.target.closest('[data-consultar]');
-      if (q) { location.hash = `#/caja-bancos/emision-de-cheques/${q.dataset.consultar}`; return; }
+      if (q) { const d = cheques.find((x) => String(x.id) === q.dataset.consultar); location.hash = `#/caja-bancos/${cfg.ruta(d || {})}/${q.dataset.consultar}`; return; }
       if (e.target.closest('[data-ver-todos]') && rango) { f.desde = rango.desde; f.hasta = rango.hasta > fmt.hoy() ? rango.hasta : fmt.hoy(); sel = null; pintarFiltros(); return consultar(); }
       const th = e.target.closest('[data-ordenar]');
       if (th) { const campo = th.dataset.ordenar; f.dir = f.orden === campo && f.dir === 'desc' ? 'asc' : 'desc'; f.orden = campo; const o = ctx.pFil.querySelector('[name=orden]'); if (o) o.value = `${f.orden}:${f.dir}`; return pintarMaestro(); }
@@ -421,5 +462,5 @@
     });
 
     iniciar();
-  };
+  }
 })();

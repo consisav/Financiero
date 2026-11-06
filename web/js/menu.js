@@ -194,9 +194,11 @@ window.MODULOS = [
           icono: 'ti-building-bank',
           pantallas: [
             { id: 'cuentas-bancarias', nombre: 'Cuentas bancarias', icono: 'ti-building-bank', descripcion: 'Bancos del sistema y cuentas bancarias de cada organización y localidad.', separador: true },
-            { id: 'depositos', nombre: 'Depósitos multimoneda', icono: 'ti-cash-banknote', descripcion: 'Depósitos en cualquier moneda con sus facturas, recibos y detalle contable.', separador: true },
+            { id: 'depositos', nombre: 'Depósitos multimoneda', icono: 'ti-cash-banknote', descripcion: 'Depósitos en cualquier moneda con sus facturas, recibos y detalle contable.' },
+            { id: 'consulta-de-depositos', nombre: 'Consulta de Depósitos Monetarios', icono: 'ti-file-search', descripcion: 'Resumen de los depósitos de la empresa por cuenta, cliente, fechas y estado (vigentes, anulados, conciliados, sin partida), con su detalle contable y sus facturas y recibos.', separador: true },
             { id: 'notas-credito', nombre: 'Notas de crédito / transferencias', icono: 'ti-file-plus', descripcion: 'Notas de crédito y transferencias recibidas.' },
-            { id: 'notas-debito', nombre: 'Notas de débito / transferencias', icono: 'ti-file-minus', descripcion: 'Notas de débito y transferencias enviadas a proveedores.', separador: true },
+            { id: 'notas-debito', nombre: 'Notas de débito / transferencias', icono: 'ti-file-minus', descripcion: 'Notas de débito y transferencias enviadas a proveedores.' },
+            { id: 'consulta-de-notas', nombre: 'Consulta de Notas', icono: 'ti-file-search', descripcion: 'Resumen de las notas de crédito y débito de la empresa por cuenta, tipo, cliente o proveedor, fechas y estado, con su detalle contable y sus documentos.', separador: true },
             { id: 'conciliacion-bancaria', nombre: 'Conciliación bancaria', icono: 'ti-scale', descripcion: 'Conciliación mensual de cada cuenta bancaria con el saldo del banco y el contable.' },
             { id: 'disponibilidad-bancaria', nombre: 'Disponibilidad bancaria', icono: 'ti-chart-line', descripcion: 'Movimiento y disponibilidad de cada cuenta bancaria en un rango de fechas.', separador: true },
             { id: 'disponibilidad-integrada', nombre: 'Disponibilidad integrada', icono: 'ti-chart-pie', descripcion: 'Disponibilidad consolidada de todas las cuentas de la organización, en quetzales.' }

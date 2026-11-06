@@ -3839,3 +3839,21 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-bancos li.bk-sep:hover { background: none; }
 .bk-bancos li.bk-sep[hidden] { display: none; }
 .bk-bancos li.bk-sep + li.bk-sep, .bk-bancos li.bk-sep ~ li.bk-sep { margin-top: 6px; }
+
+/* Consulta de Notas: un parámetro más (tipo de nota): cinco columnas, la cuenta bancaria más ancha en la fila 1. */
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros { grid-template-columns: auto repeat(5, minmax(0, 1fr)); }
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros > :nth-child(2) { grid-column: 2; grid-row: 1; }
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros > :nth-child(3) { grid-column: 3 / span 3; grid-row: 1; }
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros > :nth-child(5) { grid-column: 6; grid-row: 1; }
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros > :nth-child(6) { grid-column: 2; grid-row: 2; }
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros > :nth-child(7) { grid-column: 3; grid-row: 2; }
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros > :nth-child(4) { grid-column: 4; grid-row: 2; }
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros > :nth-child(8) { grid-column: 5; grid-row: 2; }
+.bk-consulta-cheques.cqc-con-tipo .bk-filtros > :nth-child(9) { grid-column: 6; grid-row: 2; }
+/* Marca del tipo de nota (NC crédito, ND débito) junto al número. */
+.cqc-tn { display: inline-block; min-width: 24px; padding: 1px 4px; border-radius: 5px; font-size: 10px; font-weight: 700; text-align: center; vertical-align: 1px; }
+.cqc-tn-NC { background: #e3f4ea; color: #1f7a45; }
+.cqc-tn-ND { background: #fdeceb; color: #b23a32; }
+.ta-total.cqc-tn-NC b { color: #1f7a45; }
+.ta-total.cqc-tn-ND b { color: #b23a32; }
+.cqc-con-tipo .cqc-tabla col.w-num { width: 124px; }
