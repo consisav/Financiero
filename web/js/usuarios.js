@@ -9,9 +9,6 @@
   const BUCKET = 'firmas';
   const hoy = () => new Date().toISOString().slice(0, 10);
 
-  const dato = (etiqueta, valor, completo) =>
-    `<div class="dato${completo ? ' completo' : ''}"><span>${esc(etiqueta)}</span><b>${valor || '—'}</b></div>`;
-
   async function urlFirma(sb, ruta) {
     if (!ruta) return null;
     const { data } = await sb.storage.from(BUCKET).createSignedUrl(ruta, 3600);
@@ -61,103 +58,108 @@
       (!estado.filtroOrg || u.organizacion_id === Number(estado.filtroOrg)) &&
       (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc)));
 
-    // Usuarios por crear: correo y «Crear» por fila; la clave nueva se muestra una sola vez arriba.
-    function pintarMigrados() {
-      const lista = migradosVisibles();
-      const c = estado.claveNueva;
-      if (!lista.length && !c) return '';
-      return `
-        <section class="um-panel">
-          <header class="um-cab"><h3><i class="ti ti-user-plus" aria-hidden="true"></i> Usuarios por crear <small>${lista.length}</small></h3>
-            <span class="rp-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Migrados del sistema anterior: escribe el correo de cada uno y pulsa «Crear». Su clave anterior no se migra.</span></header>
-          ${c ? `<div class="um-clave" role="status"><i class="ti ti-key" aria-hidden="true"></i><span>Cuenta creada para <b>${esc(c.nombre)}</b> (${esc(c.correo)}).${c.clave ? ` Clave: <code data-clave>${esc(c.clave)}</code> <button type="button" class="boton secundario-sm" data-accion="copiar-clave"><i class="ti ti-copy" aria-hidden="true"></i> Copiar</button> Se muestra una sola vez y vence hoy: el usuario la cambia al entrar.` : ' Se ligó a la cuenta que ya tenía ese correo.'} Asígnale su rol con «Modificar».</span><button type="button" class="icono-boton" data-accion="cerrar-clave" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></div>` : ''}
-          ${lista.length ? `<div class="tabla-desplazable um-tabla"><table class="tabla catalogo">
-            <thead><tr><th class="angosta">Usuario ant.</th><th>Nombre</th><th>Organización · localidad</th><th>Creado (sist. anterior)</th><th>Clave al (sist. anterior)</th><th>Estado</th><th>Correo</th><th class="acciones"></th></tr></thead>
-            <tbody>${lista.map((x) => `<tr data-migrado="${x.id}">
-              <td class="angosta"><span class="codigo">${esc(x.usuario_anterior)}</span></td><td class="fuerte">${esc(x.nombre)}</td>
-              <td>${esc((org(x.organizacion_id) || {}).nombre || '')} · <span class="codigo">${esc((loc(x.localidad_id) || {}).codigo || '')}</span></td>
-              <td>${fechaCorta(x.fecha_creacion_anterior) || '—'}</td><td>${fechaCorta(x.fecha_clave_anterior) || '—'}</td>
-              <td>${window.UI.estado(x.activo)}</td>
-              <td><input type="email" class="um-correo" data-correo placeholder="correo@empresa.com" aria-label="Correo de ${esc(x.nombre)}"></td>
-              <td class="acciones"><button type="button" class="boton primario-sm" data-accion="crear-migrado">Crear</button></td></tr>`).join('')}</tbody>
-          </table></div>` : ''}
-        </section>`;
-    }
-
     const visibles = () => estado.filas.filter((u) =>
       (!estado.filtroOrg || u.organizacion_id === Number(estado.filtroOrg)) &&
       (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc)));
 
+    const empresa = (idOrg, idLoc) => idLoc
+      ? `<span class="codigo">${esc((loc(idLoc) || {}).codigo || '')}</span> ${esc((loc(idLoc) || {}).nombre_comercial || '')}`
+      : '<span class="estado inactivo">Sin asignar</span>';
+
+    // Una sola lista: usuarios con cuenta y, debajo, los migrados por crear (correo y «Crear» en su fila).
     function pintar() {
       const u = estado.sel;
+      const lista = visibles();
+      const pendientes = migradosVisibles();
       const locsFiltro = estado.locs.filter((x) => !estado.filtroOrg || x.organizacion_id === Number(estado.filtroOrg));
+      const vencidas = lista.filter((x) => x.fecha_vence_clave && x.fecha_vence_clave < hoy()).length;
       const vencida = u && u.fecha_vence_clave && u.fecha_vence_clave < hoy();
+      const c = estado.claveNueva;
       panel.innerHTML = `
-        ${window.UI.barraContexto({
-          clave: 'usuarios', icono: 'ti-filter',
-          resumen: `<b>${estado.filtroOrg ? esc(org(Number(estado.filtroOrg)).nombre) : 'Todas las organizaciones'}</b>${estado.filtroLoc ? ` · ${esc(loc(Number(estado.filtroLoc)).codigo)} ${esc(loc(Number(estado.filtroLoc)).nombre_comercial)}` : ''} · ${visibles().length} usuario${visibles().length === 1 ? '' : 's'}`,
-          panel: `
-            <label class="selector-org">Organización <select data-filtro="org">
-              <option value="">Todas</option>
-              ${estado.orgs.map((x) => `<option value="${x.id}" ${String(x.id) === estado.filtroOrg ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}
-            </select></label>
-            <label class="selector-org">Localidad <select data-filtro="loc">
-              <option value="">Todas</option>
-              ${locsFiltro.map((x) => `<option value="${x.id}" ${String(x.id) === estado.filtroLoc ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}
-            </select></label>`,
-          derecha: `<input type="search" class="buscar buscar-barra" data-buscar placeholder="Buscar usuario, nombre o correo" value="${esc(estado.buscar)}">`
-        })}
-        ${tabla({
-          id: 'usuarios', editable: admin, seleccionado: u && u.id, vacio: 'No hay usuarios con estos filtros.',
-          columnas: [
-            { titulo: 'Usuario', valor: (f) => `<span class="codigo">${esc(f.usuario) || '—'}</span>`, clase: 'angosta' },
-            { titulo: 'Nombre', valor: (f) => esc(f.nombre) || '—', clase: 'fuerte' },
-            { titulo: 'Correo', valor: (f) => esc(f.correo) },
-            { titulo: 'Organización · localidad', valor: (f) => f.localidad_id
-                ? `${esc((org(f.organizacion_id) || {}).nombre)} · <span class="codigo">${esc((loc(f.localidad_id) || {}).codigo)}</span>`
-                : '<span class="estado inactivo">Sin asignar</span>' },
-            { titulo: 'Rol', valor: (f) => esc(rol(f.rol_id)) },
-            { titulo: 'Estado', valor: (f) => window.UI.estado(f.activo) }
-          ],
-          filas: visibles()
-        })}
+        <div class="us-barra">
+          <label class="us-filtro"><span>Organización</span><select data-filtro="org">
+            <option value="">Todas</option>
+            ${estado.orgs.map((x) => `<option value="${x.id}" ${String(x.id) === estado.filtroOrg ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}
+          </select></label>
+          <label class="us-filtro"><span>Localidad</span><select data-filtro="loc">
+            <option value="">Todas</option>
+            ${locsFiltro.map((x) => `<option value="${x.id}" ${String(x.id) === estado.filtroLoc ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}
+          </select></label>
+          <div class="us-kpis">
+            <span><b>${lista.length + pendientes.length}</b> usuarios</span>
+            <span><b>${lista.filter((x) => x.activo).length}</b> activos</span>
+            ${pendientes.length ? `<span class="us-pend"><b>${pendientes.length}</b> por crear</span>` : ''}
+            ${vencidas ? `<span class="us-venc"><b>${vencidas}</b> clave vencida</span>` : ''}
+          </div>
+          <label class="us-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar usuario, nombre o correo" value="${esc(estado.buscar)}" aria-label="Buscar usuarios"></label>
+        </div>
+        ${c ? `<div class="um-clave" role="status"><i class="ti ti-key" aria-hidden="true"></i><span>Cuenta creada para <b>${esc(c.nombre)}</b> (${esc(c.correo)}).${c.clave ? ` Clave: <code data-clave>${esc(c.clave)}</code> <button type="button" class="boton secundario-sm" data-accion="copiar-clave"><i class="ti ti-copy" aria-hidden="true"></i> Copiar</button> Se muestra una sola vez y vence hoy: el usuario la cambia al entrar.` : ' Se ligó a la cuenta que ya tenía ese correo.'} Asígnale su rol con «Modificar».</span><button type="button" class="icono-boton" data-accion="cerrar-clave" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></div>` : ''}
+        <div class="tabla-desplazable us-tabla">
+          <table class="tabla catalogo" data-tabla="usuarios">
+            <thead><tr><th class="angosta">Usuario</th><th>Nombre</th><th>Correo</th><th>Empresa</th><th>Rol</th><th>Estado</th><th class="acciones"></th></tr></thead>
+            <tbody>
+              ${lista.map((f) => `
+                <tr data-id="${f.id}" class="${u && f.id === u.id ? 'seleccionada' : ''} ${f.activo === false ? 'apagada' : ''}" tabindex="0">
+                  <td class="angosta"><span class="codigo">${esc(f.usuario) || '—'}</span></td>
+                  <td class="fuerte">${esc(f.nombre) || '—'}</td>
+                  <td>${esc(f.correo)}</td>
+                  <td>${empresa(f.organizacion_id, f.localidad_id)}</td>
+                  <td>${esc(rol(f.rol_id))}</td>
+                  <td>${window.UI.estado(f.activo)}${f.fecha_vence_clave && f.fecha_vence_clave < hoy() ? ' <span class="estado vencida">Clave vencida</span>' : ''}</td>
+                  <td class="acciones">${puedeModificar(f) ? `<button type="button" class="icono-editar" data-editar="${f.id}" aria-label="Modificar"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}</td>
+                </tr>`).join('')}
+              ${pendientes.map((x) => `
+                <tr data-id="m${x.id}" data-migrado="${x.id}" class="us-por-crear">
+                  <td class="angosta"><span class="codigo">${esc(x.usuario_anterior)}</span></td>
+                  <td class="fuerte">${esc(x.nombre)}</td>
+                  <td><input type="email" class="um-correo" data-correo placeholder="correo@empresa.com" aria-label="Correo de ${esc(x.nombre)}"></td>
+                  <td>${empresa(x.organizacion_id, x.localidad_id)}</td>
+                  <td class="tk-tenue" title="Creado en el sistema anterior">Desde ${fechaCorta(x.fecha_creacion_anterior) || '—'}</td>
+                  <td><span class="estado us-estado-pend">Por crear</span></td>
+                  <td class="acciones"><button type="button" class="boton primario-sm" data-accion="crear-migrado">Crear</button></td>
+                </tr>`).join('')}
+              ${!lista.length && !pendientes.length ? '<tr><td colspan="7" class="vacio">No hay usuarios con estos filtros.</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>
         ${u ? `
-          <div class="detalle">
-            <div class="auditoria">
-              ${window.UI.estado(u.activo)}
-              <span>Creado el <b>${fecha(u.creado_en)}</b></span>
-              ${vencida ? '<span class="estado vencida">Clave vencida</span>' : ''}
-              <span class="auditoria-acciones">
-                ${puedeModificar(u) ? '<button type="button" class="boton secundario-sm" data-accion="clave"><i class="ti ti-key" aria-hidden="true"></i> Enviar cambio de clave</button>' : ''}
-                ${puedeModificar(u) ? '<button type="button" class="boton primario-sm" data-accion="modificar">Modificar</button>' : ''}
-                <button type="button" class="boton secundario-sm" data-accion="actualizar">Actualizar</button>
-                ${puedeModificar(u) ? '<button type="button" class="boton secundario-sm" data-accion="generar"><i class="ti ti-key" aria-hidden="true"></i> Generar usuario</button>' : ''}
-              </span>
+          <div class="us-ficha">
+            <div class="us-ficha-id">
+              <span class="us-avatar">${esc((u.usuario || u.nombre || '?').slice(0, 2).toUpperCase())}</span>
+              <div><b>${esc(u.nombre) || '—'}</b><small><span class="codigo">${esc(u.usuario) || '—'}</span> · ${esc(u.correo)}</small></div>
             </div>
-            <div class="datos-con-firma">
-              <div class="datos">
-                ${dato('Usuario', `<span class="codigo">${esc(u.usuario) || '—'}</span>`)}
-                ${dato('Nombre', esc(u.nombre))}
-                ${dato('Correo', esc(u.correo))}
-                ${dato('Rol', esc(rol(u.rol_id)))}
-                ${dato('Organización', u.organizacion_id && `${org(u.organizacion_id).codigo} · ${esc(org(u.organizacion_id).nombre)}`)}
-                ${dato('Localidad', u.localidad_id && `${esc(loc(u.localidad_id).codigo)} · ${esc(loc(u.localidad_id).nombre_comercial)}`)}
-                ${dato('Fecha creación', u.creado_en && new Date(u.creado_en).toLocaleDateString('es-GT', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'))}
-                ${dato('Fecha vence clave', fechaCorta(u.fecha_vence_clave))}
-                ${dato('Empleado', esc(u.empleado))}
-                ${dato('Estado', u.activo ? 'ACTIVO' : 'INACTIVO')}
-                ${dato('Extensión telefónica', esc(u.extension))}
-                ${u.usuario_anterior ? dato('Usuario sist. anterior', `<span class="codigo">${esc(u.usuario_anterior)}</span>${u.fecha_creacion_anterior ? ` · desde ${fechaCorta(u.fecha_creacion_anterior)}` : ''}`) : ''}
-              </div>
-              <figure class="imagen-org firma">
-                <figcaption>Firma</figcaption>
-                <div class="imagen-marco">${estado.firma ? `<img src="${esc(estado.firma)}" alt="Firma de ${esc(u.nombre)}">` : '<span class="sin-imagen"><i class="ti ti-signature" aria-hidden="true"></i> Sin firma</span>'}</div>
-              </figure>
+            <dl class="us-ficha-datos">
+              <div><dt>Rol</dt><dd>${esc(rol(u.rol_id))}</dd></div>
+              <div><dt>Empresa</dt><dd>${u.organizacion_id ? `${org(u.organizacion_id).codigo} · ` : ''}${empresa(u.organizacion_id, u.localidad_id)}</dd></div>
+              <div><dt>Creado</dt><dd>${u.creado_en ? new Date(u.creado_en).toLocaleDateString('es-GT', { timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-') : '—'}</dd></div>
+              <div><dt>Vence clave</dt><dd class="${vencida ? 'pc-rojo' : ''}">${fechaCorta(u.fecha_vence_clave) || '—'}</dd></div>
+              <div><dt>Empleado</dt><dd>${esc(u.empleado) || '—'}</dd></div>
+              <div><dt>Extensión</dt><dd>${esc(u.extension) || '—'}</dd></div>
+              ${u.usuario_anterior ? `<div><dt>Sist. anterior</dt><dd><span class="codigo">${esc(u.usuario_anterior)}</span>${u.fecha_creacion_anterior ? ` · ${fechaCorta(u.fecha_creacion_anterior)}` : ''}</dd></div>` : ''}
+              <div><dt>Firma</dt><dd>${estado.firma ? `<a href="${esc(estado.firma)}" target="_blank" rel="noopener"><img class="us-firma" src="${esc(estado.firma)}" alt="Firma de ${esc(u.nombre)}"></a>` : 'Sin firma'}</dd></div>
+            </dl>
+            <div class="us-ficha-acciones">
+              ${puedeModificar(u) ? '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
+              ${puedeModificar(u) ? '<button type="button" class="boton secundario-sm" data-accion="generar"><i class="ti ti-key" aria-hidden="true"></i> Generar usuario</button>' : ''}
+              ${puedeModificar(u) ? '<button type="button" class="boton secundario-sm" data-accion="clave"><i class="ti ti-mail" aria-hidden="true"></i> Enviar cambio de clave</button>' : ''}
+              <button type="button" class="icono-boton" data-accion="actualizar" title="Actualizar" aria-label="Actualizar"><i class="ti ti-refresh" aria-hidden="true"></i></button>
             </div>
-          </div>` : ''}
-        ${pintarMigrados()}`;
+          </div>` : ''}`;
+      ajustarAlto();
       filtrar(panel, estado.buscar);
     }
+
+    // La lista ocupa el alto libre de la ventana (sin desplazar la página).
+    function ajustarAlto() {
+      const t = panel.querySelector('.us-tabla');
+      if (!t || !t.isConnected) return;
+      const ficha = panel.querySelector('.us-ficha');
+      const libre = window.innerHeight - t.getBoundingClientRect().top - (ficha ? ficha.offsetHeight + 12 : 0) - 40;
+      t.style.maxHeight = `${Math.max(220, libre)}px`;
+      const sobra = document.documentElement.scrollHeight - window.innerHeight;
+      if (sobra > 0) t.style.maxHeight = `${Math.max(220, t.offsetHeight - sobra)}px`;
+    }
+    window.addEventListener('resize', function alto() { if (!panel.isConnected) return window.removeEventListener('resize', alto); ajustarAlto(); });
 
     function formUsuario(u) {
       if (!puedeModificar(u)) { window.FIN.aviso('Solo el Super Administrador puede modificar a un Super Administrador.'); return; }
@@ -260,7 +262,7 @@
       const ed = e.target.closest('[data-editar]');
       if (ed) return formUsuario(estado.filas.find((x) => x.id === ed.dataset.editar));
       const tr = e.target.closest('table[data-tabla=usuarios] tr[data-id]');
-      if (tr && (!estado.sel || tr.dataset.id !== estado.sel.id)) {
+      if (tr && !tr.dataset.migrado && (!estado.sel || tr.dataset.id !== estado.sel.id)) {
         estado.sel = estado.filas.find((x) => x.id === tr.dataset.id);
         estado.firma = await urlFirma(sb, estado.sel.firma_ruta);
         pintar();
