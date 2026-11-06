@@ -387,12 +387,15 @@
     leyenda: '<i class="ti ti-info-circle" aria-hidden="true"></i> Normal: precio = costo × (1 + % utilidad) × (1 − % descuento). Precio fijo: se escribe en cada producto (pestaña Precios). «Activo» es el estado del tipo de precio.' });
 
   // ===================== Productos y servicios =====================
+  // Diseño A (sin desplazar la página): la lista de artículos arriba con sus datos clave y la ficha abajo
+  // en 4 bloques (artículo, clasificación y medida, costo y existencias, y precios / otros proveedores /
+  // imagen). Los datos del sistema anterior (script 105) se muestran en el bloque de costo.
   window.PANTALLAS['productos-y-servicios'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Definición de artículos', icono: 'ti-package', clase: 'bk-productos cp-lado', grupo: grupoCat() });
+    const ctx = montar(cont, { titulo: 'Definición de artículos', icono: 'ti-package', clase: 'bk-productos cp-arriba', grupo: grupoCat() });
     const { sb } = ctx;
     const f = { estado: 'ACTIVO', clasificacion: '', formato: 'PDF' };
     let lista0 = [], clasificaciones = [], tipos = [], medidas = [], presentaciones = [], precios = [], proveedores = [], bodegas = [];
-    let actual = null, nuevo = false, buscar = '', pestana = 'PROVEEDORES';
+    let actual = null, nuevo = false, buscar = '', pestana = 'PRECIOS', nPrecios = new Map();
     let otros = [], preciosProd = [], imagen = { nuevo: null, quitar: false };
     const prov = (id) => proveedores.find((p) => p.id === id);
     const provTxt = (p) => `${p.codigo} · ${p.nombre_comercial}`;
@@ -434,6 +437,9 @@
       const { data, error } = await q;
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       lista0 = data || [];
+      const pr = await sb.from('producto_precios').select('producto_id').eq('localidad_id', ctx.sel.loc).not('producto_id', 'is', null);
+      nPrecios = new Map();
+      (pr.data || []).forEach((x) => nPrecios.set(x.producto_id, (nPrecios.get(x.producto_id) || 0) + 1));
       pintarLista();
       await abrir(lista0.find((p) => p.id === id) || (nuevo ? null : lista0[0]) || null);
     }
@@ -443,9 +449,11 @@
       ctx.pMae.innerHTML = `
         <header class="tk-bandeja-cab cc-cab"><h2>Artículos <small>${lista0.length}</small></h2>
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Nombre, código o código de barras…" value="${esc(buscar)}" aria-label="Buscar artículos"></label></header>
-        <div class="ta-tabla cc-tabla"><table><thead><tr><th class="num">Artículo</th><th>Nombre</th><th>Código</th><th class="num">Costo Q</th><th>Estado</th></tr></thead>
-          <tbody>${filas.map((p) => `<tr data-id="${p.id}" class="${actual && actual.id === p.id ? 'actual' : ''} ${p.estado !== 'ACTIVO' ? 'pc-anulada' : ''}" tabindex="0"><td class="num fuerte">${p.codigo}</td><td class="cc-nombre" title="${esc(p.nombre)}${clas(p.clasificacion_id) ? ` · ${esc(clas(p.clasificacion_id).nombre)}` : ''}">${esc(p.nombre)}</td><td>${esc(p.codigo_producto || '')}</td><td class="num">${fmt.monto(p.precio_costo)}</td><td><span class="pc-marca ${p.estado === 'ACTIVO' ? 'aprobada' : p.estado === 'INACTIVO' ? 'pendiente' : 'anulada'}">${esc(p.estado)}</span></td></tr>`).join('')
-            || `<tr><td colspan="5" class="tk-vacio"><i class="ti ti-package" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : lista0.length ? 'Ninguno coincide con la búsqueda.' : `No hay artículos${ctx.admin ? ': crea el primero con «Nuevo artículo».' : '.'}`}</td></tr>`}</tbody></table></div>`;
+        <div class="ta-tabla cc-tabla cpa-lista"><table><thead><tr><th class="num">Artículo</th><th>Código producto</th><th>Nombre</th><th>Tipo</th><th>Medida</th><th>Presentación</th><th>Bodega</th><th class="num">Costo Q</th><th class="num" title="Precios definidos">Precios</th><th>Estado</th></tr></thead>
+          <tbody>${filas.map((p) => { const tp = tipos.find((x) => x.id === p.tipo_producto_id); const nm = (l, id) => l.find((x) => x.id === id)?.nombre || ''; return `<tr data-id="${p.id}" class="${actual && actual.id === p.id ? 'actual' : ''} ${p.estado !== 'ACTIVO' ? 'pc-anulada' : ''}" tabindex="0"><td class="num fuerte">${p.codigo}</td><td class="cpa-cod">${esc(p.codigo_producto || '')}</td><td class="cc-nombre" title="${esc(p.nombre)}${clas(p.clasificacion_id) ? ` · ${esc(clas(p.clasificacion_id).nombre)}` : ''}">${esc(p.nombre)}</td>
+            <td title="${esc(tp?.nombre || '')}">${esc(tp ? tp.siglas || tp.nombre : '')}</td><td class="cpa-txt">${esc(nm(medidas, p.tipo_medida_id))}</td><td class="cpa-txt">${esc(nm(presentaciones, p.presentacion_id))}</td><td class="cpa-txt">${esc(nm(bodegas, p.bodega_id))}</td>
+            <td class="num">${fmt.monto(p.precio_costo)}</td><td class="num">${nPrecios.get(p.id) || '<span class="tk-tenue">—</span>'}</td><td><span class="pc-marca ${p.estado === 'ACTIVO' ? 'aprobada' : p.estado === 'INACTIVO' ? 'pendiente' : 'anulada'}">${esc(p.estado)}</span></td></tr>`; }).join('')
+            || `<tr><td colspan="10" class="tk-vacio"><i class="ti ti-package" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : lista0.length ? 'Ninguno coincide con la búsqueda.' : `No hay artículos${ctx.admin ? ': crea el primero con «Nuevo artículo».' : '.'}`}</td></tr>`}</tbody></table></div>`;
     }
     async function abrir(p) {
       actual = p;
@@ -458,6 +466,20 @@
       pintarDetalle();
       ctx.pMae.querySelectorAll('tr[data-id]').forEach((tr) => tr.classList.toggle('actual', !!p && tr.dataset.id === String(p.id)));
     }
+    const anterior = (v) => {
+      const d = [
+        v.correlativo_bodega != null && ['Correlativo bodega', v.correlativo_bodega],
+        v.administracion_pm && ['Adm. punto mínimo', v.administracion_pm],
+        v.revisado != null && ['Revisado', v.revisado ? 'Sí' : 'No'],
+        v.covid && ['COVID', 'Sí'],
+        v.critico && ['Crítico', 'Sí'],
+        v.codigo_visual != null && ['Código visual', v.codigo_visual],
+        v.proveedor_codigo_anterior != null && !v.proveedor_id && ['Proveedor anterior', v.proveedor_codigo_anterior],
+        v.codigo_barras_anterior && v.codigo_barras_anterior !== v.codigo_barras && ['Barras anterior', v.codigo_barras_anterior],
+        v.nombre_foto && ['Foto', v.nombre_foto]
+      ].filter(Boolean);
+      return d.length ? `<p class="cpa-anterior" title="Datos del sistema anterior"><i class="ti ti-history" aria-hidden="true"></i> ${d.map(([k, x]) => `${k}: <b>${esc(String(x))}</b>`).join(' · ')}</p>` : '';
+    };
     const calcPrecio = (tp, costo) => fmt.redondear(Number(costo || 0) * (1 + Number(tp.pct_utilidad) / 100) * (1 - Number(tp.pct_descuento) / 100));
 
     function pintarDetalle(v0) {
@@ -469,7 +491,7 @@
       const tiposClas = tipos.filter((t) => t.clasificacion_id === v.clasificacion_id && (t.activo || t.id === v.tipo_producto_id));
       const opt = (lista, id, txt = (x) => `${x.codigo} · ${esc(x.nombre)}`, vacio = '—') => `<option value="">${vacio}</option>${lista.filter((x) => x.activo !== false || x.id === id).filter((x) => x.estado === undefined || x.estado === 'ACTIVO' || x.id === id).map((x) => `<option value="${x.id}" ${x.id === id ? 'selected' : ''}>${txt(x)}</option>`).join('')}`;
       const pv = prov(v.proveedor_id);
-      const tabs = [['PROVEEDORES', 'Otros proveedores', 'ti-truck', otros.length], ['PRECIOS', 'Precios', 'ti-currency-dollar', precios.filter((t) => t.activo).length], ['IMAGEN', 'Imagen', 'ti-photo', p?.imagen_ruta || imagen.nuevo ? 1 : 0]];
+      const tabs = [['PRECIOS', 'Precios', 'ti-currency-dollar', preciosProd.length], ['PROVEEDORES', 'Otros proveedores', 'ti-truck', otros.length], ['IMAGEN', 'Imagen', 'ti-photo', p?.imagen_ruta || imagen.nuevo ? 1 : 0]];
       ctx.pDet.innerHTML = `
         <form class="tk-form bm-form cp-form cpr-form cpr-compacto" novalidate>
           <header class="tk-titulo bm-titulo cpr-titulo"><span class="tk-icono"><i class="ti ti-package" aria-hidden="true"></i></span>
@@ -478,47 +500,59 @@
             <div class="tk-titulo-acciones">${nuevo ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}${ctx.admin ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${p ? 'Guardar' : 'Crear artículo'}</button>` : ''}</div>
           </header>
           <p class="modal-error tk-error" role="alert"></p>
-          <section class="cpr-bloque">
-            <div class="cpr-g">
-              <label class="campo cpr-c6"><span>Nombre *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="150" ${dis}></label>
-              <label class="campo cpr-c2"><span>Código producto</span><input name="codigo_producto" value="${esc(v.codigo_producto || '')}" maxlength="40" ${dis}></label>
-              <label class="campo cpr-c2"><span>Estado</span><select name="estado" ${dis}>${['ACTIVO', 'INACTIVO', 'DESCONTINUADO'].map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
-              <label class="pc-check cpr-c2 cpr-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> ¿Es genérico?</label>
-              <div class="campo cpr-c3"><span>Clasificación</span><div class="lov-campo"><select name="clasificacion_id" ${dis} aria-label="Clasificación">${opt(clasificaciones, v.clasificacion_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="clasificacion" title="Lista de valores de clasificaciones" aria-label="Lista de valores de clasificaciones" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
-              <div class="campo cpr-c3"><span>Tipo producto</span><div class="lov-campo"><select name="tipo_producto_id" ${dis} aria-label="Tipo producto">${opt(tiposClas, v.tipo_producto_id, (x) => `${x.codigo} · ${esc(x.nombre)}${x.siglas ? ` (${esc(x.siglas)})` : ''}`, v.clasificacion_id ? (tiposClas.length ? '—' : 'Sin tipos') : 'Elige la clasificación')}</select><button type="button" class="icono-boton lov-btn" data-lov="tipo" title="Lista de valores de tipos de producto" aria-label="Lista de valores de tipos de producto" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
-              <label class="campo cpr-c2"><span>Marca</span><input name="marca" value="${esc(v.marca || '')}" maxlength="80" ${dis}></label>
-              <label class="campo cpr-c2" title="Sustancia activa (medicamentos) o línea del producto"><span>Principio activo</span><input name="principio_activo" value="${esc(v.principio_activo || '')}" maxlength="150" ${dis}></label>
-              <label class="campo cpr-c2"><span>Código de barras</span><input name="codigo_barras" value="${esc(v.codigo_barras || '')}" maxlength="40" ${dis}></label>
-              <div class="campo cpr-c4"><span>Proveedor principal</span><div class="lov-campo"><input list="cpr-proveedores" name="proveedor" value="${esc(pv ? provTxt(pv) : '')}" placeholder="Código, NIT o nombre" ${dis} aria-label="Proveedor principal"><button type="button" class="icono-boton lov-btn" data-lov="proveedor" title="Lista de valores de proveedores" aria-label="Lista de valores de proveedores" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
-              <div class="campo cpr-c2"><span>Presentación</span><div class="lov-campo"><select name="presentacion_id" ${dis} aria-label="Presentación">${opt(presentaciones, v.presentacion_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="presentacion" title="Lista de valores de presentaciones" aria-label="Lista de valores de presentaciones" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
-              <div class="campo cpr-c2"><span>Unidad de medida</span><div class="lov-campo"><select name="tipo_medida_id" ${dis} aria-label="Unidad de medida">${opt(medidas, v.tipo_medida_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="medida" title="Lista de valores de unidades de medida" aria-label="Lista de valores de unidades de medida" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
-              <label class="campo cpr-c2 cpr-costo"><span>Precio costo Q</span><input type="number" step="0.0001" min="0" name="precio_costo" value="${esc(String(v.precio_costo ?? 0))}" ${dis}></label>
-              <label class="campo cpr-c2"><span>Bodega</span><select name="bodega_id" ${dis}>${opt(bodegas, v.bodega_id)}</select></label>
+          <div class="cpa-bloques">
+          <section class="cpr-bloque cpa-b">
+            <h3 class="cpa-tit"><i class="ti ti-package" aria-hidden="true"></i> Artículo</h3>
+            <div class="cpa-g">
+              <label class="campo cpa-ancho"><span>Nombre *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="150" ${dis}></label>
+              <label class="campo"><span>Código producto</span><input name="codigo_producto" value="${esc(v.codigo_producto || '')}" maxlength="40" ${dis}></label>
+              <label class="campo"><span>Código de barras</span><input name="codigo_barras" value="${esc(v.codigo_barras || '')}" maxlength="40" ${dis}></label>
+              <label class="campo"><span>Marca</span><input name="marca" value="${esc(v.marca || '')}" maxlength="80" ${dis}></label>
+              <label class="campo" title="Sustancia activa (medicamentos) o línea del producto"><span>Principio activo</span><input name="principio_activo" value="${esc(v.principio_activo || '')}" maxlength="150" ${dis}></label>
+              <label class="campo"><span>Estado</span><select name="estado" ${dis}>${['ACTIVO', 'INACTIVO', 'DESCONTINUADO'].map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
+              <label class="pc-check cpr-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> ¿Es genérico?</label>
             </div>
           </section>
-          <section class="cpr-bloque cpr-tira">
-            <span class="cpr-tit"><i class="ti ti-chart-arrows-vertical" aria-hidden="true"></i> Existencias</span>
-            <label class="pc-check cpr-chk"><input type="checkbox" name="punto_minimo" ${v.punto_minimo ? 'checked' : ''} ${dis}> Punto mínimo</label>
-            <label class="campo"><span>Mínimo</span><input type="number" step="0.001" min="0" name="minimo" value="${esc(String(v.minimo ?? 0))}" ${dis || (v.punto_minimo ? '' : 'disabled')}></label>
-            <label class="campo"><span>Máximo</span><input type="number" step="0.001" min="0" name="maximo" value="${esc(String(v.maximo ?? 0))}" ${dis || (v.punto_minimo ? '' : 'disabled')}></label>
-            <span class="cpr-tit cpr-sep"><i class="ti ti-map-pin" aria-hidden="true"></i> Ubicación</span>
-            <label class="campo"><span>Estante</span><input name="estante" value="${esc(v.estante || '')}" maxlength="20" ${dis}></label>
-            <label class="campo"><span>Fila</span><input name="fila" value="${esc(v.fila || '')}" maxlength="20" ${dis}></label>
-            <label class="campo"><span>Bloque</span><input name="bloque" value="${esc(v.bloque || '')}" maxlength="20" ${dis}></label>
+          <section class="cpr-bloque cpa-b">
+            <h3 class="cpa-tit"><i class="ti ti-category" aria-hidden="true"></i> Clasificación y medida</h3>
+            <div class="cpa-g cpa-g1">
+              <div class="campo"><span>Clasificación</span><div class="lov-campo"><select name="clasificacion_id" ${dis} aria-label="Clasificación">${opt(clasificaciones, v.clasificacion_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="clasificacion" title="Lista de valores de clasificaciones" aria-label="Lista de valores de clasificaciones" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
+              <div class="campo"><span>Tipo producto</span><div class="lov-campo"><select name="tipo_producto_id" ${dis} aria-label="Tipo producto">${opt(tiposClas, v.tipo_producto_id, (x) => `${x.codigo} · ${esc(x.nombre)}${x.siglas ? ` (${esc(x.siglas)})` : ''}`, v.clasificacion_id ? (tiposClas.length ? '—' : 'Sin tipos') : 'Elige la clasificación')}</select><button type="button" class="icono-boton lov-btn" data-lov="tipo" title="Lista de valores de tipos de producto" aria-label="Lista de valores de tipos de producto" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
+              <div class="campo"><span>Unidad de medida</span><div class="lov-campo"><select name="tipo_medida_id" ${dis} aria-label="Unidad de medida">${opt(medidas, v.tipo_medida_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="medida" title="Lista de valores de unidades de medida" aria-label="Lista de valores de unidades de medida" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
+              <div class="campo"><span>Presentación</span><div class="lov-campo"><select name="presentacion_id" ${dis} aria-label="Presentación">${opt(presentaciones, v.presentacion_id)}</select><button type="button" class="icono-boton lov-btn" data-lov="presentacion" title="Lista de valores de presentaciones" aria-label="Lista de valores de presentaciones" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
+              <div class="campo"><span>Proveedor principal</span><div class="lov-campo"><input list="cpr-proveedores" name="proveedor" value="${esc(pv ? provTxt(pv) : '')}" placeholder="Código, NIT o nombre" ${dis} aria-label="Proveedor principal"><button type="button" class="icono-boton lov-btn" data-lov="proveedor" title="Lista de valores de proveedores" aria-label="Lista de valores de proveedores" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
+            </div>
           </section>
-          <section class="bm-pestanas cp-tabs">
+          <section class="cpr-bloque cpa-b">
+            <h3 class="cpa-tit"><i class="ti ti-coin" aria-hidden="true"></i> Costo y existencias</h3>
+            <div class="cpa-g">
+              <label class="campo cpr-costo"><span>Precio costo Q</span><input type="number" step="0.0001" min="0" name="precio_costo" value="${esc(String(v.precio_costo ?? 0))}" ${dis}></label>
+              <label class="campo" title="Costo en dólares del sistema anterior"><span>Costo US$</span><input value="${v.precio_costo_dolar != null ? fmt.monto(v.precio_costo_dolar) : ''}" placeholder="—" disabled></label>
+              <label class="campo cpa-ancho"><span>Bodega</span><select name="bodega_id" ${dis}>${opt(bodegas, v.bodega_id)}</select></label>
+              <label class="pc-check cpr-chk cpa-ancho"><input type="checkbox" name="punto_minimo" ${v.punto_minimo ? 'checked' : ''} ${dis}> Punto mínimo</label>
+              <label class="campo"><span>Mínimo</span><input type="number" step="0.001" min="0" name="minimo" value="${esc(String(v.minimo ?? 0))}" ${dis || (v.punto_minimo ? '' : 'disabled')}></label>
+              <label class="campo"><span>Máximo</span><input type="number" step="0.001" min="0" name="maximo" value="${esc(String(v.maximo ?? 0))}" ${dis || (v.punto_minimo ? '' : 'disabled')}></label>
+              <div class="cpa-ubic cpa-ancho">
+                <label class="campo"><span>Estante</span><input name="estante" value="${esc(v.estante || '')}" maxlength="20" ${dis}></label>
+                <label class="campo"><span>Fila</span><input name="fila" value="${esc(v.fila || '')}" maxlength="20" ${dis}></label>
+                <label class="campo"><span>Bloque</span><input name="bloque" value="${esc(v.bloque || '')}" maxlength="20" ${dis}></label>
+              </div>
+            </div>
+            ${anterior(v)}
+          </section>
+          <section class="cpr-bloque cpa-b cpa-pest bm-pestanas cp-tabs">
             <div class="bm-tabs-barra"><div class="rp-pestanas" role="tablist">${tabs.map(([k, t, i, n]) => `<button type="button" role="tab" data-pestana="${k}" class="${pestana === k ? 'activa' : ''}" aria-selected="${pestana === k}"><i class="ti ${i}" aria-hidden="true"></i> ${t}${n ? ` <b>${n}</b>` : ''}</button>`).join('')}</div></div>
-            <div class="bm-panel cp-panel" data-panel="PROVEEDORES" ${pestana === 'PROVEEDORES' ? '' : 'hidden'}>
-              <div class="pc-lineas"><table><thead><tr><th>Proveedor</th><th>Código del proveedor</th><th class="num">Último costo</th><th></th></tr></thead>
-                <tbody>${otros.map((o, i) => `<tr data-otro="${i}"><td><input list="cpr-proveedores" data-o="proveedor" value="${esc(prov(o.proveedor_id) ? provTxt(prov(o.proveedor_id)) : o._txt || '')}" ${dis} aria-label="Proveedor"></td><td><input data-o="codigo_proveedor" value="${esc(o.codigo_proveedor || '')}" maxlength="40" ${dis} aria-label="Código del proveedor"></td><td class="num"><input type="number" step="0.0001" min="0" data-o="ultimo_costo" value="${o.ultimo_costo ?? ''}" ${dis} aria-label="Último costo"></td><td>${dis ? '' : `<button type="button" class="icono-boton" data-quitar-otro="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>`}</td></tr>`).join('')
-                  || '<tr><td colspan="4" class="tk-vacio">Sin otros proveedores.</td></tr>'}</tbody></table></div>
-              ${ctx.admin ? '<button type="button" class="boton secundario-sm cp-agregar" data-accion="otro"><i class="ti ti-plus" aria-hidden="true"></i> Proveedor</button>' : ''}
-            </div>
             <div class="bm-panel cp-panel" data-panel="PRECIOS" ${pestana === 'PRECIOS' ? '' : 'hidden'}>
               <div class="pc-lineas"><table><thead><tr><th>Tipo de precio</th><th class="num">% Utilidad</th><th class="num">% Descuento</th><th class="num">Precio calculado</th><th class="num">Precio del producto</th></tr></thead>
                 <tbody>${precios.filter((t) => t.activo).map((t) => { const pp = preciosProd.find((x) => x.tipo_precio_id === t.id); return `<tr data-precio="${t.id}"><td class="fuerte">${t.codigo} · ${esc(t.nombre)}${t.factor === 'PRECIO FIJO' ? ' <span class="pc-tipo">Precio fijo</span>' : ''}</td><td class="num">${fmt.monto(t.pct_utilidad)}</td><td class="num">${fmt.monto(t.pct_descuento)}</td>
                   <td class="num" data-calc>${t.factor === 'NORMAL' ? fmt.monto(calcPrecio(t, v.precio_costo)) : '<span class="tk-tenue">—</span>'}</td><td class="num"><input type="number" step="0.01" min="0" data-p="${t.id}" value="${pp ? Number(pp.precio) : ''}" placeholder="${t.factor === 'NORMAL' ? 'El calculado' : 'Escribe el precio'}" ${dis} aria-label="Precio ${esc(t.nombre)}"></td></tr>`; }).join('')
                   || '<tr><td colspan="5" class="tk-vacio">No hay tipos de precio activos: defínelos en Tipos de precio.</td></tr>'}</tbody></table></div>
+            </div>
+            <div class="bm-panel cp-panel" data-panel="PROVEEDORES" ${pestana === 'PROVEEDORES' ? '' : 'hidden'}>
+              <div class="pc-lineas"><table><thead><tr><th>Proveedor</th><th>Código del proveedor</th><th class="num">Último costo</th><th></th></tr></thead>
+                <tbody>${otros.map((o, i) => `<tr data-otro="${i}"><td><input list="cpr-proveedores" data-o="proveedor" value="${esc(prov(o.proveedor_id) ? provTxt(prov(o.proveedor_id)) : o._txt || '')}" ${dis} aria-label="Proveedor"></td><td><input data-o="codigo_proveedor" value="${esc(o.codigo_proveedor || '')}" maxlength="40" ${dis} aria-label="Código del proveedor"></td><td class="num"><input type="number" step="0.0001" min="0" data-o="ultimo_costo" value="${o.ultimo_costo ?? ''}" ${dis} aria-label="Último costo"></td><td>${dis ? '' : `<button type="button" class="icono-boton" data-quitar-otro="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>`}</td></tr>`).join('')
+                  || '<tr><td colspan="4" class="tk-vacio">Sin otros proveedores.</td></tr>'}</tbody></table></div>
+              ${ctx.admin ? '<button type="button" class="boton secundario-sm cp-agregar" data-accion="otro"><i class="ti ti-plus" aria-hidden="true"></i> Proveedor</button>' : ''}
             </div>
             <div class="bm-panel cp-panel" data-panel="IMAGEN" ${pestana === 'IMAGEN' ? '' : 'hidden'}>
               <div class="cpr-imagen">
@@ -529,6 +563,7 @@
               </div>
             </div>
           </section>
+          </div>
           ${p ? `<p class="cc-ingreso cpr-control"><i class="ti ti-user" aria-hidden="true"></i> Creó ${esc(p.creado_por_nombre || '')} · ${esc(fmt.fechaHora(p.creado_en))}${p.modificado_en ? ` · modificó ${esc(p.modificado_por_nombre || '')} ${esc(fmt.fechaHora(p.modificado_en))}` : ''}</p>` : ''}
           <datalist id="cpr-proveedores">${proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
         </form>`;
@@ -659,7 +694,7 @@
       const q = e.target.closest('[data-quitar-otro]');
       if (q) { leerOtros(); otros.splice(Number(q.dataset.quitarOtro), 1); return repintar(); }
       const a = e.target.closest('[data-accion]')?.dataset.accion;
-      if (a === 'nuevo') { nuevo = true; actual = null; otros = []; preciosProd = []; imagen = { nuevo: null, quitar: false }; pestana = 'PROVEEDORES'; ctx.pMae.querySelectorAll('tr.actual').forEach((tr) => tr.classList.remove('actual')); pintarDetalle(); return ctx.pDet.querySelector('[name=nombre]')?.focus(); }
+      if (a === 'nuevo') { nuevo = true; actual = null; otros = []; preciosProd = []; imagen = { nuevo: null, quitar: false }; pestana = 'PRECIOS'; ctx.pMae.querySelectorAll('tr.actual').forEach((tr) => tr.classList.remove('actual')); pintarDetalle(); return ctx.pDet.querySelector('[name=nombre]')?.focus(); }
       if (a === 'cancelar') { nuevo = false; return abrir(lista0[0] || null); }
       if (a === 'imprimir') return listado();
       if (a === 'otro') { leerOtros(); otros.push({ proveedor_id: null, codigo_proveedor: '', ultimo_costo: null }); return repintar(); }
