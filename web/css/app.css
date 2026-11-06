@@ -3568,3 +3568,4 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-clasif-tipos .cg-tabla th.cg-chk { width: 50px; }
 .bk-clasif-tipos .cg-tabla td input:not([type=checkbox]), .bk-clasif-tipos .cg-tabla td select { width: 100%; min-width: 0; box-sizing: border-box; }
 .bk-clasif-tipos .cg-tabla th.cg-chk:last-child { width: 62px; }
+.bk-clasif-tipos .cg-tabla th:last-child { width: 64px; }

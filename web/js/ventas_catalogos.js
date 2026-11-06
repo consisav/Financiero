@@ -346,8 +346,8 @@
         columnas: [
           { k: 'siglas', t: 'Siglas', ancho: '84px', max: 6 },
           { k: 'nombre', t: 'Descripción', req: true, max: 120 },
-          { k: 'cuenta_inventario_id', t: 'Cuenta inventarios', tipo: 'cuenta', ancho: '180px' },
-          { k: 'cuenta_facturacion_id', t: 'Cuenta facturación', tipo: 'cuenta', ancho: '180px' }
+          { k: 'cuenta_inventario_id', t: 'Cuenta inventarios', tipo: 'cuenta', ancho: '150px' },
+          { k: 'cuenta_facturacion_id', t: 'Cuenta facturación', tipo: 'cuenta', ancho: '150px' }
         ],
         filtro: (q) => clasif?.id ? q.eq('clasificacion_id', clasif.id) : null,
         extra: () => { if (!clasif?.id) { window.FIN.aviso('Guarda y elige primero la clasificación'); return null; } return { clasificacion_id: clasif.id, organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc }; },
