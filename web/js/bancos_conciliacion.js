@@ -98,6 +98,10 @@
               </button>`;
             }).join('') || '<p class="tk-vacio">La empresa no tiene cuentas bancarias: créalas en Bancos · Cuentas bancarias.</p>'}
           </div>
+          <div class="bca-reportes" role="group" aria-label="Reporte de la conciliación">
+            <button type="button" class="boton secundario-sm bca-pdf" data-accion="imprimir" ${actual ? '' : 'disabled'} title="Reporte de la conciliación para imprimir o guardar en PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Reporte de la conciliación</small></span></button>
+            <button type="button" class="boton cqc-excel bca-xls" data-accion="excel" ${actual ? '' : 'disabled'} title="Reporte en Excel (.xlsx) con el encabezado de la empresa"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Conciliación y movimientos</small></span></button>
+          </div>
         </div>`;
     }
 
@@ -120,7 +124,7 @@
       const ed = editable();
       const ls = filtrados();
       const vis = ls.slice(0, limite);
-      caja.innerHTML = `<table><thead><tr><th class="bca-ck">Conciliado</th><th>Tipo</th><th class="num">Folio</th><th>Documento</th><th>Fecha</th><th>Cliente / proveedor · descripción</th><th class="num">Valor</th><th class="num">Valor Q</th></tr></thead>
+      caja.innerHTML = `<table><thead><tr><th class="bca-ck" title="Marca los movimientos que aparecen en el estado de cuenta">Conciliado</th><th>Tipo</th><th class="num">Folio</th><th>Documento</th><th>Fecha</th><th>Cliente / proveedor · descripción</th><th class="num">Valor</th><th class="num">Valor Q</th></tr></thead>
         <tbody>${vis.map((m) => `<tr class="${!delMes(m) ? 'bc-anterior' : ''} ${m.conciliado ? 'bca-conc' : ''}"><td class="bca-ck"><input type="checkbox" data-conciliar="${m.id}" ${m.conciliado ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Conciliado"></td>
           <td><span class="bca-tipo bca-${m.tipo}">${esc(TIPOS[m.tipo])}</span></td><td class="num">${m.folio}</td><td>${esc(m.numero_documento || '')}</td><td>${esc(fmt.fechaDia(m.fecha))}${!delMes(m) ? ' <small class="bca-ant">anterior</small>' : ''}</td>
           <td class="bca-quien" title="${esc(m.descripcion || '')}"><b>${esc(m.tercero_nombre || m.deposito_por || '—')}</b><small>${esc(m.descripcion || '')}</small></td>
@@ -219,7 +223,6 @@
             <div class="tk-titulo-texto"><small>${esc(banco?.nombre || '')} · ${esc(empresa())}</small><h2>Conciliación ${esc(cb.numero)} · ${MESES[f.mes - 1]} ${f.anio}</h2></div>
             <div class="tk-marcas">${marca}${ant ? '<span class="pc-marca">Sistema anterior</span>' : ''}${modificando ? '<span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}</div>
             <div class="tk-titulo-acciones">
-              ${conc && !modificando ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Reporte</button>' : ''}
               ${ctx.admin && cerrada() ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="reversar"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Reversar cierre</button>' : ''}
               ${puede ? '<button type="button" class="boton secundario-sm" data-accion="cerrar"><i class="ti ti-lock" aria-hidden="true"></i> Cerrar conciliación</button>' : ''}
               ${puede ? '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
@@ -231,13 +234,8 @@
 
           <div class="bca-cabecera ${ed ? 'editando' : 'consulta'}">
             <section class="bca-ecuacion">
-              <div class="bca-datos">
-                <label class="campo"><span>Saldo según banco (${esc(mon?.simbolo || '')})</span><input type="number" step="0.01" name="saldo_banco" value="${v.saldo_banco}" ${dis}></label>
-                <label class="campo"><span>Fecha</span><input type="date" name="fecha" value="${esc(v.fecha)}" ${dis}></label>
-                <label class="campo bca-obs"><span>Observaciones</span><input name="observaciones" value="${esc(v.observaciones || '')}" maxlength="500" ${dis}></label>
-              </div>
               <div class="bca-pasos">
-                <div><span>Según banco Q</span><b data-banco-q>${fmt.monto(bancoQ)}</b><small>${local(cb) ? 'Estado de cuenta' : `al cambio ${t}`}</small></div>
+                <label class="bca-banco"><span>Saldo según banco ${esc(mon?.simbolo || '')}</span><input type="number" step="0.01" name="saldo_banco" value="${v.saldo_banco}" ${dis}><small>${local(cb) ? 'Del estado de cuenta' : `<b data-banco-q>Q ${fmt.monto(bancoQ)}</b> al cambio ${t}`}</small></label>
                 <i class="bca-op">+</i>
                 <div><span>Ingresos en circulación</span><b>${fmt.monto(ingCirc)}</b><small>Depósitos y notas de crédito</small></div>
                 <i class="bca-op">−</i>
@@ -247,10 +245,14 @@
                 <i class="bca-op">vs</i>
                 <div><span>Contable Q</span><b>${fmt.monto(contaQ)}</b><small>${local(cb) ? 'Partidas hasta el mes' : `${esc(mon?.simbolo || '')} ${fmt.monto(contaMl)}`}</small></div>
               </div>
-              <div class="bca-resultado ${dif ? 'descuadre' : 'cuadra'}" data-resultado>
-                <i class="ti ${dif ? 'ti-alert-triangle' : 'ti-circle-check'}" aria-hidden="true"></i>
-                <span data-dif-txt>${dif ? 'Diferencia' : 'Cuadra'}</span><b data-dif>Q ${fmt.monto(dif)}</b>
-                <small>Saldo en el sistema Q ${fmt.monto(saldoSistema)} · ${conciliados.toLocaleString('es-GT')} de ${movs.length.toLocaleString('es-GT')} movimientos conciliados</small>
+              <div class="bca-linea">
+                <div class="bca-resultado ${dif ? 'descuadre' : 'cuadra'}" data-resultado title="Saldo en el sistema Q ${fmt.monto(saldoSistema)} · ${conciliados} de ${movs.length} movimientos conciliados">
+                  <i class="ti ${dif ? 'ti-alert-triangle' : 'ti-circle-check'}" aria-hidden="true"></i>
+                  <span data-dif-txt>${dif ? 'Diferencia' : 'Cuadra'}</span><b data-dif>Q ${fmt.monto(dif)}</b>
+                  <small>Sistema Q ${fmt.monto(saldoSistema)} · ${conciliados.toLocaleString('es-GT')} de ${movs.length.toLocaleString('es-GT')} conciliados</small>
+                </div>
+                <label class="campo bca-fecha"><span>Fecha</span><input type="date" name="fecha" value="${esc(v.fecha)}" ${dis}></label>
+                <label class="campo bca-obs"><span>Observaciones</span><input name="observaciones" value="${esc(v.observaciones || '')}" maxlength="500" placeholder="${ed ? 'Notas de la conciliación' : ''}" ${dis}></label>
               </div>
             </section>
 
@@ -261,10 +263,10 @@
                 ${dato('Usuario', esc(conc?.usuario || (ctx.yo.usuario || '').toUpperCase()))}
                 ${dato('Moneda', esc(mon?.nombre || ''))}
                 ${dato('Actualiza', conc?.modificado_en ? `${esc(conc.modificado_por_nombre || '')} <small>${esc(fmt.fechaHora(conc.modificado_en))}</small>` : '')}
-                ${dato('Fecha cierre', conc?.fecha_cierre ? `${esc(fmt.fechaHora(conc.fecha_cierre))}<small>${esc(conc.cerrada_por || '')}</small>` : '')}
+                ${dato('Cierre', conc?.fecha_cierre ? `${esc(fmt.fechaHora(conc.fecha_cierre))}<small>${esc(conc.cerrada_por || '')}</small>` : '')}
                 ${dato('Generada', conc?.creado_en ? esc(fmt.fechaHora(conc.creado_en)) : '')}
               </dl>
-              ${conc ? adjunto.html(imagen({ ed, puede })) : '<div class="bm-comprobante"><span class="bm-sin-imagen"><i class="ti ti-info-circle" aria-hidden="true"></i> Genera la conciliación para adjuntar el estado de cuenta</span></div>'}
+              ${conc ? adjunto.html(imagen({ ed, puede })) : '<div class="bm-comprobante"><span class="bm-sin-imagen"><i class="ti ti-info-circle" aria-hidden="true"></i> Estado de cuenta: genera la conciliación para adjuntarlo</span></div>'}
             </section>
           </div>
 
@@ -272,14 +274,11 @@
             <div class="bm-tabs-barra">
               ${barraPestanas([
                 { id: 'MOVIMIENTOS', texto: 'Movimientos', icono: 'ti-checklist', n: movs.length },
-                { id: 'RESUMEN', texto: 'Resumen del mes', icono: 'ti-list-numbers' },
-                { id: 'DIFERENCIAS', texto: 'Detalle de diferencias', icono: 'ti-arrows-diff', n: difs.length },
-                ...(ant ? [{ id: 'ANTERIOR', texto: 'Totales del sistema anterior', icono: 'ti-history' }] : [])
+                { id: 'RESUMEN', texto: 'Resumen', icono: 'ti-list-numbers' },
+                { id: 'DIFERENCIAS', texto: 'Diferencias', icono: 'ti-arrows-diff', n: difs.length },
+                ...(ant ? [{ id: 'ANTERIOR', texto: 'Sistema anterior', icono: 'ti-history' }] : [])
               ], pestana)}
-              ${ed ? '<span class="bm-aplicado"><i class="ti ti-hand-click" aria-hidden="true"></i> Marca los movimientos que aparecen en el estado de cuenta</span>' : ''}
-            </div>
-            <div class="bm-panel" data-panel="MOVIMIENTOS" ${pestana === 'MOVIMIENTOS' ? '' : 'hidden'}>
-              <div class="bca-filtros">
+              <div class="bca-filtros" data-solo-mov ${pestana === 'MOVIMIENTOS' ? '' : 'hidden'}>
                 <div class="bca-chips" role="radiogroup" aria-label="Movimientos que se muestran">
                   ${[['CIRCULACION', 'En circulación'], ['MES', 'Del mes'], ['CONCILIADOS', 'Conciliados'], ['TODOS', 'Todos']].map(([k, tx]) => `<button type="button" role="radio" aria-checked="${fm.vista === k}" class="bca-chip ${fm.vista === k ? 'activo' : ''}" data-vista="${k}">${tx} <b>${vs[k].length.toLocaleString('es-GT')}</b></button>`).join('')}
                 </div>
@@ -287,6 +286,8 @@
                 <label class="tk-buscar bca-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar-mov placeholder="Documento, folio, cliente o proveedor…" value="${esc(fm.buscar)}" aria-label="Buscar movimientos"></label>
                 <span class="bca-suma" data-movs-n></span>
               </div>
+            </div>
+            <div class="bm-panel" data-panel="MOVIMIENTOS" ${pestana === 'MOVIMIENTOS' ? '' : 'hidden'}>
               <div class="pc-lineas bca-movs" data-movs></div>
             </div>
             <div class="bm-panel" data-panel="RESUMEN" ${pestana === 'RESUMEN' ? '' : 'hidden'}>
@@ -346,19 +347,80 @@
       await consultar();
     }
 
+    // Valores de la conciliación tal como están en pantalla (también sin generar).
+    function valoresReporte() {
+      const cb = actual;
+      const form = ctx.pDet.querySelector('.bca-form');
+      const v = form ? leer(form) : { saldo_banco: conc ? Number(conc.saldo_banco) : saldoSistema, fecha: conc?.fecha || fmt.hoy(), observaciones: conc?.observaciones || '' };
+      const bancoQ = fmt.redondear(v.saldo_banco * tc(cb));
+      const pend = movs.filter((m) => !m.conciliado);
+      const ing = pend.filter((m) => !egreso(m)).reduce((s, m) => s + Number(m.valor_ml), 0);
+      const egr = pend.filter(egreso).reduce((s, m) => s + Number(m.valor_ml), 0);
+      const ajustado = fmt.redondear(bancoQ + ing - egr);
+      return { v, bancoQ, ing, egr, ajustado, contaQ: saldoContable, dif: fmt.redondear(ajustado - saldoContable), pend };
+    }
+
     function reporte() {
       const cb = actual;
+      if (!cb) return;
       const res = resumen();
+      const r0 = valoresReporte();
       imprimir(`Conciliación ${cb.numero}`, `
         <h1>Conciliación bancaria</h1>
-        <h2>${esc(empresa())} · ${esc(ctx.banco(cb.banco_id)?.nombre || '')} ${esc(cb.numero)} · ${MESES[f.mes - 1]} ${f.anio}${cerrada() ? ' · CERRADA' : ''}</h2>
-        <div class="cab"><div><b>Según banco</b>${esc(ctx.moneda(cb.moneda_id)?.simbolo || '')} ${fmt.monto(conc.saldo_banco)} · Q ${fmt.monto(conc.saldo_banco_ml)}</div><div><b>Contable</b>Q ${fmt.monto(conc.saldo_contable)}</div><div><b>Diferencia</b>Q ${fmt.monto(conc.saldo_banco_ml - conc.saldo_contable)}</div><div><b>Elaboró</b>${esc(conc.usuario || '')}</div>
-          <div><b>Saldo en el sistema</b>${fmt.monto(saldoSistema)}</div><div><b>Fecha</b>${esc(fmt.fechaDia(conc.fecha))}</div><div><b>Cierre</b>${esc(conc.fecha_cierre ? fmt.fechaHora(conc.fecha_cierre) : '—')}</div><div><b>Estado de cuenta</b>${esc(conc.comprobante_nombre || 'Sin imagen')}</div>
-          ${conc.observaciones ? `<div style="grid-column:1/-1"><b>Observaciones</b>${esc(conc.observaciones)}</div>` : ''}</div>
+        <h2>${esc(empresa())} · ${esc(ctx.banco(cb.banco_id)?.nombre || '')} ${esc(cb.numero)} · ${MESES[f.mes - 1]} ${f.anio}${cerrada() ? ' · CERRADA' : !conc ? ' · SIN GENERAR' : ''}</h2>
+        <div class="cab"><div><b>Según banco</b>${esc(ctx.moneda(cb.moneda_id)?.simbolo || '')} ${fmt.monto(r0.v.saldo_banco)} · Q ${fmt.monto(r0.bancoQ)}</div><div><b>+ Ingresos en circulación</b>Q ${fmt.monto(r0.ing)}</div><div><b>− Egresos en circulación</b>Q ${fmt.monto(r0.egr)}</div><div><b>= Saldo ajustado</b>Q ${fmt.monto(r0.ajustado)}</div>
+          <div><b>Contable</b>Q ${fmt.monto(r0.contaQ)}</div><div><b>Diferencia</b>Q ${fmt.monto(r0.dif)}</div><div><b>Saldo en el sistema</b>${fmt.monto(saldoSistema)}</div><div><b>Fecha</b>${esc(fmt.fechaDia(r0.v.fecha))}</div>
+          <div><b>Elaboró</b>${esc(conc?.usuario || (ctx.yo.usuario || '').toUpperCase())}</div><div><b>Cierre</b>${esc(conc?.fecha_cierre ? fmt.fechaHora(conc.fecha_cierre) : '—')}</div><div><b>Estado de cuenta</b>${esc(conc?.comprobante_nombre || 'Sin imagen')}</div>
+          ${r0.v.observaciones ? `<div style="grid-column:1/-1"><b>Observaciones</b>${esc(r0.v.observaciones)}</div>` : ''}</div>
         <table><thead><tr><th></th><th class="n">Cantidad</th><th class="n">Valor Q</th><th class="n">En la cuenta ${esc(ctx.moneda(cb.moneda_id)?.simbolo || '')}</th></tr></thead><tbody>${res.map((r) => `<tr><td>${esc(r.txt)}</td><td class="n">${r.n}</td><td class="n">${fmt.monto(r.q)}</td><td class="n">${fmt.monto(r.ml)}</td></tr>`).join('')}</tbody></table>
         <h3>Movimientos en circulación</h3><table><thead><tr><th>Tipo</th><th>Folio</th><th>Documento</th><th>Fecha</th><th class="n">Valor</th></tr></thead><tbody>${movs.filter((m) => !m.conciliado).map((m) => `<tr><td>${esc(TIPOS[m.tipo])}</td><td>${m.folio}</td><td>${esc(m.numero_documento || '')}</td><td>${esc(fmt.fechaDia(m.fecha))}</td><td class="n">${fmt.monto(m.valor_cuenta)}</td></tr>`).join('') || '<tr><td colspan="5">Ninguno</td></tr>'}</tbody></table>
         ${difs.length ? `<h3>Detalle de diferencias</h3><table><thead><tr><th>Descripción</th><th class="n">Valor real</th><th class="n">Valor conta</th><th class="n">Diferencia</th></tr></thead><tbody>${difs.map((x) => `<tr><td>${esc(x.descripcion)}</td><td class="n">${fmt.monto(x.valor_real)}</td><td class="n">${fmt.monto(x.valor_conta)}</td><td class="n">${fmt.monto(x.valor_real - x.valor_conta)}</td></tr>`).join('')}</tbody></table>` : ''}
         <div class="firmas"><div>Elaboró</div><div>Revisó</div><div>Autorizó</div></div>`);
+    }
+
+    // Excel de la conciliación con el encabezado de las consultas: la ecuación, el resumen del mes, los
+    // movimientos en circulación y conciliados, y el detalle de diferencias.
+    function excel() {
+      const cb = actual;
+      if (!cb || !window.REPORTE_XLSX) return;
+      const r0 = valoresReporte();
+      const mon = ctx.moneda(cb.moneda_id);
+      const fila = (m) => ({ valores: [TIPOS[m.tipo], m.folio, m.numero_documento || '', fmt.fechaDia(m.fecha), m.tercero_nombre || m.deposito_por || '', m.descripcion || '', (egreso(m) ? -1 : 1) * Number(m.valor_cuenta || 0), (egreso(m) ? -1 : 1) * Number(m.valor_ml || 0)] });
+      const suma = (ls) => ls.reduce((s, m) => s + (egreso(m) ? -1 : 1) * Number(m.valor_ml || 0), 0);
+      const conciliadosLs = movs.filter((m) => m.conciliado);
+      const filas = [
+        { tipo: 'grupo', valores: ['Conciliación'] },
+        { valores: ['Saldo según banco', '', '', '', '', mon && mon.iso !== 'GTQ' ? `${mon.simbolo} ${fmt.monto(r0.v.saldo_banco)}` : '', '', r0.bancoQ] },
+        { valores: ['+ Ingresos en circulación', '', '', '', '', 'Depósitos y notas de crédito', '', r0.ing] },
+        { valores: ['− Egresos en circulación', '', '', '', '', 'Cheques y notas de débito', '', -r0.egr] },
+        { tipo: 'subtotal', valores: ['= Saldo ajustado', '', '', '', '', '', '', r0.ajustado] },
+        { valores: ['Saldo contable', '', '', '', '', 'Partidas hasta el mes', '', r0.contaQ] },
+        { tipo: 'total', valores: [r0.dif ? 'Diferencia' : 'Cuadra', '', '', '', '', `Saldo en el sistema Q ${fmt.monto(saldoSistema)}`, '', r0.dif] },
+        { tipo: 'nota', valores: [''] },
+        { tipo: 'grupo', valores: ['Resumen del mes', '', '', '', 'Cantidad', '', `En la cuenta ${mon?.simbolo || ''}`, 'Valor Q'] },
+        ...resumen().map((x) => ({ valores: [x.txt, '', '', '', x.n, '', x.ml, x.q] })),
+        { tipo: 'nota', valores: [''] },
+        { tipo: 'grupo', valores: [`Movimientos en circulación (${r0.pend.length})`] },
+        ...r0.pend.map(fila),
+        { tipo: 'subtotal', valores: ['Total en circulación', '', '', '', '', '', '', suma(r0.pend)] },
+        { tipo: 'nota', valores: [''] },
+        { tipo: 'grupo', valores: [`Movimientos conciliados (${conciliadosLs.length})`] },
+        ...conciliadosLs.map(fila),
+        { tipo: 'subtotal', valores: ['Total conciliado', '', '', '', '', '', '', suma(conciliadosLs)] }
+      ];
+      if (difs.length) {
+        filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'grupo', valores: ['Detalle de diferencias', '', '', '', '', 'Valor real Q', 'Valor conta Q', 'Diferencia'] });
+        difs.forEach((x) => filas.push({ valores: [x.descripcion, '', '', '', '', x.valor_real, x.valor_conta, x.valor_real - x.valor_conta] }));
+      }
+      window.REPORTE_XLSX.generar({
+        titulo: `Conciliación bancaria ${cb.numero} · ${MESES[f.mes - 1]} ${f.anio}`,
+        parametros: [`Empresa: ${empresa()}`, `Banco: ${ctx.banco(cb.banco_id)?.nombre || ''}`, `Cuenta: ${cb.numero} · ${cb.nombre}`, `Moneda: ${mon?.nombre || ''}`,
+          `Estado: ${conc ? conc.estado : 'SIN GENERAR'}${conc?.origen_anterior ? ' · sistema anterior' : ''}`, `Fecha: ${fmt.fechaDia(r0.v.fecha)}`],
+        orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: `Conciliación ${f.mes}-${f.anio}`, archivo: `conciliacion_${cb.numero}_${f.anio}_${String(f.mes).padStart(2, '0')}`,
+        columnas: [{ titulo: 'Tipo / concepto', ancho: 26 }, { titulo: 'Folio', ancho: 9 }, { titulo: 'Documento', ancho: 16 }, { titulo: 'Fecha', ancho: 12 }, { titulo: 'Cliente / proveedor', ancho: 34 },
+          { titulo: 'Descripción', ancho: 40 }, { titulo: `Valor ${mon?.simbolo || ''}`, ancho: 16, tipo: 'monto' }, { titulo: 'Valor Q', ancho: 16, tipo: 'monto' }],
+        filas
+      });
     }
 
     cont.addEventListener('change', async (e) => {
@@ -390,7 +452,7 @@
       if (!form) return;
       if (e.target.name === 'saldo_banco') {
         const bq = fmt.redondear(Number(e.target.value || 0) * tc(actual));
-        form.querySelector('[data-banco-q]').textContent = `Q ${fmt.monto(bq)}`;
+        const bqx = form.querySelector('[data-banco-q]'); if (bqx) bqx.textContent = `Q ${fmt.monto(bq)}`;
         const aj = fmt.redondear(bq + Number(form.dataset.ing || 0) - Number(form.dataset.egr || 0));
         const df = fmt.redondear(aj - saldoContable);
         form.querySelector('[data-ajustado]').textContent = fmt.monto(aj);
@@ -404,7 +466,7 @@
     });
     cont.addEventListener('click', async (e) => {
       const tab = e.target.closest('[data-pestana]');
-      if (tab) { pestana = tab.dataset.pestana; return activarPestana(ctx.pDet, pestana); }
+      if (tab) { pestana = tab.dataset.pestana; const fl = ctx.pDet.querySelector('[data-solo-mov]'); if (fl) fl.hidden = pestana !== 'MOVIMIENTOS'; return activarPestana(ctx.pDet, pestana); }
       const fc = e.target.closest('[data-cuenta]');
       if (fc && ctx.pMae.contains(fc)) { if (modificando) return window.FIN.aviso('Guarda o cancela la conciliación antes de cambiar de cuenta'); return abrir(cuentas.find((c) => String(c.id) === fc.dataset.cuenta)); }
       const vi = e.target.closest('[data-vista]');
@@ -414,6 +476,7 @@
       if (ac) {
         const a = ac.dataset.accion;
         if (a === 'imprimir') return reporte();
+        if (a === 'excel') return excel();
         if (a === 'modificar') { modificando = true; return repintar(); }
         if (a === 'cancelar') return abrir(actual);
         if (a === 'ver-comprobante') return adjunto.ver(imagen());
