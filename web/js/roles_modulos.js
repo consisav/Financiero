@@ -1,5 +1,6 @@
-// Catálogos · Iniciales · Roles módulos (diseño B): roles a la izquierda; a la derecha los usuarios
-// del rol y la matriz de accesos por pantalla (ver, crear, modificar, anular, imprimir).
+// Catálogos · Iniciales · Roles módulos (diseño A, sin desplazar la página): roles a la izquierda; a la
+// derecha el encabezado del rol con sus usuarios y resumen, el navegador de módulos con el avance de cada
+// uno y la matriz de accesos del módulo elegido (ver, crear, modificar, anular, imprimir).
 // Los permisos se definen por rol; cada usuario puede tener excepciones (usuario_accesos, null = hereda).
 (function () {
   const { esc, fechaCorta, fecha, tabla, formulario } = window.UI;
@@ -20,7 +21,7 @@
       roles: [], asignaciones: [], opciones: [], usuarios: [],
       rol: null, asig: null, modo: 'rol', buscarRol: '', buscarPantalla: '',
       base: new Map(), exc: new Map(), borrador: null,
-      abiertos: new Set(), excepcionesRol: 0
+      modulo: null, excepcionesRol: 0
     };
 
     const [r, a, o, u] = await Promise.all([
@@ -43,16 +44,20 @@
     const asigDe = (rolId) => estado.asignaciones.filter((x) => x.rol_id === rolId);
 
     cont.innerHTML = `
-      <div class="rm-grid">
+      <div class="rm2">
         <aside class="panel rm-roles" id="rm-roles"></aside>
-        <div class="rm-derecha">
-          <section class="panel" id="rm-usuarios"></section>
-          <section class="panel" id="rm-accesos"></section>
+        <div class="rm2-der">
+          <section class="panel rm2-cab" id="rm-usuarios"></section>
+          <div class="rm2-cuerpo">
+            <nav class="panel rm2-mods" id="rm-mods" aria-label="Módulos"></nav>
+            <section class="panel rm2-matriz" id="rm-accesos"></section>
+          </div>
         </div>
       </div>`;
     const pRoles = cont.querySelector('#rm-roles');
     const pUsu = cont.querySelector('#rm-usuarios');
     const pAcc = cont.querySelector('#rm-accesos');
+    const pMods = cont.querySelector('#rm-mods');
 
     // ---------- Datos de accesos ----------
     async function cargarAccesos() {
@@ -81,11 +86,18 @@
     }
 
     // Pantallas cuyo borrador difiere de lo guardado (rol: sin fila = todo falso; usuario: sin fila = todo null).
-    function cambiosPendientes() {
+    function idsConCambios() {
       const fuente = estado.modo === 'rol' ? estado.base : estado.exc;
       const normal = (f) => ACCIONES.map((ac) => estado.modo === 'rol' ? !!(f && f[ac.id]) : (f && f[ac.id] !== undefined ? f[ac.id] : null)).join();
       const ids = new Set([...fuente.keys(), ...estado.borrador.keys()]);
-      return [...ids].filter((id) => normal(fuente.get(id)) !== normal(estado.borrador.get(id))).length;
+      return new Set([...ids].filter((id) => normal(fuente.get(id)) !== normal(estado.borrador.get(id))));
+    }
+    const cambiosPendientes = () => idsConCambios().size;
+    // Pantallas de un alcance: todo el sistema, un módulo o los resultados de la búsqueda.
+    function idsAlcance(alcance) {
+      const q = estado.buscarPantalla.trim().toLowerCase();
+      return estado.opciones.filter((x) => alcance === 'todo'
+        || (alcance === 'busqueda' ? x.nombre.toLowerCase().includes(q) : String(x.modulo_id || 0) === alcance)).map((x) => x.id);
     }
 
     const delRol = (id) => estado.base.get(id) || vacio();
@@ -123,47 +135,66 @@
       const lista = estado.roles.filter((x) => !q || x.nombre.toLowerCase().includes(q) || String(x.codigo).includes(q));
       pRoles.innerHTML = `
         <div class="panel-cab">
-          <h2>Roles</h2>
+          <h2>Roles <small>${estado.roles.length}</small></h2>
           <div class="panel-acciones">${editable ? '<button type="button" class="boton primario-sm" data-accion="nuevo-rol">+ Rol</button>' : ''}</div>
         </div>
         <input type="search" class="buscar" data-buscar-rol placeholder="Buscar rol" value="${esc(estado.buscarRol)}">
         <ul class="rm-lista">
           ${lista.map((x) => `
-            <li><button type="button" class="rm-rol ${estado.rol && x.id === estado.rol.id ? 'activo' : ''} ${x.activo ? '' : 'apagado'}" data-rol="${x.id}">
+            <li><button type="button" class="rm-rol ${estado.rol && x.id === estado.rol.id ? 'activo' : ''} ${x.activo ? '' : 'apagado'}" data-rol="${x.id}" title="${esc(x.nombre)}${x.activo ? '' : ' (inactivo)'}">
               <span class="rm-rol-cod">${x.codigo}</span>
-              <span class="rm-rol-nombre">${esc(x.nombre)}${x.activo ? '' : ' <small>(inactivo)</small>'}${x.acceso_total ? ' <i class="ti ti-crown rm-corona" title="Acceso total" aria-label="Acceso total"></i>' : ''}</span>
+              <span class="rm-rol-nombre">${esc(x.nombre)}</span>
+              ${x.acceso_total ? '<i class="ti ti-crown rm-corona" title="Acceso total" aria-label="Acceso total"></i>' : ''}
               <span class="rm-rol-cuenta" title="Usuarios activos">${asigDe(x.id).filter((s) => s.estado === 'ACTIVO').length}</span>
             </button></li>`).join('') || '<li class="vacio">Sin roles</li>'}
         </ul>`;
     }
 
-    function pintarUsuarios() {
+    // Encabezado del rol: datos, usuarios asignados (fichas), resumen y modo de la matriz.
+    function pintarCabecera() {
       const rol = estado.rol;
       if (!rol) { pUsu.innerHTML = '<p class="vacio">Crea el primer rol con «+ Rol».</p>'; return; }
+      const usuarioSel = estado.asig ? usuario(estado.asig.perfil_id) : null;
+      const todos = estado.opciones.map((x) => x.id);
+      const conVer = todos.filter((id) => efectivo(id, 'ver')).length;
+      const conModificar = todos.filter((id) => efectivo(id, 'modificar')).length;
+      const excepciones = estado.modo === 'usuario'
+        ? todos.filter((id) => ACCIONES.some((ac) => esExcepcion(id, ac.id))).length
+        : estado.excepcionesRol;
+      const asigs = asigDe(rol.id);
+      const activos = asigs.filter((x) => x.estado === 'ACTIVO').length;
+      const pct = todos.length ? Math.round((conVer / todos.length) * 100) : 0;
       pUsu.innerHTML = `
-        <div class="panel-cab">
-          <div>
-            <h2>${esc(rol.nombre)} <small>· código ${rol.codigo}</small>${rol.acceso_total ? ' <span class="estado activo"><i class="ti ti-crown" aria-hidden="true"></i> Acceso total</span>' : ''}</h2>
+        <div class="rm2-fila">
+          <div class="rm2-titulo">
+            <h2>${esc(rol.nombre)} <small>· código ${rol.codigo}</small>${rol.acceso_total ? ' <span class="estado activo"><i class="ti ti-crown" aria-hidden="true"></i> Acceso total</span>' : ''}${rol.activo ? '' : ' <span class="estado inactivo">Inactivo</span>'}</h2>
             <p class="rm-desc">${esc(rol.descripcion || 'Sin descripción')}</p>
           </div>
-          <div class="panel-acciones">
+          <div class="rm2-acciones">
+            <div class="segmentado" role="tablist">
+              <button type="button" role="tab" class="${estado.modo === 'rol' ? 'activo' : ''}" data-modo="rol" aria-selected="${estado.modo === 'rol'}">Permisos del rol</button>
+              <button type="button" role="tab" class="${estado.modo === 'usuario' ? 'activo' : ''}" data-modo="usuario" aria-selected="${estado.modo === 'usuario'}" ${usuarioSel ? '' : 'disabled title="Elige un usuario del rol"'}>Accesos de ${usuarioSel ? esc(usuarioSel.usuario || usuarioSel.nombre) : 'usuario'}</button>
+            </div>
             ${editable ? '<button type="button" class="boton secundario-sm" data-accion="modificar-rol"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar rol</button>' : ''}
             ${editable ? '<button type="button" class="boton primario-sm" data-accion="asignar">+ Asignar usuario</button>' : ''}
           </div>
         </div>
-        ${tabla({
-          id: 'asignaciones', editable, seleccionado: estado.asig && estado.asig.id,
-          vacio: `Todavía no hay usuarios con el rol ${rol.nombre}.`,
-          columnas: [
-            { titulo: 'Usuario', valor: (f) => `<span class="codigo">${esc(usuario(f.perfil_id).usuario) || '—'}</span>`, clase: 'angosta' },
-            { titulo: 'Nombre', valor: (f) => esc(usuario(f.perfil_id).nombre), clase: 'fuerte' },
-            { titulo: 'Desde', valor: (f) => fechaCorta(f.fecha_inicio) },
-            { titulo: 'Hasta', valor: (f) => fechaCorta(f.fecha_fin) || '—' },
-            { titulo: 'Estado', valor: (f) => estadoAsig(f.estado) },
-            { titulo: 'Asignado por', valor: (f) => `${esc(f.creado_por_nombre || 'sistema')} · ${fecha(f.creado_en).slice(0, 10)}` }
-          ],
-          filas: asigDe(rol.id)
-        })}`;
+        <div class="rm2-fila rm2-fila-2">
+          <div class="rm2-usuarios">
+            <span class="rm2-etq"><i class="ti ti-users" aria-hidden="true"></i> Usuarios <b>${activos}</b></span>
+            ${asigs.map((f) => { const p = usuario(f.perfil_id); const sel = estado.asig && estado.asig.id === f.id; return `
+              <span class="rm2-chip ${sel ? 'sel' : ''} ${f.estado === 'ACTIVO' ? '' : 'apagado'}">
+                <button type="button" data-asig="${f.id}" title="${esc(p.nombre)} · desde ${fechaCorta(f.fecha_inicio)}${f.fecha_fin ? ` hasta ${fechaCorta(f.fecha_fin)}` : ''} · ${f.estado.toLowerCase()} · asignado por ${esc(f.creado_por_nombre || 'sistema')}"><b>${esc(p.usuario || '—')}</b> ${esc(p.nombre)}${f.estado === 'ACTIVO' ? '' : ` <small>${f.estado.toLowerCase()}</small>`}</button>
+                ${editable ? `<button type="button" class="rm2-chip-ed" data-editar-asig="${f.id}" aria-label="Modificar asignación de ${esc(p.nombre)}" title="Modificar asignación"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}
+              </span>`; }).join('') || `<span class="rm2-sin">Todavía no hay usuarios con este rol.</span>`}
+          </div>
+          <div class="rm-stats" role="list" aria-label="Resumen del rol">
+            <span class="rm-stat" role="listitem" title="Pantallas con permiso de ver"><i class="ti ti-layout-grid" aria-hidden="true"></i><b>${conVer}</b>/${todos.length} pantallas
+              <span class="rm-avance mini"><i style="width:${pct}%" class="${pct === 100 ? 'completo' : pct ? 'parcial' : ''}"></i></span></span>
+            <span class="rm-stat" role="listitem" title="Pantallas donde puede modificar"><i class="ti ti-pencil" aria-hidden="true"></i><b>${conModificar}</b> modifica${conModificar === 1 ? '' : 'n'}</span>
+            <span class="rm-stat ${excepciones ? 'aviso' : ''}" role="listitem" title="${estado.modo === 'usuario' ? 'Excepciones de este usuario' : 'Excepciones de los usuarios del rol'}"><i class="ti ti-alert-triangle" aria-hidden="true"></i><b>${excepciones}</b> excepcion${excepciones === 1 ? '' : 'es'}</span>
+          </div>
+        </div>`;
     }
 
     // Un rol con acceso total no se edita pantalla por pantalla (sí las excepciones de sus usuarios).
@@ -184,7 +215,7 @@
     function triestado(ids, ac, datos, titulo) {
       const n = ids.filter((id) => efectivo(id, ac)).length;
       const marca = n === ids.length && n > 0 ? 'checked' : '';
-      return `<input type="checkbox" class="tri" ${marca} data-indeterminado="${n > 0 && n < ids.length}" ${datos} ${editMatriz() ? '' : 'disabled'} aria-label="${esc(titulo)}" title="${esc(titulo)}">`;
+      return `<input type="checkbox" class="tri" ${marca} data-indeterminado="${n > 0 && n < ids.length}" ${datos} ${editMatriz() && ids.length ? '' : 'disabled'} aria-label="${esc(titulo)}" title="${esc(titulo)}">`;
     }
 
     function atajos(alcance, compacto) {
@@ -195,100 +226,88 @@
         + b('ninguno', 'ti-ban', compacto ? 'Ninguno' : 'Quitar todo', 'Sin acceso');
     }
 
-    function pintarAccesos() {
+    const moduloActual = () => { const ms = modulosMatriz(); return ms.find((x) => x.clave === estado.modulo) || ms[0] || null; };
+
+    // Navegador de módulos: avance de cada uno, cambios sin guardar y atajos de todo el sistema.
+    function pintarModulos() {
       const rol = estado.rol;
-      if (!rol) { pAcc.innerHTML = ''; return; }
-      const q = estado.buscarPantalla.trim().toLowerCase();
-      const usuarioSel = estado.asig ? usuario(estado.asig.perfil_id) : null;
-      const todos = estado.opciones.map((x) => x.id);
-      const conVer = todos.filter((id) => efectivo(id, 'ver')).length;
-      const conModificar = todos.filter((id) => efectivo(id, 'modificar')).length;
-      const excepciones = estado.modo === 'usuario'
-        ? todos.filter((id) => ACCIONES.some((ac) => esExcepcion(id, ac.id))).length
-        : estado.excepcionesRol;
-      const activos = asigDe(rol.id).filter((x) => x.estado === 'ACTIVO').length;
-      const modulos = modulosMatriz();
-      const n = cambiosPendientes();
-
-      pAcc.innerHTML = `
-        <div class="panel-cab">
-          <h2>Matriz de accesos</h2>
-          <div class="segmentado" role="tablist">
-            <button type="button" role="tab" class="${estado.modo === 'rol' ? 'activo' : ''}" data-modo="rol" aria-selected="${estado.modo === 'rol'}">Permisos del rol</button>
-            <button type="button" role="tab" class="${estado.modo === 'usuario' ? 'activo' : ''}" data-modo="usuario" aria-selected="${estado.modo === 'usuario'}" ${usuarioSel ? '' : 'disabled title="Elige un usuario del rol"'}>Accesos de ${usuarioSel ? esc(usuarioSel.usuario || usuarioSel.nombre) : 'usuario'}</button>
-          </div>
-        </div>
-
-        <div class="rm-stats" role="list" aria-label="Resumen del rol">
-          <span class="rm-stat" role="listitem" title="Usuarios activos con este rol"><i class="ti ti-users" aria-hidden="true"></i><b>${activos}</b> usuario${activos === 1 ? '' : 's'}</span>
-          <span class="rm-stat" role="listitem" title="Pantallas con permiso de ver"><i class="ti ti-layout-grid" aria-hidden="true"></i><b>${conVer}</b>/${todos.length} pantallas
-            <span class="rm-avance mini"><i style="width:${Math.round((conVer / todos.length) * 100)}%" class="${conVer === todos.length ? 'completo' : conVer ? 'parcial' : ''}"></i></span></span>
-          <span class="rm-stat" role="listitem" title="Pantallas donde puede modificar"><i class="ti ti-pencil" aria-hidden="true"></i><b>${conModificar}</b> modifica${conModificar === 1 ? '' : 'n'}</span>
-          <span class="rm-stat ${excepciones ? 'aviso' : ''}" role="listitem" title="${estado.modo === 'usuario' ? 'Excepciones de este usuario' : 'Excepciones de los usuarios del rol'}"><i class="ti ti-alert-triangle" aria-hidden="true"></i><b>${excepciones}</b> excepcion${excepciones === 1 ? '' : 'es'}</span>
-        </div>
-
-        <p class="rm-ayuda">${estado.modo === 'rol'
-          ? (rol.acceso_total ? `<b>${esc(rol.nombre)}</b> tiene <b>acceso total</b> a todo el sistema, también a las pantallas que se agreguen. Para limitarlo, quita «Acceso total» en Modificar rol.` : `Lo que marques aquí lo heredan todos los usuarios con el rol <b>${esc(rol.nombre)}</b>.`)
-          : `Accesos finales de <b>${esc(usuarioSel.nombre)}</b>: los del rol más sus excepciones. Las celdas <span class="excepcion-muestra">resaltadas</span> son excepciones; al dejarlas igual que el rol vuelven a heredarse.`}</p>
-
-        <div class="rm-atajos">
-          ${editMatriz() ? `<span class="rm-atajos-titulo">Todo el sistema</span>${atajos('todo', false)}` : ''}
+      if (!rol) { pMods.innerHTML = ''; return; }
+      const cambios = idsConCambios();
+      const actual = moduloActual();
+      pMods.innerHTML = `
+        <div class="panel-cab"><h2>Módulos <small>${modulosMatriz().length}</small></h2></div>
+        <ul class="rm2-modlista">
+          ${modulosMatriz().map((md) => {
+            const ids = md.opciones.map((x) => x.id);
+            const c = ids.filter((id) => efectivo(id, 'ver')).length;
+            const pct = Math.round((c / ids.length) * 100);
+            const pend = ids.some((id) => cambios.has(id));
+            const exc = estado.modo === 'usuario' && ids.some((id) => ACCIONES.some((ac) => esExcepcion(id, ac.id)));
+            return `<li><button type="button" class="rm2-mod ${actual && md.clave === actual.clave && !estado.buscarPantalla.trim() ? 'activo' : ''}" data-mod="${md.clave}" title="${esc(md.nombre)}: ${c} de ${ids.length} pantallas con acceso">
+              <span class="siglas">${esc(md.siglas)}</span>
+              <span class="rm2-mod-nombre">${esc(md.nombre)}</span>
+              <span class="rm2-mod-cuenta">${pend ? '<i class="rm2-punto" title="Cambios sin guardar"></i>' : ''}${exc ? '<i class="ti ti-alert-triangle rm2-exc" title="Tiene excepciones"></i>' : ''}${c}/${ids.length}</span>
+              <span class="rm-avance"><i style="width:${pct}%" class="${pct === 100 ? 'completo' : pct ? 'parcial' : ''}"></i></span>
+            </button></li>`;
+          }).join('')}
+        </ul>
+        <div class="rm2-sistema">
+          ${editMatriz() ? `<span class="rm-atajos-titulo">Todo el sistema</span><div class="rm2-sistema-bts">${atajos('todo', true)}</div>` : ''}
           ${editMatriz() && estado.modo === 'rol' && estado.roles.length > 1 ? `
-            <label class="selector-org copiar">Copiar de <select data-copiar>
+            <label class="rm2-copiar">Copiar permisos de <select data-copiar>
               <option value="">Otro rol…</option>
               ${estado.roles.filter((x) => x.id !== rol.id).map((x) => `<option value="${x.id}">${esc(x.nombre)}</option>`).join('')}
             </select></label>` : ''}
-        </div>
+          <p class="rm-ayuda">${estado.modo === 'rol'
+            ? (rol.acceso_total ? `<b>${esc(rol.nombre)}</b> tiene <b>acceso total</b>, también a las pantallas nuevas. Para limitarlo, quita «Acceso total» en Modificar rol.` : `Lo que marques lo heredan todos los usuarios con el rol <b>${esc(rol.nombre)}</b>.`)
+            : `Accesos finales de <b>${esc(usuario(estado.asig.perfil_id).nombre)}</b>: los del rol más sus excepciones (<span class="excepcion-muestra">resaltadas</span>). Si quedan igual que el rol, vuelven a heredarse.`}</p>
+        </div>`;
+    }
 
-        <div class="rm-filtros">
-          <input type="search" class="buscar" data-buscar-pantalla placeholder="Buscar pantalla" value="${esc(estado.buscarPantalla)}">
-          <button type="button" class="boton secundario-sm" data-plegar-todo="abrir"><i class="ti ti-arrows-maximize" aria-hidden="true"></i> Expandir todo</button>
-          <button type="button" class="boton secundario-sm" data-plegar-todo="cerrar"><i class="ti ti-arrows-minimize" aria-hidden="true"></i> Contraer todo</button>
+    // Matriz: pantallas del módulo elegido, o de todos los módulos al buscar.
+    function pintarMatriz() {
+      const rol = estado.rol;
+      if (!rol) { pAcc.innerHTML = ''; return; }
+      const q = estado.buscarPantalla.trim().toLowerCase();
+      const md = moduloActual();
+      const n = idsConCambios().size;
+      const grupos = q
+        ? modulosMatriz().map((m) => ({ m, ops: m.opciones.filter((x) => x.nombre.toLowerCase().includes(q)) })).filter((x) => x.ops.length)
+        : md ? [{ m: md, ops: md.opciones }] : [];
+      const ids = grupos.flatMap((g) => g.ops.map((x) => x.id));
+      const c = ids.filter((id) => efectivo(id, 'ver')).length;
+      const alcance = q ? 'busqueda' : md.clave;
+      let filas = '';
+      for (const g of grupos) {
+        let grupoActual = '';
+        if (q) filas += `<tr class="rm2-mod-fila"><td colspan="${ACCIONES.length + 1}"><span class="siglas">${esc(g.m.siglas)}</span> ${esc(g.m.nombre)}</td></tr>`;
+        for (const op of g.ops) {
+          const k = `${op.grupo}|${op.subgrupo || ''}`;
+          if (k !== grupoActual) filas += `<tr class="grupo-matriz"><td colspan="${ACCIONES.length + 1}">${GRUPO_NOMBRE[op.grupo] || op.grupo}${op.subgrupo ? ` · ${esc(op.subgrupo)}` : ''}</td></tr>`;
+          grupoActual = k;
+          filas += `
+            <tr data-op="${op.id}">
+              <td><button type="button" class="fila-todo" data-fila="${op.id}" ${editMatriz() ? '' : 'disabled'} title="Marcar o quitar toda la fila">${esc(op.nombre)}</button></td>
+              ${ACCIONES.map((ac) => `<td class="centrada ${esExcepcion(op.id, ac.id) ? 'excepcion' : ''}"><input type="checkbox" data-celda="${op.id}|${ac.id}" ${efectivo(op.id, ac.id) ? 'checked' : ''} ${editMatriz() ? '' : 'disabled'} aria-label="${ac.nombre} ${esc(op.nombre)}"></td>`).join('')}
+            </tr>`;
+        }
+      }
+      pAcc.innerHTML = `
+        <div class="rm2-matriz-cab">
+          <div class="rm2-matriz-titulo">
+            ${q ? `<h2>Resultados <small>${ids.length} pantalla${ids.length === 1 ? '' : 's'} · ${grupos.length} módulo${grupos.length === 1 ? '' : 's'}</small></h2>`
+                : `<h2><span class="siglas">${esc(md.siglas)}</span> ${esc(md.nombre)} <small>${c}/${ids.length} pantallas con acceso</small></h2>`}
+            ${q ? '' : `<span class="rm-atajos-mini">${atajos(md.clave, true)}</span>`}
+          </div>
+          <input type="search" class="buscar" data-buscar-pantalla placeholder="Buscar pantalla en todos los módulos" value="${esc(estado.buscarPantalla)}">
         </div>
-
-        <div class="rm-matriz">
+        <div class="rm-matriz rm2-desplazable">
           <table class="tabla matriz">
             <thead><tr>
-              <th>Módulo · pantalla</th>
-              <th class="rm-avance-col">Acceso</th>
-              ${ACCIONES.map((ac) => `<th class="centrada"><label class="col-tri">${triestado(todos, ac.id, `data-tri-todo="${ac.id}"`, `${ac.nombre} en todo el sistema`)}<span>${ac.nombre}</span></label></th>`).join('')}
+              <th>Pantalla</th>
+              ${ACCIONES.map((ac) => `<th class="centrada"><label class="col-tri">${triestado(ids, ac.id, `data-tri="${alcance}|${ac.id}"`, `${ac.nombre} en ${q ? 'los resultados' : md.nombre}`)}<span>${ac.nombre}</span></label></th>`).join('')}
             </tr></thead>
-            ${modulos.map((md) => {
-              const ops = md.opciones.filter((x) => !q || x.nombre.toLowerCase().includes(q));
-              if (q && !ops.length) return '';
-              const ids = md.opciones.map((x) => x.id);
-              const c = ids.filter((id) => efectivo(id, 'ver')).length;
-              const pct = Math.round((c / ids.length) * 100);
-              const abierto = q ? true : estado.abiertos.has(md.clave);
-              let grupoActual = '';
-              return `
-                <tbody class="rm-modulo ${abierto ? 'abierto' : ''}">
-                  <tr class="rm-modulo-cab">
-                    <td><div class="rm-cab-celda">
-                      <button type="button" class="rm-plegar" data-plegar="${md.clave}" aria-expanded="${abierto}">
-                        <i class="ti ti-chevron-${abierto ? 'down' : 'right'}" aria-hidden="true"></i>
-                        <span class="siglas">${esc(md.siglas)}</span> ${esc(md.nombre)} <small>${ids.length} pantallas</small>
-                      </button>
-                      <span class="rm-atajos-mini">${atajos(md.clave, true)}</span>
-                    </div></td>
-                    <td class="rm-avance-col">
-                      <div class="rm-avance" title="${c} de ${ids.length} pantallas con acceso"><i style="width:${pct}%" class="${pct === 100 ? 'completo' : pct ? 'parcial' : ''}"></i></div>
-                      <small>${c}/${ids.length}</small>
-                    </td>
-                    ${ACCIONES.map((ac) => `<td class="centrada">${triestado(ids, ac.id, `data-tri-modulo="${md.clave}|${ac.id}"`, `${ac.nombre} en ${md.nombre}`)}</td>`).join('')}
-                  </tr>
-                  ${abierto ? ops.map((op) => {
-                    const g = `${op.grupo}|${op.subgrupo || ''}`;
-                    const cab = g !== grupoActual ? `<tr class="grupo-matriz"><td colspan="${ACCIONES.length + 2}">${GRUPO_NOMBRE[op.grupo]}${op.subgrupo ? ` · ${esc(op.subgrupo)}` : ''}</td></tr>` : '';
-                    grupoActual = g;
-                    return cab + `
-                      <tr data-op="${op.id}">
-                        <td colspan="2"><button type="button" class="fila-todo" data-fila="${op.id}" ${editMatriz() ? '' : 'disabled'} title="Marcar o quitar toda la fila">${esc(op.nombre)}</button></td>
-                        ${ACCIONES.map((ac) => `<td class="centrada ${esExcepcion(op.id, ac.id) ? 'excepcion' : ''}"><input type="checkbox" data-celda="${op.id}|${ac.id}" ${efectivo(op.id, ac.id) ? 'checked' : ''} ${editMatriz() ? '' : 'disabled'} aria-label="${ac.nombre} ${esc(op.nombre)}"></td>`).join('')}
-                      </tr>`;
-                  }).join('') : ''}
-                </tbody>`;
-            }).join('') || `<tbody><tr><td colspan="${ACCIONES.length + 2}" class="vacio">Sin pantallas con esa búsqueda.</td></tr></tbody>`}
+            <tbody>${filas || `<tr><td colspan="${ACCIONES.length + 1}" class="vacio">Sin pantallas con esa búsqueda.</td></tr>`}</tbody>
           </table>
         </div>
         ${editMatriz() ? `
@@ -299,6 +318,8 @@
           </div>` : ''}`;
       pAcc.querySelectorAll('[data-indeterminado=true]').forEach((x) => { x.indeterminate = true; });
     }
+
+    function pintarAccesos() { pintarCabecera(); pintarModulos(); pintarMatriz(); }
 
     // Atajos: total = todas las acciones; consulta = ver e imprimir; ninguno = sin acceso.
     function aplicarPreset(ids, preset) {
@@ -332,7 +353,15 @@
       window.FIN.aviso(`Permisos copiados de ${r ? r.nombre : 'otro rol'}. Revisa y pulsa Guardar accesos.`);
     }
 
-    function pintar() { pintarRoles(); pintarUsuarios(); pintarAccesos(); }
+    function pintar() { pintarRoles(); pintarAccesos(); }
+    // Repinta sin perder el desplazamiento de la matriz.
+    function repintarConservando() {
+      const d = pAcc.querySelector('.rm2-desplazable');
+      const y = d ? d.scrollTop : 0;
+      pintarAccesos();
+      const d2 = pAcc.querySelector('.rm2-desplazable');
+      if (d2) d2.scrollTop = y;
+    }
 
     // ---------- Guardar ----------
     async function guardarAccesos() {
@@ -445,32 +474,27 @@
         if (!confirmarDescarte()) return;
         estado.modo = modo.dataset.modo;
         reiniciarBorrador();
-        return pintarAccesos();
+        return repintarConservando();
       }
       const preset = e.target.closest('[data-preset]');
       if (preset) {
-        const alcance = preset.dataset.alcance;
-        const ids = estado.opciones.filter((x) => alcance === 'todo' || String(x.modulo_id || 0) === alcance).map((x) => x.id);
-        aplicarPreset(ids, preset.dataset.preset);
-        return pintarAccesos();
+        aplicarPreset(idsAlcance(preset.dataset.alcance), preset.dataset.preset);
+        return repintarConservando();
       }
-      const plegar = e.target.closest('[data-plegar]');
-      if (plegar) {
-        const k = plegar.dataset.plegar;
-        if (estado.abiertos.has(k)) estado.abiertos.delete(k); else estado.abiertos.add(k);
-        return pintarAccesos();
-      }
-      const todoP = e.target.closest('[data-plegar-todo]');
-      if (todoP) {
-        estado.abiertos = todoP.dataset.plegarTodo === 'abrir' ? new Set(modulosMatriz().map((x) => x.clave)) : new Set();
-        return pintarAccesos();
+      const mod = e.target.closest('[data-mod]');
+      if (mod) {
+        estado.modulo = mod.dataset.mod;
+        estado.buscarPantalla = '';
+        pintarAccesos();
+        pAcc.querySelector('.rm2-desplazable').scrollTop = 0;
+        return;
       }
       const fila = e.target.closest('[data-fila]');
       if (fila) {
         const id = Number(fila.dataset.fila);
         const todo = ACCIONES.every((ac) => efectivo(id, ac.id));
         ACCIONES.forEach((ac) => fijar(id, ac.id, !todo));
-        return pintarAccesos();
+        return repintarConservando();
       }
       const a = e.target.closest('[data-accion]');
       if (a) {
@@ -482,15 +506,17 @@
         if (ac === 'descartar') { reiniciarBorrador(); pintarAccesos(); }
         return;
       }
-      const ed = e.target.closest('table[data-tabla=asignaciones] [data-editar]');
-      if (ed) return formAsignacion(estado.asignaciones.find((x) => String(x.id) === ed.dataset.editar));
-      const tr = e.target.closest('table[data-tabla=asignaciones] tr[data-id]');
-      if (tr && (!estado.asig || Number(tr.dataset.id) !== estado.asig.id)) {
+      // Fichas de usuarios del rol: elegir uno muestra sus accesos; el lápiz modifica la asignación.
+      const ed = e.target.closest('[data-editar-asig]');
+      if (ed) return formAsignacion(estado.asignaciones.find((x) => String(x.id) === ed.dataset.editarAsig));
+      const ch = e.target.closest('[data-asig]');
+      if (ch) {
+        const id = Number(ch.dataset.asig);
+        if (estado.asig && estado.asig.id === id && estado.modo === 'usuario') return;
         if (!confirmarDescarte()) return;
-        estado.asig = estado.asignaciones.find((x) => x.id === Number(tr.dataset.id));
+        estado.asig = estado.asignaciones.find((x) => x.id === id);
         estado.modo = 'usuario';
         await cargarAccesos();
-        pintarUsuarios();
         pintarAccesos();
       }
     });
@@ -499,17 +525,13 @@
       if (celda) {
         const [id, ac] = celda.split('|');
         fijar(Number(id), ac, e.target.checked);
-        return pintarAccesos();
+        return repintarConservando();
       }
       // Casillas de tres estados: toda la columna del sistema o de un módulo.
-      if (e.target.dataset.triTodo) {
-        alternarAccion(estado.opciones.map((x) => x.id), e.target.dataset.triTodo);
-        return pintarAccesos();
-      }
-      if (e.target.dataset.triModulo) {
-        const [clave, ac] = e.target.dataset.triModulo.split('|');
-        alternarAccion(estado.opciones.filter((x) => String(x.modulo_id || 0) === clave).map((x) => x.id), ac);
-        return pintarAccesos();
+      if (e.target.dataset.tri) {
+        const [alcance, ac] = e.target.dataset.tri.split('|');
+        alternarAccion(idsAlcance(alcance), ac);
+        return repintarConservando();
       }
       if (e.target.matches('[data-copiar]') && e.target.value) {
         copiarDeRol(Number(e.target.value)).then(pintarAccesos);
@@ -521,9 +543,9 @@
       if (e.target.matches('[data-buscar-pantalla]')) { estado.buscarPantalla = e.target.value; pintarAccesos(); restaurar('[data-buscar-pantalla]'); }
     });
 
-    // Al entrar, se abre el primer módulo de la matriz.
+    // Al entrar, se muestra el primer módulo.
     const primero = modulosMatriz()[0];
-    if (primero) estado.abiertos.add(primero.clave);
+    if (primero) estado.modulo = primero.clave;
     await cargarAccesos();
     pintar();
   };
