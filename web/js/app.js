@@ -225,6 +225,9 @@
     $('app').hidden = false;
     pintarLateral();
     rutear();
+    // Backups automáticos del servidor (script 109): al entrar un administrador, se copian a la carpeta de
+    // destino de esta computadora si el navegador ya tiene permiso (si no, desde Backup › «Copiar a la carpeta»).
+    if (window.FIN.esAdmin() && window.BACKUP_AUTO) setTimeout(() => { window.BACKUP_AUTO.copiarPendientes().then((n) => { if (n) aviso(n === 1 ? 'Se copió 1 backup automático a la carpeta de respaldos' : `Se copiaron ${n} backups automáticos a la carpeta de respaldos`); }).catch(() => {}); }, 5000);
   }
 
   // ---------- Barra lateral ----------

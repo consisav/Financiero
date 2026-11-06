@@ -11,6 +11,13 @@
 //   Contenido: Base de datos (respaldo SQL leído de Supabase: un INSERT por tabla que se restaura en
 //   el SQL Editor), Aplicativo (los archivos de la página: index.html, estilos y programas, en JSON
 //   comprimido) o Todo (los dos archivos).
+//   Diseño A: alcance y contenido, programación automática y destino en tres columnas; el historial
+//   (manuales y automáticos, con su resultado) abajo.
+//   Backup automático (script 109): frecuencia diaria, semanal o mensual, día de la semana (semanal y
+//   mensual; en la mensual, la semana del mes) y hora. Lo genera el servidor (pg_cron de Supabase) a esa hora
+//   aunque nadie esté conectado; su resultado (exitoso, o el error con su detalle) queda en el historial, y el
+//   archivo se copia comprimido a la carpeta de destino cuando se abre la app en esta computadora (Chrome y
+//   Edge con la carpeta elegida y permiso; si falta el permiso, el botón «Copiar a la carpeta»).
 (function () {
   const { esc } = window.UI;
   const POR_PAGINA = 1000;
@@ -37,6 +44,41 @@
   const guardarCarpeta = (h) => almacen('readwrite', (st) => st.put(h, 'destino'));
   const ultimaCarpeta = (ruta) => (ruta || '').replace(/[\\/]+$/, '').split(/[\\/]/).pop().replace(/:$/, '');
 
+  // Copia a la carpeta (o descarga) los backups automáticos exitosos que aún no se copiaron. Con pedir=false
+  // solo copia si el navegador ya tiene permiso (al entrar a la app); con pedir=true lo solicita (botón).
+  async function copiarPendientes({ pedir = false } = {}) {
+    const sb = window.FIN.sb;
+    const { data: lista, error } = await sb.from('respaldos_automaticos').select('id, archivo').eq('estado', 'EXITOSO').is('copiado_en', null).not('contenido', 'is', null).order('inicio');
+    if (error || !lista?.length) return 0;
+    const carpeta = typeof window.showDirectoryPicker === 'function' ? await leerCarpeta() : null;
+    if (carpeta) {
+      let p = await carpeta.queryPermission({ mode: 'readwrite' });
+      if (p !== 'granted' && pedir) p = await carpeta.requestPermission({ mode: 'readwrite' });
+      if (p !== 'granted') return 0;
+    } else if (!pedir) return 0;
+    const comprimir = typeof window.CompressionStream === 'function';
+    const ruta = leerLocal('fin.backup.ruta') || carpeta?.name || 'Descargas';
+    let n = 0;
+    for (const x of lista) {
+      const { data: sql, error: e } = await sb.rpc('backup_automatico_contenido', { p_id: x.id });
+      if (e || !sql) continue;
+      const nombre = x.archivo + (comprimir ? '.gz' : '');
+      const blob0 = new Blob([sql], { type: 'application/sql' });
+      const blob = comprimir ? await new Response(blob0.stream().pipeThrough(new CompressionStream('gzip'))).blob() : blob0;
+      if (carpeta) {
+        const h = await carpeta.getFileHandle(nombre, { create: true });
+        const w = await h.createWritable(); await w.write(blob); await w.close();
+      } else {
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+      }
+      await sb.rpc('backup_copiado', { p_id: x.id, p_ruta: carpeta ? ruta : 'Descargas' });
+      n += 1;
+    }
+    return n;
+  }
+  window.BACKUP_AUTO = { copiarPendientes };
+
   window.PANTALLAS = window.PANTALLAS || {};
   window.PANTALLAS.backup = function (cont) {
     const sb = window.FIN.sb;
@@ -46,6 +88,10 @@
     let organizaciones = [];
     let localidades = [];
     let historial = [];
+    let programacion = null;   // backup_programacion (undefined = falta el script 109)
+    let pendientes = [];       // backups automáticos por copiar a la carpeta
+    let permiso = 'prompt';    // permiso del navegador sobre la carpeta
+    const prog = {};           // cambios de la programación aún sin guardar
     let carpeta = null;      // carpeta elegida (File System Access)
     let trabajando = false;
     let comprimirArchivo = true;
@@ -81,6 +127,9 @@
       ]);
       organizaciones = o.data || [];
       if (puedeCarpeta) carpeta = await leerCarpeta();
+      if (carpeta) { try { permiso = await carpeta.queryPermission({ mode: 'readwrite' }); } catch { permiso = 'prompt'; } }
+      // Al abrir la pantalla, se copian solos los automáticos pendientes si ya hay permiso.
+      if (permiso === 'granted') { try { const n = await copiarPendientes(); if (n) window.FIN.aviso(n === 1 ? 'Se copió 1 backup automático a la carpeta' : `Se copiaron ${n} backups automáticos a la carpeta`); } catch { /* se reintenta con el botón */ } }
       localidades = l.data || [];
       if (!admin && (!yo.organizacion_id || !yo.localidad_id)) {
         cont.innerHTML = '<section class="panel"><p class="vacio">Tu usuario no tiene organización y localidad asignadas: pide a un administrador que las asigne para poder generar un backup.</p></section>';
@@ -91,50 +140,86 @@
     }
 
     async function cargarHistorial() {
-      const { data, error } = await sb.from('respaldos').select('*').order('fecha', { ascending: false }).limit(50);
-      historial = error ? null : data || [];
+      const [h, p, a] = await Promise.all([
+        sb.from('respaldos').select('*').order('fecha', { ascending: false }).limit(60),
+        sb.from('backup_programacion').select('*').eq('id', 1).maybeSingle(),
+        sb.from('respaldos_automaticos').select('id, inicio, estado, archivo, bytes, detalle').eq('estado', 'EXITOSO').is('copiado_en', null).not('contenido', 'is', null).order('inicio')
+      ]);
+      historial = h.error ? null : h.data || [];
+      programacion = p.error ? undefined : p.data || null;
+      pendientes = a.error ? [] : a.data || [];
+    }
+
+    const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    const SEMANAS = [[1, 'Primer'], [2, 'Segundo'], [3, 'Tercer'], [4, 'Cuarto'], [5, 'Último']];
+    const resultado = (r) => r.estado === 'ERROR'
+      ? (r.detalle ? `<details class="bu-det"><summary><span class="pc-marca anulada">Error</span> <small class="bu-error">ver detalle</small></summary><pre>${esc(r.detalle)}</pre></details>` : '<span class="pc-marca anulada">Error</span>')
+      : `<span class="pc-marca aprobada">Exitoso</span>`;
+
+    function bloqueProgramacion() {
+      if (programacion === undefined) return '<p class="vacio">Falta instalar en Supabase el script <b>20261106000109_backup_programado.sql</b> (backup automático).</p>';
+      const p = { activo: false, frecuencia: 'DIARIA', dia_semana: 5, semana_mes: 1, hora: '22:00', ...(programacion || {}), ...prog };
+      const dis = superadmin ? '' : 'disabled';
+      const alcance = `${programacion?.organizacion_id ? `${org(programacion.organizacion_id)?.codigo ?? ''} · ${org(programacion.organizacion_id)?.nombre || ''}` : 'Todas las organizaciones'} · ${programacion?.localidad_id ? `${loc(programacion.localidad_id)?.codigo || ''} · ${loc(programacion.localidad_id)?.nombre_comercial || ''}` : 'todas las localidades'}`;
+      return `
+        <div class="bu-prog-cab">
+          <label class="pc-check bu-activo"><input type="checkbox" name="p_activo" ${p.activo ? 'checked' : ''} ${dis}> Backup automático ${p.activo ? 'activo' : 'inactivo'}</label>
+          <span class="pc-marca ${programacion?.activo ? 'aprobada' : 'pendiente'}">${programacion?.activo ? 'Programado' : 'Sin programar'}</span>
+        </div>
+        <div class="bu-frecuencia" role="radiogroup" aria-label="Frecuencia">${['DIARIA', 'SEMANAL', 'MENSUAL'].map((f) => `<label class="${p.frecuencia === f ? 'marcada' : ''}"><input type="radio" name="p_frecuencia" value="${f}" ${p.frecuencia === f ? 'checked' : ''} ${dis}> ${f.charAt(0) + f.slice(1).toLowerCase()}</label>`).join('')}</div>
+        <div class="bu-prog-campos">
+          ${p.frecuencia === 'MENSUAL' ? `<label class="campo"><span>Semana del mes</span><select name="p_semana" ${dis}>${SEMANAS.map(([v, t]) => `<option value="${v}" ${Number(p.semana_mes) === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
+          ${p.frecuencia !== 'DIARIA' ? `<label class="campo"><span>Día de la semana</span><select name="p_dia" ${dis}>${DIAS.map((d, i) => `<option value="${i + 1}" ${Number(p.dia_semana) === i + 1 ? 'selected' : ''}>${d}</option>`).join('')}</select></label>` : ''}
+          <label class="campo"><span>Hora de ejecución</span><input type="time" name="p_hora" value="${esc(String(p.hora || '22:00').slice(0, 5))}" ${dis}></label>
+        </div>
+        <dl class="bu-prog-datos">
+          <div class="bm-dato"><dt>Próximo backup</dt><dd><b>${programacion?.activo && programacion?.proximo ? esc(fechaHora(programacion.proximo)) : '—'}</b></dd></div>
+          <div class="bm-dato"><dt>Último backup</dt><dd>${programacion?.ultimo ? `<b>${esc(fechaHora(programacion.ultimo))}</b> ${resultado({ estado: programacion.ultimo_estado, detalle: programacion.ultimo_estado === 'ERROR' ? programacion.ultimo_detalle : '' })}` : '<b>—</b>'}</dd></div>
+          <div class="bm-dato bu-c2"><dt>Qué respalda</dt><dd><small>Base de datos · ${esc(alcance)}. Lo genera el servidor (Supabase) a la hora indicada, aunque nadie esté conectado, y se copia a la carpeta al abrir la app en esta computadora.</small></dd></div>
+        </dl>
+        ${superadmin ? `<div class="bu-prog-acc"><button type="button" class="boton primario-sm" data-guardar-prog><i class="ti ti-calendar-check" aria-hidden="true"></i> Guardar programación</button>
+          <button type="button" class="boton secundario-sm" data-probar title="Genera ahora el backup automático en el servidor para comprobar que funciona"><i class="ti ti-player-play" aria-hidden="true"></i> Probar ahora</button></div>
+          <p class="bu-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Al guardar se toma el alcance elegido a la izquierda.</p>` : '<p class="bu-nota">Solo el Super Administrador cambia la programación.</p>'}`;
     }
 
     function pintar() {
       const locs = localidades.filter((l) => !sel.org || String(l.organizacion_id) === sel.org);
       if (sel.loc && !locs.some((l) => String(l.id) === sel.loc)) sel.loc = admin ? '' : sel.loc;
       cont.innerHTML = `
-        <div class="bu-espacio">
+        <div class="bu-espacio bu-a">
           <form class="tk-form ta-form bm-form bu-form" novalidate>
             <header class="tk-titulo bm-titulo">
               <span class="tk-icono"><i class="ti ti-database-export" aria-hidden="true"></i></span>
               <div class="tk-titulo-texto"><small>Administración · Procesos</small><h2>Backup de la información</h2></div>
-              <div class="tk-marcas">${superadmin ? '<span class="pc-marca definitiva"><i class="ti ti-shield-check" aria-hidden="true"></i> Super administrador: todas las organizaciones y localidades</span>' : admin ? '<span class="pc-marca definitiva"><i class="ti ti-shield-check" aria-hidden="true"></i> Administrador: puede respaldar todas</span>' : '<span class="pc-marca pendiente">Solo tu organización y localidad</span>'}</div>
-              <div class="tk-titulo-acciones"><button type="submit" class="boton primario-sm" data-generar><i class="ti ti-database-export" aria-hidden="true"></i> Generar backup</button></div>
+              <div class="tk-marcas">${superadmin ? '<span class="pc-marca definitiva"><i class="ti ti-shield-check" aria-hidden="true"></i> Super administrador: todas las organizaciones y localidades</span>' : admin ? '<span class="pc-marca definitiva"><i class="ti ti-shield-check" aria-hidden="true"></i> Administrador: puede respaldar todas</span>' : '<span class="pc-marca pendiente">Solo tu organización y localidad</span>'}
+                <span class="bu-usuario"><i class="ti ti-user" aria-hidden="true"></i> ${esc((yo.usuario || '').toUpperCase())} · <b data-reloj>${esc(fechaHora(new Date()))}</b></span></div>
+              <div class="tk-titulo-acciones">${contenido.bd ? `<a class="boton secundario-sm" href="${panelBackups}" target="_blank" rel="noopener" title="Respaldos del proyecto en el panel de Supabase"><i class="ti ti-external-link" aria-hidden="true"></i> Backups en Supabase</a>` : ''}
+                <button type="submit" class="boton primario-sm" data-generar><i class="ti ti-database-export" aria-hidden="true"></i> Generar backup ahora</button></div>
             </header>
             <p class="modal-error tk-error" role="alert"></p>
+            ${pendientes.length ? `<p class="tk-aviso bu-pendientes"><i class="ti ti-cloud-download" aria-hidden="true"></i> ${pendientes.length === 1 ? 'Hay 1 backup automático' : `Hay ${pendientes.length} backups automáticos`} del servidor por copiar a la carpeta${carpeta ? ` <b>${esc(carpeta.name)}</b>` : ''}.
+              ${puedeCarpeta ? '<button type="button" class="boton primario-sm" data-copiar><i class="ti ti-copy" aria-hidden="true"></i> Copiar a la carpeta</button>' : '<button type="button" class="boton primario-sm" data-copiar><i class="ti ti-download" aria-hidden="true"></i> Descargar</button>'}</p>` : ''}
 
             <div class="bu-tarjetas">
               <section class="bm-bloque">
-                <h3 class="ta-col-titulo"><i class="ti ti-building" aria-hidden="true"></i> Alcance del backup</h3>
-                <div class="bu-linea">
+                <h3 class="ta-col-titulo"><i class="ti ti-building" aria-hidden="true"></i> Alcance y contenido</h3>
                 <label class="campo"><span>Organización</span><select name="org" ${admin && contenido.bd ? '' : 'disabled'}>
                   ${admin ? `<option value="" ${sel.org ? '' : 'selected'}>Todas las organizaciones</option>` : ''}
                   ${organizaciones.filter((o) => admin || String(o.id) === sel.org).map((o) => `<option value="${o.id}" ${String(o.id) === sel.org ? 'selected' : ''}>${o.codigo} · ${esc(o.nombre)}</option>`).join('')}</select></label>
                 <label class="campo"><span>Localidad (empresa)</span><select name="loc" ${admin && contenido.bd ? '' : 'disabled'}>
                   ${admin ? `<option value="" ${sel.loc ? '' : 'selected'}>${sel.org ? 'Todas las localidades de la organización' : 'Todas las localidades'}</option>` : ''}
                   ${locs.filter((l) => admin || String(l.id) === sel.loc).map((l) => `<option value="${l.id}" ${String(l.id) === sel.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('')}</select></label>
-                </div>
                 <fieldset class="bu-contenido"><legend>Respaldar</legend>
                   ${CONTENIDOS.map((c) => `<label class="bu-opcion${marcado(c.k) ? ' marcada' : ''}"><input type="checkbox" name="contenido" value="${c.k}" ${marcado(c.k) ? 'checked' : ''}><i class="ti ${c.icono}" aria-hidden="true"></i><span><b>${c.nombre}</b><small>${c.nota}</small></span></label>`).join('')}
                 </fieldset>
-                <p class="bu-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> ${!contenido.bd ? 'El aplicativo es el mismo para todas las organizaciones: la organización y la localidad aplican a la base de datos.' : admin ? 'Las tablas generales del sistema (monedas, bancos, países, roles…) se incluyen siempre.' : 'Solo los administradores pueden respaldar otras organizaciones o todas.'}</p>
+                <div class="bu-formato">${puedeComprimir ? `<label class="pc-check"><input type="checkbox" name="comprimir" ${comprimirArchivo ? 'checked' : ''}> Comprimir</label>` : ''}
+                  <small>${contenido.bd ? `Base de datos: SQL${puedeComprimir && comprimirArchivo ? ' (.sql.gz)' : ' (.sql)'}` : ''}${contenido.app && contenido.bd ? ' · ' : ''}${contenido.app ? `Aplicativo: JSON${puedeComprimir && comprimirArchivo ? ' (.json.gz)' : ''}` : ''}</small></div>
+                <p class="bu-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> ${!contenido.bd ? 'El aplicativo es el mismo para todas las organizaciones.' : admin ? 'Las tablas generales (monedas, bancos, países, roles…) se incluyen siempre.' : 'Solo los administradores respaldan otras organizaciones.'}</p>
               </section>
 
-              <section class="bm-bloque">
-                <h3 class="ta-col-titulo"><i class="ti ti-user-check" aria-hidden="true"></i> Control</h3>
-                <div class="bu-control">
-                  <div class="bm-dato"><dt>Usuario</dt><dd><b>${esc((yo.usuario || '').toUpperCase())}</b><small>${esc(yo.nombre || yo.correo || '')}</small></dd></div>
-                  <div class="bm-dato"><dt>Fecha y hora</dt><dd><b data-reloj>${esc(fechaHora(new Date()))}</b><small>Hora de Guatemala</small></dd></div>
-                  <div class="bm-dato"><dt>Formato</dt><dd>${contenido.bd ? `<b>Base de datos: SQL${puedeComprimir && comprimirArchivo ? ' (.sql.gz)' : ' (.sql)'}</b>` : ''}${contenido.app ? `<b>Aplicativo: JSON${puedeComprimir && comprimirArchivo ? ' comprimido (.json.gz)' : ' (.json)'}</b>` : ''}<small>${contenido.app && contenido.bd ? 'Dos archivos, uno por cada contenido' : contenido.bd ? 'Se restaura en el SQL Editor de Supabase' : 'Página, estilos y programas'}</small></dd></div>
-                </div>
-                <div class="bu-supabase">${puedeComprimir ? `<label class="pc-check"><input type="checkbox" name="comprimir" ${comprimirArchivo ? 'checked' : ''}> Comprimir los archivos</label>` : ''}
-                  ${contenido.bd ? `<a class="boton secundario-sm" href="${panelBackups}" target="_blank" rel="noopener" title="Respaldos automáticos del proyecto CONSISAV / Financiero en Supabase"><i class="ti ti-external-link" aria-hidden="true"></i> Backups en Supabase</a>` : ''}</div>
+              <section class="bm-bloque bu-prog">
+                <h3 class="ta-col-titulo"><i class="ti ti-calendar-time" aria-hidden="true"></i> Programación automática</h3>
+                ${bloqueProgramacion()}
               </section>
 
               <section class="bm-bloque">
@@ -142,9 +227,10 @@
                 <label class="campo"><span>Directorio o ruta (computadora o servidor)</span><input name="ruta" value="${esc(leerLocal('fin.backup.ruta'))}" placeholder="Ej. D:\\Respaldos\\Financiero o \\\\SERVIDOR\\Respaldos" maxlength="300"></label>
                 ${puedeCarpeta ? `<div class="bu-carpeta">
                     <button type="button" class="boton secundario-sm" data-carpeta><i class="ti ti-folder-open" aria-hidden="true"></i> ${carpeta ? 'Cambiar carpeta' : 'Elegir carpeta…'}</button>
-                    <span>${carpeta ? `<i class="ti ti-folder-check" aria-hidden="true"></i> Los archivos se guardarán en la carpeta <b>${esc(carpeta.name)}</b>, no en Descargas.` : 'Elige la carpeta de la ruta (también una carpeta compartida del servidor): los archivos se guardarán ahí, no en Descargas.'}</span></div>
-                  ${carpeta && !coincide() ? `<p class="bu-nota bu-aviso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> La carpeta elegida (<b>${esc(carpeta.name)}</b>) no coincide con la ruta escrita: pulsa «Cambiar carpeta» y busca ${esc(leerLocal('fin.backup.ruta'))}.</p>` : ''}`
-                  : '<p class="bu-nota"><i class="ti ti-download" aria-hidden="true"></i> Este navegador no permite elegir la carpeta: el archivo se descarga y después lo mueves a la ruta indicada. En Chrome o Edge se guarda directo en la carpeta elegida.</p>'}
+                    <span>${carpeta ? `<i class="ti ti-folder-check" aria-hidden="true"></i> Se guarda en la carpeta <b>${esc(carpeta.name)}</b>${permiso === 'granted' ? ' · permiso concedido' : ' · el navegador pedirá permiso'}.` : 'Elige la carpeta de la ruta (también una carpeta compartida del servidor).'}</span></div>
+                  ${carpeta && !coincide() ? `<p class="bu-nota bu-aviso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> La carpeta elegida (<b>${esc(carpeta.name)}</b>) no coincide con la ruta: pulsa «Cambiar carpeta» y busca ${esc(leerLocal('fin.backup.ruta'))}.</p>` : ''}`
+                  : '<p class="bu-nota"><i class="ti ti-download" aria-hidden="true"></i> Este navegador no permite elegir la carpeta: el archivo se descarga. En Chrome o Edge se guarda directo en la carpeta.</p>'}
+                <p class="bu-nota"><i class="ti ti-refresh" aria-hidden="true"></i> Los backups automáticos se copian aquí al abrir la app en esta computadora.</p>
               </section>
             </div>
 
@@ -154,12 +240,12 @@
             </section>
 
             <section class="bm-bloque bu-historial">
-              <h3 class="ta-col-titulo"><i class="ti ti-history" aria-hidden="true"></i> Historial de backups</h3>
+              <h3 class="ta-col-titulo"><i class="ti ti-history" aria-hidden="true"></i> Historial de backups <small>manuales y automáticos, con su resultado</small></h3>
               ${historial === null ? '<p class="vacio">Falta instalar el script 49 (backup) en Supabase.</p>' : `
-              <div class="pc-lineas"><table>
-                <thead><tr><th>Fecha y hora</th><th>Contenido</th><th>Usuario</th><th>Organización</th><th>Localidad</th><th>Archivo</th><th>Ruta</th><th class="num">Tablas</th><th class="num">Registros</th><th class="num">Tamaño</th></tr></thead>
-                <tbody>${historial.map((r) => `<tr><td>${esc(fechaHora(r.fecha))}</td><td>${tipoArchivo(r.archivo)}</td><td>${esc(r.usuario || '')}</td><td>${esc(r.organizacion_id ? `${org(r.organizacion_id)?.codigo ?? ''} · ${org(r.organizacion_id)?.nombre || ''}` : 'TODAS')}</td><td>${esc(r.localidad_id ? `${loc(r.localidad_id)?.codigo || ''} · ${loc(r.localidad_id)?.nombre_comercial || ''}` : 'TODAS')}</td><td class="fuerte">${esc(r.archivo)}</td><td>${esc(r.ruta || '')}</td><td class="num">${r.tablas}</td><td class="num">${Number(r.registros).toLocaleString('es-GT')}</td><td class="num">${tamano(Number(r.bytes))}</td></tr>`).join('')
-                  || '<tr><td colspan="10" class="tk-vacio"><i class="ti ti-database" aria-hidden="true"></i>Todavía no se ha generado ningún backup.</td></tr>'}</tbody>
+              <div class="pc-lineas bu-tabla"><table>
+                <thead><tr><th>Fecha y hora</th><th>Origen</th><th>Contenido</th><th>Usuario</th><th>Organización</th><th>Localidad</th><th>Archivo</th><th>Ruta</th><th class="num">Tablas</th><th class="num">Registros</th><th class="num">Tamaño</th><th>Resultado</th></tr></thead>
+                <tbody>${historial.map((r) => `<tr class="${r.estado === 'ERROR' ? 'bu-fila-error' : ''}"><td>${esc(fechaHora(r.fecha))}</td><td>${r.origen === 'AUTOMÁTICO' ? '<span class="pc-tipo">Automático</span>' : 'Manual'}</td><td>${tipoArchivo(r.archivo)}</td><td>${esc(r.usuario || '')}</td><td>${esc(r.organizacion_id ? `${org(r.organizacion_id)?.codigo ?? ''} · ${org(r.organizacion_id)?.nombre || ''}` : 'TODAS')}</td><td>${esc(r.localidad_id ? `${loc(r.localidad_id)?.codigo || ''} · ${loc(r.localidad_id)?.nombre_comercial || ''}` : 'TODAS')}</td><td class="fuerte">${esc(r.archivo)}</td><td>${esc(r.ruta || '')}</td><td class="num">${r.tablas}</td><td class="num">${Number(r.registros).toLocaleString('es-GT')}</td><td class="num">${tamano(Number(r.bytes))}</td><td>${resultado(r)}</td></tr>`).join('')
+                  || '<tr><td colspan="12" class="tk-vacio"><i class="ti ti-database" aria-hidden="true"></i>Todavía no se ha generado ningún backup.</td></tr>'}</tbody>
               </table></div>`}
             </section>
           </form>
@@ -223,12 +309,16 @@
         ''
       ].join('\n');
     }
-    function insertSql(tabla, filas, general) {
+    function insertSql(tabla, filas, general, columnas) {
       if (!filas.length) return `\n-- ${tabla}: sin registros\n`;
       const lineas = [`\n-- ${tabla}: ${filas.length} registros${general ? ' (tabla general)' : ''}`];
+      // Sin las columnas calculadas (por ejemplo costo_total): la base las recalcula al restaurar.
+      const cols = columnas?.length ? columnas.map((c) => `"${c.replace(/"/g, '""')}"`).join(', ') : null;
       for (let i = 0; i < filas.length; i += 500) {
         const json = JSON.stringify(filas.slice(i, i + 500)).replace(/'/g, "''");
-        lineas.push(`insert into public."${tabla}" overriding system value select * from jsonb_populate_recordset(null::public."${tabla}", '${json}'::jsonb) on conflict do nothing;`);
+        lineas.push(cols
+          ? `insert into public."${tabla}" (${cols}) overriding system value select ${cols} from jsonb_populate_recordset(null::public."${tabla}", '${json}'::jsonb) on conflict do nothing;`
+          : `insert into public."${tabla}" overriding system value select * from jsonb_populate_recordset(null::public."${tabla}", '${json}'::jsonb) on conflict do nothing;`);
       }
       return `${lineas.join('\n')}\n`;
     }
@@ -289,7 +379,8 @@
               progreso(2 + leidas / total * (tope - 2), `Supabase · leyendo <b>${esc(t.tabla)}</b> · ${leidas.toLocaleString('es-GT')} de ${total.toLocaleString('es-GT')} registros`);
               if (data.length < POR_PAGINA) break;
             }
-            partes.push(insertSql(t.tabla, filas, t.general));
+            const rc = filas.length ? await sb.rpc('respaldo_columnas', { p_tabla: t.tabla }) : { data: null };
+            partes.push(insertSql(t.tabla, filas, t.general, rc.error ? null : rc.data));
           }
           partes.push('\nset session_replication_role = origin;\ncommit;\n');
           archivos.push({ nombre: `backup_bd_${alcance}_${sello(inicio)}.sql${gz}`, blob: await empacar(partes.join(''), 'application/sql', comprimir), tablas: tablas.length, registros: leidas, que: `${tablas.length} tablas · ${leidas.toLocaleString('es-GT')} registros` });
@@ -348,6 +439,11 @@
       if (e.target.name === 'org') { sel.org = e.target.value; sel.loc = ''; return pintar(); }
       if (e.target.name === 'loc') { sel.loc = e.target.value; return pintar(); }
       if (e.target.name === 'comprimir') { comprimirArchivo = e.target.checked; return pintar(); }
+      if (e.target.name === 'p_activo') { prog.activo = e.target.checked; return pintar(); }
+      if (e.target.name === 'p_frecuencia') { prog.frecuencia = e.target.value; return pintar(); }
+      if (e.target.name === 'p_dia') { prog.dia_semana = Number(e.target.value); return; }
+      if (e.target.name === 'p_semana') { prog.semana_mes = Number(e.target.value); return; }
+      if (e.target.name === 'p_hora') { prog.hora = e.target.value; return; }
       if (e.target.name === 'contenido') {
         const k = e.target.value;
         if (k === 'todo') { contenido.app = e.target.checked; contenido.bd = e.target.checked; } else contenido[k] = e.target.checked;
@@ -358,9 +454,42 @@
     // La ruta escrita se recuerda (también al repintar el formulario).
     cont.addEventListener('input', (e) => { if (e.target.name === 'ruta') guardarLocal('fin.backup.ruta', e.target.value.trim()); });
     cont.addEventListener('click', async (e) => {
+      const error = () => cont.querySelector('.modal-error');
+      if (e.target.closest('[data-guardar-prog]')) {
+        const p = { activo: false, frecuencia: 'DIARIA', dia_semana: 5, semana_mes: 1, hora: '22:00', ...(programacion || {}), ...prog };
+        if (!p.hora) { error().textContent = 'Indica la hora de ejecución del backup automático.'; return; }
+        if (p.frecuencia !== 'DIARIA' && !p.dia_semana) { error().textContent = 'Indica el día de la semana.'; return; }
+        const { error: e1 } = await sb.from('backup_programacion').update({ activo: !!p.activo, frecuencia: p.frecuencia, dia_semana: p.frecuencia === 'DIARIA' ? null : Number(p.dia_semana),
+          semana_mes: p.frecuencia === 'MENSUAL' ? Number(p.semana_mes || 1) : null, hora: p.hora, organizacion_id: sel.org ? Number(sel.org) : null, localidad_id: sel.loc ? Number(sel.loc) : null }).eq('id', 1);
+        if (e1) { error().textContent = window.UI.traducirError(e1); return; }
+        Object.keys(prog).forEach((k) => delete prog[k]);
+        await cargarHistorial(); pintar();
+        window.FIN.aviso(programacion?.activo ? `Backup automático programado · próximo ${fechaHora(programacion.proximo)}` : 'Backup automático desactivado');
+        return;
+      }
+      if (e.target.closest('[data-probar]')) {
+        const b = e.target.closest('[data-probar]'); b.disabled = true;
+        progreso(30, 'Generando el backup automático en el servidor…');
+        const { data, error: e2 } = await sb.rpc('probar_backup_programado');
+        cont.querySelector('[data-progreso]').hidden = true;
+        if (e2) { b.disabled = false; error().textContent = window.UI.traducirError(e2); return; }
+        await cargarHistorial(); pintar();
+        window.FIN.aviso(data === 'EXITOSO' ? 'Backup automático de prueba: exitoso' : 'El backup automático de prueba tuvo un error: mira el detalle en el historial');
+        return;
+      }
+      if (e.target.closest('[data-copiar]')) {
+        try {
+          const n = await copiarPendientes({ pedir: true });
+          if (carpeta) { try { permiso = await carpeta.queryPermission({ mode: 'readwrite' }); } catch { /* sin permiso */ } }
+          await cargarHistorial(); pintar();
+          window.FIN.aviso(n ? (n === 1 ? 'Se copió 1 backup automático' : `Se copiaron ${n} backups automáticos`) : 'No se copió ningún backup: revisa el permiso de la carpeta');
+        } catch (err) { error().textContent = err?.name === 'NotAllowedError' ? 'El navegador no dio permiso para escribir en la carpeta.' : window.UI.traducirError(err); }
+        return;
+      }
       if (!e.target.closest('[data-carpeta]')) return;
       try {
         await elegirCarpeta();
+        permiso = 'granted';
         const ruta = cont.querySelector('[name=ruta]');
         if (ruta && !ruta.value.trim()) guardarLocal('fin.backup.ruta', carpeta.name);
         pintar();
