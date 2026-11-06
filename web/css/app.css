@@ -3629,3 +3629,72 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cf-mi, .cf-excedente { display: block; font-size: 11px; color: var(--tenue); font-weight: 500; }
 .cf-excedente { color: var(--ambar-t); }
 .cf-version { margin-left: 4px; font-size: 10.5px; }
+
+/* Bancos · Cheques, depósitos y notas (diseño A): el listado arriba, siempre a la vista, y el documento abajo. */
+.bk-espacio.bk-movimientos .ta-cuerpo { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(160px, 30%) minmax(0, 1fr); gap: 10px; }
+.bk-movimientos .bk-maestro { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.bk-movimientos .bk-maestro .ta-tabla { flex: 1; min-height: 0; overflow: auto; }
+.bk-movimientos .bk-maestro thead th { position: sticky; top: 0; z-index: 1; }
+.bk-movimientos .bk-maestro td { padding-top: 4px; padding-bottom: 4px; white-space: nowrap; }
+.bk-movimientos .bk-maestro .tk-bandeja-cab { padding: 8px 12px 6px; }
+.bk-movimientos .bm-form { gap: 6px; padding: 8px 12px 10px; }
+.bk-movimientos .bm-form > .bm-titulo { padding-bottom: 6px; }
+.bk-movimientos .bm-cabecera { gap: 6px; }
+.bk-movimientos .bm-cabecera .bm-bloque { padding: 5px 10px 7px; gap: 4px; }
+.bk-movimientos .bm-form .campo { gap: 2px; font-size: 11.5px; }
+.bk-movimientos .bm-form .campo input, .bk-movimientos .bm-form .campo select { padding: 4px 8px; font-size: 12.5px; height: 28px; }
+.bk-movimientos .bm-importe input { font-size: 18px !important; padding: 3px 8px !important; height: 32px !important; }
+.bk-movimientos .bm-control dl { gap: 3px 10px; }
+.bk-movimientos .bm-control .bm-flujo { display: none; }
+.bk-movimientos .bm-pestanas { min-height: 120px; }
+.bk-movimientos .bm-panel { flex: 1; min-height: 0; overflow: auto; }
+.bk-movimientos .bm-panel .pc-lineas td, .bk-movimientos .bm-panel .pc-lineas th { padding-top: 3px; padding-bottom: 3px; }
+.bk-movimientos .bm-pestanas tfoot td { position: sticky; bottom: 0; background: var(--fondo); }
+.bk-espacio.bk-movimientos .ta-cuerpo { grid-template-rows: minmax(170px, 33%) minmax(0, 1fr); }
+.bk-movimientos .bm-cabecera .bm-banco { grid-column: 1 / span 6; }
+.bk-movimientos .bm-cabecera .bm-importe { grid-column: 7 / span 3; }
+.bk-movimientos .bm-cabecera .bm-control { grid-column: 10 / span 3; grid-row: 1 / span 2; }
+.bk-movimientos .bm-cabecera .bm-datos { grid-column: 1 / span 6; grid-row: 2; }
+.bk-movimientos .bm-cabecera .bm-tercero { grid-column: 7 / span 3; grid-row: 2; }
+.bk-movimientos .bm-datos .bm-campos { grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: end; }
+.bk-movimientos .bm-datos .bm-checks { display: contents; }
+.bk-movimientos .bm-datos .pc-check { align-self: end; padding-bottom: 6px; font-size: 12px; white-space: nowrap; }
+.bk-movimientos .bm-datos .bm-c2 { grid-column: span 2; }
+.bk-movimientos .bm-tercero .bm-campos { grid-template-columns: minmax(70px, .6fr) minmax(0, 2fr); }
+.bk-movimientos .bm-tercero .bm-c3, .bk-movimientos .bm-tercero .bm-c4 { grid-column: 1 / -1; }
+.bk-movimientos .bm-tercero .bm-campos > .campo:nth-child(2) { grid-column: 2; }
+.bk-movimientos .bm-tercero .bm-radios { gap: 4px 12px; font-size: 12px; }
+.bk-movimientos .bm-control dd small { font-size: 10.5px; }
+.bk-movimientos .bm-control .adj, .bk-movimientos .bm-control [class*=adjunto] { padding: 4px 8px; }
+.bk-espacio.bk-movimientos .ta-cuerpo { grid-template-rows: minmax(160px, 30%) minmax(0, 1fr); }
+.bk-movimientos .bm-transaccion { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 4px; }
+.bk-movimientos .bm-transaccion .campo { flex-direction: row; align-items: center; gap: 8px; flex: 0 1 560px; }
+.bk-movimientos .bm-transaccion .campo span { white-space: nowrap; }
+.bk-movimientos .bm-transaccion .campo select { flex: 1; }
+.bk-movimientos .bm-cabecera .bm-banco { padding: 5px 12px 6px; }
+.bk-movimientos .bm-cabecera .bm-importe { padding: 5px 10px; }
+.bk-movimientos .bm-tabs-barra { margin: 0; }
+.bk-movimientos .bm-pestanas { gap: 4px; }
+.bk-espacio.bk-movimientos .ta-cuerpo { grid-template-rows: minmax(140px, 1fr) auto; }
+.bk-movimientos .bk-detalle { overflow: visible; }
+.bk-movimientos .bm-form { flex: none; overflow: visible; }
+.bk-movimientos .bm-pestanas { flex: none; min-height: 0; }
+.bk-movimientos .bm-panel { flex: none; height: 168px; overflow: auto; }
+.bk-movimientos .bm-tercero { position: relative; }
+.bk-movimientos .bm-tercero .bm-radios { position: absolute; top: 4px; right: 10px; grid-column: auto; }
+.bk-movimientos .bm-pestanas { position: relative; }
+.bk-movimientos .bm-panel[data-panel=CONTABLE] .bm-transaccion { position: absolute; top: 0; right: 0; margin: 0; max-width: 62%; justify-content: flex-end; }
+.bk-movimientos .bm-panel[data-panel=CONTABLE] .bm-transaccion .campo { flex: 0 1 520px; }
+.bk-movimientos .bm-panel { height: 150px; }
+.bk-movimientos .bm-cabecera .bm-datos { grid-column: 1 / span 5; }
+.bk-movimientos .bm-cabecera .bm-tercero { grid-column: 6 / span 4; }
+.bk-movimientos .bm-tercero .bm-radios { top: 5px; right: 10px; gap: 2px 10px; font-size: 11px; }
+.bk-movimientos .bm-tercero .bm-radios input { width: 13px; height: 13px; }
+.bk-movimientos .bm-panel { height: 128px; }
+.bk-movimientos .bk-filtros { padding-top: 8px; padding-bottom: 8px; }
+.bk-movimientos .bm-datos .bm-campos { grid-template-columns: minmax(116px, 1.25fr) minmax(104px, 1.05fr) minmax(54px, .55fr) minmax(98px, 1fr) minmax(48px, .5fr) minmax(70px, .7fr); gap: 4px 8px; }
+.bk-movimientos .bm-datos .pc-check input { margin-right: 4px; }
+.bk-movimientos .bm-cabecera .bm-datos { padding-left: 8px; padding-right: 8px; }
+.bk-movimientos .bm-panel[data-panel=CONTABLE] .bm-transaccion { flex-wrap: nowrap; max-width: 72%; }
+.bk-movimientos .bm-panel[data-panel=CONTABLE] .bm-transaccion .campo { flex: 1 1 420px; min-width: 260px; }
+.bk-movimientos .bm-panel[data-panel=CONTABLE] .bm-transaccion .boton, .bk-movimientos .bm-panel[data-panel=CONTABLE] .bm-transaccion .rp-enlace { white-space: nowrap; flex: none; }

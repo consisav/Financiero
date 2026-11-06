@@ -7,7 +7,11 @@
 //   póliza, anulación).
 //   Pestañas: detalle contable desde una transacción de Objetos contables («Contabilizar»), con
 //   centro de costo; facturas de liquidación (valor y abono, en su moneda y en quetzales);
-//   recibos físicos (o notas en las notas de crédito y débito) y el listado de documentos del período.
+//   recibos físicos (o notas en las notas de crédito y débito).
+//   Diseño A (sin desplazar la página): el listado de documentos del período arriba, siempre a la vista, y el
+//   documento elegido abajo (cuenta y número, valor, datos, tercero y control) con sus pestañas.
+//   Las líneas migradas pueden usar cuentas de otra versión activa del catálogo de la localidad: se buscan
+//   aparte para mostrar su código y nombre (con la versión) y se conservan al guardar si no se cambian.
 (function () {
   const { esc } = window.UI;
   const { montar, fmt, imprimir } = window.BANCOS;
@@ -92,7 +96,8 @@
     let buscar = '';
 
     const cuentaBancaria = (id) => cuentas.find((c) => c.id === id);
-    const contable = (id) => contables.find((c) => c.id === id);
+    let otrasCuentas = [];
+    const contable = (id) => contables.find((c) => c.id === id) || otrasCuentas.find((c) => c.id === id);
     let modificando = false;        // un documento guardado se edita solo después de «Modificar»
     let comprobanteNuevo = null;    // archivo elegido, se sube al guardar
     let quitarComprobante = false;  // quitar la imagen guardada al guardar
@@ -143,6 +148,7 @@
 
     async function cargarLocalidad() {
       [cuentas, contables, centros] = await Promise.all([ctx.cuentasBancarias(), ctx.cuentasContables(), centrosLocalidad()]);
+      otrasCuentas = [];
       const { data } = ctx.sel.loc ? await sb.from('transacciones_contables').select('id, numero, descripcion, estado, aplica_poliza, tipo_operacion').eq('localidad_id', ctx.sel.loc).eq('estado', 'ACTIVO').order('numero') : { data: [] };
       transacciones = data || [];
       if (cfg.cheque) await cargarSolicitudes();
@@ -236,6 +242,11 @@
           sb.from('movimiento_lineas').select('*').eq('movimiento_id', d.id).order('linea')
         ]);
         documentos = (a.data || []).map((x) => ({ tipo: x.tipo, serie: x.serie || '', numero: x.numero, tercero: x.tercero || '', nombre: x.nombre || '', valor: Number(x.valor), abono: Number(x.abono || 0), fecha: x.fecha || '', estado: x.estado || '', contrato: x.contrato || '', compra_id: x.compra_id || null }));
+        const faltan = [...new Set((b.data || []).map((x) => x.cuenta_id).filter((id) => id && !contable(id)))];
+        if (faltan.length) {
+          const o = await sb.from('cuentas').select('id, codigo, nombre, vigente, catalogos_cuentas(version)').in('id', faltan);
+          otrasCuentas.push(...(o.data || []).map((k) => ({ ...k, movimiento: true, version: k.catalogos_cuentas?.version, otraVersion: true })));
+        }
         lineas = (b.data || []).map((x) => ({ cuenta_id: x.cuenta_id, centro_id: x.centro_id, debe: Number(x.debe), haber: Number(x.haber) }));
       }
       pintarDetalle();
@@ -245,8 +256,7 @@
     // Pestañas: detalle contable, una por tipo de documento y el listado del período.
     const pestanas = () => [
       { id: 'CONTABLE', texto: 'Detalle contable', icono: 'ti-list-details' },
-      ...cfg.documentos.map((t) => ({ id: t, texto: TITULO_DOC[t](cfg), icono: ICONO_DOC[t] })),
-      { id: 'LISTADO', texto: `Listado de ${cfg.plural}`, icono: 'ti-list-search' }
+      ...cfg.documentos.map((t) => ({ id: t, texto: TITULO_DOC[t](cfg), icono: ICONO_DOC[t] }))
     ];
 
     // Encabezado de un documento nuevo.
@@ -361,7 +371,7 @@
 
           <section class="bm-pestanas">
             <div class="bm-tabs-barra">
-              <div class="rp-pestanas" role="tablist">${pestanas().map((p) => `<button type="button" role="tab" data-pestana="${p.id}" class="${pestana === p.id ? 'activa' : ''}" aria-selected="${pestana === p.id}"><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.texto)}${p.id === 'CONTABLE' ? (lineas.length ? ` <b>${lineas.length}</b>` : '') : p.id === 'LISTADO' ? ` <b>${docs.length}</b>` : (cuenta(p.id) ? ` <b data-cuenta-tab="${p.id}">${cuenta(p.id)}</b>` : '')}</button>`).join('')}</div>
+              <div class="rp-pestanas" role="tablist">${pestanas().map((p) => `<button type="button" role="tab" data-pestana="${p.id}" class="${pestana === p.id ? 'activa' : ''}" aria-selected="${pestana === p.id}"><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.texto)}${p.id === 'CONTABLE' ? (lineas.length ? ` <b>${lineas.length}</b>` : '') : (cuenta(p.id) ? ` <b data-cuenta-tab="${p.id}">${cuenta(p.id)}</b>` : '')}</button>`).join('')}</div>
               <span class="bm-aplicado" data-docs-total></span>
             </div>
 
@@ -376,12 +386,10 @@
                 <tfoot><tr><td colspan="3" class="pc-totales-lbl">Totales</td><td class="num" data-total="debe"></td><td class="num" data-total="haber"></td><td colspan="2" data-cuadre></td><td></td></tr></tfoot></table></div>
             </div>
             ${cfg.documentos.map((t) => panelDocumentos(t, dis)).join('')}
-            <div class="bm-panel bm-listado" data-panel="LISTADO" ${pestana === 'LISTADO' ? '' : 'hidden'}></div>
           </section>
           <datalist id="bm-cuentas">${contables.filter((c) => c.movimiento).map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>
           <datalist id="bm-centros">${centros.filter((c) => c.movimiento).map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>
         </form>`;
-      ctx.pDet.querySelector('[data-panel=LISTADO]').appendChild(ctx.pMae);
       totalizar();
       miniatura();
     }
@@ -434,7 +442,7 @@
       return `<tr data-linea="${i}">
         <td class="pc-n">${i + 1}</td>
         <td class="pc-cta"><input list="bm-cuentas" data-campo="cuenta" value="${esc(c ? c.codigo : l.codigo || '')}" ${dis} aria-label="Cuenta"></td>
-        <td class="pc-nombre" data-nombre>${c ? esc(c.nombre) : l.codigo ? '<span class="oc-pendiente">Cuenta pendiente: no existe en el catálogo</span>' : ''}</td>
+        <td class="pc-nombre" data-nombre>${c ? `${esc(c.nombre)}${c.otraVersion ? ` <span class="pc-tipo cf-version" title="Cuenta del catálogo versión ${c.version ?? '?'} de la empresa (con que se migró el documento). Se conserva al guardar.">catálogo v${c.version ?? '?'}</span>` : ''}` : l.codigo ? '<span class="oc-pendiente">Cuenta pendiente: no existe en el catálogo</span>' : ''}</td>
         <td class="num"><input type="number" step="0.01" min="0" data-campo="debe" value="${l.debe || ''}" ${dis} aria-label="Debe"></td>
         <td class="num"><input type="number" step="0.01" min="0" data-campo="haber" value="${l.haber || ''}" ${dis} aria-label="Haber"></td>
         <td class="bm-centro"><input list="bm-centros" data-campo="centro" value="${esc(cc ? cc.codigo : l.centro_codigo || '')}" ${dis} aria-label="Centro de costo"></td>
@@ -495,7 +503,8 @@
       ctx.pDet.querySelectorAll('tr[data-linea]').forEach((tr) => {
         const l = lineas[Number(tr.dataset.linea)];
         const cod = tr.querySelector('[data-campo=cuenta]').value.trim();
-        const c = contables.find((x) => x.codigo === cod && x.movimiento);
+        const previa = contable(l.cuenta_id);
+        const c = previa?.otraVersion && previa.codigo === cod ? previa : contables.find((x) => x.codigo === cod && x.movimiento);
         l.cuenta_id = c ? c.id : null;
         l.codigo = cod;
         tr.querySelector('[data-nombre]').innerHTML = c ? esc(c.nombre) : cod ? '<span class="pc-error">No es una cuenta de movimiento de la localidad</span>' : '';
