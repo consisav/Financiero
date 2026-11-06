@@ -3900,3 +3900,20 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .og-a .imagenes-org { padding-top: 14px; }
 .og-a .imagen-marco { height: 104px; }
 @media (max-width: 1100px) { .og-a { grid-template-columns: 1fr; height: auto !important; } .og-listas { overflow: visible !important; } .og-b-orgs { max-height: none; } }
+
+/* Consultar Compras con el encabezado de la Consulta de Cheques: fila 1 Empresa, Proveedor (doble) y
+   Clasificación; fila 2 Fecha inicial, Fecha final, Orden y Estado. Las tablas conservan su propio formato. */
+.bk-consulta-cheques.cqc-compras .bk-filtros > :nth-child(2) { grid-column: 2; grid-row: 1; }
+.bk-consulta-cheques.cqc-compras .bk-filtros > :nth-child(3) { grid-column: 3 / span 2; grid-row: 1; }
+.bk-consulta-cheques.cqc-compras .bk-filtros > :nth-child(6) { grid-column: 5; grid-row: 1; }
+.bk-consulta-cheques.cqc-compras .bk-filtros > :nth-child(4) { grid-column: 2; grid-row: 2; }
+.bk-consulta-cheques.cqc-compras .bk-filtros > :nth-child(5) { grid-column: 3; grid-row: 2; }
+.bk-consulta-cheques.cqc-compras .bk-filtros > :nth-child(7) { grid-column: 4; grid-row: 2; }
+.bk-consulta-cheques.cqc-compras .bk-filtros > :nth-child(8) { grid-column: 5; grid-row: 2; }
+.bk-consulta-cheques.cqc-compras .bk-filtros > datalist { display: none; }
+.bk-consulta-cheques.cqc-compras .bk-maestro .ta-tabla { overflow-x: auto; }
+.bk-consulta-cheques.cqc-compras .cq-det table { table-layout: auto; }
+.bk-consulta-cheques.cqc-compras .cq-det th { width: auto !important; }
+.bk-consulta-cheques.cqc-compras .cq-det .pc-lineas { overflow-x: auto; }
+.bk-consulta-cheques.cqc-compras .cq-det td { white-space: nowrap; }
+.bk-consulta-cheques.cqc-compras .cq-det td.cc-nombre { max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
