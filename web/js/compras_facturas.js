@@ -102,6 +102,7 @@
       await consultar();
     }
 
+    let rango = null; // { n, desde, hasta } de todas las compras de la empresa, si el período no trae ninguna
     async function consultar(id = actual?.id) {
       if (!ctx.sel.loc) { compras = []; pintarMaestro(); return abrir(null); }
       let q = sb.from('compras_saldo').select('*').eq('localidad_id', ctx.sel.loc).order('numero', { ascending: false });
@@ -114,6 +115,14 @@
       const { data, error } = await q;
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       compras = data || [];
+      rango = null;
+      if (!compras.length && f.estado !== 'POR PAGAR') {
+        const [a, b] = await Promise.all([
+          sb.from('compras').select('fecha_documento', { count: 'exact' }).eq('localidad_id', ctx.sel.loc).order('fecha_documento').limit(1),
+          sb.from('compras').select('fecha_documento').eq('localidad_id', ctx.sel.loc).order('fecha_documento', { ascending: false }).limit(1)
+        ]);
+        rango = { n: a.count || 0, desde: a.data?.[0]?.fecha_documento || null, hasta: b.data?.[0]?.fecha_documento || null };
+      }
       pintarMaestro();
       await abrir(compras.find((c) => c.id === id) || (id === null ? null : compras[0]) || null);
     }
@@ -146,6 +155,10 @@
       actual = c;
       modificando = !!c && editar && c.estado === 'ACTIVA' && ctx.admin;
       items = []; lineas = []; pagos = []; articulos = []; liquidaciones = []; docsBanco = []; ingresoVincular = null;
+      if (c && !('origen_anterior' in c)) {
+        const o = await sb.from('compras').select('origen_anterior, compra_anterior, compra_varia_anterior').eq('id', c.id).maybeSingle();
+        if (!o.error && o.data) Object.assign(c, o.data);
+      }
       if (c) {
         const ar = await sb.from('compra_articulos').select('*').eq('compra_id', c.id).order('linea');
         articulos = ar.error ? [] : (ar.data || []).map((x) => ({ ...x, cantidad: Number(x.cantidad), costo_unitario: Number(x.costo_unitario), descuento: Number(x.descuento), costo_extra: Number(x.costo_extra) }));
@@ -237,6 +250,7 @@
       ctx.pDet.innerHTML = `
         <form id="cf-form" class="tk-form ta-form bm-form cf-form cl-clasico cf-compacto" novalidate>
           <p class="modal-error tk-error" role="alert"></p>
+          ${!c && rango ? (rango.n ? `<p class="tk-aviso cf-rango"><i class="ti ti-calendar-search" aria-hidden="true"></i> No hay compras del ${esc(fmt.fechaDia(f.desde))} al ${esc(fmt.fechaDia(f.hasta))}: la empresa tiene <b>${rango.n}</b> compras del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton secundario-sm" data-accion="ver-todas"><i class="ti ti-list-search" aria-hidden="true"></i> Ver todas</button></p>` : `<p class="tk-aviso cf-rango"><i class="ti ti-info-circle" aria-hidden="true"></i> Esta empresa todavía no tiene compras. Si esperabas las compras migradas del sistema anterior, ejecuta en Supabase los scripts 87 a 94.</p>`) : ''}
           ${c?.estado === 'ANULADA' ? `<p class="tk-aviso bm-anulado"><i class="ti ti-ban" aria-hidden="true"></i> Anulada por ${esc(c.anulado_por || '')} · ${esc(fmt.fechaHora(c.anulado_en))}: ${esc(c.motivo_anulacion || '')}</p>` : ''}
 
           <div class="cf-cabecera">
@@ -905,6 +919,7 @@
       const ac = e.target.closest('[data-accion]');
       if (!ac) return;
       const a = ac.dataset.accion;
+      if (a === 'ver-todas' && rango?.desde) { f.estado = 'TODAS'; f.desde = rango.desde; f.hasta = rango.hasta > fmt.hoy() ? rango.hasta : fmt.hoy(); pintarFiltros(); return consultar(); }
       if (a === 'lov-ingresos') return elegirIngreso();
       if (a === 'cargar-inv') return inventario('CARGAR');
       if (a === 'revertir-inv') return inventario('REVERTIR');
