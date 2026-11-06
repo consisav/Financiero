@@ -1,13 +1,10 @@
 // Catálogo común Organizaciones: organizaciones y sus localidades, con detalle y auditoría.
 (function () {
-  const { esc, bandera, estado: estadoHtml, auditoria, tabla, formulario, cascadaUbicacion, filtrar } = window.UI;
+  const { esc, bandera, auditoria, formulario, cascadaUbicacion } = window.UI;
   // Qué vende la localidad (empresa): define controles como lote, vencimiento y registro sanitario.
   const VENTA = { MEDICAMENTOS: 'Medicamentos', PERECEDEROS: 'Productos perecederos', 'NO PERECEDEROS': 'Productos no perecederos' };
 
   const EMBEBIDO = '*, pais:paises(nombre, iso2), departamento:departamentos(nombre), municipio:municipios(nombre)';
-
-  const ubicacion = (f) => [f.municipio && esc(f.municipio.nombre), f.departamento && esc(f.departamento.nombre),
-    f.pais && `${bandera(f.pais.iso2)} ${esc(f.pais.nombre)}`].filter(Boolean).join(', ') || '—';
 
   const dato = (etiqueta, valor, completo) =>
     `<div class="dato${completo ? ' completo' : ''}"><span>${esc(etiqueta)}</span><b>${valor || '—'}</b></div>`;
@@ -56,9 +53,62 @@
     const editable = window.FIN.puedeEditarCatalogos();
     const estado = { orgs: [], org: null, locs: [], loc: null, buscar: {} };
 
-    cont.innerHTML = '<section class="panel" id="p-orgs"></section><section class="panel" id="p-locs"></section>';
+    // Tres columnas (opción A): a la izquierda la lista de organizaciones y, debajo, sus localidades; al centro
+    // el detalle de la organización elegida y a la derecha el de la localidad elegida. Ocupan el alto de la ventana.
+    cont.innerHTML = '<div class="og-a"><section class="panel og-col og-listas" id="p-lista"></section><section class="panel og-col" id="p-orgs"></section><section class="panel og-col" id="p-locs"></section></div>';
+    const pLista = cont.querySelector('#p-lista');
     const pOrgs = cont.querySelector('#p-orgs');
     const pLocs = cont.querySelector('#p-locs');
+    const rejilla = cont.querySelector('.og-a');
+    const ajustar = () => {
+      if (!rejilla.isConnected) { window.removeEventListener('resize', ajustar); return; }
+      let alto = Math.max(520, window.innerHeight - rejilla.getBoundingClientRect().top - 18);
+      rejilla.style.height = `${alto}px`;
+      // Si el relleno inferior de la página aún deja desplazamiento, se descuenta.
+      const sobra = document.scrollingElement.scrollHeight - window.innerHeight;
+      if (sobra > 0 && alto - sobra >= 520) { alto -= sobra; rejilla.style.height = `${alto}px`; }
+    };
+    window.addEventListener('resize', ajustar);
+    requestAnimationFrame(ajustar);
+
+    const logoDe = (ruta, icono) => imagen(ruta, 'logo-mini') || `<span class="logo-mini vacio-logo"><i class="ti ${icono}" aria-hidden="true"></i></span>`;
+    const imagenes = (fila, heredar) => `
+      <div class="imagenes-org">
+        ${IMAGENES.map((im) => `
+          <figure class="imagen-org">
+            <figcaption>${im.etiqueta}</figcaption>
+            <div class="imagen-marco">${imagen(fila[im.columna], '') || (heredar && heredar[im.columna]
+              ? `${imagen(heredar[im.columna], 'imagen-heredada')}<span class="imagen-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Se usa el de la organización</span>`
+              : `<span class="sin-imagen"><i class="ti ti-photo" aria-hidden="true"></i> Sin ${im.etiqueta.toLowerCase()}</span>`)}</div>
+          </figure>`).join('')}
+      </div>`;
+
+    // Columna izquierda: organizaciones y localidades de la organización elegida.
+    function pintarLista() {
+      const o = estado.org, l = estado.loc;
+      const fila = (tipo, f, act, titulo, sub, logo) => `
+        <li class="og-item ${act ? 'actual' : ''} ${f.activo ? '' : 'inactivo'}" data-${tipo}="${f.id}" tabindex="0" data-texto="${esc(`${titulo} ${sub}`.toLowerCase())}">
+          ${logo}<span class="og-txt"><b>${titulo}</b><small>${sub}</small></span>
+          ${f.activo ? '' : '<span class="og-inactivo">Inactiva</span>'}
+          ${editable ? `<button type="button" class="og-editar" data-editar-${tipo}="${f.id}" title="Modificar" aria-label="Modificar"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}
+        </li>`;
+      pLista.innerHTML = `
+        <div class="og-bloque og-b-orgs">
+          <div class="panel-cab"><h2>Organizaciones <small>${estado.orgs.length}</small></h2>${editable ? '<button type="button" class="boton primario-sm" data-accion="nueva-org">+ Organización</button>' : ''}</div>
+          ${estado.orgs.length > 6 ? `<input type="search" class="buscar" data-buscar="orgs" placeholder="Buscar organización" value="${esc(estado.buscar.orgs || '')}">` : ''}
+          <ul class="og-ul" data-lista="orgs">${estado.orgs.map((f) => fila('org', f, o && o.id === f.id, `${f.codigo} · ${esc(f.nombre)}`, esc([f.representante_legal, f.municipio && f.municipio.nombre].filter(Boolean).join(' · ') || '—'), logoDe(f.logo_ruta, 'ti-building'))).join('') || '<li class="og-vacio">Todavía no hay organizaciones. Crea la primera.</li>'}</ul>
+        </div>
+        ${o ? `<div class="og-bloque og-b-locs">
+          <div class="panel-cab"><h2>Localidades de ${o.codigo} <small>${estado.locs.length}</small></h2>${editable ? '<button type="button" class="boton primario-sm" data-accion="nueva-loc">+ Localidad</button>' : ''}</div>
+          ${estado.locs.length > 6 ? `<input type="search" class="buscar" data-buscar="locs" placeholder="Buscar localidad" value="${esc(estado.buscar.locs || '')}">` : ''}
+          <ul class="og-ul" data-lista="locs">${estado.locs.map((f) => fila('loc', f, l && l.id === f.id, `${esc(f.codigo)} · ${esc(f.nombre_comercial)}`, esc([f.nit && `NIT ${f.nit}`, f.municipio && f.municipio.nombre].filter(Boolean).join(' · ') || '—'), logoDe(f.logo_ruta || o.logo_ruta, 'ti-building-store'))).join('') || '<li class="og-vacio">Esta organización todavía no tiene localidades.</li>'}</ul>
+        </div>` : ''}`;
+      ['orgs', 'locs'].forEach((k) => filtrarLista(k, estado.buscar[k] || ''));
+    }
+    function filtrarLista(clave, texto) {
+      const q = texto.trim().toLowerCase();
+      pLista.querySelectorAll(`[data-lista="${clave}"] li[data-texto]`).forEach((li) => { li.hidden = !!q && !li.dataset.texto.includes(q); });
+    }
 
     // ---------- Organizaciones ----------
     async function cargarOrgs(seleccion) {
@@ -72,48 +122,22 @@
     }
 
     function pintarOrgs() {
+      pintarLista();
       const o = estado.org;
-      pOrgs.innerHTML = `
-        <div class="panel-cab">
-          <h2>Organización</h2>
-          <div class="panel-acciones">${editable ? '<button type="button" class="boton primario-sm" data-accion="nueva-org">+ Organización</button>' : ''}</div>
+      pOrgs.innerHTML = o ? `
+        <header class="og-cab"><span class="og-logo-cab">${logoDe(o.logo_ruta, 'ti-building')}</span><div><small>Organización</small><h2>${o.codigo} · ${esc(o.nombre)}</h2></div></header>
+        ${auditoria(o, editable, 'org')}
+        <div class="datos">
+          ${dato('Representante legal', esc(o.representante_legal))}
+          ${dato('Organización anterior', esc(o.organizacion_anterior))}
+          ${dato('Teléfonos', esc(o.telefonos))}
+          ${dato('Correos', esc(o.correos))}
+          ${dato('Dirección', esc(o.direccion), true)}
+          ${dato('País', o.pais && `${bandera(o.pais.iso2)} ${esc(o.pais.nombre)}`)}
+          ${dato('Estado / departamento', o.departamento && esc(o.departamento.nombre))}
+          ${dato('Ciudad / municipio', o.municipio && esc(o.municipio.nombre))}
         </div>
-        ${estado.orgs.length > 6 ? `<input type="search" class="buscar" data-buscar="orgs" placeholder="Buscar organización" value="${esc(estado.buscar.orgs || '')}">` : ''}
-        ${tabla({
-          id: 'orgs', editable, seleccionado: o && o.id, vacio: 'Todavía no hay organizaciones. Crea la primera.',
-          columnas: [
-            { titulo: 'Cód.', valor: (f) => f.codigo, clase: 'angosta' },
-            { titulo: 'Organización', valor: (f) => `<span class="con-logo">${imagen(f.logo_ruta, 'logo-mini') || '<span class="logo-mini vacio-logo"><i class="ti ti-building" aria-hidden="true"></i></span>'} ${esc(f.nombre)}</span>`, clase: 'fuerte' },
-            { titulo: 'Representante legal', valor: (f) => esc(f.representante_legal) || '—' },
-            { titulo: 'Teléfonos', valor: (f) => esc(f.telefonos) || '—' },
-            { titulo: 'Ubicación', valor: ubicacion },
-            { titulo: 'Estado', valor: (f) => estadoHtml(f.activo) }
-          ],
-          filas: estado.orgs
-        })}
-        ${o ? `
-          <div class="detalle">
-            ${auditoria(o, editable, 'org')}
-            <div class="datos">
-              ${dato('Organización', `${o.codigo} · ${esc(o.nombre)}`)}
-              ${dato('Organización anterior', esc(o.organizacion_anterior))}
-              ${dato('Representante legal', esc(o.representante_legal))}
-              ${dato('Teléfonos', esc(o.telefonos))}
-              ${dato('Correos', esc(o.correos))}
-              ${dato('Dirección', esc(o.direccion), true)}
-              ${dato('País', o.pais && esc(o.pais.nombre))}
-              ${dato('Estado / departamento', o.departamento && esc(o.departamento.nombre))}
-              ${dato('Ciudad / municipio', o.municipio && esc(o.municipio.nombre))}
-            </div>
-            <div class="imagenes-org">
-              ${IMAGENES.map((im) => `
-                <figure class="imagen-org">
-                  <figcaption>${im.etiqueta}</figcaption>
-                  <div class="imagen-marco">${imagen(o[im.columna], '') || `<span class="sin-imagen"><i class="ti ti-photo" aria-hidden="true"></i> Sin ${im.etiqueta.toLowerCase()}</span>`}</div>
-                </figure>`).join('')}
-            </div>
-          </div>` : ''}`;
-      filtrar(pOrgs, estado.buscar.orgs || '');
+        ${imagenes(o)}` : '<p class="vacio">Elige o crea una organización.</p>';
     }
 
     function formOrg(fila) {
@@ -155,7 +179,7 @@
 
     // ---------- Localidades ----------
     async function cargarLocs(seleccion) {
-      if (!estado.org) { pLocs.innerHTML = ''; return; }
+      if (!estado.org) { estado.locs = []; estado.loc = null; pintarLocs(); return; }
       const { data, error } = await sb.from('localidades').select(EMBEBIDO).eq('organizacion_id', estado.org.id).order('correlativo');
       if (error) { pLocs.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       estado.locs = data;
@@ -165,52 +189,24 @@
     }
 
     function pintarLocs() {
+      pintarLista();
       const l = estado.loc;
-      pLocs.innerHTML = `
-        <div class="panel-cab">
-          <h2>Localidades de ${estado.org.codigo} · ${esc(estado.org.nombre)}</h2>
-          <div class="panel-acciones">${editable ? '<button type="button" class="boton primario-sm" data-accion="nueva-loc">+ Localidad</button>' : ''}</div>
+      pLocs.innerHTML = l ? `
+        <header class="og-cab"><span class="og-logo-cab">${logoDe(l.logo_ruta || estado.org.logo_ruta, 'ti-building-store')}</span><div><small>Localidad de ${estado.org.codigo} · ${esc(estado.org.nombre)}</small><h2>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</h2></div></header>
+        ${auditoria(l, editable, 'loc')}
+        <div class="datos">
+          ${dato('Razón social', esc(l.razon_social), true)}
+          ${dato('NIT', esc(l.nit))}
+          ${dato('Empresa anterior', esc(l.empresa_anterior))}
+          ${dato('Venta de productos', esc(VENTA[l.tipo_venta] || ''))}
+          ${dato('Teléfonos', esc(l.telefonos))}
+          ${dato('Correos', esc(l.correos), true)}
+          ${dato('Dirección', esc(l.direccion), true)}
+          ${dato('País', l.pais && `${bandera(l.pais.iso2)} ${esc(l.pais.nombre)}`)}
+          ${dato('Estado / departamento', l.departamento && esc(l.departamento.nombre))}
+          ${dato('Ciudad / municipio', l.municipio && esc(l.municipio.nombre))}
         </div>
-        ${estado.locs.length > 6 ? `<input type="search" class="buscar" data-buscar="locs" placeholder="Buscar localidad" value="${esc(estado.buscar.locs || '')}">` : ''}
-        ${tabla({
-          id: 'locs', editable, seleccionado: l && l.id, vacio: 'Esta organización todavía no tiene localidades.',
-          columnas: [
-            { titulo: 'Código', valor: (f) => `<span class="codigo">${esc(f.codigo)}</span>`, clase: 'angosta' },
-            { titulo: 'Nombre comercial', valor: (f) => esc(f.nombre_comercial), clase: 'fuerte' },
-            { titulo: 'Razón social', valor: (f) => esc(f.razon_social) || '—' },
-            { titulo: 'NIT', valor: (f) => esc(f.nit) || '—' },
-            { titulo: 'Municipio', valor: (f) => (f.municipio ? esc(f.municipio.nombre) : '—') },
-            { titulo: 'Estado', valor: (f) => estadoHtml(f.activo) }
-          ],
-          filas: estado.locs
-        })}
-        ${l ? `
-          <div class="detalle">
-            ${auditoria(l, editable, 'loc')}
-            <div class="datos">
-              ${dato('Localidad', `${esc(l.codigo)} · ${esc(l.nombre_comercial)}`)}
-              ${dato('Empresa anterior', esc(l.empresa_anterior))}
-              ${dato('Razón social', esc(l.razon_social))}
-              ${dato('NIT', esc(l.nit))}
-              ${dato('Venta de productos', esc(VENTA[l.tipo_venta] || ''))}
-              ${dato('Teléfonos', esc(l.telefonos))}
-              ${dato('Correos', esc(l.correos))}
-              ${dato('Dirección', esc(l.direccion), true)}
-              ${dato('País', l.pais && esc(l.pais.nombre))}
-              ${dato('Estado / departamento', l.departamento && esc(l.departamento.nombre))}
-              ${dato('Ciudad / municipio', l.municipio && esc(l.municipio.nombre))}
-            </div>
-            <div class="imagenes-org">
-              ${IMAGENES.map((im) => `
-                <figure class="imagen-org">
-                  <figcaption>${im.etiqueta} de la localidad</figcaption>
-                  <div class="imagen-marco">${imagen(l[im.columna], '') || (estado.org[im.columna]
-                    ? `${imagen(estado.org[im.columna], 'imagen-heredada')}<span class="imagen-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Sin ${im.etiqueta.toLowerCase()} propio: se usa el de la organización</span>`
-                    : `<span class="sin-imagen"><i class="ti ti-photo" aria-hidden="true"></i> Sin ${im.etiqueta.toLowerCase()}</span>`)}</div>
-                </figure>`).join('')}
-            </div>
-          </div>` : ''}`;
-      filtrar(pLocs, estado.buscar.locs || '');
+        ${imagenes(l, estado.org)}` : `<p class="vacio">${estado.org ? 'Esta organización todavía no tiene localidades.' : ''}</p>`;
     }
 
     function formLoc(fila) {
@@ -265,31 +261,25 @@
         if (a === 'loc-actualizar') { await cargarLocs(); window.FIN.aviso('Datos actualizados'); }
         return;
       }
-      const t = e.target.closest('table[data-tabla]');
-      if (!t) return;
-      const lista = t.dataset.tabla === 'orgs' ? estado.orgs : estado.locs;
-      const ed = e.target.closest('[data-editar]');
-      if (ed) {
-        const fila = lista.find((x) => String(x.id) === ed.dataset.editar);
-        t.dataset.tabla === 'orgs' ? formOrg(fila) : formLoc(fila);
-        return;
-      }
-      const tr = e.target.closest('tr[data-id]');
-      if (!tr) return;
-      const fila = lista.find((x) => String(x.id) === tr.dataset.id);
-      if (t.dataset.tabla === 'orgs' && fila !== estado.org) { estado.org = fila; estado.loc = null; pintarOrgs(); await cargarLocs(); }
-      if (t.dataset.tabla === 'locs' && fila !== estado.loc) { estado.loc = fila; pintarLocs(); }
+      const eo = e.target.closest('[data-editar-org]');
+      if (eo) return formOrg(estado.orgs.find((x) => String(x.id) === eo.dataset.editarOrg));
+      const el = e.target.closest('[data-editar-loc]');
+      if (el) return formLoc(estado.locs.find((x) => String(x.id) === el.dataset.editarLoc));
+      const io = e.target.closest('li[data-org]');
+      if (io) { const f = estado.orgs.find((x) => String(x.id) === io.dataset.org); if (f && f !== estado.org) { estado.org = f; estado.loc = null; pintarOrgs(); await cargarLocs(); } return; }
+      const il = e.target.closest('li[data-loc]');
+      if (il) { const f = estado.locs.find((x) => String(x.id) === il.dataset.loc); if (f && f !== estado.loc) { estado.loc = f; pintarLocs(); } }
     });
 
     cont.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && e.target.matches('tr[data-id]')) e.target.click();
+      if (e.key === 'Enter' && e.target.matches('li[data-org], li[data-loc]')) e.target.click();
     });
 
     cont.addEventListener('input', (e) => {
       const clave = e.target.dataset.buscar;
       if (!clave) return;
       estado.buscar[clave] = e.target.value;
-      filtrar(e.target.closest('.panel'), e.target.value);
+      filtrarLista(clave, e.target.value);
     });
 
     cargarOrgs();
