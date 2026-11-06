@@ -39,12 +39,11 @@
     const conLote = () => tipoVenta !== 'NO PERECEDEROS';
     let modificando = false;
     let cerradoMes = false; // el mes de la compra abierta está cerrado (cierres_mes)
-    // Una compra se modifica si está activa, no está contabilizada (partida en el sistema o en el sistema
-    // anterior) y su mes no está cerrado. Devuelve el motivo cuando no se puede.
+    // Una compra se modifica si está activa, su mes está abierto y no generó partida en el sistema (lo
+    // contabilizado en el sistema anterior no lo impide). Devuelve el motivo cuando no se puede.
     const bloqueoMod = (c) => !c ? '' : c.estado !== 'ACTIVA' ? 'La compra está anulada.'
-      : c.partida_id ? 'La compra ya generó su partida contable.'
-        : c.fecha_contabilizacion || c.poliza_numero ? 'La compra se contabilizó en el sistema anterior.'
-          : cerradoMes ? 'El mes de la compra está cerrado.' : '';
+      : cerradoMes ? 'El mes de la compra está cerrado.'
+        : c.partida_id ? 'La compra ya generó su partida contable.' : '';
     const [enlaceId, enlaceAccion] = String(extra || '').split(':');
     let pestana = 'ITEMS';
     let buscar = '';

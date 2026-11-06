@@ -1,22 +1,26 @@
 // Compras · Mantenimientos · Consultar Compras: resumen de los ingresos de compras de una empresa
 // (organización y localidad), un proveedor y un rango de fechas: arriba el maestro de compras con sus
 // totales y abajo el detalle de la compra elegida (artículos o compras varias y su detalle contable).
-// «Modificar» abre la compra en Registros · Ingreso de compras para modificarla, solo si no está
-// contabilizada (partida en el sistema o contabilizada en el sistema anterior) y su mes no está cerrado.
+// Filtros: clasificación y orden (compra, fecha o total, ascendente o descendente; también con clic en
+// el encabezado de esas columnas). «Modificar» abre la compra en Registros · Ingreso de compras para
+// modificarla si su mes está abierto y no generó partida en el sistema (lo contabilizado en el sistema
+// anterior se muestra como dato, no impide modificarla).
 (function () {
   const { esc } = window.UI;
   const { montar, fmt } = window.BANCOS;
   window.PANTALLAS = window.PANTALLAS || {};
 
   const cant = (n) => Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
+  const ORDENES = [['fecha:desc', 'Fecha ↓'], ['fecha:asc', 'Fecha ↑'], ['numero:desc', 'Compra ↓'], ['numero:asc', 'Compra ↑'], ['total:desc', 'Total ↓'], ['total:asc', 'Total ↑']];
   const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
   window.PANTALLAS['consultar-compras'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Consultar Compras', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado', grupo: 'Compras · Mantenimientos' });
     const { sb } = ctx;
     const [anio] = fmt.hoy().split('-');
-    const f = { proveedor: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODAS', buscar: '' };
-    let proveedores = [], compras = [], cerrados = new Set(), sel = null;
+    const f = { proveedor: '', clasificacion: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
+    let proveedores = [], clasificaciones = [], compras = [], cerrados = new Set(), sel = null;
+    let consulta = 0; // número de la última consulta: las respuestas de consultas anteriores se descartan
     let detalle = { articulos: [], items: [], lineas: [] };
 
     const proveedor = (id) => proveedores.find((p) => p.id === id);
@@ -27,14 +31,16 @@
     const cerrado = (c) => cerrados.has(mesDe(c));
     // Por qué no se puede modificar (vacío = se puede).
     const bloqueo = (c) => c.estado === 'ANULADA' ? 'La compra está anulada.'
-      : contabilizada(c) ? (c.partida_id ? 'La compra ya generó su partida contable.' : 'La compra se contabilizó en el sistema anterior.')
-        : cerrado(c) ? `El mes de ${MESES[Number(mesDe(c).slice(5, 7)) - 1]} ${mesDe(c).slice(0, 4)} está cerrado.` : '';
+      : cerrado(c) ? `El mes de ${MESES[Number(mesDe(c).slice(5, 7)) - 1]} ${mesDe(c).slice(0, 4)} está cerrado.`
+        : c.partida_id ? 'La compra ya generó su partida contable.' : '';
 
     function pintarFiltros() {
       ctx.filtros(`
         <label class="campo cq-prov"><span>Proveedor</span><input list="cq-proveedores" name="proveedor" value="${esc(f.proveedor)}" placeholder="Todos (código, NIT o nombre)"></label>
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
+        <label class="campo"><span>Clasificación</span><select name="clasificacion"><option value="">Todas</option>${clasificaciones.filter((k) => k.activo || String(k.id) === f.clasificacion).map((k) => `<option value="${k.id}" ${String(k.id) === f.clasificacion ? 'selected' : ''}>${k.codigo} · ${esc(k.nombre)}</option>`).join('')}</select></label>
+        <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${['TODAS', 'MODIFICABLES', 'CONTABILIZADAS', 'MES CERRADO', 'ANULADAS'].map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
         <datalist id="cq-proveedores">${proveedores.map((p) => `<option value="${esc(provTxt(p))}"></option>`).join('')}</datalist>`,
         '<button type="button" class="boton secundario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>');
@@ -46,6 +52,7 @@
     }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc;
+      if (!clasificaciones.length) { const r = await sb.from('clasificaciones_compra').select('id, codigo, nombre, activo').order('codigo'); clasificaciones = r.data || []; }
       const [p, k] = await Promise.all([
         loc ? sb.from('proveedores').select('id, codigo, nit, nombre_comercial').eq('localidad_id', loc).order('nombre_comercial') : { data: [] },
         loc ? sb.from('cierres_mes').select('anio, mes, cerrado').eq('localidad_id', loc).eq('cerrado', true) : { data: [] }
@@ -71,22 +78,28 @@
       let q = sb.from('compras').select('id, numero, tipo_documento, tipo_dte, serie, documento, fecha_documento, fecha_ingreso, proveedor_id, proveedor_codigo, proveedor_nombre, nit, clasificacion, moneda_id, tipo_cambio, valor_total, iva, base, estado, partida_id, usuario, origen_anterior, compra_anterior, compra_varia_anterior, fecha_contabilizacion, poliza_numero, bodega_id')
         .eq('localidad_id', loc).gte('fecha_documento', f.desde).lte('fecha_documento', f.hasta).order('fecha_documento', { ascending: false }).order('numero', { ascending: false }).limit(5000);
       if (pv) q = q.eq('proveedor_id', pv.id);
+      if (f.clasificacion) q = q.eq('clasificacion_id', Number(f.clasificacion));
+      const yo = ++consulta;
       let r = await q;
       // Sin las columnas de la migración (script 89) se consulta lo básico.
       if (r.error && /origen_anterior|fecha_contabilizacion|poliza_numero|compra_varia/.test(r.error.message)) {
         let q2 = sb.from('compras').select('id, numero, tipo_documento, tipo_dte, serie, documento, fecha_documento, fecha_ingreso, proveedor_id, proveedor_codigo, proveedor_nombre, nit, clasificacion, moneda_id, tipo_cambio, valor_total, iva, base, estado, partida_id, usuario, bodega_id')
           .eq('localidad_id', loc).gte('fecha_documento', f.desde).lte('fecha_documento', f.hasta).order('fecha_documento', { ascending: false }).order('numero', { ascending: false }).limit(5000);
         if (pv) q2 = q2.eq('proveedor_id', pv.id);
+        if (f.clasificacion) q2 = q2.eq('clasificacion_id', Number(f.clasificacion));
         r = await q2;
       }
+      if (yo !== consulta) return;
       if (r.error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(r.error.message)}</p>`; return; }
-      compras = r.data || [];
+      const lista = r.data || [];
       // Saldo de cada compra (vista compras_saldo), por partes para no alargar la consulta.
       const saldos = new Map();
-      for (let i = 0; i < compras.length; i += 300) {
-        const { data } = await sb.from('compras_saldo').select('id, pagado, pendiente').in('id', compras.slice(i, i + 300).map((c) => c.id));
+      for (let i = 0; i < lista.length; i += 300) {
+        const { data } = await sb.from('compras_saldo').select('id, pagado, pendiente').in('id', lista.slice(i, i + 300).map((c) => c.id));
         (data || []).forEach((x) => saldos.set(x.id, x));
       }
+      if (yo !== consulta) return;
+      compras = lista;
       compras.forEach((c) => { const s = saldos.get(c.id); c.pagado = Number(s?.pagado || 0); c.pendiente = Number(s?.pendiente ?? c.valor_total); });
       sel = compras.find((c) => c.id === id) || null;
       pintar();
@@ -97,19 +110,29 @@
       const q = f.buscar.trim().toLowerCase();
       return compras.filter((c) => (f.estado === 'TODAS' || (f.estado === 'MODIFICABLES' && !bloqueo(c)) || (f.estado === 'CONTABILIZADAS' && contabilizada(c))
         || (f.estado === 'MES CERRADO' && cerrado(c)) || (f.estado === 'ANULADAS' && c.estado === 'ANULADA'))
-        && (!q || [c.numero, c.documento, c.serie, c.proveedor_codigo, c.proveedor_nombre, c.nit, c.compra_anterior].some((v) => String(v || '').toLowerCase().includes(q))));
+        && (!q || [c.numero, c.documento, c.serie, c.proveedor_codigo, c.proveedor_nombre, c.nit, c.compra_anterior].some((v) => String(v || '').toLowerCase().includes(q))))
+        .sort((a, b) => {
+          const va = f.orden === 'numero' ? a.numero : f.orden === 'total' ? enQ(a, 'valor_total') : a.fecha_documento;
+          const vb = f.orden === 'numero' ? b.numero : f.orden === 'total' ? enQ(b, 'valor_total') : b.fecha_documento;
+          const d = va < vb ? -1 : va > vb ? 1 : b.numero - a.numero;
+          return f.dir === 'asc' ? d : -d;
+        });
     };
+    // Encabezado que ordena: clic alterna ascendente / descendente.
+    const ordenTh = (campo, texto, clase = '') => `<th class="${clase} cq-orden ${f.orden === campo ? 'activo' : ''}" data-ordenar="${campo}" title="Ordenar por ${texto.toLowerCase()}">${texto} <i class="ti ${f.orden === campo ? (f.dir === 'asc' ? 'ti-sort-ascending' : 'ti-sort-descending') : 'ti-arrows-sort'}" aria-hidden="true"></i></th>`;
     const enQ = (c, campo) => Number(c[campo] || 0) * (c.moneda_id === ctx.monedaBase()?.id ? 1 : Number(c.tipo_cambio || 1));
 
     async function elegir(c) {
       sel = c;
       detalle = { articulos: [], items: [], lineas: [] };
+      if (c) ctx.pDet.innerHTML = ctx.vacio('Cargando el detalle de la compra…', 'ti-loader-2');
       if (c) {
         const [a, i, l] = await Promise.all([
           sb.from('compra_articulos').select('*, productos(codigo, codigo_producto, nombre)').eq('compra_id', c.id).order('linea'),
           sb.from('compra_items').select('*').eq('compra_id', c.id).order('linea'),
           sb.from('compra_lineas').select('linea, debe, haber, cuentas(codigo, nombre)').eq('compra_id', c.id).order('linea')
         ]);
+        if (sel !== c) return;
         detalle = { articulos: a.error ? [] : a.data || [], items: i.data || [], lineas: l.data || [] };
       }
       pintarDetalle();
@@ -136,7 +159,7 @@
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Compra, documento, proveedor, NIT…" value="${esc(f.buscar)}" aria-label="Buscar compras"></label>
         </header>
         <div class="ta-tabla cc-tabla">
-          <table><thead><tr><th class="num">Compra</th><th>Tipo</th><th>Documento</th><th>Fecha</th><th>Proveedor</th><th>Clasificación</th><th class="num">Total</th><th class="num">IVA</th><th class="num">Saldo</th><th>Estado</th><th>Contabilizada</th><th>Mes</th><th class="cq-acc"></th></tr></thead>
+          <table><thead><tr>${ordenTh('numero', 'Compra', 'num')}<th>Tipo</th><th>Documento</th>${ordenTh('fecha', 'Fecha')}<th>Proveedor</th><th>Clasificación</th>${ordenTh('total', 'Total', 'num')}<th class="num">IVA</th><th class="num">Saldo</th><th>Estado</th><th>Contabilizada</th><th>Mes</th><th class="cq-acc"></th></tr></thead>
             <tbody>${filas.map((c) => { const b = bloqueo(c); const sim = ctx.moneda(c.moneda_id)?.simbolo || 'Q'; return `<tr data-compra="${c.id}" class="${sel && sel.id === c.id ? 'actual' : ''} ${c.estado === 'ANULADA' ? 'pc-anulada' : ''}" tabindex="0">
               <td class="num fuerte">${c.numero}${c.origen_anterior ? `<small class="cq-ant" title="Compra ${c.origen_anterior === 'VARIAS' ? 'varia' : 'de medicamentos'} ${c.compra_anterior} del sistema anterior${c.compra_varia_anterior ? ` · compra varia ${c.compra_varia_anterior}` : ''}">ant. ${c.compra_anterior}</small>` : ''}</td>
               <td><span class="pc-tipo">${esc((c.tipo_dte || c.tipo_documento || '').replace('FACTURA ', 'F. '))}</span></td><td>${esc(docTxt(c))}</td><td>${esc(fmt.fechaDia(c.fecha_documento))}</td>
@@ -225,7 +248,8 @@
       if (cambio === 'otro') {
         const n = e.target.name;
         if (n === 'estado') { f.estado = e.target.value; pintarMaestro(); return elegir(visibles().find((c) => c.id === sel?.id) || visibles()[0] || null); }
-        if (n === 'proveedor' || n === 'desde' || n === 'hasta') { f[n] = e.target.value; sel = null; return consultar(); }
+        if (n === 'orden') { [f.orden, f.dir] = e.target.value.split(':'); return pintarMaestro(); }
+        if (n === 'proveedor' || n === 'desde' || n === 'hasta' || n === 'clasificacion') { f[n] = e.target.value; sel = null; return consultar(); }
       }
     });
     cont.addEventListener('input', (e) => {
@@ -242,6 +266,8 @@
     cont.addEventListener('click', (e) => {
       const m = e.target.closest('[data-modificar]');
       if (m) return modificar(m.dataset.modificar);
+      const th = e.target.closest('[data-ordenar]');
+      if (th) { const campo = th.dataset.ordenar; f.dir = f.orden === campo && f.dir === 'desc' ? 'asc' : 'desc'; f.orden = campo; const o = ctx.pFil.querySelector('[name=orden]'); if (o) o.value = `${f.orden}:${f.dir}`; return pintarMaestro(); }
       const tr = e.target.closest('tr[data-compra]');
       if (tr && ctx.pMae.contains(tr)) return elegir(compras.find((c) => String(c.id) === tr.dataset.compra));
       const ac = e.target.closest('[data-accion]');

@@ -3398,3 +3398,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cq-bloqueo { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--coral-t); background: var(--coral-f); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
 .cq-det { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: 10px; min-height: 0; }
 .cq-det .pc-lineas { max-height: 230px; overflow: auto; }
+.bk-consultar .bk-filtros { grid-template-columns: auto minmax(200px, 260px) minmax(200px, 1.2fr) repeat(5, minmax(120px, 160px)) 1fr; }
+.cq-orden { cursor: pointer; user-select: none; white-space: nowrap; }
+.cq-orden:hover, .cq-orden.activo { color: var(--acento); }
+.cq-orden i { font-size: 13px; vertical-align: -2px; }
