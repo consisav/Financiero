@@ -222,7 +222,19 @@
           selLoc.closest('label, .campo').after(caja);
           const actuales = new Map(empresasDe(u).map((x) => [x.localidad_id, x.rol_id]));
           const opcionesRol = (val) => rolesActivos.filter((r) => r.id !== 'superadministrador').map((r) => `<option value="${r.id}" ${r.id === val ? 'selected' : ''}>${esc(r.nombre)}</option>`).join('');
+          // Un solo Super Administrador por organización (script 100): si ya hay otro, la casilla se bloquea.
+          const casSuper = form.elements.super_org;
+          const notaSuper = document.createElement('small');
+          notaSuper.className = 'us-nota-super';
+          if (casSuper) casSuper.closest('label, .campo').append(notaSuper);
+          const revisarSuper = (idOrg) => {
+            if (!casSuper) return;
+            const otro = estado.filas.find((x) => x.id !== u.id && !x.es_global && x.activo && x.rol_id === 'superadministrador' && x.organizacion_id === Number(idOrg));
+            casSuper.disabled = !!otro && !casSuper.checked;
+            notaSuper.textContent = otro ? `Ya es Super Administrador de esta organización: ${otro.nombre || otro.usuario || otro.correo}. Solo puede haber uno.` : '';
+          };
           const tabla = (idOrg) => {
+            revisarSuper(idOrg);
             const lista = estado.locs.filter((x) => x.organizacion_id === Number(idOrg));
             const principal = Number(selLoc.value) || null;
             const esSuper = u.es_global || (form.elements.super_org ? form.elements.super_org.checked : u.rol_id === 'superadministrador');
