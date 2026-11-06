@@ -45,6 +45,24 @@
     w.print();
   }
 
+  // El mismo listado jerárquico en Excel, con el encabezado de las consultas (logo, parámetros, fecha y usuario).
+  function excel(cfg, org, loc, v, filas, padre, columnas) {
+    const hijos = (id) => filas.filter((f) => (f[padre] ?? null) === id).sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
+    const orden = [];
+    (function recorrer(id) { for (const f of hijos(id)) { orden.push(f); recorrer(f.id); } })(null);
+    if (!orden.length) return window.FIN.aviso('La versión no tiene registros');
+    window.REPORTE_XLSX.generar({
+      titulo: cfg.tituloImpresion,
+      parametros: [`Organización: ${org.codigo} · ${org.nombre}`, `Localidad: ${loc.codigo} · ${loc.nombre_comercial}`, `Versión ${v.version}`,
+        `Del ${fechaCorta(v.fecha_del)} al ${fechaCorta(v.fecha_al) || 'vigente'}`, `${orden.length} registros`, `${orden.filter((f) => f.vigente).length} vigentes`],
+      orgId: org.id, locId: loc.id, hoja: cfg.tituloImpresion, archivo: `${cfg.tituloImpresion}_${loc.codigo}_v${v.version}`,
+      columnas: [{ titulo: 'Código', ancho: 18 }, { titulo: 'Nombre', ancho: 46 }, { titulo: 'Nivel', ancho: 7 }, ...columnas.map((c) => ({ titulo: c.titulo, ancho: 18 })), { titulo: 'Vigente', ancho: 9 }],
+      sangriaEn: [2],
+      filas: orden.map((f) => ({ valores: [f.codigo, f.nombre, f.nivel, ...columnas.map((c) => window.REPORTE_XLSX.plano(String(c.valor(f) ?? ''))), f.vigente ? 'Sí' : 'No'],
+        sangria: Math.max(0, f.nivel - 1), resaltar: f.nivel === 1 ? 2 : f.integra ? 1 : 0, tenue: !f.vigente }))
+    });
+  }
+
   const titulos = (principal, sub) => [`${principal} principal`, `Sub-${sub}`, `Sub-sub-${sub}`, ...Array.from({ length: 7 }, (_, i) => `Sub-${sub} de nivel ${i + 4}`)];
 
   // ---------- Pantalla de catálogo jerárquico por organización, localidad y versión ----------
@@ -106,6 +124,7 @@
           </button>
           <span class="cc-espacio"></span>
           ${v ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
+          ${v && window.REPORTE_XLSX ? window.REPORTE_XLSX.boton('data-accion="excel"') : ''}
         </div>
         <div class="cc-panel" ${abierto ? '' : 'hidden'}>
           <label class="selector-org">Empresa <select data-org>${opcionesOrg(estado.orgs, estado.org)}</select></label>
@@ -220,6 +239,12 @@
           montarArbol();
         });
         return;
+      }
+      if (a === 'excel') {
+        const org = estado.orgs.find((o) => o.id === estado.org);
+        const loc = locActual();
+        const v = estado.version;
+        return excel(cfg, org, loc, v, estado.arbol.filas(), cfg.arbol({ ...estado.ctx, loc: estado.loc }).padre, cfg.columnasImpresion(estado.ctx));
       }
       if (a === 'imprimir') {
         const org = estado.orgs.find((o) => o.id === estado.org);

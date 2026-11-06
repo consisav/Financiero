@@ -3934,3 +3934,9 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ccq-tabla col.w-acc { width: 122px; } .ccq-tabla col.w-estado { width: 160px; }
 .ccq-tabla td.cq-acc { overflow: visible; text-align: right; padding-right: 12px; }
 .ccq-ver { font-size: 12.5px; padding: 4px 9px; }
+
+/* Botón «Generar Excel» compacto (reportes de Contabilidad), con el verde de las consultas. */
+.rx-excel { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9px; border: 1px solid #1d7a46; background: linear-gradient(180deg, #23955a, #1b7c49); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 4px rgba(27, 124, 73, .25); }
+.rx-excel:hover { background: linear-gradient(180deg, #1f8a52, #176c40); }
+.rx-excel .ti { font-size: 16px; }
+.rx-par { display: inline-flex; gap: 8px; flex-wrap: wrap; }

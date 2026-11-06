@@ -272,6 +272,7 @@
         ${superAdmin ? `<button type="button" class="boton secundario-sm rp-peligro" data-accion="eliminar" ${!p.definitiva && !cerrado() ? '' : 'disabled'} title="${p.definitiva ? 'Una partida definitiva no se elimina' : cerrado() ? 'El mes está cerrado' : 'Eliminar la partida'}"><i class="ti ti-trash" aria-hidden="true"></i></button>` : ''}
         <span class="pc-imprimir">
           <button type="button" class="boton secundario-sm" data-imprimir title="Imprimir la partida"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
+          ${window.REPORTE_XLSX ? window.REPORTE_XLSX.boton('data-excel-partida') : ''}
           <select class="boton secundario-sm pq-modo-imp" name="impresion" aria-label="Tipo de impresión">
             <option value="general" ${modoImpresion === 'general' ? 'selected' : ''}>Póliza general</option>
             <option value="centros" ${modoImpresion === 'centros' ? 'selected' : ''}>Por centro de costo</option>
@@ -394,7 +395,7 @@
                   <label><input type="radio" name="impresion" value="general" ${modoImpresion === 'general' ? 'checked' : ''}> Póliza general</label>
                   <label><input type="radio" name="impresion" value="centros" ${modoImpresion === 'centros' ? 'checked' : ''}> Integración por centro de costo</label>
                 </div>
-                <button type="button" class="boton primario-sm" data-imprimir ${p ? '' : 'disabled'}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
+                <span class="rx-par"><button type="button" class="boton primario-sm" data-imprimir ${p ? '' : 'disabled'}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>${p && window.REPORTE_XLSX ? window.REPORTE_XLSX.boton('data-excel-partida') : ''}</span>
               </div>
             </div>
           </div>
@@ -556,6 +557,40 @@
       v.document.close();
     }
 
+    // Excel de la partida, con el encabezado de las consultas: póliza general o integrada por centro de costo.
+    function excelPartida(modoImp) {
+      const p = actual;
+      if (!p) return;
+      const tp = tipo(p.tipo_partida_id);
+      const mon = moneda(p.moneda_id);
+      const filas = lineas.map((l, i) => ({ ...l, n: i + 1, cuenta: cuentas.find((c) => c.id === l.cuenta_id), centro: centros.find((c) => c.id === l.centro_id) }));
+      const fila = (l) => ({ valores: [l.n, l.cuenta?.codigo || '', l.cuenta?.nombre || '', l.concepto || '', l.centro ? `${l.centro.codigo} ${l.centro.nombre}` : '', Number(l.debe) || null, Number(l.haber) || null] });
+      let datos = [];
+      if (modoImp === 'centros') {
+        const grupos = {};
+        filas.forEach((l) => { const k = l.centro ? `${l.centro.codigo} · ${l.centro.nombre}` : 'Sin centro de costo'; (grupos[k] = grupos[k] || []).push(l); });
+        Object.entries(grupos).forEach(([k, ls]) => {
+          datos.push({ tipo: 'grupo', valores: [k] });
+          datos.push(...ls.map(fila));
+          datos.push({ tipo: 'subtotal', valores: ['', '', 'Subtotal', '', '', ls.reduce((t, l) => t + Number(l.debe || 0), 0), ls.reduce((t, l) => t + Number(l.haber || 0), 0)] });
+        });
+      } else datos = filas.map(fila);
+      datos.push({ tipo: 'total', valores: ['', '', 'Totales', '', '', Number(p.total_debe || 0), Number(p.total_haber || 0)] });
+      datos.push({ tipo: 'nota', valores: [''] });
+      datos.push({ tipo: 'nota', valores: ['', 'Descripción', p.descripcion || ''] });
+      if (p.justificacion) datos.push({ tipo: 'nota', valores: ['', 'Justificación', p.justificacion] });
+      datos.push({ tipo: 'nota', valores: ['', 'Elaboró', p.usuario || '', 'Aprobó', p.aprobada_por || ''] });
+      const num = `${String(p.mes).padStart(2, '0')}-${p.numero}`;
+      window.REPORTE_XLSX.generar({
+        titulo: `Partida contable ${num}${modoImp === 'centros' ? ' · por centro de costo' : ''}${p.estado === 'ANULADA' ? ' · ANULADA' : ''}`,
+        parametros: [`Póliza anual ${p.numero_anual}`, `Período: ${MESES[p.mes - 1]} ${p.anio}`, `Fecha: ${fechaHora(p.fecha)}`, `Tipo: ${tp ? `${tp.siglas} · ${tp.nombre}` : '—'}`,
+          `Moneda: ${mon ? mon.nombre : '—'} · TC ${p.tipo_cambio}`, `Estado: ${p.estado}${p.definitiva ? ' · definitiva' : ''}`],
+        orgId: p.organizacion_id, locId: p.localidad_id, hoja: `Partida ${num}`, archivo: `partida_${p.anio}_${num}_${modoImp}`,
+        columnas: [{ titulo: '#', ancho: 6 }, { titulo: 'Cuenta', ancho: 14 }, { titulo: 'Nombre de la cuenta', ancho: 38 }, { titulo: 'Concepto', ancho: 38 }, { titulo: 'Centro de costo', ancho: 26 }, { titulo: 'Debe', ancho: 15, tipo: 'monto' }, { titulo: 'Haber', ancho: 15, tipo: 'monto' }],
+        filas: datos
+      });
+    }
+
     // ---------- Eventos ----------
     function activarPestana(id) {
       pDet.querySelectorAll('[data-pestana]').forEach((x) => { x.classList.toggle('activa', x.dataset.pestana === id); x.setAttribute('aria-selected', x.dataset.pestana === id); });
@@ -680,6 +715,7 @@
       }
       const im = e.target.closest('[data-imprimir]');
       if (im) return imprimir(modoImpresion);
+      if (e.target.closest('[data-excel-partida]')) return excelPartida(modoImpresion);
       const px = e.target.closest('[data-proximamente]');
       if (px) return window.FIN.aviso(`${px.dataset.proximamente}: se habilita cuando exista el módulo${px.dataset.modulo ? ` de ${px.dataset.modulo}` : ' que origina las transacciones'}`);
       const ql = e.target.closest('[data-quitar-linea]');

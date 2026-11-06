@@ -207,6 +207,7 @@
             <div class="tk-marcas">${marcaEstado(v.estado)}</div>
             <div class="tk-titulo-acciones">
               ${p ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>' : ''}
+              ${p && window.REPORTE_XLSX ? window.REPORTE_XLSX.boton('data-accion="excel"') : ''}
               ${ed ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${p ? 'Guardar cambios' : 'Registrar presupuesto'}</button>` : ''}
             </div>
           </header>
@@ -355,6 +356,32 @@
       }
     }
 
+    // Excel del presupuesto, con el encabezado de las consultas: rubros por grupo con subtotales y totales.
+    function excel() {
+      const p = actual;
+      if (!p) return;
+      const fr = frecuencia(p.frecuencia);
+      const filas = [];
+      GRUPOS.forEach((g) => {
+        const ls = lineas.filter((l) => rubro(l.rubro_id)?.grupo === g);
+        if (!ls.length) return;
+        filas.push({ tipo: 'grupo', valores: [g] });
+        ls.forEach((l) => { const r = rubro(l.rubro_id); filas.push({ valores: [r?.codigo || '', r?.nombre || '', Number(l.presupuestado || 0), Number(l.ejecutado || 0), Number(l.presupuestado || 0) - Number(l.ejecutado || 0), pct(l.ejecutado, l.presupuestado) / 100] }); });
+        const sp = ls.reduce((s, l) => s + Number(l.presupuestado || 0), 0); const se = ls.reduce((s, l) => s + Number(l.ejecutado || 0), 0);
+        filas.push({ tipo: 'subtotal', valores: ['', `Subtotal ${g.toLowerCase()}`, sp, se, sp - se, pct(se, sp) / 100] });
+      });
+      filas.push({ tipo: 'total', valores: ['', 'Totales', Number(p.total_presupuestado || 0), Number(p.total_ejecutado || 0), Number(p.total_presupuestado || 0) - Number(p.total_ejecutado || 0), pct(p.total_ejecutado, p.total_presupuestado) / 100] });
+      filas.push({ tipo: 'nota', valores: [''] });
+      filas.push({ tipo: 'nota', valores: ['Elaboró', p.elaborado_por || '', 'Aprobó', p.aprobado_por || ''] });
+      window.REPORTE_XLSX.generar({
+        titulo: `Presupuesto ${p.numero}`,
+        parametros: [`Tipo: ${p.tipo}`, `Estado: ${p.estado}`, `Fecha: ${fechaDia(p.fecha)}`, `Frecuencia: ${fr.texto}`, `Período: ${fr.nombre(p.periodo)} ${p.anio}`, `Del ${fechaDia(p.fecha_inicio)} al ${fechaDia(p.fecha_fin)}`],
+        orgId: p.organizacion_id, locId: p.localidad_id, hoja: `Presupuesto ${p.numero}`, archivo: `presupuesto_${p.numero}_${p.anio}`,
+        columnas: [{ titulo: 'Código', ancho: 12 }, { titulo: 'Rubro', ancho: 44 }, { titulo: 'Presupuestado', ancho: 17, tipo: 'monto' }, { titulo: 'Ejecutado', ancho: 17, tipo: 'monto' }, { titulo: 'Variación', ancho: 17, tipo: 'monto' }, { titulo: 'Ejecución', ancho: 12, tipo: 'porcentaje' }],
+        filas
+      });
+    }
+
     function imprimir() {
       const p = actual;
       const org = organizaciones.find((o) => o.id === p.organizacion_id);
@@ -445,6 +472,7 @@
       if (ac) {
         if (ac.dataset.accion === 'nuevo') return abrir(null);
         if (ac.dataset.accion === 'imprimir') return imprimir();
+        if (ac.dataset.accion === 'excel') return excel();
         if (ac.dataset.accion === 'todos') {
           leerLineas();
           const usados = new Set(lineas.map((l) => l.rubro_id));
