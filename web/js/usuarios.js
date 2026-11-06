@@ -56,15 +56,19 @@
 
     const migradosVisibles = () => estado.migrados.filter((u) =>
       (!estado.filtroOrg || u.organizacion_id === Number(estado.filtroOrg)) &&
-      (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc)));
+      (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc) || (u.localidades_adicionales || []).includes(Number(estado.filtroLoc))));
 
     const visibles = () => estado.filas.filter((u) =>
       (!estado.filtroOrg || u.organizacion_id === Number(estado.filtroOrg)) &&
-      (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc)));
+      (!estado.filtroLoc || u.localidad_id === Number(estado.filtroLoc) || (u.localidades_adicionales || []).includes(Number(estado.filtroLoc))));
 
     const empresa = (idOrg, idLoc) => idLoc
       ? `<span class="codigo">${esc((loc(idLoc) || {}).codigo || '')}</span> ${esc((loc(idLoc) || {}).nombre_comercial || '')}`
       : '<span class="estado inactivo">Sin asignar</span>';
+
+    // Localidades adicionales (el usuario también trabaja en ellas): «+N» con sus códigos.
+    const adicionales = (lista) => (lista || []).map((id) => (loc(id) || {}).codigo).filter(Boolean);
+    const mas = (lista) => { const a = adicionales(lista); return a.length ? ` <span class="us-mas" title="También en ${esc(a.join(', '))}">+${a.length}</span>` : ''; };
 
     // Una sola lista: usuarios con cuenta y, debajo, los migrados por crear (correo y «Crear» en su fila).
     function pintar() {
@@ -103,7 +107,7 @@
                   <td class="angosta"><span class="codigo">${esc(f.usuario) || '—'}</span></td>
                   <td class="fuerte">${esc(f.nombre) || '—'}</td>
                   <td>${esc(f.correo)}</td>
-                  <td>${empresa(f.organizacion_id, f.localidad_id)}</td>
+                  <td>${empresa(f.organizacion_id, f.localidad_id)}${mas(f.localidades_adicionales)}</td>
                   <td>${esc(rol(f.rol_id))}</td>
                   <td>${window.UI.estado(f.activo)}${f.fecha_vence_clave && f.fecha_vence_clave < hoy() ? ' <span class="estado vencida">Clave vencida</span>' : ''}</td>
                   <td class="acciones">${puedeModificar(f) ? `<button type="button" class="icono-editar" data-editar="${f.id}" aria-label="Modificar"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}</td>
@@ -113,7 +117,7 @@
                   <td class="angosta"><span class="codigo">${esc(x.usuario_anterior)}</span></td>
                   <td class="fuerte">${esc(x.nombre)}</td>
                   <td><input type="email" class="um-correo" data-correo placeholder="correo@empresa.com" aria-label="Correo de ${esc(x.nombre)}"></td>
-                  <td>${empresa(x.organizacion_id, x.localidad_id)}</td>
+                  <td>${empresa(x.organizacion_id, x.localidad_id)}${mas(x.localidades_adicionales)}</td>
                   <td class="tk-tenue" title="Creado en el sistema anterior">Desde ${fechaCorta(x.fecha_creacion_anterior) || '—'}</td>
                   <td><span class="estado us-estado-pend">Por crear</span></td>
                   <td class="acciones"><button type="button" class="boton primario-sm" data-accion="crear-migrado">Crear</button></td>
@@ -131,6 +135,7 @@
             <dl class="us-ficha-datos">
               <div><dt>Rol</dt><dd>${esc(rol(u.rol_id))}</dd></div>
               <div><dt>Empresa</dt><dd>${u.organizacion_id ? `${org(u.organizacion_id).codigo} · ` : ''}${empresa(u.organizacion_id, u.localidad_id)}</dd></div>
+              ${adicionales(u.localidades_adicionales).length ? `<div><dt>También en</dt><dd>${esc(adicionales(u.localidades_adicionales).join(', '))}</dd></div>` : ''}
               <div><dt>Creado</dt><dd>${u.creado_en ? new Date(u.creado_en).toLocaleDateString('es-GT', { timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-') : '—'}</dd></div>
               <div><dt>Vence clave</dt><dd class="${vencida ? 'pc-rojo' : ''}">${fechaCorta(u.fecha_vence_clave) || '—'}</dd></div>
               <div><dt>Empleado</dt><dd>${esc(u.empleado) || '—'}</dd></div>
@@ -199,6 +204,8 @@
         alGuardar: async (d) => {
           const firma = d.firma;
           delete d.firma;
+          // Al cambiar de organización, las localidades adicionales (de la anterior) se quitan.
+          if (d.organizacion_id && d.organizacion_id !== u.organizacion_id) d.localidades_adicionales = [];
           const { error } = await sb.from('perfiles').update(d).eq('id', u.id);
           if (error) {
             if (/perfiles_usuario_key|perfiles_usuario_unico|duplicate/i.test(error.message)) throw new Error(`Ya existe otro usuario con el código ${d.usuario}.`);

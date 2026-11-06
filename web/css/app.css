@@ -3260,3 +3260,4 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .us-ficha-datos dd { margin: 0; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .us-firma { height: 22px; vertical-align: middle; }
 .us-ficha-acciones { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.us-mas { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--acento-fondo); color: var(--acento); cursor: help; }
