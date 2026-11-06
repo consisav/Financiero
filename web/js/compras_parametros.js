@@ -2,6 +2,8 @@
 // compras de la empresa conectada, en tres bloques: encargados (compras, pedidos y facturación, cada uno
 // con su usuario del sistema), inventario y ventas (quién recibe los traslados y la transacción principal
 // de ventas) y avisos por correo (orden cotizada y orden autorizada). Una fila por empresa.
+// Selector de empresa por organización: el Super Administrador Global ve todas; los demás, las empresas
+// a las que tienen acceso (empieza en la empresa conectada).
 (function () {
   const { esc } = window.UI;
   const ENCARGADOS = [
@@ -13,6 +15,7 @@
     'recibe_traslados', 'transaccion_ventas_id', 'avisos_cotizado', 'avisos_autorizado'];
   const correoValido = (c) => /^[^@\s,]+@[^@\s,]+\.[^@\s,]+$/.test(c);
 
+  let elegida = null;
   window.PANTALLAS = window.PANTALLAS || {};
   window.PANTALLAS['parametros-compras'] = async function (cont) {
     const sb = window.FIN.sb;
@@ -22,22 +25,38 @@
     const panel = cont.querySelector('.pcm');
     if (!yo.localidad_id) { panel.innerHTML = '<p class="vacio">Conéctate a una empresa para ver sus parámetros.</p>'; return; }
 
-    const [l, p, u, t] = await Promise.all([
-      sb.from('localidades').select('id, codigo, nombre_comercial, organizacion_id, organizaciones(codigo, nombre)').eq('id', yo.localidad_id).maybeSingle(),
-      sb.from('parametros_compras').select('*').eq('localidad_id', yo.localidad_id).maybeSingle(),
-      sb.from('perfiles').select('id, usuario, nombre, activo').eq('organizacion_id', yo.organizacion_id).order('usuario', { nullsFirst: false }),
-      sb.from('transacciones_contables').select('id, numero, descripcion, modulo, estado').eq('localidad_id', yo.localidad_id).order('numero')
+    // Empresas visibles (la regla de empresa conectada de app.js ya limita a quien no es el Global).
+    const [o, l] = await Promise.all([
+      sb.from('organizaciones').select('id, codigo, nombre').eq('activo', true).order('codigo'),
+      sb.from('localidades').select('id, codigo, nombre_comercial, organizacion_id').eq('activo', true).order('organizacion_id').order('correlativo')
     ]);
-    if (p.error) {
-      panel.innerHTML = `<p class="vacio">${/parametros_compras|schema cache|does not exist/.test(p.error.message) ? 'Falta instalar en Supabase el script <b>20261106000101_compras_generales_parametros.sql</b>.' : esc(p.error.message)}</p>`;
-      return;
-    }
-    const emp = l.data;
-    const usuarios = (u.data || []).filter((x) => x.activo !== false);
-    const transacciones = (t.data || []).filter((x) => x.estado !== 'INACTIVO');
-    let guardado = p.data || null;
+    let empresas = l.data || [];
+    const permitidas = window.FIN.empresas && window.FIN.empresas();
+    if (permitidas) { const ids = new Set(permitidas.map((x) => x.id)); empresas = empresas.filter((x) => ids.has(x.id)); }
+    const orgs = (o.data || []).filter((x) => empresas.some((y) => y.organizacion_id === x.id));
+    if (!empresas.some((x) => x.id === elegida)) elegida = empresas.some((x) => x.id === yo.localidad_id) ? yo.localidad_id : empresas[0]?.id || null;
+    if (!elegida) { panel.innerHTML = '<p class="vacio">No tienes acceso a ninguna empresa.</p>'; return; }
+
     const vacio = Object.fromEntries(CAMPOS.map((k) => [k, null]));
-    let datos = { ...vacio, ...(guardado || {}) };
+    let emp = null, usuarios = [], transacciones = [], guardado = null, datos = { ...vacio };
+    async function cargar() {
+      emp = empresas.find((x) => x.id === elegida);
+      emp.org = orgs.find((x) => x.id === emp.organizacion_id);
+      const [p, u, t] = await Promise.all([
+        sb.from('parametros_compras').select('*').eq('localidad_id', elegida).maybeSingle(),
+        sb.from('perfiles').select('id, usuario, nombre, activo').eq('organizacion_id', emp.organizacion_id).order('usuario', { nullsFirst: false }),
+        sb.from('transacciones_contables').select('id, numero, descripcion, modulo, estado').eq('localidad_id', elegida).order('numero')
+      ]);
+      if (p.error) {
+        panel.innerHTML = `<p class="vacio">${/parametros_compras|schema cache|does not exist/.test(p.error.message) ? 'Falta instalar en Supabase el script <b>20261106000101_compras_generales_parametros.sql</b>.' : esc(p.error.message)}</p>`;
+        return false;
+      }
+      usuarios = (u.data || []).filter((x) => x.activo !== false);
+      transacciones = (t.data || []).filter((x) => x.estado !== 'INACTIVO');
+      guardado = p.data || null;
+      datos = { ...vacio, ...(guardado || {}) };
+      return true;
+    }
 
     const valorDe = (k) => datos[k] ?? '';
     const cambios = () => CAMPOS.some((k) => String(valorDe(k)) !== String((guardado || vacio)[k] ?? ''));
@@ -64,8 +83,11 @@
             <small>Compras · Catálogos · Generales</small>
             <h2>Parámetros del módulo de compras</h2>
           </div>
-          <div class="pcm-empresa"><span>Empresa</span><b>${esc(emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—')}</b>
-            <small>${esc(emp?.organizaciones ? `${emp.organizaciones.codigo} · ${emp.organizaciones.nombre}` : '')}</small></div>
+          <label class="pcm-empresa"><span>Empresa</span>
+            ${empresas.length > 1 ? `<select data-empresa aria-label="Empresa">${orgs.map((g) => `<optgroup label="${esc(`${g.codigo} · ${g.nombre}`)}">${empresas.filter((x) => x.organizacion_id === g.id).map((x) =>
+              `<option value="${x.id}" ${x.id === elegida ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</optgroup>`).join('')}</select>`
+              : `<b>${esc(`${emp.codigo} · ${emp.nombre_comercial}`)}</b>`}
+            <small>${esc(emp.org ? `${emp.org.codigo} · ${emp.org.nombre}` : '')}${emp.id === yo.localidad_id ? ' · empresa conectada' : ''}</small></label>
           <div class="pcm-acciones">
             <span class="pcm-estado ${cambios() ? 'pendientes' : ''}">${cambios() ? 'Cambios sin guardar' : guardado ? `Guardado${quien ? ` por ${esc(quien)}` : ''}${cuando ? ` · ${window.UI.fecha(cuando).slice(0, 10)}` : ''}` : 'Sin parámetros todavía'}</span>
             ${ed ? `<button type="button" class="boton secundario-sm" data-accion="descartar" ${cambios() ? '' : 'disabled'}>Descartar</button>
@@ -126,6 +148,12 @@
       }
       estadoBotones();
     });
+    panel.addEventListener('change', async (e) => {
+      if (!e.target.matches('[data-empresa]')) return;
+      if (cambios() && !confirm('Hay cambios sin guardar en esta empresa. ¿Cambiar de empresa y descartarlos?')) { e.target.value = String(elegida); return; }
+      elegida = Number(e.target.value);
+      if (await cargar()) pintar();
+    });
     panel.addEventListener('click', async (e) => {
       const a = e.target.closest('[data-accion]');
       if (!a) return;
@@ -136,7 +164,7 @@
       if (malos.length) { err.textContent = `Revisa estos correos: ${malos.join(', ')}.`; return; }
       err.textContent = '';
       a.disabled = true;
-      const fila = { localidad_id: yo.localidad_id, organizacion_id: yo.organizacion_id, ...Object.fromEntries(CAMPOS.map((k) => [k, datos[k] === '' ? null : datos[k]])) };
+      const fila = { localidad_id: elegida, organizacion_id: emp.organizacion_id, ...Object.fromEntries(CAMPOS.map((k) => [k, datos[k] === '' ? null : datos[k]])) };
       ['avisos_cotizado', 'avisos_autorizado'].forEach((k) => { if (fila[k]) fila[k] = fila[k].split(/[,;\s]+/).filter(Boolean).join(', '); });
       const res = guardado
         ? await sb.from('parametros_compras').update(fila).eq('id', guardado.id).select().single()
@@ -148,6 +176,6 @@
       window.FIN.aviso('Parámetros guardados');
     });
 
-    pintar();
+    if (await cargar()) pintar();
   };
 })();

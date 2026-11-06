@@ -3569,3 +3569,4 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-clasif-tipos .cg-tabla td input:not([type=checkbox]), .bk-clasif-tipos .cg-tabla td select { width: 100%; min-width: 0; box-sizing: border-box; }
 .bk-clasif-tipos .cg-tabla th.cg-chk:last-child { width: 62px; }
 .bk-clasif-tipos .cg-tabla th:last-child { width: 64px; }
+.pcm-empresa select { font: inherit; font-size: 14px; font-weight: 700; padding: 4px 6px; margin: 1px 0; border: 1px solid var(--borde); border-radius: 8px; background: var(--panel); color: var(--texto); min-width: 260px; }
