@@ -1,7 +1,7 @@
 -- Presentaciones de productos de la organización 3 (Futura Farma - Mavisa), del archivo
 -- «ACT_PRESENTACIONES.xls» (35 presentaciones, códigos 1 y del 19 al 52).
---   El archivo no trae organización ni localidad (es una sola lista): se cargan en las localidades 3-01 y
---   3-02, como los demás catálogos de productos de la organización 3.
+--   El archivo no trae organización ni localidad (es una sola lista): las mismas presentaciones se cargan
+--   en TODAS las empresas (localidades) de la organización 3.
 --   1. Si ya existe en la localidad (mismo código) NO se crea: se actualiza.
 --   2. El archivo no trae columnas que no estén en la base de datos (PRESENTACION = código, DESCRIPCION).
 --   Descripciones repetidas (la base exige que no se repitan en la localidad): se conserva cada código y la
@@ -15,11 +15,11 @@ declare
   v_loc record;
   r record;
   v_nuevo boolean;
-  v_n int := 0; v_a int := 0;
+  v_n int := 0; v_a int := 0; v_emp text := '';
 begin
   select id into v_org from public.organizaciones where codigo = '3';
   if v_org is null then raise notice 'No existe la organización 3.'; return; end if;
-  for v_loc in select id, codigo from public.localidades where organizacion_id = v_org and correlativo in (1, 2) order by correlativo loop
+  for v_loc in select id, codigo from public.localidades where organizacion_id = v_org order by correlativo loop
     for r in select * from (values
     (1, 'SIN PRESENTACION'),
     (19, 'CAJA X 1'),
@@ -62,8 +62,9 @@ begin
       returning (xmax = 0) into v_nuevo;
       if v_nuevo then v_n := v_n + 1; else v_a := v_a + 1; end if;
     end loop;
+    v_emp := v_emp || case when v_emp = '' then '' else ', ' end || v_loc.codigo;
   end loop;
-  raise notice '%', format('Presentaciones: %s nuevas, %s actualizadas (en 3-01 y 3-02).', v_n, v_a);
+  raise notice '%', format('Presentaciones: %s nuevas, %s actualizadas (en %s).', v_n, v_a, v_emp);
 end;
 $migra$;
 
