@@ -256,7 +256,18 @@
           <span class="rp-nota" title="Cada organización y localidad tiene su propio catálogo de bancos y sus códigos"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(ctx.localidad(seleccion.loc)?.codigo || '')}</span></header>
         <label class="bk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar-banco placeholder="Buscar banco…" aria-label="Buscar banco"></label>
         <ul class="bk-bancos">
-          ${bancos.map((b) => {
+          ${(() => {
+            // Primero los bancos donde la empresa tiene cuentas; luego los demás bancos del sistema.
+            const nCta = (b) => cuentas.filter((c) => c.banco_id === b.id).length;
+            const con = bancos.filter((b) => nCta(b));
+            const sin = bancos.filter((b) => !nCta(b));
+            const sep = (t, n) => `<li class="bk-sep" aria-hidden="true"><span>${t}</span><small>${n}</small></li>`;
+            return (con.length ? sep('Con cuentas de la empresa', con.length) : '') + con.map(fila).join('')
+              + (sin.length ? sep('Otros bancos del sistema', sin.length) : '') + sin.map(fila).join('');
+          })()}
+        </ul>${bancos.length ? '' : ctx.vacio('La localidad no tiene bancos: créalos con «+ Banco».')}`;
+
+      function fila(b) {
             const n = cuentas.filter((c) => c.banco_id === b.id).length;
             return `
             <li class="${bancoActual && bancoActual.id === b.id ? 'actual' : ''} ${b.activo ? '' : 'inactivo'}" data-banco="${b.id}" tabindex="0" data-texto="${esc(`${b.codigo} ${b.nombre} ${b.siglas || ''}`.toLowerCase())}">
@@ -265,8 +276,7 @@
               <span class="bk-n ${n ? 'con' : ''}" title="Cuentas en esta localidad">${n}</span>
               ${ctx.admin ? `<button type="button" class="bk-editar" data-editar-banco="${b.id}" title="Modificar banco" aria-label="Modificar ${esc(b.nombre)}"><i class="ti ti-pencil" aria-hidden="true"></i></button>` : ''}
             </li>`;
-          }).join('')}
-        </ul>${bancos.length ? '' : ctx.vacio('La localidad no tiene bancos: créalos con «+ Banco».')}`;
+      }
     }
 
     function abrirBanco(b, cuentaId) {
@@ -414,6 +424,12 @@
       if (e.target.matches('[data-buscar-banco]')) {
         const q = e.target.value.trim().toLowerCase();
         ctx.pMae.querySelectorAll('li[data-banco]').forEach((li) => { li.hidden = !!q && !li.dataset.texto.includes(q); });
+        // Un separador se oculta si su grupo quedó sin bancos visibles.
+        ctx.pMae.querySelectorAll('li.bk-sep').forEach((s) => {
+          let li = s.nextElementSibling, alguno = false;
+          while (li && !li.classList.contains('bk-sep')) { if (!li.hidden) alguno = true; li = li.nextElementSibling; }
+          s.hidden = !alguno;
+        });
         return;
       }
       const form = e.target.closest('.bk-ficha');

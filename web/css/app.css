@@ -3830,3 +3830,12 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-consulta-cheques .cq-lineas th:nth-child(5), .bk-consulta-cheques .cq-lineas th:nth-child(6) { width: 104px; } .bk-consulta-cheques .cq-lineas th:nth-child(7) { width: 30px; }
 .bk-consulta-cheques .cqc-concepto { margin-bottom: 4px; }
 .bk-espacio.bk-consulta-cheques .ta-cuerpo { grid-template-rows: minmax(220px, 1fr) auto; }
+
+/* Cuentas bancarias: separadores entre los bancos con cuentas de la empresa y los demás bancos del sistema. */
+.bk-bancos li.bk-sep { display: flex; align-items: center; gap: 8px; padding: 8px 8px 4px; cursor: default; background: none; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
+.bk-bancos li.bk-sep::after { content: ''; order: 3; flex: 1; height: 1px; background: var(--borde); }
+.bk-bancos li.bk-sep small { order: 2; font-size: 10.5px; font-weight: 600; }
+.bk-bancos li.bk-sep span { order: 1; }
+.bk-bancos li.bk-sep:hover { background: none; }
+.bk-bancos li.bk-sep[hidden] { display: none; }
+.bk-bancos li.bk-sep + li.bk-sep, .bk-bancos li.bk-sep ~ li.bk-sep { margin-top: 6px; }
