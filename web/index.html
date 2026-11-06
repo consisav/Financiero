@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
-  <link rel="stylesheet" href="css/app.css?v=20261106a">
+  <link rel="stylesheet" href="css/app.css?v=20261106b">
 </head>
 <body>
   <!-- Inicio de sesión: pantalla dividida -->
@@ -28,8 +28,8 @@
     <main class="acceso-panel">
       <form id="f-entrar" class="formulario" data-paso="entrar">
         <h1>Iniciar sesión</h1>
-        <p class="sub">Ingresa con tu correo corporativo.</p>
-        <label>Correo<input name="correo" type="email" autocomplete="email" required placeholder="nombre@consisav.com"></label>
+        <p class="sub">Ingresa con tu usuario o tu correo corporativo.</p>
+        <label>Usuario o correo<input name="correo" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" required placeholder="Oasturias o nombre@consisav.com"></label>
         <label>Contraseña<input name="clave" type="password" autocomplete="current-password" required></label>
         <button type="submit" class="primario">Iniciar sesión</button>
         <p class="enlaces"><a href="#" data-ir="recuperar">¿Olvidaste tu contraseña?</a> · <a href="#" data-ir="registrar">Crear cuenta</a></p>
@@ -59,6 +59,13 @@
         <button type="submit" class="primario">Guardar contraseña</button>
         <p class="enlaces"><a href="#" data-salir>Cerrar sesión</a></p>
       </form>
+
+      <div id="elegir-empresa" class="formulario" data-paso="empresa" hidden>
+        <h1>¿A qué empresa te conectas?</h1>
+        <p class="sub">Tienes acceso a varias empresas: elige con cuál vas a trabajar. Verás solo su información y tu rol en ella; puedes cambiarla después en el encabezado.</p>
+        <div class="emp-lista" data-empresas></div>
+        <p class="enlaces"><a href="#" data-salir>Cerrar sesión</a></p>
+      </div>
 
       <div id="pendiente" class="formulario" data-paso="pendiente" hidden>
         <h1>Cuenta pendiente</h1>
@@ -106,55 +113,55 @@
   <div id="aviso" class="aviso" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="js/config.js?v=20261106a"></script>
-  <script src="js/menu.js?v=20261106a"></script>
-  <script src="js/ui.js?v=20261106a"></script>
-  <script src="js/app.js?v=20261106a"></script>
-  <script src="js/usuarios.js?v=20261106a"></script>
-  <script src="js/generar_usuario.js?v=20261106a"></script>
-  <script src="js/parametros.js?v=20261106a"></script>
-  <script src="js/modulos.js?v=20261106a"></script>
-  <script src="js/roles_modulos.js?v=20261106a"></script>
-  <script src="js/geografia.js?v=20261106a"></script>
-  <script src="js/organizaciones.js?v=20261106a"></script>
-  <script src="js/jerarquia.js?v=20261106a"></script>
-  <script src="js/tipos_cuenta.js?v=20261106a"></script>
-  <script src="js/cuentas.js?v=20261106a"></script>
-  <script src="js/monedas.js?v=20261106a"></script>
-  <script src="js/tipos_partida.js?v=20261106a"></script>
-  <script src="js/tickets_comun.js?v=20261106a"></script>
-  <script src="js/tickets.js?v=20261106a"></script>
-  <script src="js/tickets_asignacion.js?v=20261106a"></script>
-  <script src="js/tickets_seguimiento.js?v=20261106a"></script>
-  <script src="js/tickets_cierre.js?v=20261106a"></script>
-  <script src="js/tickets_visualizacion.js?v=20261106a"></script>
-  <script src="js/partidas.js?v=20261106a"></script>
-  <script src="js/cierre_mes.js?v=20261106a"></script>
-  <script src="js/objetos_contables.js?v=20261106a"></script>
-  <script src="js/rubros_presupuesto.js?v=20261106a"></script>
-  <script src="js/presupuesto.js?v=20261106a"></script>
-  <script src="js/bancos.js?v=20261106a"></script>
-  <script src="js/bancos_movimientos.js?v=20261106a"></script>
-  <script src="js/bancos_solicitudes.js?v=20261106a"></script>
-  <script src="js/bancos_generacion.js?v=20261106a"></script>
-  <script src="js/compras.js?v=20261106a"></script>
-  <script src="js/cajas.js?v=20261106a"></script>
-  <script src="js/compras_catalogos.js?v=20261106a"></script>
-  <script src="js/compras_facturas.js?v=20261106a"></script>
-  <script src="js/compras_registros.js?v=20261106a"></script>
-  <script src="js/compras_ordenes.js?v=20261106a"></script>
-  <script src="js/compras_cxp.js?v=20261106a"></script>
-  <script src="js/compras_notas.js?v=20261106a"></script>
-  <script src="js/compras_kardex.js?v=20261106a"></script>
-  <script src="js/compras_consulta.js?v=20261106a"></script>
-  <script src="js/administracion_reportes.js?v=20261106a"></script>
-  <script src="js/manual_modulo.js?v=20261106a"></script>
-  <script src="js/ventas_catalogos.js?v=20261106a"></script>
-  <script src="js/ventas_clientes.js?v=20261106a"></script>
-  <script src="js/bancos_conciliacion.js?v=20261106a"></script>
-  <script src="js/bancos_disponibilidad.js?v=20261106a"></script>
-  <script src="js/backup.js?v=20261106a"></script>
-  <script src="js/replicacion.js?v=20261106a"></script>
-  <script src="js/replicacion_catalogos.js?v=20261106a"></script>
+  <script src="js/config.js?v=20261106b"></script>
+  <script src="js/menu.js?v=20261106b"></script>
+  <script src="js/ui.js?v=20261106b"></script>
+  <script src="js/app.js?v=20261106b"></script>
+  <script src="js/usuarios.js?v=20261106b"></script>
+  <script src="js/generar_usuario.js?v=20261106b"></script>
+  <script src="js/parametros.js?v=20261106b"></script>
+  <script src="js/modulos.js?v=20261106b"></script>
+  <script src="js/roles_modulos.js?v=20261106b"></script>
+  <script src="js/geografia.js?v=20261106b"></script>
+  <script src="js/organizaciones.js?v=20261106b"></script>
+  <script src="js/jerarquia.js?v=20261106b"></script>
+  <script src="js/tipos_cuenta.js?v=20261106b"></script>
+  <script src="js/cuentas.js?v=20261106b"></script>
+  <script src="js/monedas.js?v=20261106b"></script>
+  <script src="js/tipos_partida.js?v=20261106b"></script>
+  <script src="js/tickets_comun.js?v=20261106b"></script>
+  <script src="js/tickets.js?v=20261106b"></script>
+  <script src="js/tickets_asignacion.js?v=20261106b"></script>
+  <script src="js/tickets_seguimiento.js?v=20261106b"></script>
+  <script src="js/tickets_cierre.js?v=20261106b"></script>
+  <script src="js/tickets_visualizacion.js?v=20261106b"></script>
+  <script src="js/partidas.js?v=20261106b"></script>
+  <script src="js/cierre_mes.js?v=20261106b"></script>
+  <script src="js/objetos_contables.js?v=20261106b"></script>
+  <script src="js/rubros_presupuesto.js?v=20261106b"></script>
+  <script src="js/presupuesto.js?v=20261106b"></script>
+  <script src="js/bancos.js?v=20261106b"></script>
+  <script src="js/bancos_movimientos.js?v=20261106b"></script>
+  <script src="js/bancos_solicitudes.js?v=20261106b"></script>
+  <script src="js/bancos_generacion.js?v=20261106b"></script>
+  <script src="js/compras.js?v=20261106b"></script>
+  <script src="js/cajas.js?v=20261106b"></script>
+  <script src="js/compras_catalogos.js?v=20261106b"></script>
+  <script src="js/compras_facturas.js?v=20261106b"></script>
+  <script src="js/compras_registros.js?v=20261106b"></script>
+  <script src="js/compras_ordenes.js?v=20261106b"></script>
+  <script src="js/compras_cxp.js?v=20261106b"></script>
+  <script src="js/compras_notas.js?v=20261106b"></script>
+  <script src="js/compras_kardex.js?v=20261106b"></script>
+  <script src="js/compras_consulta.js?v=20261106b"></script>
+  <script src="js/administracion_reportes.js?v=20261106b"></script>
+  <script src="js/manual_modulo.js?v=20261106b"></script>
+  <script src="js/ventas_catalogos.js?v=20261106b"></script>
+  <script src="js/ventas_clientes.js?v=20261106b"></script>
+  <script src="js/bancos_conciliacion.js?v=20261106b"></script>
+  <script src="js/bancos_disponibilidad.js?v=20261106b"></script>
+  <script src="js/backup.js?v=20261106b"></script>
+  <script src="js/replicacion.js?v=20261106b"></script>
+  <script src="js/replicacion_catalogos.js?v=20261106b"></script>
 </body>
 </html>

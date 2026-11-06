@@ -15,6 +15,8 @@
   let perfil = null;      // fila de public.perfiles del usuario actual
   let permisos = {};      // modulo -> { puede_ver, puede_editar }
   let roles = [];
+  let rolesCache = [];
+  const CLAVE_EMPRESA = 'fin.empresa_elegida'; // en esta pestaña ya se eligió la empresa de la sesión
   let empresas = null;    // empresas del usuario [{ id, codigo, nombre_comercial, organizacion_id, rol_id }]; null = todas (Super Administrador o sin script 96)
 
   // Lo que necesitan las pantallas de catálogos (js/geografia.js, js/organizaciones.js…)
@@ -93,7 +95,17 @@
   }
 
   alEnviar('f-entrar', async (d) => {
-    const { error } = await sb.auth.signInWithPassword({ email: d.correo, password: d.clave });
+    let correo = String(d.correo || '').trim();
+    // Sin «@» es el código de usuario: se busca el correo de su cuenta (script 97).
+    if (!correo.includes('@')) {
+      const r = await sb.rpc('correo_para_ingresar', { p_usuario: correo });
+      if (r.error && !/correo_para_ingresar/.test(r.error.message || '')) throw r.error;
+      if (!r.data) throw new Error('Invalid login credentials');
+      correo = r.data;
+    }
+    // Al iniciar sesión se vuelve a preguntar la empresa (si el usuario tiene varias).
+    try { sessionStorage.removeItem(CLAVE_EMPRESA); } catch (e) { /* sin almacenamiento */ }
+    const { error } = await sb.auth.signInWithPassword({ email: correo, password: d.clave });
     if (error) throw error;
   });
 
@@ -177,6 +189,9 @@
       const pe = await sb.from('perfil_empresas').select('rol_id, localidad_id, localidades(id, codigo, nombre_comercial, organizacion_id, activo)').eq('perfil_id', perfil.id).eq('activo', true);
       if (!pe.error && pe.data?.length) empresas = pe.data.filter((x) => x.localidades?.activo !== false).map((x) => ({ ...x.localidades, rol_id: x.rol_id })).sort((x, y) => x.codigo.localeCompare(y.codigo));
     }
+    rolesCache = rs || [];
+    if (await elegirEmpresa()) return;
+    aplicarAlcance();
     roles = (rs || []).sort((a, b) => (a.orden ?? 99) - (b.orden ?? 99) || a.nombre.localeCompare(b.nombre));
 
     $('acceso').hidden = true;
@@ -232,6 +247,7 @@
       selEmp.disabled = true;
       const { error } = await sb.rpc('cambiar_empresa_activa', { p_localidad: Number(selEmp.value) });
       if (error) { selEmp.disabled = false; selEmp.value = String(perfil.localidad_id); return aviso(error.message); }
+      try { sessionStorage.setItem(CLAVE_EMPRESA, selEmp.value); } catch (e) { /* sin almacenamiento */ }
       location.reload();
     });
     const img = caja.querySelector('.marca-logo');
@@ -239,6 +255,48 @@
     const esl = caja.querySelector('.marca-eslogan');
     if (esl) esl.addEventListener('error', () => esl.remove());
     caja.hidden = false;
+  }
+
+  // Varias empresas: al iniciar sesión se pregunta a cuál se conecta (el Super Administrador entra a
+  // todas sin preguntar). Con una sola, se activa esa. Devuelve true mientras espera la elección.
+  async function elegirEmpresa() {
+    if (!empresas || perfil.rol_id === 'superadministrador') return false;
+    let elegida = null;
+    try { elegida = sessionStorage.getItem(CLAVE_EMPRESA); } catch (e) { /* sin almacenamiento */ }
+    const activar = async (id) => {
+      const { error } = await sb.rpc('cambiar_empresa_activa', { p_localidad: id });
+      if (error) { mensaje(traducir(error), true); return; }
+      try { sessionStorage.setItem(CLAVE_EMPRESA, String(id)); } catch (e) { /* sin almacenamiento */ }
+      location.reload();
+    };
+    if (empresas.length === 1) {
+      if (empresas[0].id !== perfil.localidad_id) { await activar(empresas[0].id); return true; }
+      return false;
+    }
+    if (elegida && empresas.some((x) => String(x.id) === elegida && x.id === perfil.localidad_id)) return false;
+    const rolDe = (r) => ((roles.length ? roles : rolesCache).find((x) => x.id === r) || {}).nombre || r;
+    const caja = document.querySelector('[data-empresas]');
+    caja.innerHTML = empresas.map((x) => `<button type="button" class="emp-opcion ${x.id === perfil.localidad_id ? 'ultima' : ''}" data-empresa="${x.id}">
+        <span class="emp-cod">${esc(x.codigo)}</span><span class="emp-nom"><b>${esc(x.nombre_comercial)}</b><small>${esc(rolDe(x.rol_id))}${x.id === perfil.localidad_id ? ' · última usada' : ''}</small></span><i class="ti ti-chevron-right" aria-hidden="true"></i></button>`).join('');
+    caja.onclick = (e) => { const b = e.target.closest('[data-empresa]'); if (b) { caja.querySelectorAll('button').forEach((x) => { x.disabled = true; }); activar(Number(b.dataset.empresa)); } };
+    mostrarAcceso('empresa');
+    return true;
+  }
+
+  // Usuario que no es Super Administrador: ve y trabaja solo con la información de su empresa activa.
+  // Las consultas de empresas (localidades) y organizaciones de todas las pantallas se limitan a ellas.
+  function aplicarAlcance() {
+    if (!sb.__fromOriginal) sb.__fromOriginal = sb.from.bind(sb);
+    const original = sb.__fromOriginal;
+    if (perfil.rol_id === 'superadministrador' || !perfil.localidad_id || !empresas) { sb.from = original; return; }
+    const limite = { localidades: perfil.localidad_id, organizaciones: perfil.organizacion_id };
+    sb.from = (tabla) => {
+      const q = original(tabla);
+      if (!(tabla in limite)) return q;
+      const select = q.select.bind(q);
+      q.select = (...args) => select(...args).eq('id', limite[tabla]);
+      return q;
+    };
   }
 
   // Empresa activa: selector con las empresas del usuario y su rol (el Super Administrador, todas las

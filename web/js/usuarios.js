@@ -268,7 +268,9 @@
           if (estado.pe && u.rol_id !== 'superadministrador') {
             const { data: antes } = await sb.from('perfil_empresas').select('localidad_id, rol_id').eq('perfil_id', u.id);
             const previas = new Map((antes || []).map((x) => [x.localidad_id, x.rol_id]));
-            const quitar = [...previas.keys()].filter((id) => !elegidas.some((x) => x.localidad_id === id));
+            // Solo se quitan empresas que se ven en la tabla (un usuario limitado a su empresa no toca las demás).
+            const enTabla = new Set(estado.locs.map((x) => x.id));
+            const quitar = [...previas.keys()].filter((id) => enTabla.has(id) && !elegidas.some((x) => x.localidad_id === id));
             if (quitar.length) { const r = await sb.from('perfil_empresas').delete().eq('perfil_id', u.id).in('localidad_id', quitar); if (r.error) throw r.error; }
             const nuevas = elegidas.filter((x) => !previas.has(x.localidad_id));
             if (nuevas.length) { const r = await sb.from('perfil_empresas').insert(nuevas.map((x) => ({ perfil_id: u.id, localidad_id: x.localidad_id, rol_id: superAdmin ? x.rol_id : (d.rol_id || u.rol_id) }))); if (r.error) throw r.error; }
