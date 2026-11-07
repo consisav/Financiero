@@ -4185,7 +4185,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bmc-reportes .boton b { font-size: 12.5px; } .bmc-reportes .boton small { font-size: 10px; opacity: .85; font-weight: 500; }
 /* Detalle compacto de depósitos, notas y cheques: título y acciones en una sola fila, cabecera más baja y
    botones de reporte pequeños en la barra de la lista. */
-.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo { display: flex; flex-wrap: nowrap; align-items: center; padding-bottom: 4px; margin-bottom: 4px; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto { min-width: 0; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 11px; }
@@ -4204,11 +4204,11 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .tg-cab .bmc-reportes .boton { height: 34px; padding: 3px 10px 3px 8px; }
 .tg-cab .bmc-reportes .boton .ti { font-size: 17px; }
 .tg-cab .bmc-reportes .boton small { display: none; }
-.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bk-detalle { display: flex; flex-direction: column; overflow: hidden; }
-.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bk-detalle > .bm-form { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bm-form > .bm-pestanas { flex: 1 1 0; min-height: 90px; display: flex; flex-direction: column; overflow: hidden; }
-.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bm-form > .bm-pestanas > .bm-panel:not([hidden]) { flex: 1 1 0; min-height: 0; overflow: auto; }
-.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bm-form > .bm-pestanas .pc-lineas { max-height: none; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .bk-detalle { display: flex; flex-direction: column; overflow: hidden; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .bk-detalle > .bm-form { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .bm-form > .bm-pestanas { flex: 1 1 0; min-height: 90px; display: flex; flex-direction: column; overflow: hidden; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .bm-form > .bm-pestanas > .bm-panel:not([hidden]) { flex: 1 1 0; min-height: 0; overflow: auto; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .bm-form > .bm-pestanas .pc-lineas { max-height: none; }
 .bk-movimientos:not(.bk-conc) .bm-cabecera .campo > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bk-movimientos:not(.bk-conc) .bm-cabecera .ta-col-titulo { font-size: 11.5px; }
 /* Datos y tercero en dos filas cada uno: la descripción ocupa la fila completa y «Clientes varios» va junto
@@ -4218,7 +4218,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-c3 { grid-column: span 3; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-check { grid-column: span 1; padding-bottom: 6px; white-space: nowrap; font-size: 12px; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-radios { grid-column: 1 / -1; }
-.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
 .bk-movimientos:not(.bk-conc) .tg-cab h2 { white-space: nowrap; }
 .bk-movimientos:not(.bk-conc) .tg-cab .ta-total { white-space: nowrap; }
 .bk-movimientos:not(.bk-conc) .bm-control .bm-comprobante { padding: 3px 8px; }
@@ -4283,3 +4283,113 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .dsp-part i.neg::after { background: #e4574c; }
 .dsp-part small { font-size: 11.5px; font-weight: 700; min-width: 44px; text-align: right; }
 @media (max-width: 1500px) { .dsp-cx-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ===== Cajas (script 120) ===== */
+/* Cajas chicas · selección de caja a operar: lista amplia y la ficha resumida de la caja elegida. */
+.bk-cajas:not(.cc-en-detalle) .ta-cuerpo { grid-template-rows: minmax(0, 1fr) auto !important; }
+.bk-cajas:not(.cc-en-detalle) .bk-filtros { grid-template-columns: auto minmax(240px, 1fr) minmax(130px, .5fr) auto; }
+.cs-ficha { display: grid; grid-template-columns: minmax(260px, 1.2fr) minmax(0, 3fr) auto; gap: 14px; align-items: center; padding: 10px 14px; }
+.cs-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cs-id small { display: block; font-size: 11px; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-id h2 { margin: 1px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.cs-kpis > div { display: flex; flex-direction: column; align-items: flex-end; padding: 6px 10px; border-radius: 12px; background: var(--fondo); min-width: 0; }
+.cs-kpis span { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; }
+.cs-kpis b { font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cs-kpis .alerta { background: #fdeceb; }
+.cs-kpis .alerta b { color: #b23a32; }
+.cs-acc { display: flex; gap: 8px; }
+/* Cajas chicas · detalle: cabecera con «Ver cajas» y cinco bloques arriba. */
+.cc-en-detalle .bk-filtros { grid-template-columns: auto repeat(3, minmax(0, auto)) 1fr !important; align-items: center; gap: 18px; }
+.cd-dato small { display: block; font-size: 10.5px; color: var(--tenue); white-space: nowrap; }
+.cd-dato b { display: block; font-size: 14px; white-space: nowrap; }
+.cd-ver { justify-self: end; background: linear-gradient(180deg, #23955a, #1b7c49); border: 1px solid #1d7a46; color: #fff; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 10px; font-weight: 700; }
+.cd-arriba { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(260px, 1.05fr) minmax(300px, 1.35fr) minmax(220px, .9fr) minmax(170px, .65fr); gap: 8px; align-items: stretch; }
+.cd-arriba .bm-bloque { margin: 0; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cd-subcajas .pc-lineas { max-height: 150px; overflow: auto; }
+.cd-subcajas td, .cd-subcajas th { padding-top: 3px; padding-bottom: 3px; }
+.cd-abierta { color: #1f7a45; }
+.cd-campos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 8px; }
+.cd-campos .cd-c2 { grid-column: span 2; }
+.cd-campos .campo span { font-size: 11px; }
+.cd-campos input, .cd-campos select { padding-top: 4px; padding-bottom: 4px; width: 100%; }
+.cd-botones { display: flex; gap: 6px; flex-wrap: wrap; }
+.cd-fecha { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.cd-creacion { margin: 0; font-size: 11px; color: var(--tenue); }
+.cd-creacion b { color: var(--texto); }
+.cd-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.cd-kpis > div { display: flex; flex-direction: column; align-items: flex-end; padding: 5px 10px; border-radius: 11px; background: var(--fondo); }
+.cd-kpis > div:first-child { grid-column: 1 / -1; background: var(--acento-fondo); }
+.cd-kpis span { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; }
+.cd-kpis b { font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cd-kpis small { font-size: 10.5px; color: var(--tenue); }
+.cd-kpis .alerta { background: #fdeceb; }
+.cd-kpis .alerta b { color: #b23a32; }
+.cd-kpis .ok b { color: #1f7a45; }
+.cd-reportes { background: color-mix(in srgb, #f5c542 10%, var(--panel)); }
+.cd-formato { display: inline-flex; gap: 4px; background: var(--fondo); border-radius: 9px; padding: 3px; align-self: flex-start; }
+.cd-formato button { border: 0; background: none; padding: 4px 10px; border-radius: 7px; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--tenue); cursor: pointer; display: inline-flex; gap: 5px; align-items: center; }
+.cd-formato button.activo.cd-f-PDF { background: #fff; color: #b23a32; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+.cd-formato button.activo.cd-f-EXCEL { background: #fff; color: #1b7c49; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+.cd-rep-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.cd-rep-botones .boton { justify-content: center; font-size: 12px; padding: 4px 6px; }
+.cd-reportes .campo span { font-size: 11px; }
+.cd-reportes select { padding-top: 3px; padding-bottom: 3px; }
+.cd-estado-v { align-self: flex-start; font-weight: 800; font-size: 12px; letter-spacing: .06em; padding: 3px 10px; border-radius: 8px; }
+.cd-estado-v.vigente { background: #e3f4ea; color: #1f7a45; }
+.cd-estado-v.cerrada { background: #e6ebf3; color: #3b4a63; }
+.cd-estado dl { margin: 0; display: grid; gap: 2px; }
+.cd-estado dt { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.cd-estado dd { margin: 0 0 2px; font-size: 12.5px; }
+.cd-tabs { display: flex; gap: 4px; background: var(--fondo); border-radius: 11px; padding: 3px; align-self: flex-start; margin-bottom: 6px; }
+.cd-tabs button { border: 0; background: none; padding: 6px 14px; border-radius: 9px; font: inherit; font-size: 13px; font-weight: 700; color: var(--tenue); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.cd-tabs button b { font-size: 11px; padding: 0 6px; border-radius: 8px; background: var(--panel); color: var(--texto); }
+.cd-tabs button.activa { background: var(--panel); color: var(--acento); box-shadow: 0 1px 3px rgba(15, 27, 45, .12); }
+.cc-en-detalle .bk-detalle { flex-direction: column; }
+.cc-en-detalle .bk-detalle > .cc-docs { flex: 1; min-height: 0; }
+.cd-liq { border: 1px solid var(--borde); border-radius: 14px; padding: 12px 14px; background: var(--panel); display: flex; flex-direction: column; gap: 10px; }
+.cd-liq-cab { display: grid; grid-template-columns: 180px 160px auto auto; gap: 18px; align-items: end; }
+.cd-fondos { max-width: 1100px; }
+/* Definición de Cajas: lista a la izquierda y la ficha a la derecha. */
+.bk-espacio.dc-def .ta-cuerpo { grid-template-columns: minmax(380px, .85fr) minmax(0, 1.6fr) !important; grid-template-rows: minmax(0, 1fr) !important; }
+.dc-def .bk-detalle { overflow: auto; }
+.dc-tabla td small { display: block; font-size: 11px; color: var(--tenue); overflow: hidden; text-overflow: ellipsis; }
+.dc-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 10px; }
+.dc-grid .bm-bloque { margin: 0; padding: 10px 12px; }
+.dc-campos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 10px; align-items: end; }
+.dc-campos .dc-c2 { grid-column: span 2; }
+.dc-campos .dc-c3 { grid-column: span 3; }
+.dc-campos.dc-tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dc-campos input, .dc-campos select { width: 100%; }
+.dc-activa { align-self: center; }
+.dc-derecha { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dc-checks { display: flex; gap: 20px; margin: 2px 0 8px; }
+.dc-tipos .ta-col-titulo { display: flex; align-items: center; gap: 8px; }
+.dc-tipos-acc { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; }
+.dc-tipos-tabla { max-height: 230px; overflow: auto; }
+.dc-tipos-tabla input { width: 100%; padding: 3px 6px; }
+.dc-control dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 12px; }
+@media (max-width: 1500px) { .dc-grid { grid-template-columns: 1fr; } .cd-arriba { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Liquidación de Cajas Chicas. */
+.bk-espacio.lq-cajas .ta-cuerpo { grid-template-rows: minmax(0, 1fr) auto !important; }
+.lq-cajas .bk-filtros .lq-caja select { min-width: 280px; }
+.lq-tabla td small { display: block; font-size: 11px; color: var(--tenue); overflow: hidden; text-overflow: ellipsis; }
+.lq-tabla .lq-ck { text-align: center; }
+.lq-tabla tr.lq-marcada td { background: color-mix(in srgb, #23955a 8%, transparent); }
+.lq-abajo { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 2.2fr); gap: 10px; padding: 4px; }
+.lq-abajo .bm-bloque { margin: 0; padding: 10px 12px; }
+.lq-caja-info dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; margin: 0 0 8px; }
+.lq-tipo { display: inline-flex; gap: 4px; background: var(--fondo); border-radius: 10px; padding: 3px; margin-bottom: 8px; }
+.lq-tipo button { border: 0; background: none; padding: 5px 12px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; color: var(--tenue); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.lq-tipo button.activo { background: var(--panel); color: var(--acento); box-shadow: 0 1px 3px rgba(15, 27, 45, .12); }
+.lq-campos { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: 8px 10px; align-items: end; }
+.lq-campos input, .lq-campos select { width: 100%; }
+.lq-total { display: flex; flex-direction: column; align-items: flex-end; padding: 6px 10px; border-radius: 11px; background: var(--fondo); }
+.lq-total span { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; }
+.lq-total b { font-size: 17px; font-variant-numeric: tabular-nums; }
+.lq-total.principal { background: var(--acento-fondo); }
+.lq-total.principal b { color: var(--acento); }
+.lq-pie { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 8px; }
+.cd-arriba > .bm-bloque, .dc-grid > .bm-bloque, .dc-grid > .dc-derecha, .lq-abajo > .bm-bloque, .dc-derecha > .bm-bloque { grid-column: auto !important; grid-row: auto !important; }
+.lq-tabla th.lq-ck { overflow: visible; } .lq-tabla th.lq-ck .pc-check { justify-content: center; font-size: 11px; }
+.dc-campos { align-items: start; } .dc-campos .dc-activa { align-self: end; padding-bottom: 8px; } .dc-campos .bs-req-num { align-self: end; }

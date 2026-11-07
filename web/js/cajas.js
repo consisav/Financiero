@@ -41,6 +41,8 @@
     let lineas = [];
     let verContable = false;
     let tipoReporte = 'TODOS';
+    let pestanaDet = 'DOCUMENTOS';   // Documentos o Liquidación
+    let formatoRep = 'PDF';           // PDF o Excel
     let buscar = '';
 
     const contable = (id) => contables.find((x) => x.id === id);
@@ -59,8 +61,10 @@
     function pintarFiltros() {
       ctx.titulo = 'Selección de caja a operar';
       ctx.filtros(`<label class="campo"><span>Cajas</span><select name="estado">${[['ACTIVAS', 'Activas'], ['TODAS', 'Todas']].map(([k, t]) => `<option value="${k}" ${f.estado === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`,
-        `${ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nueva-caja"><i class="ti ti-plus" aria-hidden="true"></i> Nueva caja</button>' : ''}
-         <button type="button" class="boton primario-sm" data-accion="ir-detalle" ${caja ? '' : 'disabled'}>Ir a detalle <i class="ti ti-arrow-right" aria-hidden="true"></i></button>`);
+        `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="cajas-pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Cajas a operar</small></span></button>
+         <button type="button" class="boton cqc-excel" data-accion="cajas-excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Cajas a operar</small></span></button>
+         ${ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nueva-caja" title="Se crea en Cajas · Definición de Cajas"><i class="ti ti-plus" aria-hidden="true"></i> Nueva caja</button>' : ''}
+         <button type="button" class="boton primario-sm cc-ir" data-accion="ir-detalle" ${caja ? '' : 'disabled'}>Ir a detalle <i class="ti ti-arrow-right" aria-hidden="true"></i></button></div>`);
     }
 
     async function iniciar() {
@@ -99,7 +103,7 @@
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       cajas = data || [];
       const ids = cajas.map((c) => c.id);
-      const { data: ps } = ids.length ? await sb.from('caja_periodos_resumen').select('id, caja_id, numero, anio, mes, estado, liquidado').in('caja_id', ids).order('numero', { ascending: false }) : { data: [] };
+      const { data: ps } = ids.length ? await sb.from('caja_periodos_resumen').select('id, caja_id, numero, anio, mes, estado, liquidado, anticipo_valor, adelanto_valor, disponible, documentos').in('caja_id', ids).order('numero', { ascending: false }) : { data: [] };
       ultimo = new Map();
       (ps || []).forEach((p) => { if (!ultimo.has(p.caja_id)) ultimo.set(p.caja_id, p); });
       const guardada = Number(leerSesion('fin.caja'));
@@ -111,27 +115,25 @@
 
     function pintarCajas() {
       const q = buscar.trim().toLowerCase();
-      const filas = cajas.filter((c) => !q || [c.codigo, c.nombre, c.responsable, c.tipo_caja].some((v) => String(v || '').toLowerCase().includes(q)));
-      const cc = (id) => { const x = centro(id); return x ? `<span title="${esc(x.nombre)}">${esc(x.codigo)}</span>` : '<span class="tk-tenue">—</span>'; };
+      const filas = cajas.filter((c) => !q || [c.codigo, c.nombre, c.responsable, c.tipo_caja, contable(c.cuenta_id)?.codigo].some((v) => String(v || '').toLowerCase().includes(q)));
       ctx.pMae.innerHTML = `
         <header class="tk-bandeja-cab cc-cab">
-          <h2>Cajas de la empresa <small>${cajas.length}</small></h2>
+          <h2>Selección de caja a operar <small>${cajas.length}</small></h2>
           <span class="cc-ayuda"><i class="ti ti-hand-click" aria-hidden="true"></i> Elige la caja y presiona «Ir a detalle» (o doble clic en la fila).</span>
-          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar caja, responsable…" value="${esc(buscar)}" aria-label="Buscar cajas"></label>
+          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar caja, responsable, cuenta…" value="${esc(buscar)}" aria-label="Buscar cajas"></label>
         </header>
         <div class="ta-tabla cc-tabla">
-          <table>
-            <thead><tr><th class="num">Caja</th><th>Nombre</th><th>Responsable</th><th>Centro costo</th><th>Centro alterno</th><th>Tipo caja</th><th class="cc-mod">Nor</th><th class="cc-mod">Liq</th><th class="num">Fondo</th><th>Subcaja actual</th><th>Estado</th></tr></thead>
+          <table class="bmc-tabla cs-tabla"><colgroup><col style="width:58px"><col><col style="width:15%"><col style="width:24%"><col style="width:130px"><col style="width:150px"><col style="width:120px"><col style="width:96px"></colgroup>
+            <thead><tr><th class="num">Caja</th><th>Nombre</th><th>Responsable</th><th>Cuenta contable asociada</th><th class="num">Fondo</th><th>Subcaja actual</th><th class="num">Disponible</th><th>Estado</th></tr></thead>
             <tbody>
-              ${filas.map((c) => { const u = ultimo.get(c.id); return `<tr data-caja="${c.id}" class="${caja && caja.id === c.id ? 'actual' : ''} ${c.activa ? '' : 'pc-anulada'}" tabindex="0">
-                <td class="num fuerte">${c.codigo}</td><td class="fuerte cc-nombre">${esc(c.nombre)}</td><td>${esc(c.responsable || '')}</td>
-                <td>${cc(c.centro_costo_id)}</td><td>${cc(c.centro_alterno_id)}</td><td><span class="pc-tipo">${esc(c.tipo_caja)}</span></td>
-                <td class="cc-mod"><i class="ti ${c.modalidad === 'NORMAL' ? 'ti-circle-dot cc-si' : 'ti-circle cc-no'}" aria-label="${c.modalidad === 'NORMAL' ? 'Normal' : ''}"></i></td>
-                <td class="cc-mod"><i class="ti ${c.modalidad === 'LIQUIDACION' ? 'ti-circle-dot cc-si' : 'ti-circle cc-no'}" aria-label="${c.modalidad === 'LIQUIDACION' ? 'Liquidación' : ''}"></i></td>
+              ${filas.map((c) => { const u = ultimo.get(c.id); const k = contable(c.cuenta_id); return `<tr data-caja="${c.id}" class="${caja && caja.id === c.id ? 'actual' : ''} ${c.activa ? '' : 'pc-anulada'}" tabindex="0">
+                <td class="num fuerte">${c.codigo}</td><td title="${esc(c.nombre)}"><b>${esc(c.nombre)}</b><small>${esc(c.tipo_caja)} · ${c.modalidad === 'NORMAL' ? 'normal' : 'liquidación'}</small></td><td>${esc(c.responsable || '')}</td>
+                <td title="${esc(k ? `${k.codigo} · ${k.nombre}` : '')}"><b class="bmc-n">${esc(k?.codigo || '—')}</b><small>${esc(k?.nombre || 'Sin cuenta: defínela en Definición de Cajas')}</small></td>
                 <td class="num">${esc(simbolo(c.moneda_id))} ${fmt.monto(c.monto_fondo)}</td>
-                <td>${u ? `Subcaja ${u.numero} · ${esc(mesTxt(u).toLowerCase())}` : '<span class="tk-tenue">Sin subcajas</span>'}</td>
+                <td>${u ? `<b>Subcaja ${u.numero}</b><small>${esc(mesTxt(u).toLowerCase())} · ${u.documentos || 0} doc.</small>` : '<span class="tk-tenue">Sin subcajas</span>'}</td>
+                <td class="num ${u && Number(u.disponible) < 0 ? 'pc-rojo' : ''}">${u ? fmt.monto(u.disponible) : '—'}</td>
                 <td>${!c.activa ? '<span class="pc-marca anulada">Inactiva</span>' : u ? `<span class="pc-marca ${u.estado === 'ABIERTA' ? 'pendiente' : 'definitiva'}">${u.estado === 'ABIERTA' ? 'Abierta' : 'Liquidada'}</span>` : '<span class="pc-marca aprobada">Activa</span>'}</td></tr>`; }).join('')
-                || `<tr><td colspan="11" class="tk-vacio"><i class="ti ti-cash-register" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : cajas.length ? 'Ninguna caja coincide con la búsqueda.' : `La empresa no tiene cajas${ctx.admin ? ': crea la primera con «Nueva caja».' : '.'}`}</td></tr>`}
+                || `<tr><td colspan="8" class="tk-vacio"><i class="ti ti-cash-register" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : cajas.length ? 'Ninguna caja coincide con la búsqueda.' : `La empresa no tiene cajas${ctx.admin ? ': créala en Cajas · Definición de Cajas («Nueva caja»).' : '.'}`}</td></tr>`}
             </tbody>
           </table>
         </div>`;
@@ -143,72 +145,30 @@
       <datalist id="cc-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
       <datalist id="cc-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>`;
 
-    function pintarCaja(v0) {
+    function pintarCaja() {
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-cash-register'); return; }
       const c = caja;
-      const dis = ctx.admin ? '' : 'disabled';
-      const base = ctx.monedaBase();
-      const iva = contables.find((x) => x.movimiento && /IVA/i.test(x.nombre));
-      const v = v0 || (c ? { ...c } : { nombre: '', responsable: '', tipo_caja: 'CAJA CHICA', modalidad: 'NORMAL', centro_costo_id: null, centro_alterno_id: null, moneda_id: base?.id, monto_fondo: '', cuenta_id: null, cuenta_iva_id: iva?.id || null, cuenta_retencion_id: null, cuenta_bancaria_id: null, activa: true });
-      const u = c ? ultimo.get(c.id) : null;
+      if (!c) { ctx.pDet.innerHTML = ctx.vacio('Elige una caja para operarla.', 'ti-cash-register'); return; }
+      const u = ultimo.get(c.id);
+      const k = contable(c.cuenta_id);
+      const sim = simbolo(c.moneda_id);
+      const fondos = u ? Number(u.anticipo_valor) + Number(u.adelanto_valor) : 0;
       ctx.pDet.innerHTML = `
-        <form class="tk-form ta-form bm-form cc-caja-form" novalidate>
-          <header class="tk-titulo bm-titulo">
-            <span class="tk-icono"><i class="ti ti-cash-register" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>Definición de la caja</small><h2>${c ? `Caja ${c.codigo} · ${esc(c.nombre)}` : 'Nueva caja'}</h2></div>
-            <div class="tk-marcas">${c ? `<span class="pc-marca ${c.activa ? 'aprobada' : 'anulada'}">${c.activa ? 'Activa' : 'Inactiva'}</span>` : ''}${u ? `<span class="pc-marca ${u.estado === 'ABIERTA' ? 'pendiente' : 'definitiva'}">Subcaja ${u.numero} · ${esc(mesTxt(u).toLowerCase())}</span>` : ''}</div>
-            <div class="tk-titulo-acciones">
-              ${!c && cajas.length ? '<button type="button" class="boton secundario-sm" data-accion="cancelar-caja"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
-              ${ctx.admin ? `<button type="submit" class="boton secundario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${c ? 'Guardar caja' : 'Crear caja'}</button>` : ''}
-              ${c ? '<button type="button" class="boton primario-sm" data-accion="ir-detalle">Ir a detalle <i class="ti ti-arrow-right" aria-hidden="true"></i></button>' : ''}
-            </div>
-          </header>
-          <p class="modal-error tk-error" role="alert"></p>
-          <div class="cc-def">
-            <section class="bm-bloque cc-ident">
-              <h3 class="ta-col-titulo"><i class="ti ti-id" aria-hidden="true"></i> Caja</h3>
-              <div class="cc-campos">
-                <div class="bs-req-num"><span>No. caja</span><b>${c ? c.codigo : 'Auto'}</b></div>
-                <label class="campo cc-c3"><span>Nombre *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="80" ${dis}></label>
-                <label class="campo cc-c2"><span>Responsable</span><input name="responsable" value="${esc(v.responsable || '')}" maxlength="80" ${dis}></label>
-                <label class="campo cc-c2"><span>Tipo de caja</span><select name="tipo_caja" ${dis}>${TIPOS_CAJA.map((t) => `<option ${v.tipo_caja === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-                <div class="campo cc-c2"><span>Modalidad</span><div class="cc-radios">${[['NORMAL', 'Normal'], ['LIQUIDACION', 'Liquidación']].map(([k, t]) => `<label class="pc-check"><input type="radio" name="modalidad" value="${k}" ${v.modalidad === k ? 'checked' : ''} ${dis}> ${t}</label>`).join('')}</div></div>
-                <label class="pc-check cc-activa"><input type="checkbox" name="activa" ${v.activa ? 'checked' : ''} ${dis}> Activa</label>
-              </div>
-            </section>
-            <section class="bm-bloque cc-centros-b">
-              <h3 class="ta-col-titulo"><i class="ti ti-sitemap" aria-hidden="true"></i> Centros de costo</h3>
-              <div class="cc-campos cc-dos">
-                ${centroCampo('centro_costo', 'Centro de costo', v.centro_costo_id, dis)}
-                ${centroCampo('centro_alterno', 'Centro alterno', v.centro_alterno_id, dis)}
-              </div>
-            </section>
-            <section class="bm-bloque cc-fondo">
-              <h3 class="ta-col-titulo"><i class="ti ti-coins" aria-hidden="true"></i> Fondo</h3>
-              <div class="cc-campos cc-dos">
-                <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((m) => `<option value="${m.id}" ${v.moneda_id === m.id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
-                <label class="campo"><span>Fondo asignado</span><input type="number" step="0.01" min="0" name="monto_fondo" value="${esc(String(v.monto_fondo ?? ''))}" ${dis}></label>
-                <label class="campo cc-c2x"><span>Cuenta bancaria de reintegro</span><select name="cuenta_bancaria_id" ${dis}><option value="">—</option>${cuentas.filter((x) => x.activo || x.id === v.cuenta_bancaria_id).map((x) => `<option value="${x.id}" ${x.id === v.cuenta_bancaria_id ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(x))}</option>`).join('')}</select></label>
-              </div>
-            </section>
-            <section class="bm-bloque cc-cuentas-b">
-              <h3 class="ta-col-titulo"><i class="ti ti-list-numbers" aria-hidden="true"></i> Cuentas contables de la liquidación</h3>
-              <div class="cc-campos cc-tres">
-                ${cuentaCampo('cuenta', 'Cuenta de la caja (haber)', v.cuenta_id, dis)}
-                ${cuentaCampo('cuenta_iva', 'IVA por cobrar (debe)', v.cuenta_iva_id, dis)}
-                ${cuentaCampo('cuenta_retencion', 'Retenciones (haber)', v.cuenta_retencion_id, dis)}
-              </div>
-            </section>
-            <section class="bm-bloque bm-control cc-control">
-              <h3 class="ta-col-titulo"><i class="ti ti-shield-check" aria-hidden="true"></i> Control</h3>
-              <dl>
-                <div class="bm-dato bm-c2"><dt>Creó</dt><dd>${c ? `${esc(c.creado_por_nombre || '')} <small>${esc(fmt.fechaHora(c.creado_en))}</small>` : esc((yo.usuario || '').toUpperCase())}</dd></div>
-                <div class="bm-dato bm-c2"><dt>Modificó</dt><dd>${c?.modificado_en ? `${esc(c.modificado_por_nombre || '')} <small>${esc(fmt.fechaHora(c.modificado_en))}</small>` : sinPartida()}</dd></div>
-              </dl>
-            </section>
+        <div class="cs-ficha">
+          <div class="cs-id"><span class="tk-icono"><i class="ti ti-cash-register" aria-hidden="true"></i></span>
+            <div><small>Caja ${c.codigo} · ${esc(c.tipo_caja)}</small><h2>${esc(c.nombre)}</h2><small>Responsable ${esc(c.responsable || '—')} · cuenta ${esc(k ? `${k.codigo} ${k.nombre}` : '—')}</small></div></div>
+          <div class="cs-kpis">
+            <div><span>Fondo asignado</span><b>${esc(sim)} ${fmt.monto(c.monto_fondo)}</b></div>
+            <div><span>Subcaja actual</span><b>${u ? `${u.numero} · ${esc(mesTxt(u).toLowerCase())}` : '—'}</b></div>
+            <div><span>Fondos entregados</span><b>${esc(sim)} ${fmt.monto(fondos)}</b></div>
+            <div><span>Total gastos</span><b>${esc(sim)} ${fmt.monto(u?.liquidado || 0)}</b></div>
+            <div class="${u && Number(u.disponible) < 0 ? 'alerta' : ''}"><span>${u && Number(u.disponible) < 0 ? 'Por reembolsar' : 'Disponible'}</span><b>${esc(sim)} ${fmt.monto(Math.abs(u?.disponible || 0))}</b></div>
           </div>
-          ${listas()}
-        </form>`;
+          <div class="cs-acc">
+            <a class="boton secundario-sm" href="#/caja-bancos/definicion-cajas" data-accion="definir"><i class="ti ti-settings" aria-hidden="true"></i> Definición de la caja</a>
+            <button type="button" class="boton primario-sm" data-accion="ir-detalle">Ir a detalle <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+          </div>
+        </div>`;
     }
 
     function leerCaja(form) {
@@ -290,84 +250,84 @@
 
     function pintarCabecera() {
       const c = caja;
-      const hoy = fmt.hoy().split('-');
-      const anio = periodo ? periodo.anio : Number(hoy[0]);
-      const mes = periodo ? periodo.mes : Number(hoy[1]);
+      const k = contable(c.cuenta_id);
       ctx.pFil.innerHTML = `
         <div class="ta-titulo"><span class="tk-icono"><i class="ti ti-cash-register" aria-hidden="true"></i></span><div><small>Cajas · Administración de cajas chicas</small><h2>Caja ${c.codigo} · ${esc(c.nombre)}</h2></div></div>
-        <div class="cc-responsable"><small>Responsable</small><b>${esc(c.responsable || '—')}</b><small>${esc(c.tipo_caja)} · ${c.modalidad === 'NORMAL' ? 'Normal' : 'Liquidación'}</small></div>
-        ${ctx.admin ? `<div class="cc-crear">
-          <label class="campo"><span>Año</span><input type="number" name="anio" min="1900" max="2999" value="${anio}"></label>
-          <label class="campo"><span>Mes</span><select name="mes">${MESES.map((m, i) => `<option value="${i + 1}" ${mes === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
-          <label class="campo cc-cta-crear"><span>Cta bancaria (anticipo)</span><select name="cta_anticipo"><option value="">—</option>${cuentas.filter((x) => x.activo).map((x) => `<option value="${x.id}" ${x.id === c.cuenta_bancaria_id ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(x))}</option>`).join('')}</select></label>
-          <label class="campo"><span>No. cheque</span><input name="cheque_anticipo" maxlength="20"></label>
-          <button type="button" class="boton primario-sm" data-accion="crear-subcaja" title="Abre una subcaja nueva con el año, el mes y el anticipo del fondo"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear subcaja</button>
-          <button type="button" class="boton secundario-sm" data-accion="cambiar-mes" ${abierta() ? '' : 'disabled'} title="Pasa la subcaja elegida al año y mes indicados"><i class="ti ti-calendar-repeat" aria-hidden="true"></i> Cambiar mes</button>
-        </div>` : '<div></div>'}
-        <div class="cc-creacion"><small>Creación</small><b>${periodo ? esc(periodo.usuario || '') : '—'}</b><small>${periodo ? esc(fmt.fechaHora(periodo.creado_en)) : ''}</small></div>
-        <button type="button" class="boton secundario-sm cc-volver" data-accion="ir-cajas"><i class="ti ti-arrow-left" aria-hidden="true"></i> Ir a cajas</button>`;
+        <div class="cd-dato"><small>Responsable</small><b>${esc(c.responsable || '—')}</b><small>${esc(c.tipo_caja)} · ${c.modalidad === 'NORMAL' ? 'Normal' : 'Liquidación'}</small></div>
+        <div class="cd-dato"><small>Cuenta de la caja</small><b>${esc(k?.codigo || '—')}</b><small>${esc(k?.nombre || '')}</small></div>
+        <div class="cd-dato"><small>Fondo asignado</small><b>${esc(simbolo(c.moneda_id))} ${fmt.monto(c.monto_fondo)}</b><small>${esc(c.usuario_liquida ? `Liquida ${c.usuario_liquida}` : '')}</small></div>
+        <button type="button" class="boton cd-ver" data-accion="ir-cajas"><i class="ti ti-layout-list" aria-hidden="true"></i> Ver cajas</button>`;
     }
 
     function pintarSubcajas() {
       const p = periodo;
       const sim = simbolo(caja.moneda_id);
-      const dis = puede() ? '' : 'disabled';
-      const total = liquidado();
+      const hoy = fmt.hoy().split('-');
+      const anio = p ? p.anio : Number(hoy[0]);
+      const mes = p ? p.mes : Number(hoy[1]);
+      const gastos = liquidado();
       const fondos = p ? Number(p.anticipo_valor) + Number(p.adelanto_valor) : 0;
+      const pendLiq = fmt.redondear(gastos - fondos);           // > 0: gastos sobre el fondo, por reembolsar
+      const reembolso = p ? Number(p.liquidacion_valor || 0) : 0;
+      const pendReem = p && p.estado === 'ABIERTA' ? Math.max(0, pendLiq - reembolso) : 0;
       ctx.pMae.innerHTML = `
-        <div class="cc-arriba">
-          <section class="bm-bloque cc-lista">
+        <div class="cd-arriba">
+          <section class="bm-bloque cd-subcajas">
             <h3 class="ta-col-titulo"><i class="ti ti-folders" aria-hidden="true"></i> Subcajas <small>${periodos.length}</small></h3>
             <div class="pc-lineas"><table>
-              <thead><tr><th class="num">Subcaja</th><th class="num">Año</th><th>Mes</th><th>Liquidada</th><th class="num">Liquidado</th></tr></thead>
-              <tbody>${periodos.map((x) => `<tr data-periodo="${x.id}" class="${p && p.id === x.id ? 'actual' : ''}" tabindex="0"><td class="num fuerte">${x.numero}</td><td class="num">${x.anio}</td><td>${MESES[x.mes - 1]}</td>
-                <td>${x.estado === 'LIQUIDADA' ? '<i class="ti ti-square-check cc-si" aria-label="Liquidada"></i>' : '<i class="ti ti-square cc-no" aria-label="Abierta"></i>'}</td><td class="num">${fmt.monto(x.liquidado)}</td></tr>`).join('')
-                || `<tr><td colspan="5" class="tk-vacio">${ctx.admin ? 'Sin subcajas: elige año y mes y presiona «Crear subcaja».' : 'La caja no tiene subcajas.'}</td></tr>`}</tbody>
+              <thead><tr><th class="num">Subcaja</th><th class="num">Año</th><th>Mes</th><th class="num">Gastos</th><th></th></tr></thead>
+              <tbody>${periodos.map((x) => `<tr data-periodo="${x.id}" class="${p && p.id === x.id ? 'actual' : ''}" tabindex="0"><td class="num fuerte">${x.numero}</td><td class="num">${x.anio}</td><td>${MESES[x.mes - 1]}</td><td class="num">${fmt.monto(x.liquidado)}</td>
+                <td>${x.estado === 'LIQUIDADA' ? '<i class="ti ti-lock cc-si" title="Liquidada" aria-label="Liquidada"></i>' : '<i class="ti ti-circle-dot cd-abierta" title="Abierta" aria-label="Abierta"></i>'}</td></tr>`).join('')
+                || `<tr><td colspan="5" class="tk-vacio">${ctx.admin ? 'Sin subcajas: créala a la derecha.' : 'La caja no tiene subcajas.'}</td></tr>`}</tbody>
             </table></div>
           </section>
-          <section class="bm-bloque cc-sub">
-            <h3 class="ta-col-titulo"><i class="ti ti-folder-open" aria-hidden="true"></i> Subcaja ${p ? p.numero : ''}</h3>
-            ${p ? `<div class="cc-sub-cab"><b>${esc(mesTxt(p))}</b><span class="pc-marca ${p.estado === 'ABIERTA' ? 'pendiente' : 'definitiva'}">${p.estado === 'ABIERTA' ? 'Abierta' : 'Liquidada'}</span></div>
-              <div class="cc-campos cc-dos">
-                <label class="campo"><span>Valor del fondo</span><input type="number" step="0.01" min="0" name="valor" form="cc-sub-form" value="${esc(String(p.valor))}" ${dis}></label>
-                <label class="campo"><span>Tasa de cambio</span><input type="number" step="any" min="0" name="tipo_cambio" form="cc-sub-form" value="${esc(String(p.tipo_cambio))}" ${dis}></label>
-              </div>
-              <dl class="cc-cifras">
-                <div><dt>Póliza</dt><dd>${p.partida_id ? `<a href="#/contabilidad/partidas" class="pc-tipo">${esc(String(p.partida_id ? partidaTxt() : ''))}</a>` : sinPartida()}</dd></div>
-                <div><dt>Documentos</dt><dd>${documentos.length}</dd></div>
-                <div><dt>Liquidado</dt><dd>${esc(sim)} ${fmt.monto(total)}</dd></div>
-                <div class="${fondos - total < 0 ? 'cc-mal' : ''}"><dt>Disponible</dt><dd>${esc(sim)} ${fmt.monto(fondos - total)}</dd></div>
-              </dl>` : ctx.vacio('Elige o crea una subcaja.', 'ti-folder')}
+          <section class="bm-bloque cd-crear">
+            <h3 class="ta-col-titulo"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear nueva subcaja</h3>
+            ${ctx.admin ? `<div class="cd-campos">
+              <label class="campo"><span>Año</span><input type="number" name="anio" min="1900" max="2999" value="${anio}"></label>
+              <label class="campo cd-c2"><span>Mes</span><select name="mes">${MESES.map((m, i) => `<option value="${i + 1}" ${mes === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
+              <label class="campo cd-c2"><span>Cta bancaria del anticipo</span><select name="cta_anticipo"><option value="">—</option>${cuentas.filter((x) => x.activo).map((x) => `<option value="${x.id}" ${x.id === caja.cuenta_bancaria_id ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(x))}</option>`).join('')}</select></label>
+              <label class="campo"><span>No. cheque</span><input name="cheque_anticipo" maxlength="20"></label>
+            </div>
+            <div class="cd-botones">
+              <button type="button" class="boton primario-sm" data-accion="crear-subcaja"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear subcaja</button>
+              <button type="button" class="boton secundario-sm" data-accion="cambiar-mes" ${abierta() ? '' : 'disabled'} title="Pasa la subcaja elegida al año y mes indicados"><i class="ti ti-calendar-repeat" aria-hidden="true"></i> Cambiar mes</button>
+            </div>
+            <div class="cd-campos cd-fecha">
+              <label class="campo cd-c2"><span>Fecha de presentación</span><input type="date" name="fecha_presentacion_sub" value="${esc(p?.fecha_presentacion || '')}" ${puede() ? '' : 'disabled'}></label>
+              <button type="button" class="boton secundario-sm" data-accion="actualizar-fecha" ${puede() ? '' : 'disabled'} title="Aplica la fecha a la subcaja y a sus documentos"><i class="ti ti-calendar-check" aria-hidden="true"></i> Actualizar fecha</button>
+            </div>` : '<p class="tk-tenue">Solo un administrador crea subcajas.</p>'}
+            <p class="cd-creacion">Creación <b>${p ? esc(p.usuario || '') : '—'}</b> ${p ? esc(fmt.fechaHora(p.creado_en)) : ''}</p>
           </section>
-          <section class="bm-bloque cc-fondos">
-            <h3 class="ta-col-titulo"><i class="ti ti-building-bank" aria-hidden="true"></i> Anticipo, adelanto y liquidación</h3>
-            ${p ? `<form id="cc-sub-form" class="cc-fondos-form" novalidate>
-              <div class="cc-fondos-tabla">
-                <span></span><small>Cuenta bancaria</small><small>No. cheque</small><small># Nota</small><small class="num">Valor</small>
-                ${FONDOS.map(([k, t]) => `<b>${t}</b>
-                  <select name="${k}_cuenta_id" aria-label="Cuenta bancaria del ${t.toLowerCase()}" ${dis}><option value="">—</option>${cuentas.filter((x) => x.activo || x.id === p[`${k}_cuenta_id`]).map((x) => `<option value="${x.id}" ${x.id === p[`${k}_cuenta_id`] ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(x))}</option>`).join('')}</select>
-                  <input name="${k}_cheque" value="${esc(p[`${k}_cheque`] || '')}" maxlength="20" aria-label="Cheque del ${t.toLowerCase()}" ${dis}>
-                  <input name="${k}_nota" value="${esc(p[`${k}_nota`] || '')}" maxlength="20" aria-label="Nota del ${t.toLowerCase()}" ${dis}>
-                  <input type="number" step="0.01" min="0" class="num" name="${k}_valor" value="${esc(String(p[`${k}_valor`]))}" aria-label="Valor del ${t.toLowerCase()}" ${dis}>`).join('')}
-              </div>
-              <div class="cc-fondos-pie">
-                <span class="cc-liquida"><small>Usuario liquida</small><b>${esc(p.liquidado_por || '—')}</b><small>${esc(fmt.fechaHora(p.liquidado_en))}</small></span>
-                ${puede() ? '<button type="submit" class="boton secundario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar subcaja</button>' : ''}
-              </div>
-              <p class="modal-error tk-error" role="alert"></p>
-            </form>` : ''}
+          <section class="bm-bloque cd-resumen">
+            <h3 class="ta-col-titulo"><i class="ti ti-calculator" aria-hidden="true"></i> Resumen de la liquidación ${p ? `<small>subcaja ${p.numero} · ${esc(mesTxt(p).toLowerCase())}</small>` : ''}</h3>
+            <div class="cd-kpis">
+              <div><span>Total liquidado</span><b>${esc(sim)} ${fmt.monto(fondos)}</b><small>Anticipo + adelanto</small></div>
+              <div><span>Total gastos</span><b>${esc(sim)} ${fmt.monto(gastos)}</b><small>${documentos.length} documentos</small></div>
+              <div class="${pendLiq > 0 ? 'alerta' : pendLiq < 0 ? 'ok' : ''}"><span>${pendLiq < 0 ? 'Disponible' : 'Pendiente de liquidar'}</span><b>${esc(sim)} ${fmt.monto(Math.abs(pendLiq))}</b><small>${pendLiq < 0 ? 'Fondo sin usar' : 'Gastos sobre el fondo'}</small></div>
+              <div class="${pendReem > 0 ? 'alerta' : ''}"><span>Pendiente de reembolso</span><b>${esc(sim)} ${fmt.monto(pendReem)}</b><small>Por reintegrar</small></div>
+              <div><span>Total reembolso</span><b>${esc(sim)} ${fmt.monto(reembolso)}</b><small>${p?.liquidacion_nota ? `Nota ${esc(p.liquidacion_nota)}` : p?.liquidacion_cheque ? `Cheque ${esc(p.liquidacion_cheque)}` : 'Nota o cheque de liquidación'}</small></div>
+            </div>
           </section>
-        </div>
-        ${p ? `<div class="cc-reportes">
-          <button type="button" class="boton secundario-sm" data-reporte="RESUMEN"><i class="ti ti-printer" aria-hidden="true"></i> Resumen contable</button>
-          <button type="button" class="boton secundario-sm" data-reporte="CONTABLE"><i class="ti ti-printer" aria-hidden="true"></i> Detalle contable</button>
-          <button type="button" class="boton secundario-sm" data-reporte="MOVIMIENTOS"><i class="ti ti-printer" aria-hidden="true"></i> Detalle movimientos</button>
-          <button type="button" class="boton secundario-sm" data-reporte="DETALLE"><i class="ti ti-printer" aria-hidden="true"></i> Detalle de documentos</button>
-          <label class="campo cc-tipo-rep"><span>Tipo de reporte</span><select name="tipo_reporte">${REPORTES.map(([k, t]) => `<option value="${k}" ${tipoReporte === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-          <span class="cc-esp"></span>
-          ${ctx.admin && abierta() ? '<button type="button" class="boton primario-sm cc-liquidar" data-accion="liquidar"><i class="ti ti-file-check" aria-hidden="true"></i> Liquidar subcaja</button>' : ''}
-          ${ctx.admin && p.estado === 'LIQUIDADA' ? '<button type="button" class="boton secundario-sm" data-accion="reabrir"><i class="ti ti-lock-open" aria-hidden="true"></i> Reabrir</button>' : ''}
-        </div>` : ''}`;
+          <section class="bm-bloque cd-reportes">
+            <h3 class="ta-col-titulo"><i class="ti ti-report" aria-hidden="true"></i> Reportes</h3>
+            ${p ? `<div class="cd-formato" role="radiogroup" aria-label="Formato">${[['PDF', 'ti-file-type-pdf', 'PDF'], ['EXCEL', 'ti-file-spreadsheet', 'Excel']].map(([k, ic, t]) => `<button type="button" role="radio" aria-checked="${formatoRep === k}" class="${formatoRep === k ? 'activo' : ''} cd-f-${k}" data-formato="${k}"><i class="ti ${ic}" aria-hidden="true"></i> ${t}</button>`).join('')}</div>
+            <label class="campo"><span>Documentos</span><select name="tipo_reporte">${REPORTES.map(([k, t]) => `<option value="${k}" ${tipoReporte === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+            <div class="cd-rep-botones">
+              <button type="button" class="boton secundario-sm" data-reporte="RESUMEN">Resumen contable</button>
+              <button type="button" class="boton secundario-sm" data-reporte="CONTABLE">Detalle contable</button>
+              <button type="button" class="boton secundario-sm" data-reporte="MOVIMIENTOS">Detalle movimientos</button>
+              <button type="button" class="boton secundario-sm" data-reporte="DETALLE">Detalle documentos</button>
+            </div>` : ctx.vacio('Elige una subcaja.', 'ti-report')}
+          </section>
+          <section class="bm-bloque cd-estado">
+            <h3 class="ta-col-titulo"><i class="ti ti-lock" aria-hidden="true"></i> Estado de la subcaja</h3>
+            ${p ? `<span class="cd-estado-v ${p.estado === 'ABIERTA' ? 'vigente' : 'cerrada'}">${p.estado === 'ABIERTA' ? 'VIGENTE' : 'LIQUIDADA'}</span>
+              <dl><div><dt>Fecha de cierre</dt><dd>${p.liquidado_en ? esc(fmt.fechaHora(p.liquidado_en)) : '—'}</dd></div><div><dt>Cerró</dt><dd>${esc(p.liquidado_por || '—')}</dd></div><div><dt>Póliza</dt><dd>${p.partida_id ? `<span class="pc-tipo">${esc(partidaTxt())}</span>` : '—'}</dd></div></dl>
+              ${ctx.admin && abierta() ? '<button type="button" class="boton primario-sm cc-liquidar" data-accion="liquidar"><i class="ti ti-file-check" aria-hidden="true"></i> Cerrar y liquidar</button>' : ''}
+              ${ctx.admin && p.estado === 'LIQUIDADA' ? '<button type="button" class="boton secundario-sm" data-accion="reabrir"><i class="ti ti-lock-open" aria-hidden="true"></i> Reabrir</button>' : ''}` : ctx.vacio('Sin subcaja.', 'ti-lock')}
+          </section>
+        </div>`;
     }
     let partidas = new Map();
     const partidaTxt = () => partidas.get(periodo?.partida_id) || `Partida ${periodo?.partida_id}`;
@@ -387,7 +347,9 @@
       const marcados = documentos.filter((d) => d.contable).length;
       const debe = fmt.redondear(lineas.reduce((t, l) => t + Number(l.debe), 0));
       const haber = fmt.redondear(lineas.reduce((t, l) => t + Number(l.haber), 0));
-      ctx.pDet.innerHTML = `
+      const tabs = `<div class="cd-tabs" role="tablist">${[['DOCUMENTOS', 'ti-receipt', 'Documentos', documentos.length], ['LIQUIDACION', 'ti-building-bank', 'Liquidación', null]].map(([k, ic, t, n]) => `<button type="button" role="tab" class="${pestanaDet === k ? 'activa' : ''}" aria-selected="${pestanaDet === k}" data-tab-caja="${k}"><i class="ti ${ic}" aria-hidden="true"></i> ${t}${n != null ? ` <b>${n}</b>` : ''}</button>`).join('')}</div>`;
+      if (pestanaDet === 'LIQUIDACION') { ctx.pDet.innerHTML = `${tabs}${panelLiquidacion()}`; return; }
+      ctx.pDet.innerHTML = `${tabs}
         <div class="cc-docs">
           <section class="cc-docs-lista">
             <header class="tk-bandeja-cab cc-cab">
@@ -420,6 +382,29 @@
           </section>
           ${formDocumento(v0)}
         </div>`;
+    }
+
+    function panelLiquidacion() {
+      const p = periodo;
+      const dis = puede() ? '' : 'disabled';
+      const sim = simbolo(caja.moneda_id);
+      return `<form id="cc-sub-form" class="cc-fondos-form cd-liq" novalidate>
+        <div class="cd-liq-cab">
+          <label class="campo"><span>Valor del fondo</span><input type="number" step="0.01" min="0" name="valor" value="${esc(String(p.valor))}" ${dis}></label>
+          <label class="campo"><span>Tasa de cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(p.tipo_cambio))}" ${dis}></label>
+          <div class="cd-dato"><small>Usuario que liquidó</small><b>${esc(p.liquidado_por || '—')}</b><small>${esc(fmt.fechaHora(p.liquidado_en))}</small></div>
+          <div class="cd-dato"><small>Total gastos</small><b>${esc(sim)} ${fmt.monto(liquidado())}</b><small>${documentos.length} documentos</small></div>
+        </div>
+        <div class="cc-fondos-tabla cd-fondos">
+          <span></span><small>Cuenta bancaria</small><small>No. cheque</small><small># Nota</small><small class="num">Valor</small>
+          ${FONDOS.map(([k, t]) => `<b>${t}</b>
+            <select name="${k}_cuenta_id" aria-label="Cuenta bancaria del ${t.toLowerCase()}" ${dis}><option value="">—</option>${cuentas.filter((x) => x.activo || x.id === p[`${k}_cuenta_id`]).map((x) => `<option value="${x.id}" ${x.id === p[`${k}_cuenta_id`] ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(x))}</option>`).join('')}</select>
+            <input name="${k}_cheque" value="${esc(p[`${k}_cheque`] || '')}" maxlength="20" aria-label="Cheque del ${t.toLowerCase()}" ${dis}>
+            <input name="${k}_nota" value="${esc(p[`${k}_nota`] || '')}" maxlength="20" aria-label="Nota del ${t.toLowerCase()}" ${dis}>
+            <input type="number" step="0.01" min="0" class="num" name="${k}_valor" value="${esc(String(p[`${k}_valor`]))}" aria-label="Valor del ${t.toLowerCase()}" ${dis}>`).join('')}
+        </div>
+        <div class="cc-fondos-pie"><p class="modal-error tk-error" role="alert"></p>${puede() ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar liquidación</button>' : ''}</div>
+      </form>`;
     }
 
     function formDocumento(v0) {
@@ -594,7 +579,7 @@
 
     // ---------- Subcaja: crear, cambiar mes, guardar, liquidar ----------
     async function crearSubcaja() {
-      const el = (n) => ctx.pFil.querySelector(`[name=${n}]`);
+      const el = (n) => ctx.pMae.querySelector(`[name=${n}]`);
       const anio = Number(el('anio').value);
       const mes = Number(el('mes').value);
       if (!(anio >= 1900 && anio <= 2999)) return window.FIN.aviso('Escribe un año válido');
@@ -614,9 +599,19 @@
       periodo = { id: data.id };
       await cargarPeriodos(data.id);
     }
+    async function actualizarFecha() {
+      const fecha = ctx.pMae.querySelector('[name=fecha_presentacion_sub]')?.value;
+      if (!fecha) return window.FIN.aviso('Elige la fecha de presentación');
+      const a = await sb.from('caja_periodos').update({ fecha_presentacion: fecha }).eq('id', periodo.id);
+      if (a.error && !/fecha_presentacion/.test(a.error.message)) return window.FIN.aviso(window.UI.traducirError(a.error));
+      const b = await sb.from('caja_documentos').update({ fecha_presentacion: fecha }).eq('periodo_id', periodo.id);
+      if (b.error) return window.FIN.aviso(window.UI.traducirError(b.error));
+      window.FIN.aviso(`Fecha de presentación aplicada a la subcaja y a sus ${documentos.length} documentos`);
+      await refrescar();
+    }
     async function cambiarMes() {
-      const anio = Number(ctx.pFil.querySelector('[name=anio]').value);
-      const mes = Number(ctx.pFil.querySelector('[name=mes]').value);
+      const anio = Number(ctx.pMae.querySelector('[name=anio]').value);
+      const mes = Number(ctx.pMae.querySelector('[name=mes]').value);
       if (anio === periodo.anio && mes === periodo.mes) return window.FIN.aviso('Elige otro año o mes');
       if (!confirm(`¿Pasar la subcaja ${periodo.numero} de ${mesTxt(periodo).toLowerCase()} a ${MESES[mes - 1].toLowerCase()} ${anio}?`)) return;
       const { error } = await sb.from('caja_periodos').update({ anio, mes }).eq('id', periodo.id);
@@ -627,7 +622,7 @@
     async function guardarSubcaja(form) {
       const el = form.elements;
       const error = form.querySelector('.modal-error');
-      const v = { valor: fmt.redondear(ctx.pMae.querySelector('[name=valor]').value), tipo_cambio: Number(ctx.pMae.querySelector('[name=tipo_cambio]').value) || 1 };
+      const v = { valor: fmt.redondear(el.valor.value), tipo_cambio: Number(el.tipo_cambio.value) || 1 };
       FONDOS.forEach(([k]) => {
         v[`${k}_cuenta_id`] = el[`${k}_cuenta_id`].value ? Number(el[`${k}_cuenta_id`].value) : null;
         v[`${k}_cheque`] = el[`${k}_cheque`].value.trim() || null;
@@ -695,6 +690,59 @@
       imprimir(`${titulos[tipo]} · caja ${caja.codigo} subcaja ${p.numero}`, `${cab}${cuerpo}<div class="firmas"><div>Responsable de la caja</div><div>Revisó</div><div>Autorizó</div></div>`);
     }
 
+    // Los mismos reportes de la subcaja en Excel, con el encabezado común (logo, parámetros, fecha y usuario).
+    function reporteExcel(tipo) {
+      const p = periodo;
+      if (!p || !window.REPORTE_XLSX) return;
+      const sim = simbolo(caja.moneda_id);
+      const emp = ctx.localidad(caja.localidad_id);
+      const docs = [...documentos].reverse().filter((d) => tipoReporte === 'TODOS' || (tipoReporte === 'CONTABLE' ? d.contable : !d.contable));
+      const titulos = { RESUMEN: 'Resumen contable', CONTABLE: 'Detalle contable', MOVIMIENTOS: 'Detalle de movimientos', DETALLE: 'Detalle de documentos' };
+      const parametros = [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : ''}`, `Caja: ${caja.codigo} · ${caja.nombre}`, `Subcaja: ${p.numero} · ${mesTxt(p)}`, `Estado: ${p.estado}`,
+        `Responsable: ${caja.responsable || ''}`, `Documentos: ${(REPORTES.find(([x]) => x === tipoReporte) || [])[1] || ''}`];
+      let columnas; let filas;
+      if (tipo === 'RESUMEN' || tipo === 'CONTABLE') {
+        if (!lineas.length) return window.FIN.aviso('Reconstruye primero el detalle contable');
+        const ls = tipo === 'CONTABLE' ? lineas : [...lineas.reduce((m, l) => { const x = m.get(l.cuenta_id) || { cuenta_id: l.cuenta_id, debe: 0, haber: 0 }; x.debe += Number(l.debe); x.haber += Number(l.haber); return m.set(l.cuenta_id, x); }, new Map()).values()];
+        columnas = [{ titulo: 'Línea', ancho: 7 }, { titulo: 'Cuenta', ancho: 14 }, { titulo: 'Nombre de la cuenta', ancho: 40 }, { titulo: 'Concepto', ancho: 34 }, { titulo: 'Centro', ancho: 10 }, { titulo: 'Debe', ancho: 15, tipo: 'monto' }, { titulo: 'Haber', ancho: 15, tipo: 'monto' }];
+        filas = ls.map((l, i) => { const c = contable(l.cuenta_id); return { valores: [l.linea || i + 1, c?.codigo || '', c?.nombre || '', l.concepto || '', centro(l.centro_id)?.codigo || '', Number(l.debe) || null, Number(l.haber) || null] }; });
+        filas.push({ tipo: 'total', valores: ['', '', 'Totales (Q)', '', '', lineas.reduce((t, l) => t + Number(l.debe), 0), lineas.reduce((t, l) => t + Number(l.haber), 0)] });
+      } else if (tipo === 'MOVIMIENTOS') {
+        columnas = [{ titulo: '#', ancho: 6 }, { titulo: 'Serie', ancho: 12 }, { titulo: 'Documento', ancho: 16 }, { titulo: 'Tipo', ancho: 8 }, { titulo: 'Fecha', ancho: 11 }, { titulo: 'NIT', ancho: 13 }, { titulo: 'Proveedor', ancho: 34 }, { titulo: 'Justificación', ancho: 34 }, { titulo: `Valor ${sim}`, ancho: 14, tipo: 'monto' }];
+        filas = docs.map((d) => ({ valores: [d.linea, d.serie || '', d.documento, (TIPOS_DOC.find(([x]) => x === d.tipo_documento) || [])[1] || '', fmt.fechaDia(d.fecha), d.nit || '', d.proveedor_nombre, d.justificacion || '', Number(d.total)] }));
+        filas.push({ tipo: 'total', valores: ['', '', `${docs.length} documentos`, '', '', '', '', '', docs.reduce((t, d) => t + Number(d.total), 0)] });
+      } else {
+        const K = ['total', 'exento', 'idp', 'inguat', 'timbre_prensa', 'no_deducible', 'base', 'iva', 'valor_retencion'];
+        columnas = [{ titulo: '#', ancho: 6 }, { titulo: 'Documento', ancho: 18 }, { titulo: 'Proveedor', ancho: 32 }, { titulo: 'Cuenta gasto', ancho: 13 }, ...['Total', 'Exento', 'IDP', 'INGUAT', 'Timbre', 'No ded.', 'Base', 'IVA', 'Retención'].map((t) => ({ titulo: t, ancho: 12, tipo: 'monto' }))];
+        filas = docs.map((d) => ({ valores: [d.linea, docTxt(d), d.proveedor_nombre, contable(d.cuenta_gasto_id)?.codigo || '', ...K.map((x) => Number(d[x] || 0))] }));
+        filas.push({ tipo: 'total', valores: ['', `${docs.length} documentos`, '', '', ...K.map((x) => docs.reduce((t, d) => t + Number(d[x] || 0), 0))] });
+      }
+      // Fondos al pie: etiqueta, referencia y el valor en la última columna.
+      const pie = (t, ref, v, tp = 'nota') => { const r = Array(columnas.length).fill(''); r[0] = t; r[1] = ref; r[columnas.length - 1] = v; return { tipo: tp, valores: r }; };
+      filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'grupo', valores: ['Fondos de la subcaja'] }, ...FONDOS.map(([x, t]) => pie(t, p[`${x}_cheque`] ? `cheque ${p[`${x}_cheque`]}` : p[`${x}_nota`] ? `nota ${p[`${x}_nota`]}` : '', Number(p[`${x}_valor`] || 0))), pie('Total gastos', '', liquidado(), 'subtotal'));
+      window.REPORTE_XLSX.generar({ titulo: `${titulos[tipo]} · Caja ${caja.codigo} · Subcaja ${p.numero}`, parametros, orgId: caja.organizacion_id, locId: caja.localidad_id,
+        hoja: titulos[tipo], archivo: `caja_${caja.codigo}_subcaja_${p.numero}_${tipo.toLowerCase()}`, columnas, filas });
+    }
+
+    // Listado de las cajas a operar (selección) en PDF o Excel.
+    function listadoCajas(formato) {
+      if (!cajas.length) return window.FIN.aviso('No hay cajas');
+      const l = ctx.localidad(ctx.sel.loc);
+      const filas = cajas.map((c) => { const k = contable(c.cuenta_id); const u = ultimo.get(c.id); return { c, k, u }; });
+      if (formato === 'PDF') {
+        return imprimir('Selección de caja a operar', `<h1>Cajas chicas · selección de caja a operar</h1><h2>Empresa: ${esc(l ? `${l.codigo} · ${l.nombre_comercial}` : '')} · Cajas: ${esc(f.estado)} · ${cajas.length} cajas</h2>
+          <table><thead><tr><th>Caja</th><th>Nombre</th><th>Responsable</th><th>Cuenta contable</th><th class="n">Fondo</th><th>Subcaja actual</th><th class="n">Gastos</th><th class="n">Disponible</th><th>Estado</th></tr></thead><tbody>
+          ${filas.map(({ c, k, u }) => `<tr><td>${c.codigo}</td><td>${esc(c.nombre)}</td><td>${esc(c.responsable || '')}</td><td>${esc(k ? `${k.codigo} ${k.nombre}` : '')}</td><td class="n">${esc(simbolo(c.moneda_id))} ${fmt.monto(c.monto_fondo)}</td><td>${u ? `${u.numero} · ${esc(mesTxt(u).toLowerCase())}` : ''}</td><td class="n">${u ? fmt.monto(u.liquidado) : ''}</td><td class="n">${u ? fmt.monto(u.disponible) : ''}</td><td>${!c.activa ? 'Inactiva' : u ? (u.estado === 'ABIERTA' ? 'Abierta' : 'Liquidada') : 'Activa'}</td></tr>`).join('')}</tbody></table>`, { locId: ctx.sel.loc });
+      }
+      window.REPORTE_XLSX.generar({
+        titulo: 'Cajas chicas · selección de caja a operar', parametros: [`Empresa: ${l ? `${l.codigo} · ${l.nombre_comercial}` : ''}`, `Cajas: ${f.estado}`, `${cajas.length} cajas`],
+        orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Cajas', archivo: `cajas_chicas_${l?.codigo || ''}`, autofiltro: true,
+        columnas: [{ titulo: 'Caja', ancho: 7 }, { titulo: 'Nombre', ancho: 38 }, { titulo: 'Responsable', ancho: 22 }, { titulo: 'Cuenta', ancho: 14 }, { titulo: 'Nombre de la cuenta', ancho: 32 }, { titulo: 'Fondo', ancho: 14, tipo: 'monto' },
+          { titulo: 'Subcaja actual', ancho: 20 }, { titulo: 'Gastos', ancho: 14, tipo: 'monto' }, { titulo: 'Disponible', ancho: 14, tipo: 'monto' }, { titulo: 'Estado', ancho: 11 }],
+        filas: filas.map(({ c, k, u }) => ({ tenue: !c.activa, valores: [c.codigo, c.nombre, c.responsable || '', k?.codigo || '', k?.nombre || '', Number(c.monto_fondo || 0), u ? `${u.numero} · ${mesTxt(u).toLowerCase()}` : '', u ? Number(u.liquidado) : null, u ? Number(u.disponible) : null, !c.activa ? 'Inactiva' : u ? (u.estado === 'ABIERTA' ? 'Abierta' : 'Liquidada') : 'Activa'] }))
+      });
+    }
+
     // ---------- Eventos ----------
     cont.addEventListener('change', async (e) => {
       if (vista === 'CAJAS') {
@@ -742,7 +790,11 @@
     cont.addEventListener('dblclick', (e) => { if (e.target.closest('tr[data-caja]')) irDetalle(); });
     cont.addEventListener('click', (e) => {
       const rep = e.target.closest('[data-reporte]');
-      if (rep) return reporte(rep.dataset.reporte);
+      if (rep) return formatoRep === 'EXCEL' ? reporteExcel(rep.dataset.reporte) : reporte(rep.dataset.reporte);
+      const fmtB = e.target.closest('[data-formato]');
+      if (fmtB) { formatoRep = fmtB.dataset.formato; ctx.pMae.querySelectorAll('[data-formato]').forEach((b) => { b.classList.toggle('activo', b === fmtB); b.setAttribute('aria-checked', String(b === fmtB)); }); return; }
+      const tabB = e.target.closest('[data-tab-caja]');
+      if (tabB) { pestanaDet = tabB.dataset.tabCaja; return pintarDocumentos(); }
       const filaCaja = e.target.closest('tr[data-caja]');
       if (filaCaja) {
         caja = cajas.find((c) => String(c.id) === filaCaja.dataset.caja);
@@ -763,12 +815,16 @@
       const ac = e.target.closest('[data-accion]');
       if (!ac) return;
       const a = ac.dataset.accion;
-      if (a === 'nueva-caja') { caja = null; pintarFiltros(); ctx.pMae.querySelectorAll('tr.actual').forEach((tr) => tr.classList.remove('actual')); pintarCaja(); return ctx.pDet.querySelector('[name=nombre]')?.focus(); }
+      if (a === 'nueva-caja') { guardarSesion('fin.caja.nueva', '1'); location.hash = '#/caja-bancos/definicion-cajas'; return; }
+      if (a === 'definir' && caja) { guardarSesion('fin.caja', String(caja.id)); return; }
+      if (a === 'cajas-pdf') return listadoCajas('PDF');
+      if (a === 'cajas-excel') return listadoCajas('EXCEL');
       if (a === 'cancelar-caja') return consultarCajas();
       if (a === 'ir-detalle') return irDetalle();
       if (a === 'ir-cajas') return irCajas();
       if (a === 'crear-subcaja') return crearSubcaja();
       if (a === 'cambiar-mes') return cambiarMes();
+      if (a === 'actualizar-fecha') return actualizarFecha();
       if (a === 'liquidar') return procesar('LIQUIDAR');
       if (a === 'reabrir') return procesar('REABRIR');
       if (a === 'reconstruir') return procesar('RECONSTRUIR');

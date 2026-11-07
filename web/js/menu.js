@@ -225,7 +225,9 @@ window.MODULOS = [
           subgrupo: 'Cajas',
           icono: 'ti-cash-register',
           pantallas: [
-            { id: 'cajas-chicas', nombre: 'Cajas chicas', icono: 'ti-cash-register', descripcion: 'Selección de la caja a operar y su administración: subcajas por mes, anticipo, adelanto y liquidación, documentos con su desglose fiscal, detalle contable y póliza.' }
+            { id: 'definicion-cajas', nombre: 'Definición de Cajas', icono: 'ti-settings', descripcion: 'Cajas de la empresa: tipo de movimiento, transacción, cuenta principal, monto asignado, usuario que liquida, vinculación de cuentas para la carga masiva y tipos de gasto con su cuenta.', separador: true },
+            { id: 'cajas-chicas', nombre: 'Cajas chicas', icono: 'ti-cash-register', descripcion: 'Selección de la caja a operar y su administración: subcajas por mes, anticipo, adelanto y liquidación, documentos con su desglose fiscal, detalle contable y póliza.' },
+            { id: 'liquidacion-cajas-chicas', nombre: 'Liquidación de Cajas Chicas', icono: 'ti-file-check', descripcion: 'Subcajas por liquidar de una caja o de todas, con su anticipo y adelanto; se liquidan con una nota o un cheque y generan su póliza.' }
           ]
         }
       ]
