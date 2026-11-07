@@ -4557,3 +4557,37 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bm-solo .bm-titulo .tk-titulo-acciones .boton { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .bm-solo .bm-titulo .tk-titulo-acciones a.boton { text-decoration: none; }
 .bm-solo .bm-titulo .cqc-excel { padding: 5px 12px; min-height: 0; font-size: 13px; }
+
+/* ===== Depósitos · ingreso (opción A): tarjetas numeradas a la izquierda y control a la derecha ===== */
+.dpa { display: grid; grid-template-columns: minmax(0, 2.7fr) minmax(300px, 1fr); gap: 10px; align-items: stretch; }
+.dpa-izq { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dpa .bm-bloque { grid-column: auto !important; margin: 0; padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dpa .ta-col-titulo { margin: 0; display: flex; align-items: center; gap: 8px; }
+.dpa-n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--acento); color: #fff; font-size: 11.5px; font-weight: 800; }
+.dpa-g { display: grid; gap: 8px 12px; align-items: end; }
+.dpa-g1 { grid-template-columns: minmax(170px, 1.15fr) minmax(250px, 2fr) minmax(130px, 1fr) minmax(140px, 1fr) minmax(150px, 1.2fr); }
+.dpa-g2 { grid-template-columns: minmax(150px, 1.1fr) minmax(110px, .8fr) minmax(110px, .8fr) minmax(200px, 1.6fr); }
+.dpa-g3 { grid-template-columns: minmax(100px, .7fr) minmax(220px, 2fr) minmax(200px, 1.6fr) minmax(130px, .8fr); }
+.dpa-g4 { grid-template-columns: minmax(0, 2.6fr) minmax(180px, 1fr); }
+.dpa .campo { gap: 3px; font-size: 12px; min-width: 0; }
+.dpa .campo input, .dpa .campo select { padding: 7px 10px; font-size: 13.5px; width: 100%; }
+.dpa-banco { display: flex; align-items: center; gap: 10px; padding: 5px 10px; border-radius: 10px; background: var(--acento-fondo); min-width: 0; height: 100%; }
+.dpa-banco small { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); }
+.dpa-banco b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dpa-banco > div { min-width: 0; }
+.dpa-cta select { font-weight: 700; color: var(--acento); }
+.dpa-valor input { text-align: right; font-size: 16px !important; font-weight: 800; font-variant-numeric: tabular-nums; border-color: color-mix(in srgb, #23955a 45%, var(--borde)); }
+.dpa-check { align-self: center; padding-top: 16px; white-space: nowrap; font-size: 13px; }
+.dpa-ml { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding: 6px 14px; border-radius: 12px; background: color-mix(in srgb, #23955a 10%, var(--panel)); }
+.dpa-ml span { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); }
+.dpa-ml b { font-size: 20px; color: #1f7a45; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dpa-control dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 0; }
+.dpa-control .bm-dato dt { font-size: 10.5px; }
+.dpa-control .bm-dato dd { font-size: 13px; }
+.dpa.consulta .campo input, .dpa.consulta .campo select { background: var(--fondo); }
+@media (max-width: 1750px) {
+  .dpa { grid-template-columns: minmax(0, 2.4fr) minmax(270px, 1fr); }
+  .dpa-g1 { grid-template-columns: minmax(150px, 1fr) minmax(220px, 1.8fr) minmax(110px, .9fr) minmax(130px, .9fr) minmax(120px, 1fr); }
+  .dpa-g3 { grid-template-columns: minmax(80px, .6fr) minmax(180px, 1.8fr) minmax(160px, 1.5fr) minmax(120px, .8fr); }
+  .dpa .campo input, .dpa .campo select { padding: 6px 8px; font-size: 13px; }
+}

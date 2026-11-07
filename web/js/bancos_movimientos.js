@@ -328,6 +328,54 @@
       const marca = d ? (d.estado === 'ANULADO' ? '<span class="pc-marca anulada">Anulado</span>' : '<span class="pc-marca aprobada">Activo</span>') : '<span class="pc-marca pendiente">Sin registrar</span>';
       const dato = (etq, val, extra = '') => `<div class="bm-dato ${extra}"><dt>${etq}</dt><dd>${val || '<span class="tk-tenue">—</span>'}</dd></div>`;
       const puede = ctx.admin && d && d.estado === 'ACTIVO' && !modificando;
+      // Depósitos (opción A): a la izquierda «1 · Cuenta y valor» y «2 · Cliente y descripción»; a la derecha el control.
+      const cabA = !cfg.soloIngreso ? '' : `
+          <div class="dpa ${ed ? 'editando' : 'consulta'}">
+            <div class="dpa-izq">
+              <section class="bm-bloque dpa-b">
+                <h3 class="ta-col-titulo"><span class="dpa-n">1</span> Cuenta y valor</h3>
+                <div class="dpa-g dpa-g1">
+                  <div class="dpa-banco"><span class="bk-cod" data-banco-cod>${banco?.codigo ?? ''}</span><div><small>Banco</small><b data-banco-nombre title="${esc(banco?.nombre || '')}">${esc(banco?.nombre || '')}</b></div></div>
+                  <label class="campo dpa-cta"><span>Cuenta bancaria *</span><select name="cuenta_bancaria_id" ${disC}>${cuentas.filter((c) => c.activo || c.id === v.cuenta_bancaria_id).map((c) => `<option value="${c.id}" ${v.cuenta_bancaria_id === c.id ? 'selected' : ''}>${esc(c.numero)} · ${esc(c.nombre)}</option>`).join('')}</select></label>
+                  <label class="campo"><span>${esc(cfg.etiquetaNumero)}</span><input name="numero_documento" value="${esc(v.numero_documento || '')}" maxlength="40" ${dis}></label>
+                  <label class="campo"><span>Fecha *</span><input type="date" name="fecha" value="${esc(v.fecha)}" ${disC}></label>
+                  <label class="campo dpa-valor"><span>Valor *</span><input type="number" step="0.01" min="0" name="valor" value="${esc(String(v.valor ?? ''))}" placeholder="0.00" ${disC || disImp}></label>
+                </div>
+                <div class="dpa-g dpa-g2">
+                  <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis || disImp}>${ctx.monedas.map((m) => `<option value="${m.id}" ${v.moneda_id === m.id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Valor de cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
+                  <label class="pc-check dpa-check"><input type="checkbox" name="caja_chica" ${v.caja_chica ? 'checked' : ''} ${dis}> Caja chica</label>
+                  <div class="dpa-ml"><span>Valor en quetzales</span><b data-valor-ml>Q ${fmt.monto(valorMl)}</b></div>
+                </div>
+              </section>
+              <section class="bm-bloque dpa-b">
+                <h3 class="ta-col-titulo"><span class="dpa-n">2</span> ${esc(cfg.etiquetaTercero)} y descripción</h3>
+                <div class="dpa-g dpa-g3">
+                  <label class="campo"><span>Código</span><input name="tercero_codigo" value="${esc(v.tercero_codigo || '')}" maxlength="20" ${dis}></label>
+                  <label class="campo"><span>${esc(cfg.etiquetaTercero)}</span><input name="tercero_nombre" value="${esc(v.tercero_nombre || '')}" maxlength="150" ${dis}></label>
+                  <label class="campo"><span>${esc(cfg.etiquetaPor)}</span><input name="deposito_por" value="${esc(v.deposito_por || '')}" maxlength="120" placeholder="${esc(cfg.ayudaPor)}" ${dis || disImp}></label>
+                  ${cfg.varios ? `<label class="pc-check dpa-check"><input type="checkbox" name="clientes_varios" ${v.clientes_varios || v.tipo_tercero === 'CLIENTES VARIOS' ? 'checked' : ''} ${dis}> Clientes varios</label>` : '<span></span>'}
+                </div>
+                <div class="dpa-g dpa-g4">
+                  <label class="campo"><span>Descripción</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="250" placeholder="Ej. FE-7074 FE-7075" ${dis}></label>
+                  <label class="campo"><span>Tipo de operación</span><input list="bm-operaciones" name="tipo_operacion" value="${esc(v.tipo_operacion || '')}" maxlength="40" ${dis}><datalist id="bm-operaciones">${tiposOperacion.map((t) => `<option value="${esc(t)}">`).join('')}</datalist></label>
+                </div>
+                <input type="hidden" name="tipo_tercero" value="${cfg.terceros[0].valor}">
+              </section>
+            </div>
+            <section class="bm-bloque bm-control dpa-control">
+              <h3 class="ta-col-titulo"><i class="ti ti-shield-check" aria-hidden="true"></i> Control</h3>
+              <dl>
+                ${dato('Folio', d ? `<b>${d.folio}</b>` : 'Automático')}
+                ${dato('Estado', d ? esc(d.estado) : 'Sin registrar')}
+                ${dato('Operador', `<span ${d ? '' : 'data-reloj'}>${esc(d ? d.usuario || '' : (ctx.yo.usuario || '').toUpperCase())}</span> <small>${esc(fmt.fechaHora(d ? d.fecha_operacion : new Date()))}</small>`)}
+                ${dato('Póliza', d?.partida_id ? `<b>${esc(nombrePartida(d.partida_id))}</b>` : '')}
+                ${dato('Actualiza', d?.modificado_en ? `${esc(d.modificado_por_nombre || '')} <small>${esc(fmt.fechaHora(d.modificado_en))}</small>` : '')}
+                ${dato('Fecha anula', d?.anulado_en ? `${esc(fmt.fechaHora(d.anulado_en))}<small title="${esc(d.motivo_anulacion || '')}">${esc(d.anulado_por || '')}</small>` : '')}
+              </dl>
+              ${window.BANCOS.adjunto.html(adjuntoActual({ ed, puede }))}
+            </section>
+          </div>`;
       ctx.pDet.innerHTML = `
         <form class="tk-form ta-form bm-form" novalidate>
           <header class="tk-titulo bm-titulo">
@@ -354,7 +402,7 @@
           <p class="modal-error tk-error" role="alert"></p>
           ${d && d.estado === 'ANULADO' ? `<p class="tk-aviso bm-anulado"><i class="ti ti-ban" aria-hidden="true"></i> Anulado por ${esc(d.anulado_por || '')} el ${esc(fmt.fechaHora(d.anulado_en))}: ${esc(d.motivo_anulacion || '')}</p>` : ''}
 
-          <div class="bm-cabecera ${ed ? 'editando' : 'consulta'}">
+          ${cfg.soloIngreso ? cabA : `<div class="bm-cabecera ${ed ? 'editando' : 'consulta'}">
             <section class="bm-banco">
               <div class="bm-banco-id"><span class="bk-cod" data-banco-cod>${banco?.codigo ?? ''}</span><div><small>Banco</small><b data-banco-nombre title="${esc(banco?.nombre || '')}">${esc(banco?.nombre || '')}</b></div></div>
               <label class="campo bm-cta"><span>Cuenta bancaria *</span><select name="cuenta_bancaria_id" ${disC}>${cuentas.filter((c) => c.activo || c.id === v.cuenta_bancaria_id).map((c) => `<option value="${c.id}" ${v.cuenta_bancaria_id === c.id ? 'selected' : ''}>${esc(c.numero)} · ${esc(c.nombre)}</option>`).join('')}</select></label>
@@ -412,7 +460,7 @@
                 ${cfg.radios ? `<div class="pc-radios bm-radios bm-c4">${cfg.terceros.map((t) => `<label><input type="radio" name="tipo_tercero" value="${t.valor}" ${v.tipo_tercero === t.valor ? 'checked' : ''} ${dis}> ${esc(t.texto)}</label>`).join('')}</div>` : `<input type="hidden" name="tipo_tercero" value="${cfg.terceros[0].valor}">`}
               </div>
             </section>
-          </div>
+          </div>`}
 
           <section class="bm-pestanas">
             <div class="bm-tabs-barra">
