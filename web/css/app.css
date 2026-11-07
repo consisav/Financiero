@@ -4544,6 +4544,6 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 /* Pantallas de poca altura: el formulario del documento se desplaza dentro de su columna. */
 @media (max-height: 940px) { .cc-en-detalle .cc-doc-form { overflow: auto; } .cd-cinco > .bm-bloque { padding: 5px 9px 6px; gap: 4px; } .cd5-tabla td { height: 20px; } }
 /* Elección de empresa: logo a la par del código. */
-.emp-logo { flex: 0 0 auto; width: 46px; height: 38px; display: grid; place-items: center; border-radius: 9px; background: var(--fondo); overflow: hidden; }
-.emp-logo img { max-width: 42px; max-height: 34px; object-fit: contain; }
-.emp-logo .ti { font-size: 20px; color: var(--tenue); }
+.emp-logo { flex: 0 0 auto; width: 104px; height: 56px; display: grid; place-items: center; border-radius: 9px; background: var(--fondo); overflow: hidden; }
+.emp-logo img { max-width: 98px; max-height: 50px; object-fit: contain; }
+.emp-logo .ti { font-size: 26px; color: var(--tenue); }
