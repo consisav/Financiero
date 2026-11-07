@@ -269,7 +269,7 @@
                 ${cfg.forma === 'CHEQUE'
                   ? `<div class="bg-chequera"><small>Chequera</small><b>${ch ? `Sig. ${ch.siguiente}` : 'Sin chequera'}</b><small>${ch ? `${ch.disponibles} disponibles` : 'Defínela en Cuentas bancarias'}</small></div>`
                   : `<label class="campo"><span>Referencia del lote</span><input name="referencia" value="${esc(p.referencia)}" maxlength="12" placeholder="Ej. LOTE1104"></label>`}
-                <label class="campo bg-c2"><span>Transacción</span><select name="transaccion"><option value="">Sin transacción</option>${transacciones.map((t) => `<option value="${t.id}" ${String(t.id) === p.transaccion ? 'selected' : ''}>${t.numero} · ${esc(t.descripcion || '')}</option>`).join('')}</select></label>
+                <label class="campo bg-c2"><span>Transacción</span><select name="transaccion"><option value="">Sin transacción</option>${transacciones.slice().sort((a, b) => String(a.descripcion || '').localeCompare(String(b.descripcion || ''), 'es')).map((t) => `<option value="${t.id}" ${String(t.id) === p.transaccion ? 'selected' : ''}>${esc(t.descripcion || '')} · ${t.numero}</option>`).join('')}</select></label>
                 ${extranjera ? `<label class="campo"><span>Tipo de cambio</span><input type="number" step="any" min="0" name="cambio" value="${esc(p.cambio || ctx.moneda(cb.moneda_id)?.cambio || '')}"></label>` : '<span></span>'}
                 <label class="campo bg-c3"><span>Descripción</span><input name="descripcion" value="${esc(p.descripcion)}" maxlength="120" placeholder="Se agrega antes de «PAGO FACTURA …»"></label>
                 <div class="bg-opciones bg-c3">

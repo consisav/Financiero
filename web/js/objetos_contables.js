@@ -254,7 +254,7 @@
     function filaTrans(r, i, dis) {
       const t = transacciones.find((x) => x.id === r.transaccion_id);
       return `<tr data-tra="${i}">
-        <td class="oc-trans"><select data-campo="transaccion" ${dis} aria-label="Transacción ${i + 1}"><option value="">Elegir…</option>${transacciones.map((x) => `<option value="${x.id}" ${r.transaccion_id === x.id ? 'selected' : ''}>${x.numero}</option>`).join('')}</select></td>
+        <td class="oc-trans"><select data-campo="transaccion" ${dis} aria-label="Transacción ${i + 1}"><option value="">Elegir…</option>${transacciones.slice().sort((a, b) => String(a.descripcion || '').localeCompare(String(b.descripcion || ''), 'es')).map((x) => `<option value="${x.id}" ${r.transaccion_id === x.id ? 'selected' : ''}>${esc(x.descripcion || '')} · ${x.numero}</option>`).join('')}</select></td>
         <td class="pc-nombre" data-nombre>${esc(t ? t.descripcion : '')}</td>
         <td><input data-campo="banco" value="${esc(r.cuenta_bancaria)}" maxlength="40" placeholder="No. de cuenta bancaria" ${dis} aria-label="Cuenta bancaria ${i + 1}"></td>
         <td>${dis ? '' : `<button type="button" class="icono-boton" data-quitar-tra="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>`}</td></tr>`;

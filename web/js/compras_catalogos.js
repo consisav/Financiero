@@ -31,7 +31,7 @@
     const { data } = await sb.from('transacciones_contables').select('id, numero, descripcion, estado').eq('localidad_id', loc).order('numero');
     return data || [];
   }
-  const opcionesTrx = (lista, id) => `<option value="">—</option>${lista.filter((t) => t.estado === 'ACTIVO' || t.id === id).map((t) => `<option value="${t.id}" ${t.id === id ? 'selected' : ''}>${t.numero} · ${esc(t.descripcion)}</option>`).join('')}`;
+  const opcionesTrx = (lista, id) => `<option value="">—</option>${lista.filter((t) => t.estado === 'ACTIVO' || t.id === id).slice().sort((a, b) => String(a.descripcion || '').localeCompare(String(b.descripcion || ''), 'es')).map((t) => `<option value="${t.id}" ${t.id === id ? 'selected' : ''}>${esc(t.descripcion)} · ${t.numero}</option>`).join('')}`;
   function descargarCsv(nombre, filas) {
     const csv = filas.map((f) => f.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
     const a = document.createElement('a');

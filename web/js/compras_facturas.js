@@ -415,7 +415,7 @@
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
               <div class="bm-transaccion bc-transaccion">
-                <label class="campo"><span>Transacción</span><select name="transaccion_id" ${dis}><option value="">Sin transacción (cuentas del proveedor)</option>${transacciones.filter((t) => t.estado === 'ACTIVO' || t.id === v.transaccion_id).map((t) => `<option value="${t.id}" ${t.id === v.transaccion_id ? 'selected' : ''}>${t.numero} · ${esc(t.descripcion || '')}</option>`).join('')}</select></label>
+                <label class="campo"><span>Transacción</span><select name="transaccion_id" ${dis}><option value="">Sin transacción (cuentas del proveedor)</option>${transacciones.filter((t) => t.estado === 'ACTIVO' || t.id === v.transaccion_id).slice().sort((a, b) => String(a.descripcion || '').localeCompare(String(b.descripcion || ''), 'es')).map((t) => `<option value="${t.id}" ${t.id === v.transaccion_id ? 'selected' : ''}>${esc(t.descripcion || '')} · ${t.numero}</option>`).join('')}</select></label>
                 <label class="campo"><span>Cuenta por pagar (proveedor)</span><input list="cf-cuentas" name="cuenta_pagar" value="${esc(cxp ? cxp.codigo : '')}" placeholder="Si se deja vacía, la cuenta al haber" ${dis}><small class="bc-cxp" data-cxp>${cxp ? esc(cxp.nombre) : ''}</small></label>
                 ${!disC ? '<button type="button" class="boton secundario-sm" data-accion="contabilizar"><i class="ti ti-calculator" aria-hidden="true"></i> Contabilizar</button><button type="button" class="boton secundario-sm" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Línea</button>' : ''}
               </div>

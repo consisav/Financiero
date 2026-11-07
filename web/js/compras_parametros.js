@@ -65,8 +65,9 @@
     // Ventas primero, luego las demás transacciones de la empresa.
     const esVentas = (x) => /VENT|FAC/i.test(`${x.modulo || ''}`);
     const opcTransacciones = (sel) => {
-      const fila = (x) => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${x.numero} · ${esc(x.descripcion)}</option>`;
-      const v = transacciones.filter(esVentas), o = transacciones.filter((x) => !esVentas(x));
+      const fila = (x) => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.descripcion)} · ${x.numero}</option>`;
+      const orden = transacciones.slice().sort((a, b) => String(a.descripcion || '').localeCompare(String(b.descripcion || ''), 'es'));
+      const v = orden.filter(esVentas), o = orden.filter((x) => !esVentas(x));
       return '<option value="">— Sin transacción —</option>'
         + (v.length ? `<optgroup label="Ventas">${v.map(fila).join('')}</optgroup>` : '')
         + (o.length ? `<optgroup label="${v.length ? 'Otras transacciones' : 'Transacciones de la empresa'}">${o.map(fila).join('')}</optgroup>` : '');

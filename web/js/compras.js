@@ -232,7 +232,7 @@
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
               <div class="bm-transaccion bc-transaccion">
-                <label class="campo"><span>Transacción</span><select name="transaccion_id" ${dis}><option value="">Sin transacción</option>${transacciones.map((t) => `<option value="${t.id}" ${t.id === v.transaccion_id ? 'selected' : ''}>${t.numero} · ${esc(t.descripcion || '')}</option>`).join('')}</select></label>
+                <label class="campo"><span>Transacción</span><select name="transaccion_id" ${dis}><option value="">Sin transacción</option>${transacciones.slice().sort((a, b) => String(a.descripcion || '').localeCompare(String(b.descripcion || ''), 'es')).map((t) => `<option value="${t.id}" ${t.id === v.transaccion_id ? 'selected' : ''}>${esc(t.descripcion || '')} · ${t.numero}</option>`).join('')}</select></label>
                 <label class="campo"><span>Cuenta por pagar (proveedor)</span><input list="bc-cuentas" name="cuenta_pagar" value="${esc(cxp ? cxp.codigo : '')}" placeholder="Si se deja vacía, la cuenta al haber" ${dis}><small class="bc-cxp" data-cxp>${cxp ? esc(cxp.nombre) : ''}</small></label>
                 <label class="campo bc-desc"><span>Descripción</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="200" ${dis}></label>
                 ${!disC ? '<button type="button" class="boton secundario-sm" data-accion="contabilizar"><i class="ti ti-calculator" aria-hidden="true"></i> Contabilizar</button><button type="button" class="boton secundario-sm" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Línea</button>' : ''}

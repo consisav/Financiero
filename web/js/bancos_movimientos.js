@@ -400,7 +400,7 @@
 
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
               <div class="bm-transaccion">
-                <label class="campo"><span>Transacción</span><select name="transaccion_id" ${disC}><option value="">Elegir transacción…</option>${transacciones.filter((t) => t.aplica_poliza).map((t) => `<option value="${t.id}" ${v.transaccion_id === t.id ? 'selected' : ''}>${t.numero} · ${esc(t.descripcion)}</option>`).join('')}</select></label>
+                <label class="campo"><span>Transacción</span><select name="transaccion_id" ${disC}><option value="">Elegir transacción…</option>${transacciones.filter((t) => t.aplica_poliza).slice().sort((a, b) => String(a.descripcion || '').localeCompare(String(b.descripcion || ''), 'es')).map((t) => `<option value="${t.id}" ${v.transaccion_id === t.id ? 'selected' : ''}>${esc(t.descripcion)} · ${t.numero}</option>`).join('')}</select></label>
                 ${ed && !contabilizado() ? '<button type="button" class="boton secundario-sm" data-accion="contabilizar" title="Arma el detalle contable con las cuentas de la transacción y el valor del documento"><i class="ti ti-calculator" aria-hidden="true"></i> Contabilizar</button>' : ''}
                 ${ed && !contabilizado() ? '<button type="button" class="rp-enlace" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Agregar línea</button>' : ''}
               </div>
