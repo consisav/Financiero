@@ -4639,3 +4639,36 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .dpb-codbanco { flex-direction: row !important; align-items: center; gap: 8px !important; }
 .dpb-codbanco input { width: 140px !important; }
 .bm-solo .bm-titulo .tk-titulo-acciones { flex-wrap: wrap; justify-content: flex-end; }
+/* Consulta de Partidas: anchos de sus columnas. */
+.pz-tabla col.w-pz-num { width: 96px; } .pz-tabla col.w-pz-tipo { width: 64px; } .pz-tabla col.w-pz-origen { width: 96px; }
+.pz-tabla col.w-estado { width: 190px; }
+/* ===== Partidas contables · solo ingreso: arriba la empresa y el período; abajo la partida con el diseño de depósitos ===== */
+.pq-espacio.pq-solo { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.pq-solo .pq-lista { flex-direction: row; align-items: center; gap: 12px; padding: 0 12px 0 0; overflow: visible; }
+.pq-solo .pq-filtros { flex: 1; display: grid; grid-template-columns: auto minmax(280px, 1.6fr) minmax(110px, .5fr) minmax(170px, .8fr); align-items: end; gap: 6px 12px; border-bottom: 0; padding: 10px 14px; }
+.pq-solo .pq-filtros .pq-c2 { grid-column: auto; }
+.pq-solo .pq-marca-titulo { margin-right: 6px; }
+.pq-solo .pq-bandeja { flex: 0 0 auto; padding: 0; gap: 0; }
+.pq-solo .pq-mes { padding: 8px 14px; }
+.pzb { gap: 8px; }
+.pzb-control { gap: 18px; }
+.pzb-control .rp-enlace { font-size: 11.5px; margin-left: 4px; }
+.pzb-checks { margin-left: auto; display: flex; gap: 16px; }
+.pzb-checks .pc-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+.pzb-checks .pc-check small { font-size: 10.5px; color: var(--tenue); }
+.pzb-g { grid-template-columns: minmax(220px, 1.5fr) minmax(260px, 2.6fr) minmax(150px, .9fr) minmax(150px, .9fr) minmax(80px, .45fr); }
+.pzb-totales { flex-basis: 220px !important; gap: 2px !important; }
+.pzb-totales > div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.pzb-totales > div span { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #1f7a45; }
+.pzb-totales > div b { font-size: 16px; font-variant-numeric: tabular-nums; color: var(--texto); }
+.pzb-totales em { align-self: flex-end; font-style: normal; font-size: 12.5px; font-weight: 700; display: inline-flex; gap: 4px; align-items: center; }
+.pzb-totales em.ok { color: #1f7a45; } .pzb-totales em.no { color: #b23a32; }
+@media (max-width: 1750px) {
+  .pzb-g { grid-template-columns: minmax(190px, 1.4fr) minmax(200px, 2.2fr) minmax(130px, .9fr) minmax(130px, .9fr) minmax(64px, .45fr); }
+  .pzb-control { gap: 12px; }
+  .pzb-totales { flex-basis: 190px !important; }
+}
+.pz-consulta .cq-ficha .tk-titulo-texto { min-width: 0; } .pz-consulta .cq-ficha h2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pq-solo .pq-filtros { grid-template-columns: auto minmax(260px, 340px) minmax(100px, 130px) minmax(160px, 200px) 1fr; }
+.pq-solo .pq-filtros .pq-marca-titulo { grid-column: auto !important; align-self: center; }
+.pq-solo .pq-marca-titulo h2 { white-space: nowrap; }

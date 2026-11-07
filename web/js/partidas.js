@@ -35,7 +35,7 @@
   ];
 
   window.PANTALLAS = window.PANTALLAS || {};
-  window.PANTALLAS['partidas-contables'] = function (cont) {
+  window.PANTALLAS['partidas-contables'] = function (cont, m, extra) {
     const sb = window.FIN.sb;
     const yo = window.FIN.perfil();
     const admin = window.FIN.puedeEditarCatalogos();
@@ -60,7 +60,7 @@
     const f = { org: yo.organizacion_id || null, loc: yo.localidad_id || null, anio: anioHoy, mes: mesHoy, tipo: 0, estado: 'todas' };
 
     cont.innerHTML = `
-      <div class="pq-espacio">
+      <div class="pq-espacio pq-solo">
         <aside class="pq-lista">
           <div class="pq-filtros" id="pc-filtros"></div>
           <div class="pq-bandeja" id="pc-maestro"></div>
@@ -115,6 +115,11 @@
       if (localidad(f.loc)) f.org = localidad(f.loc).organizacion_id;
       if (!f.org) f.org = organizaciones[0]?.id || null;
       if (!f.loc || localidad(f.loc)?.organizacion_id !== f.org) f.loc = localidades.find((x) => x.organizacion_id === f.org)?.id || null;
+      // Enlace desde la Consulta de Partidas: se abre la partida con su empresa y su período.
+      if (extra && /^\d+$/.test(String(extra))) {
+        const { data: p } = await sb.from('partidas').select('*').eq('id', Number(extra)).maybeSingle();
+        if (p && localidad(p.localidad_id)) { f.loc = p.localidad_id; f.org = p.organizacion_id; f.anio = p.anio; f.mes = p.mes; f.tipo = 0; f.estado = 'todas'; actual = p; }
+      }
       pintarFiltros();
       await consultar();
     }
@@ -157,8 +162,7 @@
         <label class="campo pq-c2"><span>Empresa</span><select name="loc">${grupos.map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.locs.map((x) => `<option value="${x.id}" ${f.loc === x.id ? 'selected' : ''}>${esc(x.codigo)} · ${esc(x.nombre_comercial)}</option>`).join('')}</optgroup>`).join('') || '<option value="">Sin localidades</option>'}</select></label>
         <label class="campo"><span>Año</span><select name="anio">${anios.map((a) => `<option ${f.anio === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
         <label class="campo"><span>Mes</span><select name="mes">${MESES.map((n, i) => `<option value="${i + 1}" ${f.mes === i + 1 ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} · ${n}</option>`).join('')}</select></label>
-        <label class="campo"><span>Tipo</span><select name="tipo"><option value="0">Todos</option>${tipos.map((t) => `<option value="${t.id}" ${f.tipo === t.id ? 'selected' : ''}>${esc(t.siglas)} · ${esc(t.nombre)}</option>`).join('')}</select></label>
-        <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option value="${e.valor}" ${f.estado === e.valor ? 'selected' : ''}>${esc(e.texto)}</option>`).join('')}</select></label>`;
+`;
     }
 
     async function consultar() {
@@ -180,7 +184,7 @@
       partidas = data;
       if (actual && !partidas.some((p) => p.id === actual.id)) actual = null;
       pintarMaestro();
-      await abrir(actual ? partidas.find((p) => p.id === actual.id) : partidas[0] || null);
+      await abrir(actual ? partidas.find((p) => p.id === actual.id) || null : null);
     }
 
     // ---------- Maestro ----------
@@ -189,36 +193,12 @@
     const franja = (p) => p.estado === 'ANULADA' ? 'e1' : p.definitiva ? 'e7' : p.aprobada ? 'e6' : 'e4';
 
     function pintarMaestro() {
-      const q = buscar.trim().toLowerCase();
-      const filas = partidas.filter((p) => !q || [`${p.mes}-${p.numero}`, p.numero_anual, p.descripcion, p.usuario, tipo(p.tipo_partida_id)?.nombre, tipo(p.tipo_partida_id)?.siglas]
-        .some((v) => String(v || '').toLowerCase().includes(q)));
-      const vig = partidas.filter((p) => p.estado === 'VIGENTE');
-      const porAprobar = vig.filter((p) => !p.aprobada).length;
       pMae.innerHTML = `
         <div class="pq-mes ${cerrado() ? 'cerrado' : 'abierto'}">
           <i class="ti ${cerrado() ? 'ti-lock' : 'ti-lock-open'}" aria-hidden="true"></i>
           <div><b>${esc(nombreMes())} · ${cerrado() ? 'Mes cerrado' : 'Mes abierto'}</b>
-          <small>${cerrado() ? `Cerrado por ${esc(cierre.cerrado_por || '')} el ${esc(fechaCorta(cierre.cerrado_en))}: solo consulta e impresión` : 'Las partidas se registran y modifican'}</small></div>
-        </div>
-        <div class="pq-kpis">
-          <div><span>Debe</span><b>${monto(vig.reduce((s, p) => s + Number(p.total_debe), 0))}</b></div>
-          <div><span>Haber</span><b>${monto(vig.reduce((s, p) => s + Number(p.total_haber), 0))}</b></div>
-          <div class="${porAprobar ? 'pend' : ''}"><span>Por aprobar</span><b>${porAprobar}</b></div>
-        </div>
-        <div class="pq-buscar-fila">
-          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar partida, descripción…" value="${esc(buscar)}" aria-label="Buscar partidas"></label>
-          ${admin && f.loc ? `<button type="button" class="boton primario-sm" data-accion="nueva" ${cerrado() ? 'disabled title="El mes está cerrado"' : 'title="Registrar una partida nueva en este mes"'}><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>` : ''}
-        </div>
-        <div class="pq-cuenta-lista"><span>${partidas.length} partida${partidas.length === 1 ? '' : 's'}</span>${q ? `<span>${filas.length} coinciden</span>` : ''}</div>
-        <ul class="pq-items" role="listbox" aria-label="Partidas del mes">
-          ${filas.map((p) => `
-            <li class="${actual && actual.id === p.id ? 'actual' : ''} ${p.estado === 'ANULADA' ? 'anulada' : ''}" data-partida="${p.id}" tabindex="0" role="option" aria-selected="${!!actual && actual.id === p.id}">
-              <i class="tk-franja-celda ${franja(p)}" aria-hidden="true"></i>
-              <div class="pq-item-cab"><b>${String(p.mes).padStart(2, '0')}-${p.numero}</b><span class="pc-tipo" title="${esc(tipo(p.tipo_partida_id)?.nombre || '')}">${esc(tipo(p.tipo_partida_id)?.siglas || '')}</span><small>anual ${p.numero_anual}</small><time>${esc(fechaCorta(p.fecha))}</time></div>
-              <p title="${esc(p.descripcion)}">${esc(p.descripcion)}</p>
-              <div class="pq-item-pie"><span class="pc-marcas">${marcas(p)}</span><b>${monto(p.total_debe)}</b></div>
-            </li>`).join('') || `<li class="pq-vacio"><i class="ti ti-notebook" aria-hidden="true"></i>${partidas.length ? 'Ninguna partida coincide con la búsqueda.' : `No hay partidas en ${esc(nombreMes())} para esta empresa.`}</li>`}
-        </ul>`;
+          <small>${cerrado() ? `Cerrado por ${esc(cierre.cerrado_por || '')} el ${esc(fechaCorta(cierre.cerrado_en))}: solo consulta e impresión` : `${partidas.length} partida${partidas.length === 1 ? '' : 's'} en el mes · las partidas se registran y modifican`}</small></div>
+        </div>`;
     }
 
     // ---------- Detalle ----------
@@ -255,9 +235,10 @@
       return '';
     }
 
+    const consultaBtn = '<a class="boton secundario-sm" href="#/contabilidad/consulta-de-partidas" title="Buscar y consultar las partidas registradas"><i class="ti ti-file-search" aria-hidden="true"></i> Consulta</a>';
     function acciones(p, ed) {
       if (!p) {
-        return ed ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Registrar partida</button>' : '';
+        return `${consultaBtn}${ed ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Registrar partida</button>' : ''}`;
       }
       if (modo === 'editar' && ed) {
         return `<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Cancelar</button>
@@ -266,6 +247,8 @@
       const bloqueo = motivoBloqueo(p);
       const procesar = puedeModificar(p);
       return `
+        ${consultaBtn}
+        ${admin && !cerrado() ? '<button type="button" class="boton secundario-sm" data-accion="nueva" title="Registrar una partida nueva en este mes"><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>' : ''}
         <button type="button" class="boton primario-sm" data-accion="modificar" ${bloqueo ? `disabled title="${esc(bloqueo)}: no se modifica"` : 'title="Habilitar la edición de la partida"'}><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>
         <button type="button" class="boton secundario-sm" data-accion="copiar" ${admin && !cerrado() ? '' : 'disabled'} title="${cerrado() ? 'El mes está cerrado' : 'Crear una partida nueva con este encabezado y estas líneas'}"><i class="ti ti-copy" aria-hidden="true"></i> Replicar</button>
         ${procesar ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>' : ''}
@@ -284,7 +267,7 @@
       const p = actual;
       if (!f.loc) { pDet.innerHTML = '<div class="tk-vacio ta-elige"><i class="ti ti-building" aria-hidden="true"></i>Elige la empresa.</div>'; return; }
       if (!p && !copia && (!admin || cerrado())) {
-        pDet.innerHTML = `<div class="tk-vacio ta-elige"><i class="ti ${cerrado() ? 'ti-lock' : 'ti-notebook'}" aria-hidden="true"></i>${cerrado() ? `El mes de ${esc(nombreMes())} está cerrado: no se registran partidas nuevas.` : 'Elige una partida de la lista.'}</div>`;
+        pDet.innerHTML = `<div class="tk-vacio ta-elige"><i class="ti ${cerrado() ? 'ti-lock' : 'ti-notebook'}" aria-hidden="true"></i>${cerrado() ? `El mes de ${esc(nombreMes())} está cerrado: no se registran partidas nuevas. Consulta sus partidas en Registros · Consulta de Partidas.` : 'Busca la partida en Registros · Consulta de Partidas.'}</div>`;
         return;
       }
       catalogoNuevo = p ? null : await catalogoActivo(f.loc);
@@ -316,28 +299,16 @@
           ${!p && !catalogoNuevo ? '<p class="tk-aviso pq-aviso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Esta empresa no tiene un catálogo de cuentas activo: créalo en Catálogos · Cuentas y CC · Cuentas contables.</p>' : ''}
           ${p && p.estado === 'ANULADA' ? `<p class="tk-aviso pq-aviso"><i class="ti ti-ban" aria-hidden="true"></i> Anulada por ${esc(p.anulada_por || '')} el ${esc(fechaHora(p.anulada_en))}: ${esc(p.motivo_anulacion || '')}</p>` : ''}
 
-          <div class="pq-cabecera">
-            <div class="pq-tarjeta pq-periodo">
-              <div class="pq-empresa"><small>Empresa</small><b title="${esc(loc ? loc.nombre_comercial : '')}">${esc(loc ? `${loc.codigo} · ${loc.nombre_comercial}` : '')}</b></div>
-              <div class="pq-cifras">
-                <div><span>Año</span><b>${p ? p.anio : f.anio}</b></div>
-                <div><span>Mes</span><b>${MESES[(p ? p.mes : f.mes) - 1]}</b></div>
-                <div class="pq-poliza"><span>Póliza</span><b data-poliza>${p ? p.numero : siguiente ? siguiente.numero : '—'}</b>${p ? '' : '<button type="button" class="rp-enlace" data-accion="obtener" title="Ver el número que tendrá la partida al registrarla">Obtener</button>'}</div>
-                <div><span>Póliza anual</span><b data-anual>${p ? p.numero_anual : siguiente ? siguiente.anual : '—'}</b></div>
-              </div>
-            </div>
-            <div class="pq-tarjeta pq-moneda">
-              <label class="campo"><span>Moneda</span>
-                <select name="moneda_id" ${dis}>${monedas.map((m) => `<option value="${m.id}" ${mon && mon.id === m.id ? 'selected' : ''}>${esc(m.nombre)} (${esc(m.simbolo)})</option>`).join('')}</select></label>
-              <label class="campo"><span>Valor cambio</span><input type="number" name="tipo_cambio" step="any" min="0" value="${esc(String(base.tipo_cambio ?? mon?.cambio ?? 1))}" ${dis}></label>
-            </div>
-            <div class="pq-tarjeta pq-control">
-              <dl>
-                <div><dt>Fecha y hora</dt><dd ${p ? '' : 'data-reloj'}>${esc(fechaHora(p ? p.fecha : new Date()))}</dd></div>
-                <div><dt>Usuario</dt><dd>${esc(p ? p.usuario || '' : (yo.usuario || '').toUpperCase())}</dd></div>
-                <div><dt>Estado · origen</dt><dd class="${p && p.estado === 'ANULADA' ? 'pc-rojo' : ''}">${p ? esc(p.estado) : 'VIGENTE'} <small>${p ? esc(p.origen) : 'MANUAL'}</small></dd></div>
-              </dl>
-              <div class="pq-checks">
+          <div class="dpb pzb">
+            <div class="dpb-control pzb-control">
+              <span><small>Empresa</small><b title="${esc(loc ? loc.nombre_comercial : '')}">${esc(loc ? loc.codigo : '')}</b></span>
+              <span><small>Año</small><b>${p ? p.anio : f.anio}</b></span>
+              <span><small>Mes</small><b>${MESES[(p ? p.mes : f.mes) - 1]}</b></span>
+              <span><small>Póliza</small><b data-poliza>${p ? p.numero : siguiente ? siguiente.numero : '—'}</b>${p ? '' : '<button type="button" class="rp-enlace" data-accion="obtener" title="Ver el número que tendrá la partida al registrarla">Obtener</button>'}</span>
+              <span><small>Anual</small><b data-anual>${p ? p.numero_anual : siguiente ? siguiente.anual : '—'}</b></span>
+              <span><small>Usuario</small><b>${esc(p ? p.usuario || '' : (yo.usuario || '').toUpperCase())}</b><em ${p ? '' : 'data-reloj'}>${esc(fechaHora(p ? p.fecha : new Date()))}</em></span>
+              <span><small>Estado</small><b class="${p && p.estado === 'ANULADA' ? 'pc-rojo' : 'dpb-ok'}">${p ? esc(p.estado) : 'VIGENTE'}</b><em>${p ? esc(p.origen) : 'MANUAL'}</em></span>
+              <div class="pzb-checks">
                 <label class="pc-check" title="${p ? 'Aprobar requiere que la partida esté cuadrada (debe = haber)' : 'Registra la partida para poder aprobarla'}">
                   <input type="checkbox" data-check="aprobada" ${p && p.aprobada ? 'checked' : ''} ${procesar ? '' : 'disabled'}> Aprobada
                   <small>${p && p.aprobada ? `${esc(p.aprobada_por || '')} · ${esc(fechaCorta(p.aprobada_en))}` : ''}</small></label>
@@ -346,14 +317,26 @@
                   <small>${p && p.definitiva ? `${esc(p.definitiva_por || '')} · ${esc(fechaCorta(p.definitiva_en))}` : ''}</small></label>
               </div>
             </div>
-          </div>
-
-          <div class="pq-fila">
-            <label class="campo"><span>Tipo de partida (transacción) *</span>
-              <select name="tipo_partida_id" ${dis}><option value="">Seleccionar…</option>${tipos.map((t) => `<option value="${t.id}" ${tp && tp.id === t.id ? 'selected' : ''}>${t.codigo} · ${esc(t.siglas)} · ${esc(t.nombre)}</option>`).join('')}</select></label>
-            <label class="campo"><span>Descripción *</span><input name="descripcion" value="${esc(base.descripcion || '')}" maxlength="300" placeholder="Concepto general de la partida" ${dis}></label>
-            <label class="campo"><span>Clasificación</span>
-              <select name="clasificacion" ${dis}>${CLASIFICACIONES.map((c) => `<option ${clasif === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+            <section class="bm-bloque dpb-banda dpb-deposito">
+              <div class="dpb-campos">
+                <h3 class="ta-col-titulo"><i class="ti ti-file-invoice" aria-hidden="true"></i> Póliza</h3>
+                <div class="dpb-g pzb-g">
+                  <label class="campo"><span>Tipo de partida (transacción) *</span>
+                    <select name="tipo_partida_id" ${dis}><option value="">Seleccionar…</option>${tipos.map((t) => `<option value="${t.id}" ${tp && tp.id === t.id ? 'selected' : ''}>${t.codigo} · ${esc(t.siglas)} · ${esc(t.nombre)}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Descripción *</span><input name="descripcion" value="${esc(base.descripcion || '')}" maxlength="300" placeholder="Concepto general de la partida" ${dis}></label>
+                  <label class="campo"><span>Clasificación</span>
+                    <select name="clasificacion" ${dis}>${CLASIFICACIONES.map((c) => `<option ${clasif === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Moneda</span>
+                    <select name="moneda_id" ${dis}>${monedas.map((m) => `<option value="${m.id}" ${mon && mon.id === m.id ? 'selected' : ''}>${esc(m.nombre)} (${esc(m.simbolo)})</option>`).join('')}</select></label>
+                  <label class="campo"><span>Cambio</span><input type="number" name="tipo_cambio" step="any" min="0" value="${esc(String(base.tipo_cambio ?? mon?.cambio ?? 1))}" ${dis}></label>
+                </div>
+              </div>
+              <div class="dpb-valor pzb-totales">
+                <div><span>Debe</span><b data-caja="debe">0.00</b></div>
+                <div><span>Haber</span><b data-caja="haber">0.00</b></div>
+                <em data-caja="cuadre"></em>
+              </div>
+            </section>
           </div>
 
           <div class="pq-pestanas">
@@ -433,6 +416,8 @@
       const n = pDet.querySelector('[data-n-lineas]');
       if (n) n.textContent = lineas.length;
       const cuadra = dif === 0 && d > 0;
+      const caja = (k) => pDet.querySelector(`[data-caja=${k}]`);
+      if (caja('debe')) { caja('debe').textContent = monto(d); caja('haber').textContent = monto(h); caja('cuadre').innerHTML = cuadra ? '<i class="ti ti-circle-check" aria-hidden="true"></i> Cuadrada' : d || h ? `<i class="ti ti-alert-triangle" aria-hidden="true"></i> Diferencia ${monto(Math.abs(dif))}` : 'Sin líneas'; caja('cuadre').className = cuadra ? 'ok' : 'no'; }
       pDet.querySelector('[data-diferencia]').innerHTML = cuadra
         ? '<span class="pc-cuadre ok"><i class="ti ti-circle-check" aria-hidden="true"></i> Cuadrada</span>'
         : `<span class="pc-cuadre no"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Diferencia ${monto(Math.abs(dif))} ${dif > 0 ? 'en el debe' : dif < 0 ? 'en el haber' : ''}</span>`;

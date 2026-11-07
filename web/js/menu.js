@@ -116,7 +116,8 @@ window.MODULOS = [
           subgrupo: 'Partidas',
           icono: 'ti-notebook',
           pantallas: [
-            { id: 'partidas-contables', nombre: 'Partidas contables', icono: 'ti-file-invoice', descripcion: 'Pólizas de cada organización y localidad: encabezado, detalle de cuentas, aprobación y cierre definitivo.' }
+            { id: 'partidas-contables', nombre: 'Partidas contables', icono: 'ti-file-invoice', descripcion: 'Pólizas de cada organización y localidad: encabezado, detalle de cuentas, aprobación y cierre definitivo.' },
+            { id: 'consulta-de-partidas', nombre: 'Consulta de Partidas', icono: 'ti-file-search', descripcion: 'Resumen de las partidas de la empresa por tipo, clasificación, fechas y estado (por aprobar, aprobadas, definitivas, anuladas, descuadradas), con su detalle contable y los documentos que las generaron.', separador: true }
           ]
         },
         {
