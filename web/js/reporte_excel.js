@@ -104,7 +104,8 @@
     let fila = 8;
     for (const f of cfg.filas) {
       const r = ws.getRow(fila);
-      r.values = f.valores.map((v) => plano(v ?? ''));
+      // Los montos se redondean a centavos (evita residuos de la suma en coma flotante).
+      r.values = f.valores.map((v, i) => (cols[i] && cols[i].tipo === 'monto' && typeof v === 'number') ? Math.round(v * 100) / 100 : plano(v ?? ''));
       cols.forEach((c, i) => { if (c.tipo === 'monto') r.getCell(i + 1).numFmt = MONTO; if (c.tipo === 'numero') r.getCell(i + 1).numFmt = NUMERO; if (c.tipo === 'porcentaje') r.getCell(i + 1).numFmt = '0.0%'; });
       if (f.sangria) r.getCell(1).alignment = { indent: f.sangria };
       if (f.sangria && cfg.sangriaEn) cfg.sangriaEn.forEach((k) => { r.getCell(k).alignment = { indent: f.sangria }; });

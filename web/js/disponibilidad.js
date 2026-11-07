@@ -37,103 +37,179 @@
   const estimado = (d) => Number(d.saldo) + Number(d.circ_egresos) - Number(d.circ_ingresos);
   const local = (d) => d.moneda_iso === 'GTQ';
 
-  // Tablero de una generación (proceso y consulta).
-  function tablero(gen, det, { acciones = true } = {}) {
+  // Síntesis de la organización: por empresa (con sus bancos) y por banco (con sus empresas).
+  function sintesis(org) {
+    const emp = new Map(), ban = new Map();
+    org.forEach((o) => {
+      const e = emp.get(o.localidad_id) || { codigo: o.localidad_codigo, nombre: o.localidad_nombre, bancos: [], cuentas: 0, saldo: 0, circ: 0, est: 0, bajo: 0 };
+      e.bancos.push(o); e.cuentas += o.cuentas; e.saldo += Number(o.saldo_ml); e.circ += Number(o.circulacion_ml); e.est += Number(o.estimado_ml); e.bajo += o.bajo_minimo;
+      emp.set(o.localidad_id, e);
+      const b = ban.get(o.banco_codigo) || { codigo: o.banco_codigo, nombre: o.banco_nombre, empresas: [], cuentas: 0, saldo: 0, circ: 0, est: 0, bajo: 0 };
+      b.empresas.push(o); b.cuentas += o.cuentas; b.saldo += Number(o.saldo_ml); b.circ += Number(o.circulacion_ml); b.est += Number(o.estimado_ml); b.bajo += o.bajo_minimo;
+      ban.set(o.banco_codigo, b);
+    });
+    const ord = (a, b) => String(a.codigo).localeCompare(String(b.codigo), undefined, { numeric: true });
+    return { empresas: [...emp.values()].sort(ord), bancos: [...ban.values()].sort(ord) };
+  }
+  const pct = (v, t) => Number(t) ? `${Math.round(v / Number(t) * 1000) / 10}%` : '—';
+  const PESTANAS = [['CUENTAS', 'ti-building-bank', 'Cuentas de la empresa'], ['ORGANIZACION', 'ti-building-community', 'Síntesis de la organización'], ['BANCOS', 'ti-chart-bar', 'Por banco']];
+
+  // Tablero de una generación (opción A): generación y reportes; indicadores de la empresa frente a la
+  // organización; pestañas con las cuentas de la empresa, la síntesis de la organización y el resumen por banco.
+  function tablero(gen, det, org = [], { pestana = 'CUENTAS' } = {}) {
     if (!gen) return '';
     const grupos = porBanco(det);
     const totEst = grupos.reduce((s, g) => s + g.estimado, 0);
-    const maxB = Math.max(1, ...grupos.map((g) => Math.abs(g.saldo)));
+    const hayOrg = org.length > 0;
+    const sx = sintesis(org);
+    const maxB = Math.max(1, ...sx.bancos.map((b) => Math.abs(b.saldo)), ...grupos.map((g) => Math.abs(g.saldo)));
     const parametros = `${gen.banco_nombre ? esc(gen.banco_nombre) : 'Todos los bancos'} · ${gen.cuenta_numero ? `cuenta ${esc(gen.cuenta_numero)}` : 'todas las cuentas'} · al ${esc(fmt.fechaDia(gen.fecha_corte))}`;
+    const kpi = (titulo, emp, orgV, nota, clase = '') => `<div class="dsp-kpi2 ${clase}"><span>${titulo}</span>
+      <div class="dsp-kpi2-v"><div><small>Empresa</small><b class="${emp < 0 ? 'neg' : ''}">${typeof emp === 'number' && titulo !== 'Bajo su mínimo' ? m(emp) : emp}</b></div>
+      ${hayOrg ? `<div><small>Organización</small><b class="${orgV < 0 ? 'neg' : ''}">${typeof orgV === 'number' && titulo !== 'Bajo su mínimo' ? m(orgV) : orgV}</b></div>` : ''}</div><small>${nota}</small></div>`;
+    const barra = (nombre, v, total) => `<div class="dsp-barra"><div><b>${esc(nombre || '')}</b><span>Q ${m(v)}</span></div><i style="--p:${Math.max(2, Math.round(Math.abs(v) / maxB * 100))}%" class="${v < 0 ? 'neg' : ''}"></i><small>${pct(v, total)} del total</small></div>`;
     return `
-      <div class="dsp-tablero">
-        <div class="dsp-fila1">
+      <div class="dsp-tablero dsp-a">
+        <div class="dsp-cab">
           <section class="dsp-gen">
             <span class="tk-icono"><i class="ti ti-chart-line" aria-hidden="true"></i></span>
             <div><small>Generación</small><b class="dsp-corr">${esc(gen.correlativo)}</b><small class="dsp-par">${parametros}</small></div>
             <dl>
               <div><dt>Generó</dt><dd>${esc(gen.usuario || '')}${gen.usuario_nombre ? `<small>${esc(gen.usuario_nombre)}</small>` : ''}</dd></div>
               <div><dt>Fecha y hora</dt><dd>${esc(fhs(gen.generado_en))}</dd></div>
+              ${hayOrg ? `<div><dt>Organización</dt><dd>${gen.org_empresas} empresas<small>${gen.org_cuentas} cuentas</small></dd></div>` : ''}
             </dl>
           </section>
-          <div class="dsp-kpi principal"><span>Disponible Q</span><b>${m(gen.total_saldo_ml)}</b><small>Saldo en libros de ${gen.cuentas} cuenta${gen.cuentas === 1 ? '' : 's'}</small></div>
-          <div class="dsp-kpi"><span>En circulación Q</span><b class="${Number(gen.total_circulacion_ml) < 0 ? 'pc-rojo' : ''}">${m(gen.total_circulacion_ml)}</b><small>Ingresos − egresos sin conciliar</small></div>
-          <div class="dsp-kpi"><span>Estimado en bancos Q</span><b>${m(totEst)}</b><small>Libros + lo que aún no cobran</small></div>
-          <div class="dsp-kpi ${gen.bajo_minimo ? 'alerta' : 'ok'}"><span>Bajo su mínimo</span><b>${gen.bajo_minimo}</b><small>${gen.bajo_minimo ? 'Revisar las cuentas en rojo' : 'Todas sobre su mínimo'}</small></div>
-          ${acciones ? `<div class="dsp-acciones">
-            <button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Disponibilidad</small></span></button>
-            <button type="button" class="boton cqc-excel" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Cuentas y bancos</small></span></button>
-          </div>` : ''}
+          <div class="dsp-kpis">
+            ${kpi('Disponible Q', Number(gen.total_saldo_ml), Number(gen.org_saldo_ml), 'Saldo en libros', 'principal')}
+            ${kpi('En circulación Q', Number(gen.total_circulacion_ml), Number(gen.org_circulacion_ml), 'Ingresos − egresos sin conciliar')}
+            ${kpi('Estimado en bancos Q', totEst, Number(gen.org_estimado_ml), 'Libros + lo que aún no cobran')}
+            ${kpi('Bajo su mínimo', `${gen.bajo_minimo} de ${gen.cuentas}`, hayOrg ? `${gen.org_bajo_minimo} de ${gen.org_cuentas}` : '', 'Cuentas bajo su saldo mínimo', (gen.bajo_minimo || gen.org_bajo_minimo) ? 'alerta' : 'ok')}
+          </div>
+          <div class="dsp-acciones">
+            <button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Empresa y organización</small></span></button>
+            <button type="button" class="boton cqc-excel" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Empresa y organización</small></span></button>
+          </div>
         </div>
-        <div class="dsp-fila2">
-          <section class="dsp-cuentas pc-lineas">
-            <table><thead><tr><th>Cuenta bancaria</th><th>Moneda</th><th class="num">Saldo inicial</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo (libros)</th><th class="num" title="Ingresos menos egresos sin conciliar">En circulación</th><th class="num">Estimado en banco</th><th class="num">Mínimo</th><th class="num">Disponible Q</th></tr></thead>
-              <tbody>${grupos.map((g) => `<tr class="dsp-banco"><td colspan="10"><span class="bk-cod">${g.codigo ?? ''}</span> ${esc(g.nombre || '')} <small>${g.filas.length} cuenta${g.filas.length === 1 ? '' : 's'}</small></td></tr>
-                ${g.filas.map((d) => `<tr class="${d.bajo_minimo ? 'dsp-bajo' : ''}">
-                  <td><b>${esc(d.cuenta_numero)}</b><small>${esc(d.cuenta_nombre || '')}</small></td>
-                  <td>${esc(d.moneda_simbolo || d.moneda_iso || '')}${local(d) ? '' : `<small>TC ${Number(d.tipo_cambio)}</small>`}</td>
-                  <td class="num">${m(d.saldo_inicial)}</td><td class="num">${m(d.ingresos)}</td><td class="num">${m(d.egresos)}</td>
-                  <td class="num fuerte">${m(d.saldo)}</td>
-                  <td class="num ${Number(d.circ_ingresos) - Number(d.circ_egresos) < 0 ? 'pc-rojo' : ''}">${m(Number(d.circ_ingresos) - Number(d.circ_egresos))}<small>${d.circ_documentos} doc.</small></td>
-                  <td class="num">${m(estimado(d))}</td>
-                  <td class="num">${m(d.saldo_minimo)}${d.bajo_minimo ? '<small class="pc-rojo">bajo el mínimo</small>' : ''}</td>
-                  <td class="num fuerte">${m(d.saldo_ml)}</td></tr>`).join('')}
-                <tr class="dsp-sub"><td colspan="5">Total ${esc(g.nombre || '')}</td><td></td><td class="num">${m(g.circ)}</td><td class="num">${m(g.estimado)}</td><td class="num">${m(g.minimo)}</td><td class="num">${m(g.saldo)}</td></tr>`).join('')
-                || '<tr><td colspan="10" class="tk-vacio">La generación no tiene cuentas (no hay cuentas activas con esos parámetros).</td></tr>'}</tbody>
-              <tfoot><tr><td colspan="6">Total general en quetzales</td><td class="num">${m(gen.total_circulacion_ml)}</td><td class="num">${m(totEst)}</td><td></td><td class="num">${m(gen.total_saldo_ml)}</td></tr></tfoot>
-            </table>
-          </section>
-          <section class="dsp-bancos">
-            <h3 class="ta-col-titulo"><i class="ti ti-building-bank" aria-hidden="true"></i> Por banco</h3>
-            ${grupos.map((g) => `<div class="dsp-barra"><div><b>${esc(g.nombre || '')}</b><span>Q ${m(g.saldo)}</span></div><i style="--p:${Math.max(2, Math.round(Math.abs(g.saldo) / maxB * 100))}%" class="${g.saldo < 0 ? 'neg' : ''}"></i><small>${Number(gen.total_saldo_ml) ? Math.round(g.saldo / Number(gen.total_saldo_ml) * 1000) / 10 : 0}% del disponible</small></div>`).join('') || '<p class="tk-vacio">Sin bancos.</p>'}
-          </section>
+        <div class="dsp-pestanas" role="tablist">
+          ${PESTANAS.map(([k, ic, tx]) => `<button type="button" role="tab" class="${pestana === k ? 'activa' : ''}" aria-selected="${pestana === k}" data-dsp-tab="${k}"><i class="ti ${ic}" aria-hidden="true"></i> ${tx}${k === 'ORGANIZACION' ? ` <b>${sx.empresas.length}</b>` : k === 'CUENTAS' ? ` <b>${gen.cuentas}</b>` : ''}</button>`).join('')}
         </div>
+        <section class="dsp-panel dsp-cuentas pc-lineas" data-dsp-panel="CUENTAS" ${pestana === 'CUENTAS' ? '' : 'hidden'}>
+          <table><thead><tr><th>Cuenta bancaria</th><th>Moneda</th><th class="num">Saldo inicial</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo (libros)</th><th class="num" title="Ingresos menos egresos sin conciliar">En circulación</th><th class="num">Estimado en banco</th><th class="num">Mínimo</th><th class="num">Disponible Q</th></tr></thead>
+            <tbody>${grupos.map((g) => `<tr class="dsp-banco"><td colspan="10"><span class="bk-cod">${g.codigo ?? ''}</span> ${esc(g.nombre || '')} <small>${g.filas.length} cuenta${g.filas.length === 1 ? '' : 's'}</small></td></tr>
+              ${g.filas.map((d) => `<tr class="${d.bajo_minimo ? 'dsp-bajo' : ''}">
+                <td><b>${esc(d.cuenta_numero)}</b><small>${esc(d.cuenta_nombre || '')}</small></td>
+                <td>${esc(d.moneda_simbolo || d.moneda_iso || '')}${local(d) ? '' : `<small>TC ${Number(d.tipo_cambio)}</small>`}</td>
+                <td class="num">${m(d.saldo_inicial)}</td><td class="num">${m(d.ingresos)}</td><td class="num">${m(d.egresos)}</td>
+                <td class="num fuerte">${m(d.saldo)}</td>
+                <td class="num ${Number(d.circ_ingresos) - Number(d.circ_egresos) < 0 ? 'pc-rojo' : ''}">${m(Number(d.circ_ingresos) - Number(d.circ_egresos))}<small>${d.circ_documentos} doc.</small></td>
+                <td class="num">${m(estimado(d))}</td>
+                <td class="num">${m(d.saldo_minimo)}${d.bajo_minimo ? '<small class="pc-rojo">bajo el mínimo</small>' : ''}</td>
+                <td class="num fuerte">${m(d.saldo_ml)}</td></tr>`).join('')}
+              <tr class="dsp-sub"><td colspan="5">Total ${esc(g.nombre || '')}</td><td></td><td class="num">${m(g.circ)}</td><td class="num">${m(g.estimado)}</td><td class="num">${m(g.minimo)}</td><td class="num">${m(g.saldo)}</td></tr>`).join('')
+              || '<tr><td colspan="10" class="tk-vacio">La generación no tiene cuentas (no hay cuentas activas con esos parámetros).</td></tr>'}</tbody>
+            <tfoot><tr><td colspan="6">Total de la empresa en quetzales</td><td class="num">${m(gen.total_circulacion_ml)}</td><td class="num">${m(totEst)}</td><td></td><td class="num">${m(gen.total_saldo_ml)}</td></tr></tfoot>
+          </table>
+        </section>
+        <section class="dsp-panel dsp-cuentas pc-lineas" data-dsp-panel="ORGANIZACION" ${pestana === 'ORGANIZACION' ? '' : 'hidden'}>
+          ${hayOrg ? `<table><thead><tr><th>Empresa · banco</th><th class="num">Cuentas</th><th class="num">Disponible Q</th><th class="num">% de la organización</th><th class="num">En circulación Q</th><th class="num">Estimado en bancos Q</th><th class="num">Bajo su mínimo</th></tr></thead>
+            <tbody>${sx.empresas.map((e) => `<tr class="dsp-banco"><td colspan="7"><b>${esc(e.codigo)}</b> · ${esc(e.nombre || '')}${String(e.codigo) === String(gen.localidad_codigo || '') ? ' <small>empresa de la generación</small>' : ''}</td></tr>
+              ${e.bancos.sort((a, b) => a.banco_codigo - b.banco_codigo).map((o) => `<tr><td class="dsp-sangria">${esc(o.banco_nombre || '')}</td><td class="num">${o.cuentas}</td><td class="num">${m(o.saldo_ml)}</td><td class="num">${pct(Number(o.saldo_ml), gen.org_saldo_ml)}</td><td class="num">${m(o.circulacion_ml)}</td><td class="num">${m(o.estimado_ml)}</td><td class="num ${o.bajo_minimo ? 'pc-rojo' : ''}">${o.bajo_minimo || '—'}</td></tr>`).join('')}
+              <tr class="dsp-sub"><td>Total ${esc(e.codigo)}</td><td class="num">${e.cuentas}</td><td class="num">${m(e.saldo)}</td><td class="num">${pct(e.saldo, gen.org_saldo_ml)}</td><td class="num">${m(e.circ)}</td><td class="num">${m(e.est)}</td><td class="num">${e.bajo || '—'}</td></tr>`).join('')}</tbody>
+            <tfoot><tr><td>Total de la organización</td><td class="num">${gen.org_cuentas}</td><td class="num">${m(gen.org_saldo_ml)}</td><td class="num">100%</td><td class="num">${m(gen.org_circulacion_ml)}</td><td class="num">${m(gen.org_estimado_ml)}</td><td class="num">${gen.org_bajo_minimo}</td></tr></tfoot>
+          </table>` : '<p class="tk-vacio">Esta generación no tiene síntesis de la organización: se agrega a las generaciones nuevas (script 119). Presiona «Generar disponibilidad».</p>'}
+        </section>
+        <section class="dsp-panel dsp-porbanco" data-dsp-panel="BANCOS" ${pestana === 'BANCOS' ? '' : 'hidden'}>
+          <div class="dsp-col"><h3 class="ta-col-titulo"><i class="ti ti-building-bank" aria-hidden="true"></i> Empresa · por banco</h3>
+            ${grupos.map((g) => barra(g.nombre, g.saldo, gen.total_saldo_ml)).join('') || '<p class="tk-vacio">Sin bancos.</p>'}</div>
+          <div class="dsp-col"><h3 class="ta-col-titulo"><i class="ti ti-building-community" aria-hidden="true"></i> Organización · por banco</h3>
+            ${hayOrg ? sx.bancos.map((b) => `${barra(b.nombre, b.saldo, gen.org_saldo_ml)}<p class="dsp-detb">${b.empresas.map((o) => `${esc(o.localidad_codigo)} Q ${m(o.saldo_ml)}`).join(' · ')}</p>`).join('') : '<p class="tk-vacio">Sin síntesis de la organización.</p>'}</div>
+          <div class="dsp-col"><h3 class="ta-col-titulo"><i class="ti ti-building" aria-hidden="true"></i> Organización · por empresa</h3>
+            ${hayOrg ? sx.empresas.map((e) => barra(`${e.codigo} · ${e.nombre}`, e.saldo, gen.org_saldo_ml)).join('') : '<p class="tk-vacio">Sin síntesis de la organización.</p>'}</div>
+        </section>
       </div>`;
   }
+  // Cambia de pestaña sin volver a pintar el tablero.
+  function cambiarPestana(raiz, k) {
+    raiz.querySelectorAll('[data-dsp-tab]').forEach((b) => { b.classList.toggle('activa', b.dataset.dspTab === k); b.setAttribute('aria-selected', String(b.dataset.dspTab === k)); });
+    raiz.querySelectorAll('[data-dsp-panel]').forEach((p) => { p.hidden = p.dataset.dspPanel !== k; });
+    return k;
+  }
 
-  // PDF (ventana de impresión) y Excel de una generación.
-  function pdf(gen, det, empresa) {
+  // PDF (ventana de impresión) y Excel de una generación: empresa y síntesis de la organización.
+  function pdf(gen, det, empresa, org = []) {
     const grupos = porBanco(det);
+    const sx = sintesis(org);
     imprimir(`Disponibilidad ${gen.correlativo}`, `
       <h1>Disponibilidad bancaria · ${esc(gen.correlativo)}</h1>
       <h2>${esc(empresa)} · ${gen.banco_nombre ? esc(gen.banco_nombre) : 'Todos los bancos'} · ${gen.cuenta_numero ? `cuenta ${esc(gen.cuenta_numero)}` : 'todas las cuentas'} · al ${esc(fmt.fechaDia(gen.fecha_corte))}</h2>
-      <div class="cab"><div><b>Disponible Q</b>${m(gen.total_saldo_ml)}</div><div><b>En circulación Q</b>${m(gen.total_circulacion_ml)}</div><div><b>Bajo su mínimo</b>${gen.bajo_minimo}</div><div><b>Cuentas</b>${gen.cuentas}</div>
-        <div><b>Generó</b>${esc(gen.usuario || '')} ${esc(gen.usuario_nombre || '')}</div><div><b>Fecha y hora</b>${esc(fhs(gen.generado_en))}</div><div><b>Fecha de corte</b>${esc(fmt.fechaDia(gen.fecha_corte))}</div><div><b>Correlativo</b>${esc(gen.correlativo)}</div></div>
+      <div class="cab"><div><b>Disponible empresa Q</b>${m(gen.total_saldo_ml)}</div><div><b>En circulación empresa Q</b>${m(gen.total_circulacion_ml)}</div><div><b>Bajo su mínimo</b>${gen.bajo_minimo} de ${gen.cuentas}</div><div><b>Correlativo</b>${esc(gen.correlativo)}</div>
+        ${org.length ? `<div><b>Disponible organización Q</b>${m(gen.org_saldo_ml)}</div><div><b>En circulación organización Q</b>${m(gen.org_circulacion_ml)}</div><div><b>Bajo su mínimo (org.)</b>${gen.org_bajo_minimo} de ${gen.org_cuentas}</div><div><b>Empresas</b>${gen.org_empresas}</div>` : ''}
+        <div><b>Generó</b>${esc(gen.usuario || '')} ${esc(gen.usuario_nombre || '')}</div><div><b>Fecha y hora</b>${esc(fhs(gen.generado_en))}</div><div><b>Fecha de corte</b>${esc(fmt.fechaDia(gen.fecha_corte))}</div></div>
+      <h3>Cuentas de la empresa</h3>
       <table><thead><tr><th>Cuenta</th><th>Moneda</th><th class="n">Saldo inicial</th><th class="n">Ingresos</th><th class="n">Egresos</th><th class="n">Saldo</th><th class="n">En circulación</th><th class="n">Estimado banco</th><th class="n">Mínimo</th><th class="n">Disponible Q</th></tr></thead><tbody>
         ${grupos.map((g) => `<tr class="s"><td colspan="10">${esc(g.nombre || '')}</td></tr>${g.filas.map((d) => `<tr><td>${esc(d.cuenta_numero)} ${esc(d.cuenta_nombre || '')}</td><td>${esc(d.moneda_simbolo || '')}${local(d) ? '' : ` TC ${Number(d.tipo_cambio)}`}</td><td class="n">${m(d.saldo_inicial)}</td><td class="n">${m(d.ingresos)}</td><td class="n">${m(d.egresos)}</td><td class="n">${m(d.saldo)}</td><td class="n">${m(Number(d.circ_ingresos) - Number(d.circ_egresos))}</td><td class="n">${m(estimado(d))}</td><td class="n">${m(d.saldo_minimo)}${d.bajo_minimo ? ' ⚠' : ''}</td><td class="n">${m(d.saldo_ml)}</td></tr>`).join('')}
           <tr class="s"><td colspan="6">Total ${esc(g.nombre || '')}</td><td class="n">${m(g.circ)}</td><td class="n">${m(g.estimado)}</td><td class="n">${m(g.minimo)}</td><td class="n">${m(g.saldo)}</td></tr>`).join('')}
-      </tbody><tfoot><tr><td colspan="6">Total general en quetzales</td><td class="n">${m(gen.total_circulacion_ml)}</td><td class="n">${m(grupos.reduce((s, g) => s + g.estimado, 0))}</td><td></td><td class="n">${m(gen.total_saldo_ml)}</td></tr></tfoot></table>
+      </tbody><tfoot><tr><td colspan="6">Total de la empresa en quetzales</td><td class="n">${m(gen.total_circulacion_ml)}</td><td class="n">${m(grupos.reduce((s, g) => s + g.estimado, 0))}</td><td></td><td class="n">${m(gen.total_saldo_ml)}</td></tr></tfoot></table>
+      ${org.length ? `<h3>Síntesis de la organización</h3>
+      <table><thead><tr><th>Empresa · banco</th><th class="n">Cuentas</th><th class="n">Disponible Q</th><th class="n">%</th><th class="n">En circulación Q</th><th class="n">Estimado Q</th><th class="n">Bajo mínimo</th></tr></thead><tbody>
+        ${sx.empresas.map((e) => `<tr class="s"><td colspan="7">${esc(e.codigo)} · ${esc(e.nombre || '')}</td></tr>${e.bancos.map((o) => `<tr><td>&nbsp;&nbsp;${esc(o.banco_nombre || '')}</td><td class="n">${o.cuentas}</td><td class="n">${m(o.saldo_ml)}</td><td class="n">${pct(Number(o.saldo_ml), gen.org_saldo_ml)}</td><td class="n">${m(o.circulacion_ml)}</td><td class="n">${m(o.estimado_ml)}</td><td class="n">${o.bajo_minimo}</td></tr>`).join('')}
+          <tr class="s"><td>Total ${esc(e.codigo)}</td><td class="n">${e.cuentas}</td><td class="n">${m(e.saldo)}</td><td class="n">${pct(e.saldo, gen.org_saldo_ml)}</td><td class="n">${m(e.circ)}</td><td class="n">${m(e.est)}</td><td class="n">${e.bajo}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td>Total de la organización</td><td class="n">${gen.org_cuentas}</td><td class="n">${m(gen.org_saldo_ml)}</td><td class="n">100%</td><td class="n">${m(gen.org_circulacion_ml)}</td><td class="n">${m(gen.org_estimado_ml)}</td><td class="n">${gen.org_bajo_minimo}</td></tr></tfoot></table>
+      <h3>Organización por banco</h3>
+      <table><thead><tr><th>Banco</th><th class="n">Cuentas</th><th class="n">Disponible Q</th><th class="n">%</th><th class="n">En circulación Q</th><th class="n">Estimado Q</th><th class="n">Bajo mínimo</th></tr></thead><tbody>
+        ${sx.bancos.map((b) => `<tr><td>${esc(b.nombre || '')}</td><td class="n">${b.cuentas}</td><td class="n">${m(b.saldo)}</td><td class="n">${pct(b.saldo, gen.org_saldo_ml)}</td><td class="n">${m(b.circ)}</td><td class="n">${m(b.est)}</td><td class="n">${b.bajo}</td></tr>`).join('')}</tbody></table>` : ''}
       <div class="firmas"><div>Elaboró: ${esc(gen.usuario || '')}</div><div>Revisó</div><div>Autorizó</div></div>`);
   }
 
-  function excel(gen, det, empresa) {
+  function excel(gen, det, empresa, org = []) {
     if (!window.REPORTE_XLSX) return;
     const grupos = porBanco(det);
-    const filas = [];
+    const sx = sintesis(org);
+    const filas = [{ tipo: 'nota', valores: ['CUENTAS DE LA EMPRESA'] }];
     grupos.forEach((g) => {
       filas.push({ tipo: 'grupo', valores: [`${g.codigo ?? ''} · ${g.nombre || ''}`] });
-      g.filas.forEach((d) => filas.push({ resaltar: 0, tenue: false, valores: [d.cuenta_numero, d.cuenta_nombre || '', local(d) ? (d.moneda_simbolo || 'Q') : `${d.moneda_simbolo || d.moneda_iso} · TC ${Number(d.tipo_cambio)}`,
+      g.filas.forEach((d) => filas.push({ valores: [d.cuenta_numero, d.cuenta_nombre || '', local(d) ? (d.moneda_simbolo || 'Q') : `${d.moneda_simbolo || d.moneda_iso} · TC ${Number(d.tipo_cambio)}`,
         Number(d.saldo_inicial), Number(d.ingresos), Number(d.egresos), Number(d.saldo), Number(d.circ_ingresos) - Number(d.circ_egresos), estimado(d), Number(d.saldo_minimo), Number(d.saldo_ml), d.bajo_minimo ? 'Bajo el mínimo' : ''] }));
       filas.push({ tipo: 'subtotal', valores: [`Total ${g.nombre || ''}`, '', '', null, null, null, null, g.circ, g.estimado, g.minimo, g.saldo, ''] });
     });
-    filas.push({ tipo: 'total', valores: ['Total general en quetzales', '', '', null, null, null, null, Number(gen.total_circulacion_ml), grupos.reduce((s, g) => s + g.estimado, 0), null, Number(gen.total_saldo_ml), `${gen.bajo_minimo} bajo su mínimo`] });
+    filas.push({ tipo: 'total', valores: ['Total de la empresa en quetzales', '', '', null, null, null, null, Number(gen.total_circulacion_ml), grupos.reduce((s, g) => s + g.estimado, 0), null, Number(gen.total_saldo_ml), `${gen.bajo_minimo} bajo su mínimo`] });
+    if (org.length) {
+      filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'nota', valores: ['SÍNTESIS DE LA ORGANIZACIÓN', '', '', 'Cuentas', '', '', '', 'En circulación Q', 'Estimado Q', '% org.', 'Disponible Q', 'Bajo mínimo'] });
+      sx.empresas.forEach((e) => {
+        filas.push({ tipo: 'grupo', valores: [`${e.codigo} · ${e.nombre || ''}`] });
+        e.bancos.forEach((o) => filas.push({ valores: ['', o.banco_nombre || '', '', o.cuentas, null, null, null, Number(o.circulacion_ml), Number(o.estimado_ml), pct(Number(o.saldo_ml), gen.org_saldo_ml), Number(o.saldo_ml), o.bajo_minimo] }));
+        filas.push({ tipo: 'subtotal', valores: [`Total ${e.codigo}`, '', '', e.cuentas, null, null, null, e.circ, e.est, pct(e.saldo, gen.org_saldo_ml), e.saldo, e.bajo] });
+      });
+      filas.push({ tipo: 'total', valores: ['Total de la organización', '', '', gen.org_cuentas, null, null, null, Number(gen.org_circulacion_ml), Number(gen.org_estimado_ml), '100%', Number(gen.org_saldo_ml), gen.org_bajo_minimo] });
+      filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'nota', valores: ['ORGANIZACIÓN POR BANCO'] });
+      sx.bancos.forEach((b) => filas.push({ valores: [b.nombre || '', b.empresas.map((o) => `${o.localidad_codigo} ${m(o.saldo_ml)}`).join(' · '), '', b.cuentas, null, null, null, b.circ, b.est, pct(b.saldo, gen.org_saldo_ml), b.saldo, b.bajo] }));
+    }
     window.REPORTE_XLSX.generar({
       titulo: `Disponibilidad bancaria · ${gen.correlativo}`,
       parametros: [`Empresa: ${empresa}`, `Banco: ${gen.banco_nombre || 'Todos'}`, `Cuenta: ${gen.cuenta_numero || 'Todas'}`, `Fecha de corte: ${fmt.fechaDia(gen.fecha_corte)}`,
         `Generó: ${gen.usuario || ''}${gen.usuario_nombre ? ` · ${gen.usuario_nombre}` : ''}`, `Generado: ${fhs(gen.generado_en)}`],
       orgId: gen.organizacion_id, locId: gen.localidad_id, hoja: gen.correlativo, archivo: `disponibilidad_${gen.correlativo}`,
-      columnas: [{ titulo: 'Cuenta bancaria', ancho: 16 }, { titulo: 'Nombre', ancho: 34 }, { titulo: 'Moneda', ancho: 14 }, { titulo: 'Saldo inicial', ancho: 15, tipo: 'monto' }, { titulo: 'Ingresos', ancho: 15, tipo: 'monto' },
+      columnas: [{ titulo: 'Cuenta / empresa', ancho: 22 }, { titulo: 'Nombre / banco', ancho: 34 }, { titulo: 'Moneda', ancho: 14 }, { titulo: 'Saldo inicial · cuentas', ancho: 15, tipo: 'monto' }, { titulo: 'Ingresos', ancho: 15, tipo: 'monto' },
         { titulo: 'Egresos', ancho: 15, tipo: 'monto' }, { titulo: 'Saldo (libros)', ancho: 16, tipo: 'monto' }, { titulo: 'En circulación', ancho: 15, tipo: 'monto' }, { titulo: 'Estimado en banco', ancho: 16, tipo: 'monto' },
-        { titulo: 'Mínimo', ancho: 13, tipo: 'monto' }, { titulo: 'Disponible Q', ancho: 16, tipo: 'monto' }, { titulo: 'Observación', ancho: 16 }],
+        { titulo: 'Mínimo · %', ancho: 13, tipo: 'monto' }, { titulo: 'Disponible Q', ancho: 16, tipo: 'monto' }, { titulo: 'Observación', ancho: 16 }],
       filas
     });
   }
 
   async function leerGeneracion(sb, id) {
-    const [g, d] = await Promise.all([
+    const [g, d, o] = await Promise.all([
       sb.from('disponibilidad_generaciones').select('*').eq('id', id).maybeSingle(),
-      sb.from('disponibilidad_detalle').select('*').eq('generacion_id', id).order('orden')
+      sb.from('disponibilidad_detalle').select('*').eq('generacion_id', id).order('orden'),
+      sb.from('disponibilidad_organizacion').select('*').eq('generacion_id', id).order('localidad_codigo').order('banco_codigo')
     ]);
-    return { gen: g.data, det: d.data || [], error: g.error || d.error };
+    const gen = g.data;
+    if (gen) {
+      const { data: l } = await sb.from('localidades').select('codigo').eq('id', gen.localidad_id).maybeSingle();
+      gen.localidad_codigo = l?.codigo || '';
+    }
+    // Sin el script 119 no hay síntesis de la organización: se muestra solo la empresa.
+    return { gen, det: d.data || [], org: o.error ? [] : o.data || [], error: g.error || d.error };
   }
 
   // ===================== Disponibilidad bancaria (proceso) =====================
@@ -142,7 +218,8 @@
     const { sb } = ctx;
     const f = { banco: '', cuenta: '', fecha: fmt.hoy() };
     let cuentas = [];
-    let actual = null; // { gen, det }
+    let actual = null; // { gen, det, org }
+    let pestana = 'CUENTAS';
     const empresa = () => { const l = ctx.localidad(ctx.sel.loc); return l ? `${l.codigo} · ${l.nombre_comercial}` : ''; };
     const bancosConCuenta = () => (ctx.bancosLoc ? ctx.bancosLoc() : ctx.bancos || []).filter((b) => cuentas.some((c) => c.banco_id === b.id));
 
@@ -176,7 +253,7 @@
     function pintar() {
       ctx.pMae.innerHTML = '';
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.'); return; }
-      ctx.pDet.innerHTML = actual?.gen ? `${tablero(actual.gen, actual.det)}`
+      ctx.pDet.innerHTML = actual?.gen ? tablero(actual.gen, actual.det, actual.org, { pestana })
         : `<div class="dsp-vacio">${ctx.vacio('Elige el banco, la cuenta y la fecha, y presiona «Generar disponibilidad». Cada generación queda guardada en la Consulta de Disponibilidad.', 'ti-chart-line')}</div>`;
     }
 
@@ -201,11 +278,13 @@
       }
     });
     cont.addEventListener('click', (e) => {
+      const tb = e.target.closest('[data-dsp-tab]');
+      if (tb) { pestana = cambiarPestana(ctx.pDet, tb.dataset.dspTab); return; }
       const ac = e.target.closest('[data-accion]');
       if (!ac) return;
       if (ac.dataset.accion === 'generar') return generar(ac);
-      if (ac.dataset.accion === 'pdf' && actual?.gen) return pdf(actual.gen, actual.det, empresa());
-      if (ac.dataset.accion === 'excel' && actual?.gen) return excel(actual.gen, actual.det, empresa());
+      if (ac.dataset.accion === 'pdf' && actual?.gen) return pdf(actual.gen, actual.det, empresa(), actual.org);
+      if (ac.dataset.accion === 'excel' && actual?.gen) return excel(actual.gen, actual.det, empresa(), actual.org);
     });
     iniciar();
   };
@@ -216,7 +295,7 @@
     const { sb } = ctx;
     const [anio] = fmt.hoy().split('-');
     const f = { desde: `${anio}-01-01`, hasta: fmt.hoy(), banco: '', usuario: '', buscar: '' };
-    let lista = [], sel = null, actual = null, consulta = 0;
+    let lista = [], sel = null, actual = null, consulta = 0, pestana = 'CUENTAS';
     const empresa = () => { const l = ctx.localidad(ctx.sel.loc); return l ? `${l.codigo} · ${l.nombre_comercial}` : ''; };
 
     function pintarFiltros() {
@@ -294,7 +373,7 @@
       const r = await leerGeneracion(sb, g.id);
       if (sel !== g) return;
       actual = r;
-      ctx.pDet.innerHTML = tablero(r.gen, r.det);
+      ctx.pDet.innerHTML = tablero(r.gen, r.det, r.org, { pestana });
     }
     function pintar() { pintarMaestro(); elegir(sel); }
 
@@ -329,13 +408,15 @@
     });
     cont.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('tr[data-gen]')) e.target.click(); });
     cont.addEventListener('click', (e) => {
+      const tb = e.target.closest('[data-dsp-tab]');
+      if (tb) { pestana = cambiarPestana(ctx.pDet, tb.dataset.dspTab); return; }
       const tr = e.target.closest('tr[data-gen]');
       if (tr && ctx.pMae.contains(tr)) return elegir(lista.find((g) => String(g.id) === tr.dataset.gen));
       const ac = e.target.closest('[data-accion]');
       if (!ac) return;
       if (ac.dataset.accion === 'excel-lista') return excelLista();
-      if (ac.dataset.accion === 'pdf' && actual?.gen) return pdf(actual.gen, actual.det, empresa());
-      if (ac.dataset.accion === 'excel' && actual?.gen) return excel(actual.gen, actual.det, empresa());
+      if (ac.dataset.accion === 'pdf' && actual?.gen) return pdf(actual.gen, actual.det, empresa(), actual.org);
+      if (ac.dataset.accion === 'excel' && actual?.gen) return excel(actual.gen, actual.det, empresa(), actual.org);
     });
     iniciar();
   };

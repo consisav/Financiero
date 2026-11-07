@@ -4224,3 +4224,38 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-movimientos:not(.bk-conc) .bm-control .bm-comprobante { padding: 3px 8px; }
 .bk-movimientos:not(.bk-conc) .bm-control .bm-sin-imagen { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 11.5px; }
 .bmc-tabla td.bmc-acc { overflow: visible; text-overflow: clip; display: table-cell; } .bmc-tabla td.bmc-acc .bmc-btn { display: inline-flex; vertical-align: middle; } .bmc-tabla col.w-acc { width: 84px; }
+
+/* Disponibilidad (opción A con síntesis de la organización): cabecera con generación, indicadores empresa vs
+   organización y reportes; pestañas con cuentas, síntesis y por banco a todo el alto disponible. */
+.dsp-a { gap: 8px; }
+.dsp-cab { display: grid; grid-template-columns: minmax(280px, 1.25fr) minmax(0, 4fr) auto; gap: 10px; align-items: stretch; }
+.dsp-a .dsp-gen dl { grid-template-columns: auto auto auto; }
+.dsp-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.dsp-kpi2 { display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--borde); background: var(--fondo); min-width: 0; }
+.dsp-kpi2 > span { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; }
+.dsp-kpi2-v { display: grid; gap: 2px; }
+.dsp-kpi2-v > div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.dsp-kpi2-v small { font-size: 10.5px; color: var(--tenue); font-weight: 600; }
+.dsp-kpi2-v b { font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dsp-kpi2-v > div + div { border-top: 1px dashed var(--borde); padding-top: 2px; }
+.dsp-kpi2-v > div + div b { font-size: 14px; }
+.dsp-kpi2 > small { font-size: 10.5px; color: var(--tenue); }
+.dsp-kpi2 b.neg { color: #b23a32; }
+.dsp-kpi2.principal { background: var(--acento-fondo); border-color: color-mix(in srgb, var(--acento) 30%, var(--borde)); }
+.dsp-kpi2.principal b:not(.neg) { color: var(--acento); }
+.dsp-kpi2.alerta { background: #fdeceb; } .dsp-kpi2.alerta b { color: #b23a32; }
+.dsp-kpi2.ok b { color: #1f7a45; }
+.dsp-pestanas { display: flex; gap: 4px; background: var(--fondo); border-radius: 11px; padding: 3px; align-self: flex-start; }
+.dsp-pestanas button { border: 0; background: none; padding: 6px 12px; border-radius: 9px; font: inherit; font-size: 13px; font-weight: 600; color: var(--tenue); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.dsp-pestanas button b { font-size: 11px; padding: 0 6px; border-radius: 8px; background: var(--panel); color: var(--texto); }
+.dsp-pestanas button.activa { background: var(--panel); color: var(--acento); box-shadow: 0 1px 3px rgba(15, 27, 45, .12); }
+.dsp-panel { flex: 1 1 0; min-height: 0; overflow: auto; }
+.dsp-panel[hidden] { display: none !important; }
+.dsp-cuentas td.dsp-sangria { padding-left: 26px; }
+.dsp-porbanco { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.dsp-col { border: 1px solid var(--borde); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; overflow: auto; min-height: 0; }
+.dsp-detb { margin: -6px 0 0; font-size: 11px; color: var(--tenue); }
+.dsp-proceso .bk-detalle, .dsp-consulta .bk-detalle { display: flex; flex-direction: column; }
+.dsp-proceso .bk-detalle > .dsp-tablero, .dsp-consulta .bk-detalle > .dsp-tablero { flex: 1 1 0; min-height: 0; }
+@media (max-width: 1400px) { .dsp-cab { grid-template-columns: 1fr; } .dsp-acciones { flex-direction: row; } .dsp-porbanco { grid-template-columns: 1fr; } }
+.dsp-gen dd { white-space: nowrap; } .dsp-a .dsp-gen dl { gap: 2px 12px; }
