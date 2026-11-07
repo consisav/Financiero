@@ -4548,3 +4548,6 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .emp-logo img { max-width: 98px; max-height: 50px; object-fit: contain; }
 .emp-logo .ti { font-size: 26px; color: var(--tenue); }
 .modal-pie .modal-eliminar { margin-right: auto; }
+/* Consultas de cheques, depósitos y notas: botón «Consultar» con texto en lugar del ojo. */
+.cqc-ver.boton { width: auto; height: auto; display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; font-size: 12.5px; white-space: nowrap; }
+.cqc-tabla col.w-acc { width: 116px !important; } .cqc-tabla td.cq-acc { overflow: visible; text-align: right; padding-right: 10px; }
