@@ -36,7 +36,7 @@
 
   window.PANTALLAS = window.PANTALLAS || {};
   window.PANTALLAS.clientes = function (cont) {
-    const ctx = montar(cont, { titulo: 'Listado de clientes', icono: 'ti-users', clase: 'bk-clientes cp-lado', grupo: 'Ventas · Catálogos' });
+    const ctx = montar(cont, { titulo: 'Listado de clientes', icono: 'ti-users', clase: 'bk-clientes cp-lado clb-pantalla', grupo: 'Ventas · Catálogos' });
     const { sb } = ctx;
     const f = { estado: 'ACTIVO', tipo: '', formato: 'PDF' };
     let lista = [], vendedores = [], precios = [], bodegas = [], paises = [];
@@ -87,12 +87,12 @@
       const q = buscar.trim().toLowerCase();
       const filas = lista.filter((c) => !q || [c.codigo, c.documento, c.nombre, c.razon_social, c.contacto, c.correo].some((v) => String(v || '').toLowerCase().includes(q)));
       ctx.pMae.innerHTML = `
-        <header class="tk-bandeja-cab cc-cab"><h2>Clientes <small>${lista.length}</small></h2>
-          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Número, documento, nombre o correo…" value="${esc(buscar)}" aria-label="Buscar clientes"></label></header>
-        <div class="ta-tabla cc-tabla"><table><thead><tr><th class="num">Cliente</th><th>Tipo doc.</th><th>Documento</th><th>Nombre del cliente</th><th class="cl-razon">Razón social</th><th>Estado</th></tr></thead>
-          <tbody>${filas.map((c) => `<tr data-id="${c.id}" class="${actual && actual.id === c.id ? 'actual' : ''} ${c.estado !== 'ACTIVO' ? 'pc-anulada' : ''}" tabindex="0"><td class="num fuerte">${c.codigo}</td><td>${esc(c.tipo_documento)}</td><td>${esc(c.documento)}</td>
-            <td class="cc-nombre" title="${esc(c.nombre)}">${esc(c.nombre)}</td><td class="cc-nombre cl-razon" title="${esc(c.razon_social || '')}">${esc(c.razon_social || '')}</td><td>${marcaEstado(c.estado)}</td></tr>`).join('')
-            || `<tr><td colspan="6" class="tk-vacio"><i class="ti ti-users" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : lista.length ? 'Ningún cliente coincide con la búsqueda.' : `No hay clientes${ctx.admin ? ': crea el primero con «Nuevo cliente».' : '.'}`}</td></tr>`}</tbody></table></div>`;
+        <header class="tk-bandeja-cab cc-cab clb-cab"><h2>Clientes <small>${lista.length}</small></h2>
+          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Nombre, NIT, código o correo…" value="${esc(buscar)}" aria-label="Buscar clientes"></label></header>
+        <div class="ta-tabla cc-tabla clb-lista"><table><tbody>${filas.map((c) => `<tr data-id="${c.id}" class="${actual && actual.id === c.id ? 'actual' : ''} ${c.estado !== 'ACTIVO' ? 'pc-anulada' : ''}" tabindex="0">
+            <td class="clb-item"><b title="${esc(c.nombre)}">${esc(c.nombre)}</b><small>${c.codigo} · ${c.tipo_documento === 'CF' ? 'Consumidor final' : `${esc(c.tipo_documento)} ${esc(c.documento)}`}</small></td>
+            <td class="clb-marca">${c.estado !== 'ACTIVO' ? marcaEstado(c.estado) : c.forma_pago === 'CRÉDITO' ? '<span class="pc-marca aprobada">Crédito</span>' : '<span class="pc-marca">Contado</span>'}</td></tr>`).join('')
+          || `<tr><td colspan="2" class="tk-vacio"><i class="ti ti-users" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : lista.length ? 'Ningún cliente coincide con la búsqueda.' : `No hay clientes${ctx.admin ? ': crea el primero con «Nuevo cliente».' : '.'}`}</td></tr>`}</tbody></table></div>`;
     }
     async function abrir(c) {
       actual = c; credito = false; historial = [];
@@ -113,62 +113,84 @@
       const opt = (l, id, txt = (x) => `${x.codigo} · ${esc(x.nombre)}`) => `<option value="">—</option>${l.filter((x) => x.activo !== false && (x.estado === undefined || x.estado === 'ACTIVO') || x.id === id).map((x) => `<option value="${x.id}" ${x.id === id ? 'selected' : ''}>${txt(x)}</option>`).join('')}`;
       const tabs = [['EXPORTACION', 'Datos de exportación', 'ti-world-upload'], ['CREDITO', 'Historial de crédito', 'ti-history', historial.length]];
       ctx.pDet.innerHTML = `
-        <form class="tk-form bm-form cp-form cpr-form cpr-compacto cl-form" novalidate>
-          <header class="tk-titulo bm-titulo cpr-titulo"><span class="tk-icono"><i class="ti ti-user-circle" aria-hidden="true"></i></span>
-            <div class="tk-titulo-texto"><small>${c ? `Cliente ${c.codigo} · ${esc(c.tipo_documento)} ${esc(c.documento)}` : base ? 'Nuevo cliente (duplicado)' : 'Nuevo cliente'}</small><h2>${c ? esc(c.nombre) : 'Datos del cliente'}</h2></div>
-            <div class="tk-marcas">${c ? marcaEstado(c.estado) : ''}${c?.forma_pago === 'CRÉDITO' ? `<span class="pc-marca definitiva">Crédito ${c.dias_credito} días · Q ${fmt.monto(c.monto_credito)}</span>` : ''}</div>
+        <form class="tk-form bm-form cp-form cl-form clb-form" novalidate>
+          <header class="tk-titulo bm-titulo cpr-titulo"><span class="tk-icono clb-avatar">${esc((v.nombre || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join('').toUpperCase() || '?')}</span>
+            <div class="tk-titulo-texto"><small>${c ? `Cliente ${c.codigo} · ${c.tipo_documento === 'CF' ? 'consumidor final' : `${esc(c.tipo_documento)} ${esc(c.documento)}`}` : base ? 'Nuevo cliente (duplicado)' : 'Nuevo cliente'}</small><h2>${c ? esc(c.nombre) : 'Datos del cliente'}</h2></div>
             <div class="tk-titulo-acciones">
               ${c && ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="duplicar" title="Abre un cliente nuevo con estos mismos datos"><i class="ti ti-copy" aria-hidden="true"></i> Duplicar</button>' : ''}
-              <button type="button" class="boton secundario-sm" data-accion="exportacion"><i class="ti ti-world-upload" aria-hidden="true"></i> Exportación</button>
+              ${c && ctx.admin && !credito ? '<button type="button" class="boton secundario-sm" data-accion="credito"><i class="ti ti-credit-card" aria-hidden="true"></i> Modificar crédito</button>' : ''}
               ${nuevo ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
               ${ctx.admin ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${c ? 'Guardar' : 'Crear cliente'}</button>` : ''}
             </div>
           </header>
           <p class="modal-error tk-error" role="alert"></p>
-          <section class="cpr-bloque">
-            <div class="cpr-g">
-              ${c ? `<div class="campo cpr-c2 cf-numero"><span>Cliente</span><b>${c.codigo}</b></div>` : `<label class="campo cpr-c2"><span>Cliente</span><input type="number" min="1" name="codigo" placeholder="Auto" ${dis}></label>`}
-              <label class="campo cpr-c2"><span>Tipo de documento</span>${sel('tipo_documento', TIPOS_DOC.map(([k, t]) => `<option value="${k}" ${v.tipo_documento === k ? 'selected' : ''}>${t}</option>`).join(''))}</label>
-              <label class="campo cpr-c3"><span>Documento * <span data-pista>${pistaDocumento(v.tipo_documento, v.documento)}</span></span><input name="documento" value="${esc(v.tipo_documento === 'CF' ? 'CF' : v.documento || '')}" maxlength="25" ${dis || (v.tipo_documento === 'CF' ? 'disabled' : '')}></label>
-              <label class="campo cpr-c2"><span>Estado</span>${sel('estado', ESTADOS.map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join(''))}</label>
-              <label class="campo cpr-c3"><span>Tipo de cliente</span>${sel('tipo_cliente', TIPOS_CLIENTE.map((e) => `<option ${v.tipo_cliente === e ? 'selected' : ''}>${e}</option>`).join(''))}</label>
-              <label class="campo cpr-c6"><span>Nombre del cliente *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="150" ${dis}></label>
-              <label class="campo cpr-c6"><span>Razón social</span><input name="razon_social" value="${esc(v.razon_social || '')}" maxlength="150" placeholder="Si se deja vacía, el nombre" ${dis}></label>
-              <label class="campo cpr-c4"><span>Contacto</span><input name="contacto" value="${esc(v.contacto || '')}" maxlength="100" ${dis}></label>
-              <label class="campo cpr-c3"><span>Teléfono</span><input name="telefono" value="${esc(v.telefono || '')}" maxlength="40" ${dis}></label>
-              <label class="campo cl-c5"><span>Correo electrónico</span><input type="email" name="correo" value="${esc(v.correo || '')}" maxlength="120" ${dis}></label>
-              <label class="campo cpr-c3"><span>Vendedor</span>${sel('vendedor_id', opt(vendedores, v.vendedor_id))}</label>
-              <label class="campo cpr-c3"><span>Tipo de precio</span>${sel('tipo_precio_id', opt(precios, v.tipo_precio_id))}</label>
-              <label class="campo cpr-c3"><span>Bodega</span>${sel('bodega_id', opt(bodegas, v.bodega_id))}</label>
-              <label class="campo cpr-c3"><span>Modo de entrega</span>${sel('modo_entrega', ENTREGAS.map((e) => `<option ${v.modo_entrega === e ? 'selected' : ''}>${e}</option>`).join(''))}</label>
+          <div class="dpb clb">
+            <div class="dpb-control">
+              <span><small>Estado</small><b class="${v.estado === 'ACTIVO' ? 'dpb-ok' : 'pc-rojo'}">${esc(v.estado || 'ACTIVO')}</b></span>
+              <span><small>Tipo</small><b>${esc(v.tipo_cliente || 'LOCAL')}</b></span>
+              <span><small>Pago</small><b>${v.forma_pago === 'CRÉDITO' ? `Crédito ${v.dias_credito} días` : 'Contado'}</b></span>
+              ${c ? `<span><small>Creó</small><b>${esc(c.creado_por_nombre || '—')}</b><em>${esc(fmt.fechaHora(c.creado_en))}</em></span>` : ''}
+              ${c?.modificado_en ? `<span><small>Modificó</small><b>${esc(c.modificado_por_nombre || '')}</b><em>${esc(fmt.fechaHora(c.modificado_en))}</em></span>` : ''}
             </div>
-          </section>
-          <section class="cpr-bloque cl-credito ${credito ? 'cl-editando' : ''}">
-            <span class="cpr-tit"><i class="ti ti-credit-card" aria-hidden="true"></i> Crédito</span>
-            <label class="campo"><span>Forma de pago</span><select name="forma_pago" ${disCred}>${['CONTADO', 'CRÉDITO'].map((e) => `<option ${v.forma_pago === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
-            <label class="campo"><span>Días crédito</span><input type="number" min="0" max="365" name="dias_credito" value="${esc(String(v.dias_credito ?? 0))}" ${disCred || (v.forma_pago === 'CONTADO' ? 'disabled' : '')}></label>
-            <label class="campo"><span>Monto máximo Q</span><input type="number" step="0.01" min="0" name="monto_credito" value="${esc(String(v.monto_credito ?? 0))}" ${disCred || (v.forma_pago === 'CONTADO' ? 'disabled' : '')}></label>
-            ${credito ? '<label class="campo cl-motivo"><span>Motivo del cambio *</span><input name="motivo_credito" maxlength="200" placeholder="Por qué se cambia el crédito"></label><button type="button" class="boton primario-sm" data-accion="aplicar-credito"><i class="ti ti-check" aria-hidden="true"></i> Aplicar</button><button type="button" class="boton secundario-sm" data-accion="cancelar-credito">Cancelar</button>'
-              : `<label class="pc-check cpr-chk"><input type="checkbox" name="aplicar_detalle" ${v.aplicar_detalle ? 'checked' : ''} ${dis}> Aplicar detalle</label>${c && ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="credito"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar crédito</button>' : ''}`}
-          </section>
-          <section class="cpr-bloque">
-            <div class="cpr-g">
-              <label class="campo cpr-c2"><span><i class="ti ti-map-pin" aria-hidden="true"></i> País</span><select name="pais_id" ${dis}></select></label>
-              <label class="campo cpr-c2"><span>Departamento</span><select name="departamento_id" ${dis}></select></label>
-              <label class="campo cpr-c2"><span>Municipio</span><select name="municipio_id" ${dis}></select></label>
-              <label class="campo cl-c1"><span>Cód. postal</span><input name="codigo_postal" value="${esc(v.codigo_postal || '')}" maxlength="10" ${dis}></label>
-              <label class="campo cl-c5"><span>Dirección</span><input name="direccion" value="${esc(v.direccion || '')}" maxlength="300" ${dis}></label>
-            </div>
-          </section>
+            <section class="bm-bloque dpb-banda">
+              <h3 class="ta-col-titulo"><i class="ti ti-id" aria-hidden="true"></i> Identificación y contacto</h3>
+              <div class="dpb-g clb-g1">
+                ${c ? `<div class="campo clb-num"><span>Cliente</span><b>${c.codigo}</b></div>` : `<label class="campo"><span>Cliente</span><input type="number" min="1" name="codigo" placeholder="Auto" ${dis}></label>`}
+                <label class="campo"><span>Tipo de documento</span>${sel('tipo_documento', TIPOS_DOC.map(([k, t]) => `<option value="${k}" ${v.tipo_documento === k ? 'selected' : ''}>${t}</option>`).join(''))}</label>
+                <label class="campo"><span>Documento * <span data-pista>${pistaDocumento(v.tipo_documento, v.documento)}</span></span><input name="documento" value="${esc(v.tipo_documento === 'CF' ? 'CF' : v.documento || '')}" maxlength="25" ${dis || (v.tipo_documento === 'CF' ? 'disabled' : '')}></label>
+                <label class="campo"><span>Nombre del cliente *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="150" ${dis}></label>
+                <label class="campo"><span>Estado</span>${sel('estado', ESTADOS.map((e) => `<option ${v.estado === e ? 'selected' : ''}>${e}</option>`).join(''))}</label>
+                <label class="campo"><span>Tipo de cliente</span>${sel('tipo_cliente', TIPOS_CLIENTE.map((e) => `<option ${v.tipo_cliente === e ? 'selected' : ''}>${e}</option>`).join(''))}</label>
+              </div>
+              <div class="dpb-g clb-g2">
+                <label class="campo"><span>Razón social</span><input name="razon_social" value="${esc(v.razon_social || '')}" maxlength="150" placeholder="Si se deja vacía, el nombre" ${dis}></label>
+                <label class="campo"><span>Contacto</span><input name="contacto" value="${esc(v.contacto || '')}" maxlength="100" ${dis}></label>
+                <label class="campo"><span>Teléfono</span><input name="telefono" value="${esc(v.telefono || '')}" maxlength="40" ${dis}></label>
+                <label class="campo"><span>Correo electrónico</span><input type="email" name="correo" value="${esc(v.correo || '')}" maxlength="120" ${dis}></label>
+              </div>
+            </section>
+            <section class="bm-bloque dpb-banda dpb-deposito">
+              <div class="dpb-campos">
+                <h3 class="ta-col-titulo"><i class="ti ti-briefcase" aria-hidden="true"></i> Comercial</h3>
+                <div class="dpb-g clb-g3">
+                  <label class="campo"><span>Vendedor</span>${sel('vendedor_id', opt(vendedores, v.vendedor_id))}</label>
+                  <label class="campo"><span>Tipo de precio</span>${sel('tipo_precio_id', opt(precios, v.tipo_precio_id))}</label>
+                  <label class="campo"><span>Bodega</span>${sel('bodega_id', opt(bodegas, v.bodega_id))}</label>
+                  <label class="campo"><span>Modo de entrega</span>${sel('modo_entrega', ENTREGAS.map((e) => `<option ${v.modo_entrega === e ? 'selected' : ''}>${e}</option>`).join(''))}</label>
+                  <label class="pc-check clb-chk"><input type="checkbox" name="aplicar_detalle" ${v.aplicar_detalle ? 'checked' : ''} ${dis}> Aplicar detalle</label>
+                </div>
+              </div>
+              <div class="dpb-valor clb-credito ${credito ? 'cl-editando' : ''}">
+                <span class="clb-cred-tit"><i class="ti ti-credit-card" aria-hidden="true"></i> Crédito</span>
+                <div class="clb-cred-g">
+                  <label class="campo"><span>Forma de pago</span><select name="forma_pago" ${disCred}>${['CONTADO', 'CRÉDITO'].map((e) => `<option ${v.forma_pago === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Días</span><input type="number" min="0" max="365" name="dias_credito" value="${esc(String(v.dias_credito ?? 0))}" ${disCred || (v.forma_pago === 'CONTADO' ? 'disabled' : '')}></label>
+                  <label class="campo"><span>Monto máximo Q</span><input type="number" step="0.01" min="0" name="monto_credito" value="${esc(String(v.monto_credito ?? 0))}" ${disCred || (v.forma_pago === 'CONTADO' ? 'disabled' : '')}></label>
+                </div>
+                ${credito ? `<label class="campo cl-motivo"><span>Motivo del cambio *</span><input name="motivo_credito" maxlength="200" placeholder="Por qué se cambia el crédito"></label>
+                  <div class="clb-cred-acc"><button type="button" class="boton secundario-sm" data-accion="cancelar-credito">Cancelar</button><button type="button" class="boton primario-sm" data-accion="aplicar-credito"><i class="ti ti-check" aria-hidden="true"></i> Aplicar</button></div>` : ''}
+              </div>
+            </section>
+            <section class="bm-bloque dpb-banda">
+              <h3 class="ta-col-titulo"><i class="ti ti-map-pin" aria-hidden="true"></i> Ubicación</h3>
+              <div class="dpb-g clb-g4">
+                <label class="campo"><span>País</span><select name="pais_id" ${dis}></select></label>
+                <label class="campo"><span>Departamento</span><select name="departamento_id" ${dis}></select></label>
+                <label class="campo"><span>Municipio</span><select name="municipio_id" ${dis}></select></label>
+                <label class="campo"><span>Cód. postal</span><input name="codigo_postal" value="${esc(v.codigo_postal || '')}" maxlength="10" ${dis}></label>
+                <label class="campo"><span>Dirección</span><input name="direccion" value="${esc(v.direccion || '')}" maxlength="300" ${dis}></label>
+              </div>
+            </section>
+          </div>
           <section class="bm-pestanas cp-tabs">
             <div class="bm-tabs-barra"><div class="rp-pestanas" role="tablist">${tabs.map(([k, t, i, n]) => `<button type="button" role="tab" data-pestana="${k}" class="${pestana === k ? 'activa' : ''}" aria-selected="${pestana === k}"><i class="ti ${i}" aria-hidden="true"></i> ${t}${n ? ` <b>${n}</b>` : ''}</button>`).join('')}</div></div>
             <div class="bm-panel cp-panel" data-panel="EXPORTACION" ${pestana === 'EXPORTACION' ? '' : 'hidden'}>
-              <div class="cpr-g">
-                <label class="campo cpr-c3"><span>País de destino</span><select name="exp_pais_id" ${dis}><option value="">—</option>${paises.map((p) => `<option value="${p.id}" ${p.id === v.exp_pais_id ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('')}</select></label>
-                <label class="campo cpr-c2"><span>Incoterm</span><select name="exp_incoterm" ${dis}><option value="">—</option>${INCOTERMS.map((x) => `<option ${v.exp_incoterm === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                <label class="campo cpr-c3"><span>Código del comprador</span><input name="exp_codigo_comprador" value="${esc(v.exp_codigo_comprador || '')}" maxlength="40" ${dis}></label>
-                <label class="campo cpr-c4"><span>Consignatario</span><input name="exp_consignatario" value="${esc(v.exp_consignatario || '')}" maxlength="150" ${dis}></label>
-                <label class="campo cpr-c12"><span>Dirección en el exterior</span><input name="exp_direccion" value="${esc(v.exp_direccion || '')}" maxlength="300" ${dis}></label>
+              <div class="dpb-g clb-g5">
+                <label class="campo"><span>País de destino</span><select name="exp_pais_id" ${dis}><option value="">—</option>${paises.map((p) => `<option value="${p.id}" ${p.id === v.exp_pais_id ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('')}</select></label>
+                <label class="campo"><span>Incoterm</span><select name="exp_incoterm" ${dis}><option value="">—</option>${INCOTERMS.map((x) => `<option ${v.exp_incoterm === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                <label class="campo"><span>Código del comprador</span><input name="exp_codigo_comprador" value="${esc(v.exp_codigo_comprador || '')}" maxlength="40" ${dis}></label>
+                <label class="campo"><span>Consignatario</span><input name="exp_consignatario" value="${esc(v.exp_consignatario || '')}" maxlength="150" ${dis}></label>
+                <label class="campo"><span>Dirección en el exterior</span><input name="exp_direccion" value="${esc(v.exp_direccion || '')}" maxlength="300" ${dis}></label>
               </div>
               ${v.tipo_cliente !== 'EXPORTACIÓN' ? '<p class="cc-ingreso"><i class="ti ti-info-circle" aria-hidden="true"></i> Se usan cuando el tipo de cliente es «EXPORTACIÓN».</p>' : ''}
             </div>
@@ -178,7 +200,6 @@
                   || '<tr><td colspan="5" class="tk-vacio">Sin cambios de crédito.</td></tr>'}</tbody></table></div>
             </div>
           </section>
-          ${c ? `<p class="cc-ingreso cpr-control"><i class="ti ti-user" aria-hidden="true"></i> Creó ${esc(c.creado_por_nombre || '')} · ${esc(fmt.fechaHora(c.creado_en))}${c.modificado_en ? ` · modificó ${esc(c.modificado_por_nombre || '')} ${esc(fmt.fechaHora(c.modificado_en))}` : ''}</p>` : ''}
         </form>`;
       const form = ctx.pDet.querySelector('.cl-form');
       window.UI.cascadaUbicacion(form, { pais_id: v.pais_id, departamento_id: v.departamento_id, municipio_id: v.municipio_id });
