@@ -267,11 +267,21 @@ window.MODULOS = [
             { id: 'productos-y-servicios', nombre: 'Productos y servicios', icono: 'ti-package', descripcion: 'Definición de artículos: clasificación y tipo, proveedor, presentación, medida, punto mínimo, costo, ubicación, bodega, precios e imagen.' }
           ]
         }
+      ],
+      registros: [
+        {
+          subgrupo: 'Facturas',
+          icono: 'ti-file-invoice',
+          pantallas: [
+            { id: 'facturas-ventas', nombre: 'Facturas Ventas', icono: 'ti-file-invoice', descripcion: 'Factura electrónica (FEL, certificador COFIDI): cliente, venta y crédito, impuestos, productos con lote y vencimiento, detalle contable, inventario y pagos.' },
+            { id: 'consulta-de-facturas', nombre: 'Consulta de Facturas', icono: 'ti-file-search', descripcion: 'Resumen de las facturas de venta por cliente, vendedor, forma de pago, fechas y estado (con saldo, pagadas, anuladas, sin certificar), con sus productos, detalle contable y pagos.', separador: true }
+          ]
+        }
       ]
     },
     opciones: {
       catalogos: ['Formas de pago'],
-      registros: ['Cotizaciones', 'Pedidos', 'Facturas', 'Notas de crédito', 'Cobros'],
+      registros: ['Cotizaciones', 'Pedidos', 'Notas de crédito', 'Cobros'],
       mantenimientos: ['Series de documentos', 'Listas de precios', 'Descuentos'],
       procesos: ['Anulación de documentos', 'Antigüedad de saldos', 'Comisiones'],
       reportes: ['Ventas por período', 'Ventas por cliente', 'Cuentas por cobrar', 'Gráfica de ventas'],
