@@ -5,3 +5,9 @@ node_modules/
 *.log
 supabase/.temp/
 supabase/.branches/
+
+# Scripts con datos personales (clientes y vendedores): se ejecutan copiándolos desde la computadora, no se publican.
+supabase/migrations/20261107000128_clientes_organizacion_3.sql
+supabase/migrations/20261107000129_vendedores_organizacion_3.sql
+supabase/pendientes/128_clientes_parte_*.sql
+supabase/privados/
