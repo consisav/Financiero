@@ -4547,3 +4547,4 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .emp-logo { flex: 0 0 auto; width: 104px; height: 56px; display: grid; place-items: center; border-radius: 9px; background: var(--fondo); overflow: hidden; }
 .emp-logo img { max-width: 98px; max-height: 50px; object-fit: contain; }
 .emp-logo .ti { font-size: 26px; color: var(--tenue); }
+.modal-pie .modal-eliminar { margin-right: auto; }

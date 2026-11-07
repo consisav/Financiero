@@ -60,7 +60,7 @@
   // Un campo "imagen" recibe en valores la URL actual y entrega { archivo: File|null, quitar: boolean }.
   const IMAGEN_TIPOS = ['image/png', 'image/jpeg', 'image/webp'];
   const IMAGEN_MAX = 2 * 1024 * 1024;
-  function formulario({ titulo, campos, valores = {}, alGuardar, alPreparar }) {
+  function formulario({ titulo, campos, valores = {}, alGuardar, alPreparar, eliminar }) {
     const velo = document.createElement('div');
     velo.className = 'modal-velo';
     velo.innerHTML = `
@@ -71,6 +71,7 @@
         </div>
         <p class="modal-error" role="alert"></p>
         <footer class="modal-pie">
+          ${eliminar ? `<button type="button" class="boton secundario-sm rp-peligro modal-eliminar" data-eliminar-registro><i class="ti ti-trash" aria-hidden="true"></i> ${esc(eliminar.texto || 'Eliminar')}</button>` : ''}
           <button type="button" class="boton secundario-sm" data-cerrar>Cancelar</button>
           <button type="submit" class="boton primario-sm">Guardar</button>
         </footer>
@@ -98,6 +99,15 @@
         caja.dataset.quitar = '1';
         vista.innerHTML = '<i class="ti ti-photo" aria-hidden="true"></i><small>Sin imagen</small>';
       });
+    });
+    // Eliminar (opcional): eliminar.alEliminar() confirma y elimina; si lanza un error, se muestra en la ventana.
+    const btnEliminar = form.querySelector('[data-eliminar-registro]');
+    if (btnEliminar) btnEliminar.addEventListener('click', async () => {
+      btnEliminar.disabled = true;
+      error.textContent = '';
+      try { if (await eliminar.alEliminar()) cerrar(); }
+      catch (err) { error.textContent = traducirError(err); }
+      finally { btnEliminar.disabled = false; }
     });
     if (alPreparar) alPreparar(form);
     const primero = form.querySelector('input:not([type=checkbox]):not([type=file]), select, textarea');

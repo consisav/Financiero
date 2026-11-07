@@ -271,7 +271,7 @@
         const tipoDe = (id) => (todos.find((t) => t.id === id) || {}).descripcion || '';
         const tiposActivos = tipos.filter((t) => t.activo).map((t) => ({ valor: t.id, texto: `${t.codigo} · ${t.descripcion}` }));
         return {
-          tabla: 'cuentas', padre: 'cuenta_mayor_id',
+          tabla: 'cuentas', padre: 'cuenta_mayor_id', eliminable: true,
           titulos: titulos('Cuenta', 'cuenta'), etiquetaCodigo: 'Cuenta', etiquetaMayor: 'Cuenta mayor', etiquetaHijos: 'Sub-cuentas',
           columnas: [
             { titulo: 'Tipo cuenta', valor: (f) => esc(tipoDe(f.tipo_cuenta_id)) },
@@ -311,7 +311,7 @@
       tablaVersiones: 'catalogos_centros', nombreCatalogo: 'catálogo de centros de costo', unidad: 'centros', icono: 'ti-hierarchy-2',
       tituloImpresion: 'Centros de costo', script: '20261102000014_centros_por_localidad_y_version.sql',
       arbol: () => ({
-        tabla: 'centros_costo', padre: 'centro_mayor_id',
+        tabla: 'centros_costo', padre: 'centro_mayor_id', eliminable: true,
         titulos: titulos('Centro', 'centro'), etiquetaCodigo: 'Centro', etiquetaMayor: 'Centro mayor', etiquetaHijos: 'Sub-centros',
         columnas: [{ titulo: 'Integración', valor: (f) => siNo(f.integra) }],
         ficha: (f) => fichaDato('Integración', siNo(f.integra)) + fichaDato('Centro anterior', esc(f.centro_anterior)),

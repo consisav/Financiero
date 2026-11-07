@@ -144,13 +144,33 @@
         </div>` : ''}`;
     }
 
-    function abrirFormulario(fila, nivel) {
+    // Se puede eliminar solo si no tiene hijas ni ninguna referencia en la base de datos (script 124).
+    async function eliminable(fila) {
+      if (!fila || !cfg.editable || !cfg.eliminable || hijos(fila.id).length) return false;
+      const { data, error } = await sb.rpc('referencias_catalogo', { p_tabla: cfg.tabla, p_id: fila.id });
+      return !error && Array.isArray(data) && data.length === 0;
+    }
+
+    async function abrirFormulario(fila, nivel) {
+      const puedeEliminar = await eliminable(fila);
       const mayor = fila ? porId(fila[cfg.padre]) : (nivel === 1 ? null : porId(estado.ruta[nivel - 2]));
       const nombreNivel = titulo(fila ? fila.nivel : nivel);
       formulario({
         titulo: fila ? `Modificar ${nombreNivel.toLowerCase()} · ${fila.codigo}` : `Nueva ${nombreNivel.toLowerCase()}${mayor ? ` de ${mayor.codigo} · ${mayor.nombre}` : ''}`,
         valores: fila || cfg.valores(mayor, hijos(mayor ? mayor.id : null)),
         campos: cfg.campos(fila, mayor),
+        eliminar: puedeEliminar ? {
+          texto: 'Eliminar',
+          alEliminar: async () => {
+            if (!confirm(`¿Eliminar ${nombreNivel.toLowerCase()} ${fila.codigo} · ${fila.nombre}? Esta acción no se puede deshacer.`)) return false;
+            const { error } = await sb.rpc('eliminar_registro_catalogo', { p_tabla: cfg.tabla, p_id: fila.id });
+            if (error) throw error;
+            window.FIN.aviso(`${nombreNivel} ${fila.codigo} eliminada`);
+            estado.foco = mayor ? mayor.id : null;
+            await cargar(mayor ? mayor.id : null);
+            return true;
+          }
+        } : null,
         alGuardar: async (d) => {
           if (fila) delete d.codigo;
           else Object.assign(d, cfg.filtro, { [cfg.padre]: mayor ? mayor.id : null });
