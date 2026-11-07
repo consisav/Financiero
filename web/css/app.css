@@ -4259,3 +4259,27 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .dsp-proceso .bk-detalle > .dsp-tablero, .dsp-consulta .bk-detalle > .dsp-tablero { flex: 1 1 0; min-height: 0; }
 @media (max-width: 1400px) { .dsp-cab { grid-template-columns: 1fr; } .dsp-acciones { flex-direction: row; } .dsp-porbanco { grid-template-columns: 1fr; } }
 .dsp-gen dd { white-space: nowrap; } .dsp-a .dsp-gen dl { gap: 2px 12px; }
+
+/* Disponibilidad · Consolidado general de la organización: indicadores destacados y matriz empresa × banco. */
+.dsp-consol { display: flex; flex-direction: column; gap: 10px; }
+.dsp-cx-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.dsp-cx { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--borde); background: var(--fondo); min-width: 0; }
+.dsp-cx span { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dsp-cx b { font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dsp-cx b.dsp-cx-txt { font-size: 14px; }
+.dsp-cx b.neg { color: #b23a32; }
+.dsp-cx small { font-size: 11px; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dsp-cx.principal { background: var(--acento-fondo); border-color: color-mix(in srgb, var(--acento) 30%, var(--borde)); }
+.dsp-cx.principal b:not(.neg) { color: var(--acento); }
+.dsp-cx.alerta { background: #fdeceb; } .dsp-cx.alerta b { color: #b23a32; }
+.dsp-cx.ok b { color: #1f7a45; }
+.dsp-matriz { flex: 1; min-height: 0; overflow: auto; }
+.dsp-matriz table { table-layout: auto; }
+.dsp-matriz tr.dsp-propia td { background: var(--acento-fondo); }
+.dsp-matriz tfoot tr.dsp-pct td { font-weight: 600; color: var(--tenue); background: transparent; }
+.dsp-part { display: flex; align-items: center; gap: 8px; min-width: 140px; }
+.dsp-part i { flex: 1; height: 8px; border-radius: 6px; background: var(--fondo); position: relative; overflow: hidden; display: block; }
+.dsp-part i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--p); border-radius: 6px; background: var(--acento); }
+.dsp-part i.neg::after { background: #e4574c; }
+.dsp-part small { font-size: 11.5px; font-weight: 700; min-width: 44px; text-align: right; }
+@media (max-width: 1500px) { .dsp-cx-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
