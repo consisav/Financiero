@@ -4185,7 +4185,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bmc-reportes .boton b { font-size: 12.5px; } .bmc-reportes .boton small { font-size: 10px; opacity: .85; font-weight: 500; }
 /* Detalle compacto de depósitos, notas y cheques: título y acciones en una sola fila, cabecera más baja y
    botones de reporte pequeños en la barra de la lista. */
-.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo { display: flex; flex-wrap: nowrap; align-items: center; padding-bottom: 4px; margin-bottom: 4px; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto { min-width: 0; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 11px; }
@@ -4218,7 +4218,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-c3 { grid-column: span 3; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-check { grid-column: span 1; padding-bottom: 6px; white-space: nowrap; font-size: 12px; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-radios { grid-column: 1 / -1; }
-.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
 .bk-movimientos:not(.bk-conc) .tg-cab h2 { white-space: nowrap; }
 .bk-movimientos:not(.bk-conc) .tg-cab .ta-total { white-space: nowrap; }
 .bk-movimientos:not(.bk-conc) .bm-control .bm-comprobante { padding: 3px 8px; }
@@ -4551,3 +4551,9 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 /* Consultas de cheques, depósitos y notas: botón «Consultar» con texto en lugar del ojo. */
 .cqc-ver.boton { width: auto; height: auto; display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; font-size: 12.5px; white-space: nowrap; }
 .cqc-tabla col.w-acc { width: 116px !important; } .cqc-tabla td.cq-acc { overflow: visible; text-align: right; padding-right: 10px; }
+/* Depósitos: pantalla solo de ingreso (sin la lista del período). */
+.bk-espacio.bm-solo .ta-cuerpo { grid-template-rows: minmax(0, 1fr) !important; }
+.bm-solo .bk-maestro { display: none !important; }
+.bm-solo .bm-titulo .tk-titulo-acciones .boton { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.bm-solo .bm-titulo .tk-titulo-acciones a.boton { text-decoration: none; }
+.bm-solo .bm-titulo .cqc-excel { padding: 5px 12px; min-height: 0; font-size: 13px; }

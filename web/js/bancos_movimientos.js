@@ -20,7 +20,9 @@
     depositos: {
       tipo: 'DEPOSITO', titulo: 'Depósitos multimoneda', icono: 'ti-cash-banknote', nombre: 'Depósito', plural: 'depósitos', etiquetaNumero: 'Número de depósito',
       terceros: [{ valor: 'CLIENTE', texto: 'Cliente' }], etiquetaTercero: 'Cliente', documentos: ['FACTURA', 'RECIBO'], tituloDocs: 'Facturas y recibos depositados',
-      varios: true, etiquetaPor: 'Depositó', ayudaPor: 'Persona que hizo el depósito', queImagen: 'del depósito', ayudaImagen: 'Foto o escaneo de la boleta (imagen o PDF, hasta 10 MB)'
+      varios: true, etiquetaPor: 'Depositó', ayudaPor: 'Persona que hizo el depósito', queImagen: 'del depósito', ayudaImagen: 'Foto o escaneo de la boleta (imagen o PDF, hasta 10 MB)',
+      // Solo ingreso: sin la lista del período; se busca, consulta y reporta en Bancos · Consulta de Depósitos Monetarios.
+      soloIngreso: true, consulta: 'consulta-de-depositos'
     },
     'notas-credito': {
       tipo: 'NOTA_CREDITO', titulo: 'Notas de crédito / transferencias', icono: 'ti-file-plus', nombre: 'Nota de crédito', plural: 'notas de crédito', etiquetaNumero: 'Número de nota',
@@ -79,7 +81,7 @@
   }
 
   function pantallaMovimiento(cont, cfg, extra) {
-    const ctx = montar(cont, { titulo: cfg.titulo, icono: cfg.icono, clase: `bk-movimientos${cfg.cheque ? ' bk-cheques' : ''}`, grupo: cfg.grupo || 'Bancos' });
+    const ctx = montar(cont, { titulo: cfg.titulo, icono: cfg.icono, clase: `bk-movimientos${cfg.cheque ? ' bk-cheques' : ''}${cfg.soloIngreso ? ' bm-solo' : ''}`, grupo: cfg.grupo || 'Bancos' });
     const { sb } = ctx;
     const [anio, mes] = fmt.hoy().split('-');
     const f = { cuenta: '', desde: `${anio}-${mes}-01`, hasta: fmt.hoy(), estado: '' };
@@ -113,6 +115,10 @@
     let modoCheque = 'ambos';      // impresión: cheque y voucher, solo cheque o solo voucher
 
     function pintarFiltros() {
+      if (cfg.soloIngreso) {
+        ctx.filtros(`<label class="campo"><span>Cuenta bancaria</span><select name="cuenta"><option value="">Todas</option>${cuentas.map((c) => `<option value="${c.id}" ${String(f.cuenta) === String(c.id) ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(c))}</option>`).join('')}</select></label>`);
+        return;
+      }
       ctx.filtros(`
         <label class="campo"><span>Cuenta bancaria</span><select name="cuenta"><option value="">Todas</option>${cuentas.map((c) => `<option value="${c.id}" ${String(f.cuenta) === String(c.id) ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(c))}</option>`).join('')}</select></label>
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
@@ -175,6 +181,18 @@
 
     async function consultar() {
       if (!ctx.sel.loc) { docs = []; pintarMaestro(); return abrir(null); }
+      // Solo ingreso: el documento abierto (recién registrado o abierto desde la Consulta) o uno nuevo.
+      if (cfg.soloIngreso) {
+        docs = []; partidas = {};
+        if (actual?.id) {
+          const { data: d } = await sb.from('movimientos_bancarios').select('*').eq('id', actual.id).maybeSingle();
+          if (d) {
+            docs = [d];
+            if (d.partida_id) { const { data: p } = await sb.from('partidas').select('id, mes, numero, estado').eq('id', d.partida_id).maybeSingle(); if (p) partidas[p.id] = p; }
+          }
+        }
+        return abrir(docs[0] || null, modificando);
+      }
       // Por páginas de 1,000 (el servidor devuelve como máximo 1,000 filas por consulta), hasta 10,000.
       const data = [];
       for (let p = 0; p < 10000; p += 1000) {
@@ -316,11 +334,15 @@
             <div class="tk-titulo-texto"><small>${esc(cfg.titulo)} · ${esc(empresaDe(d))}</small><h2>${d ? (cfg.cheque ? `Cheque ${esc(d.numero_documento || '')} <span class="pc-anual">folio ${d.folio}</span>` : `${esc(cfg.nombre)} folio ${d.folio}`) : `${cfg.tipo === 'DEPOSITO' || cfg.cheque ? 'Nuevo' : 'Nueva'} ${esc(cfg.nombre.toLowerCase())}`}</h2></div>
             <div class="tk-marcas">${marca}${modificando ? '<span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}${d?.partida_id ? `<span class="pc-marca definitiva"><i class="ti ti-notebook" aria-hidden="true"></i> Partida ${esc(nombrePartida(d.partida_id))}</span>` : ''}${d?.conciliado ? '<span class="pc-marca aprobada">Conciliado</span>' : ''}${cfg.cheque && d?.impreso ? '<span class="pc-marca definitiva"><i class="ti ti-printer" aria-hidden="true"></i> Impreso</span>' : ''}${cfg.cheque && v.no_negociable ? '<span class="pc-marca descuadrada">No negociable</span>' : ''}</div>
             <div class="tk-titulo-acciones">
-              ${ctx.admin && d && !modificando ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>' : ''}
+              ${cfg.soloIngreso ? `<a class="boton secundario-sm" href="#/caja-bancos/${cfg.consulta}" title="Buscar y consultar ${esc(cfg.plural)} registrados"><i class="ti ti-file-search" aria-hidden="true"></i> Consulta</a>
+                <button type="button" class="boton secundario-sm bca-pdf" data-accion="doc-pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> Imprimir en PDF</button>
+                <button type="button" class="boton cqc-excel" data-accion="doc-excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel</button>
+                ${ctx.admin && !modificando ? `<button type="button" class="boton ${ed ? 'secundario-sm' : 'primario-sm'}" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>` : ''}`
+                : ctx.admin && d && !modificando ? '<button type="button" class="boton secundario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>' : ''}
               ${cfg.liquidaciones && ed ? cfg.liquidaciones.map((l) => `<button type="button" class="boton secundario-sm" data-proximamente="${esc(l.texto)}" data-modulo="${esc(l.modulo)}" title="Se habilita cuando exista el módulo de ${esc(l.modulo)}"><i class="ti ${l.icono}" aria-hidden="true"></i> ${esc(l.texto)}</button>`).join('') : ''}
               ${d && !modificando ? (cfg.cheque
                 ? `<span class="pc-imprimir"><button type="button" class="boton secundario-sm" data-accion="imprimir-cheque" ${d.estado === 'ANULADO' ? 'disabled' : ''}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button><select class="boton secundario-sm bm-modo-cheque" name="modo_cheque" aria-label="Qué imprimir">${[['ambos', 'Cheque y voucher'], ['cheque', 'Solo cheque'], ['voucher', 'Solo voucher']].map(([k, t]) => `<option value="${k}" ${modoCheque === k ? 'selected' : ''}>${t}</option>`).join('')}</select></span>`
-                : '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>') : ''}
+                : cfg.soloIngreso ? '' : '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>') : ''}
               ${puede ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>' : ''}
               ${d && ctx.superAdmin && !d.partida_id && !modificando && !cfg.cheque ? `<button type="button" class="boton secundario-sm rp-peligro" data-eliminar="${d.id}"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>` : ''}
               ${puede && !contabilizado() ? '<button type="button" class="boton secundario-sm" data-accion="partida" title="Genera la partida contable con el detalle contable"><i class="ti ti-notebook" aria-hidden="true"></i> Generar partida</button>' : ''}
@@ -664,6 +686,31 @@
       await consultar();
     }
 
+    function excelDocumento() {
+      const d = actual;
+      if (!d) return window.FIN.aviso(`Registra primero el ${cfg.nombre.toLowerCase()}`);
+      if (!window.REPORTE_XLSX) return;
+      const cb = cuentaBancaria(d.cuenta_bancaria_id);
+      const l = ctx.localidad(d.localidad_id);
+      const mon = ctx.moneda(d.moneda_id);
+      const quien = d.tercero_nombre || (d.clientes_varios ? 'CLIENTES VARIOS' : '');
+      const parametros = [`Empresa: ${l ? `${l.codigo} · ${l.nombre_comercial}` : ''}`, `Cuenta: ${cb ? ctx.nombreCuentaBancaria(cb) : ''}`, `Folio: ${d.folio}`, `${cfg.etiquetaNumero}: ${d.numero_documento || '—'}`,
+        `Fecha: ${fmt.fechaDia(d.fecha)}`, `${cfg.etiquetaTercero}: ${quien || '—'}`, `Valor: ${mon?.simbolo || ''} ${fmt.monto(d.valor)} (Q ${fmt.monto(d.valor_ml)})`,
+        `Estado: ${d.estado === 'ANULADO' ? 'Anulado' : 'Activo'}${d.partida_id ? ` · partida ${nombrePartida(d.partida_id)}` : ' · sin partida'}`, ...(d.descripcion ? [`Descripción: ${d.descripcion}`] : [])];
+      const filas = [{ tipo: 'grupo', valores: ['Detalle contable'] }];
+      lineas.forEach((x, i) => { const k = contable(x.cuenta_id); const c = centros.find((z) => z.id === x.centro_id); filas.push({ valores: [i + 1, k?.codigo || '', k?.nombre || '', c?.codigo || '', Number(x.debe) || null, Number(x.haber) || null] }); });
+      if (!lineas.length) filas.push({ tipo: 'nota', valores: ['', 'Sin detalle contable'] });
+      filas.push({ tipo: 'total', valores: ['', '', 'Totales', '', lineas.reduce((t, x) => t + Number(x.debe || 0), 0), lineas.reduce((t, x) => t + Number(x.haber || 0), 0)] });
+      if (documentos.length) {
+        filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'grupo', valores: [cfg.tituloDocs] });
+        documentos.forEach((x) => filas.push({ valores: [x.tipo, [x.serie, x.numero].filter(Boolean).join('-'), x.nombre || x.tercero || '', x.fecha ? fmt.fechaDia(x.fecha) : '', Number(x.valor || 0), x.tipo === 'FACTURA' ? Number(x.abono || 0) : null] }));
+        filas.push({ tipo: 'total', valores: ['', `${documentos.length} documentos`, '', '', documentos.reduce((t, x) => t + Number(x.valor || 0), 0), null] });
+      }
+      window.REPORTE_XLSX.generar({ titulo: `${cfg.nombre} folio ${d.folio}`, parametros, orgId: d.organizacion_id, locId: d.localidad_id, hoja: cfg.nombre, archivo: `${cfg.plural.replace(/\s+/g, '_')}_folio_${d.folio}`,
+        columnas: [{ titulo: 'Línea · tipo', ancho: 11 }, { titulo: 'Cuenta · documento', ancho: 18 }, { titulo: 'Nombre', ancho: 44 }, { titulo: 'Centro · fecha', ancho: 13 }, { titulo: 'Debe · valor', ancho: 15, tipo: 'monto' }, { titulo: 'Haber · abono', ancho: 15, tipo: 'monto' }],
+        filas });
+    }
+
     function imprimirDocumento() {
       const d = actual;
       const cb = cuentaBancaria(d.cuenta_bancaria_id);
@@ -934,6 +981,8 @@
         if (a === 'ver-comprobante') return verComprobante();
         if (a === 'quitar-comprobante') { if (comprobanteNuevo) comprobanteNuevo = null; else quitarComprobante = true; return repintar(); }
         if (a === 'imprimir') return imprimirDocumento();
+        if (a === 'doc-pdf') return actual ? imprimirDocumento() : window.FIN.aviso(`Registra primero el ${cfg.nombre.toLowerCase()}`);
+        if (a === 'doc-excel') return excelDocumento();
         if (a === 'imprimir-cheque') return imprimirCheque();
         if (a === 'anular') return procesar('ANULAR');
         if (a === 'partida') return procesar('PARTIDA');
