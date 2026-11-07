@@ -137,17 +137,92 @@
     return ctx;
   }
 
-  // Ventana de impresión con estilos sencillos.
-  function imprimir(titulo, cuerpo) {
+  // Ventana de impresión (PDF) de todos los reportes, con el mismo encabezado de los reportes en Excel:
+  // a la izquierda el logo (de la localidad o, si no tiene, de la organización) y el nombre de la empresa; al
+  // centro el título y los parámetros; a la derecha la fecha y hora de generación y el usuario; una línea de
+  // separación y después el contenido. El título y los parámetros salen del primer <h1> y <h2> del cuerpo
+  // (los parámetros separados por « · »). opciones: { locId, orgId, horizontal }.
+  function imprimir(titulo, cuerpo, opciones = {}) {
     const v = window.open('', '_blank');
     if (!v) return window.FIN.aviso('Permite las ventanas emergentes para imprimir');
-    v.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title><style>
-      body{font:12px/1.4 Arial,sans-serif;color:#111;margin:28px}h1{font-size:16px;margin:0}h2{font-size:13px;margin:2px 0 12px;font-weight:normal;color:#444}h3{font-size:13px;margin:16px 0 6px}
+    let html = String(cuerpo || '');
+    // Formatos que se imprimen sobre papel preimpreso (el cheque): sin encabezado.
+    if (opciones.sinEncabezado) {
+      v.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title><style>body{font:12px/1.4 Arial,sans-serif;color:#111;margin:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left}.n{text-align:right}@media print{body{margin:8mm}}</style></head><body>${html}<script>window.onload=()=>window.print()</script></body></html>`);
+      v.document.close();
+      return;
+    }
+    const plano = (x) => String(x || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    let tituloRep = titulo;
+    let params = [];
+    const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if (h1) { tituloRep = plano(h1[1]); html = html.replace(h1[0], ''); }
+    // Los parámetros: el <h2> que sigue al título (si está al inicio, no uno de sección más abajo).
+    const h2 = h1 ? html.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i) : null;
+    if (h2 && plano(html.slice(0, h2.index).replace(/<style[\s\S]*?<\/style>/gi, '')).length < 3) {
+      // Un trozo sin «:» que sigue a «Etiqueta: valor» es parte de ese valor (p. ej. «Empresa: 3-01 · FUTURA FARMA»).
+      // «generado el…» o «impreso el…» se omiten: la fecha, la hora y el usuario ya están en el encabezado.
+      plano(h2[1]).split(/\s+·\s+/).filter(Boolean).forEach((x) => {
+        if (/^(generad[oa]|impres[oa]) el\b/i.test(x)) return;
+        const ult = params[params.length - 1] || '';
+        // Solo si el valor anterior es un código suelto (p. ej. «3-01»): así «Del … al …» sigue siendo otro parámetro.
+        if (!x.includes(':') && /:\s*[\w.-]+$/.test(ult)) params[params.length - 1] += ` · ${x}`;
+        else params.push(x);
+      });
+      html = html.replace(h2[0], '');
+    }
+    const lineas = []; const n = Math.ceil(params.length / 3) || 1;
+    for (let i = 0; i < params.length; i += n) lineas.push(params.slice(i, i + n).join('   ·   '));
+    const yo = window.FIN.perfil ? window.FIN.perfil() : {};
+    const ahora = new Date().toLocaleString('es-GT', { timeZone: 'America/Guatemala', hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '');
+    v.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(tituloRep || titulo)}</title><style>
+      body{font:12px/1.4 Arial,sans-serif;color:#111;margin:24px}h1{font-size:16px;margin:0}h2{font-size:13px;margin:2px 0 12px;font-weight:normal;color:#444}h3{font-size:13px;margin:16px 0 6px;color:#1f3a5f}
+      .rp-cab{display:grid;grid-template-columns:1fr 1.6fr 1fr;align-items:center;gap:14px;padding-bottom:8px;border-bottom:2.5px solid #1f3a5f;margin-bottom:14px}
+      .rp-emp{display:flex;align-items:center;gap:10px;min-width:0}.rp-emp img{max-height:56px;max-width:140px;object-fit:contain}.rp-emp img[hidden]{display:none}
+      .rp-emp b{display:block;font-size:14px;color:#1f3a5f}.rp-emp small{display:block;font-size:11px;color:#555}
+      .rp-tit{text-align:center}.rp-tit b{display:block;font-size:16px;color:#1f3a5f}.rp-tit small{display:block;font-size:10.5px;color:#444;margin-top:1px}
+      .rp-gen{text-align:right;font-size:10.5px;color:#444}.rp-gen div{white-space:nowrap}
       .cab{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 16px;border:1px solid #bbb;padding:8px 10px;margin-bottom:12px}.cab b{display:block;font-size:10px;color:#666;text-transform:uppercase}
-      table{width:100%;border-collapse:collapse;margin-bottom:10px}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left}th{background:#eee;font-size:11px}.n{text-align:right;white-space:nowrap}
-      tfoot td,tr.s td{font-weight:bold;background:#f3f3f3}.firmas{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:60px;text-align:center}.firmas div{border-top:1px solid #333;padding-top:4px}
-      @media print{body{margin:10mm}}</style></head><body>${cuerpo}<script>window.onload=()=>window.print()<\/script></body></html>`);
+      table{width:100%;border-collapse:collapse;margin-bottom:10px}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left}th{background:#1f3a5f;color:#fff;font-size:11px}.n{text-align:right;white-space:nowrap}
+      tfoot td,tr.s td{font-weight:bold;background:#eaf0f7}.firmas{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:60px;text-align:center}.firmas div{border-top:1px solid #333;padding-top:4px}
+      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      @page{size:${opciones.horizontal ? 'landscape' : 'auto'}}@media print{body{margin:8mm}}</style></head><body>
+      <header class="rp-cab">
+        <div class="rp-emp"><img id="rp-logo" alt="" hidden><div><b id="rp-org"></b><small id="rp-loc"></small></div></div>
+        <div class="rp-tit"><b>${esc(tituloRep || titulo)}</b>${lineas.map((l) => `<small>${esc(l)}</small>`).join('')}</div>
+        <div class="rp-gen"><div>Fecha: ${esc(ahora)}</div><div>Usuario: ${esc((yo.usuario || '').toUpperCase())}${yo.nombre ? ` · ${esc(yo.nombre)}` : ''}</div></div>
+      </header>
+      ${html}</body></html>`);
     v.document.close();
+    // Logo y nombre de la empresa (la elegida en pantalla o la del usuario); luego se imprime.
+    (async () => {
+      const sb = window.FIN.sb;
+      const locId = opciones.locId || seleccion.loc || yo.localidad_id;
+      let loc = null; let org = null;
+      try {
+        if (locId) {
+          const r = await sb.from('localidades').select('codigo, nombre_comercial, organizacion_id, logo_ruta').eq('id', locId).maybeSingle();
+          loc = r.error ? (await sb.from('localidades').select('codigo, nombre_comercial, organizacion_id').eq('id', locId).maybeSingle()).data : r.data;
+        }
+        const orgId = opciones.orgId || loc?.organizacion_id || seleccion.org || yo.organizacion_id;
+        if (orgId) org = (await sb.from('organizaciones').select('nombre, logo_ruta').eq('id', orgId).maybeSingle()).data;
+      } catch (err) { /* sin datos de la empresa: el reporte sale sin logo */ }
+      if (v.closed) return;
+      const d = v.document;
+      if (org?.nombre) d.getElementById('rp-org').textContent = org.nombre;
+      if (loc) d.getElementById('rp-loc').textContent = `${loc.codigo} · ${loc.nombre_comercial}`;
+      const ruta = loc?.logo_ruta || org?.logo_ruta;
+      const img = d.getElementById('rp-logo');
+      await new Promise((ok) => {
+        if (!ruta) return ok();
+        const t = setTimeout(ok, 3000);
+        img.onload = () => { clearTimeout(t); img.hidden = false; ok(); };
+        img.onerror = () => { clearTimeout(t); ok(); };
+        img.src = sb.storage.from('organizaciones').getPublicUrl(ruta).data.publicUrl;
+      });
+      v.focus();
+      v.print();
+    })();
   }
 
   // Imagen adjunta de un documento bancario (boleta del depósito, estado de cuenta…) en el bucket

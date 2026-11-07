@@ -624,15 +624,13 @@
           ${ls.map((l) => { const c = ctx.cuentas.find((x) => x.id === l.cuenta_id); const cc = ctx.centros.find((x) => x.id === l.centro_id); return `<tr><td>${l.linea}</td><td>${esc(c?.codigo || l.cuenta_codigo || '')}</td><td>${esc(c?.nombre || (l.cuenta_codigo ? '(cuenta pendiente)' : ''))}</td><td>${l.naturaleza}</td><td>${l.orden ?? ''}</td><td>${esc(l.operacion)}</td><td>${esc(cc ? `${cc.codigo} ${cc.nombre}` : '')}</td><td>${esc(l.columna_nomina || '')}</td></tr>`; }).join('') || '<tr><td colspan="8">Sin cuentas</td></tr>'}
           </tbody></table>`;
       }).join('');
-      const v = window.open('', '_blank');
-      if (!v) return window.FIN.aviso('Permite las ventanas emergentes para imprimir');
-      v.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Plantillas de transacciones</title><style>
+      // Encabezado común de los reportes (logo, parámetros, fecha y usuario): window.BANCOS.imprimir.
+      window.BANCOS.imprimir(`Plantillas de transacciones`, `<style>
         body{font:12px/1.4 Arial,sans-serif;color:#111;margin:28px}h1{font-size:16px;margin:0 0 4px}h2{font-size:12px;font-weight:normal;color:#555;margin:0 0 16px}
         h3{font-size:13px;margin:18px 0 6px}h3 small{font-weight:normal;color:#666}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:3px 6px;text-align:left}th{background:#eee;font-size:11px}
-        @media print{body{margin:10mm}h3{break-after:avoid}table{break-inside:avoid}}</style></head><body>
+        @media print{body{margin:10mm}h3{break-after:avoid}table{break-inside:avoid}}</style>
         <h1>Plantillas de transacciones</h1><h2>${esc(org?.nombre || '')} · ${esc(loc ? `${loc.codigo} ${loc.nombre_comercial}` : '')} · ${transacciones.length} transacciones</h2>
-        ${cuerpo || '<p>No hay transacciones.</p>'}<script>window.onload=()=>window.print()<\/script></body></html>`);
-      v.document.close();
+        ${cuerpo || '<p>No hay transacciones.</p>'}`, { locId: loc?.id, orgId: org?.id });
     }
 
     cont.addEventListener('change', (e) => {

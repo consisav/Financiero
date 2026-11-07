@@ -16,16 +16,14 @@
   const sinOrganizaciones = (m) => `<p class="vacio">Primero crea una organización en <a href="#/${m.id}/organizaciones">Catálogos · Organizaciones</a>.</p>`;
 
   // Listado imprimible del árbol completo, en orden jerárquico; las filas que integran van resaltadas.
-  function imprimir(titulo, subtitulo, filas, padre, columnas) {
+  function imprimir(titulo, subtitulo, filas, padre, columnas, opciones = {}) {
     const hijos = (id) => filas.filter((f) => (f[padre] ?? null) === id).sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
     // Sangría de unos tres espacios por nivel, en el código y en el nombre.
     const sangria = (nivel) => `calc(8px + ${((nivel - 1) * 1.1).toFixed(1)}em)`;
     const orden = [];
     (function recorrer(id) { for (const f of hijos(id)) { orden.push(f); recorrer(f.id); } })(null);
-    const w = window.open('', '_blank');
-    if (!w) { window.FIN.aviso('Permite las ventanas emergentes para imprimir.'); return; }
-    w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title>
-      <style>
+    // Encabezado común de los reportes (logo, parámetros, fecha y usuario): window.BANCOS.imprimir.
+      window.BANCOS.imprimir(`${esc(titulo)}`, `<style>
         body { font-family: Inter, system-ui, sans-serif; font-size: 12px; color: #0f1b2d; margin: 24px; }
         h1 { font-size: 18px; margin: 0; } p { margin: 4px 0 16px; color: #5a6678; }
         table { width: 100%; border-collapse: collapse; }
@@ -35,14 +33,11 @@
         tr.n1 td { font-weight: 800; background: #d6e2f3; }
         tr.inactiva td { color: #8a94a6; }
         * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      </style></head><body>
-      <h1>${esc(titulo)}</h1><p>${esc(subtitulo)} · ${orden.length} registros · Impreso el ${new Date().toLocaleString('es-GT')}</p>
+      </style>
+      <h1>${esc(titulo)}</h1><h2>${esc(subtitulo)} · ${orden.length} registros</h2>
       <table><thead><tr><th>Código</th><th>Nombre</th><th>Nivel</th>${columnas.map((c) => `<th>${esc(c.titulo)}</th>`).join('')}<th>Vigente</th></tr></thead><tbody>
       ${orden.map((f) => `<tr class="n${f.nivel} ${f.integra ? 'integra' : ''} ${f.vigente ? '' : 'inactiva'}"><td style="padding-left:${sangria(f.nivel)}">${esc(f.codigo)}</td><td style="padding-left:${sangria(f.nivel)}">${esc(f.nombre)}</td><td>${f.nivel}</td>${columnas.map((c) => `<td>${c.valor(f)}</td>`).join('')}<td>${f.vigente ? 'Sí' : 'No'}</td></tr>`).join('')}
-      </tbody></table></body></html>`);
-    w.document.close();
-    w.focus();
-    w.print();
+      </tbody></table>`, opciones);
   }
 
   // El mismo listado jerárquico en Excel, con el encabezado de las consultas (logo, parámetros, fecha y usuario).
@@ -251,7 +246,7 @@
         const loc = locActual();
         const v = estado.version;
         return imprimir(`${cfg.tituloImpresion} · ${org.nombre}`, `Localidad ${loc.codigo} · ${loc.nombre_comercial} · Versión ${v.version}, del ${fechaCorta(v.fecha_del)} al ${fechaCorta(v.fecha_al) || 'vigente'}`,
-          estado.arbol.filas(), cfg.arbol({ ...estado.ctx, loc: estado.loc }).padre, cfg.columnasImpresion(estado.ctx));
+          estado.arbol.filas(), cfg.arbol({ ...estado.ctx, loc: estado.loc }).padre, cfg.columnasImpresion(estado.ctx), { locId: loc.id, orgId: org.id });
       }
       const ed = e.target.closest('[data-editar-version]');
       if (ed) return formVersion(estado.versiones.find((v) => String(v.id) === ed.dataset.editarVersion));

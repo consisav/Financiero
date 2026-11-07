@@ -394,22 +394,20 @@
         return `<tr class="g"><td colspan="6">${g}</td></tr>${ls.map((l) => { const r = rubro(l.rubro_id); return `<tr><td>${r?.codigo || ''}</td><td>${esc(r?.nombre || '')}</td><td class="n">${monto(l.presupuestado)}</td><td class="n">${monto(l.ejecutado)}</td><td class="n">${monto(l.presupuestado - l.ejecutado)}</td><td class="n">${pct(l.ejecutado, l.presupuestado)}%</td></tr>`; }).join('')}
           <tr class="s"><td colspan="2">Subtotal ${g.toLowerCase()}</td><td class="n">${monto(sp)}</td><td class="n">${monto(se)}</td><td class="n">${monto(sp - se)}</td><td class="n">${pct(se, sp)}%</td></tr>`;
       }).join('');
-      const v = window.open('', '_blank');
-      if (!v) return window.FIN.aviso('Permite las ventanas emergentes para imprimir');
-      v.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Presupuesto ${p.numero}</title><style>
+      // Encabezado común de los reportes (logo, parámetros, fecha y usuario): window.BANCOS.imprimir.
+      window.BANCOS.imprimir(`Presupuesto ${p.numero}`, `<style>
         body{font:12px/1.4 Arial,sans-serif;color:#111;margin:28px}h1{font-size:16px;margin:0}h2{font-size:13px;margin:2px 0 12px;font-weight:normal;color:#444}
         .cab{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 16px;border:1px solid #bbb;padding:8px 10px;margin-bottom:12px}.cab b{display:block;font-size:10px;color:#666;text-transform:uppercase}
         table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left}th{background:#eee;font-size:11px}.n{text-align:right;white-space:nowrap}
         tr.g td{background:#f3f3f3;font-weight:bold}tr.s td{font-weight:bold}tfoot td{font-weight:bold;background:#eee}.firmas{display:grid;grid-template-columns:repeat(2,1fr);gap:60px;margin-top:60px;text-align:center}.firmas div{border-top:1px solid #333;padding-top:4px}
-        @media print{body{margin:10mm}}</style></head><body>
-        <h1>${esc(org?.nombre || '')} · ${esc(loc ? `${loc.codigo} ${loc.nombre_comercial}` : '')}</h1>
-        <h2>Presupuesto ${p.numero} · ${esc(p.tipo)} · ${esc(p.estado)}</h2>
+        @media print{body{margin:10mm}}</style>
+        <h1>Presupuesto ${p.numero}</h1>
+        <h2>${esc(p.tipo)} · ${esc(p.estado)} · ${esc(org?.nombre || '')} · ${esc(loc ? `${loc.codigo} ${loc.nombre_comercial}` : '')}</h2>
         <div class="cab"><div><b>Fecha</b>${esc(fechaDia(p.fecha))}</div><div><b>Frecuencia</b>${esc(fr.texto)}</div><div><b>Período</b>${esc(fr.nombre(p.periodo))} ${p.anio}</div><div><b>Del / al</b>${esc(fechaDia(p.fecha_inicio))} – ${esc(fechaDia(p.fecha_fin))}</div>${p.descripcion ? `<div style="grid-column:1/-1"><b>Descripción</b>${esc(p.descripcion)}</div>` : ''}</div>
         <table><thead><tr><th>Código</th><th>Rubro</th><th class="n">Presupuestado</th><th class="n">Ejecutado</th><th class="n">Variación</th><th class="n">Ejecución</th></tr></thead><tbody>${cuerpo}</tbody>
         <tfoot><tr><td colspan="2">Totales</td><td class="n">${monto(p.total_presupuestado)}</td><td class="n">${monto(p.total_ejecutado)}</td><td class="n">${monto(p.total_presupuestado - p.total_ejecutado)}</td><td class="n">${pct(p.total_ejecutado, p.total_presupuestado)}%</td></tr></tfoot></table>
         <div class="firmas"><div>Elaboró: ${esc(p.elaborado_por || '')}</div><div>Aprobó: ${esc(p.aprobado_por || '')}</div></div>
-        <script>window.onload=()=>window.print()<\/script></body></html>`);
-      v.document.close();
+        `, { locId: p.localidad_id, orgId: p.organizacion_id });
     }
 
     // ---------- Eventos ----------

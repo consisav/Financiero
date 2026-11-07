@@ -740,7 +740,8 @@
         .ch-nn{position:absolute;left:18px;bottom:14px;font-weight:bold;border:2px solid #000;padding:2px 10px;letter-spacing:.1em}.ch-firma{position:absolute;right:18px;bottom:14px;border-top:1px solid #333;padding-top:3px;width:220px;text-align:center}
         .corte{border-top:1px dashed #999;margin:18px 0}</style>`;
       const cuerpo = modoCheque === 'cheque' ? cheque : modoCheque === 'voucher' ? voucher : `${cheque}<div class="corte"></div>${voucher}`;
-      imprimir(`Cheque ${d.numero_documento || d.folio}`, estilos + cuerpo);
+      // El cheque se imprime sobre su papel: sin el encabezado de los reportes (el voucher solo, sí lo lleva).
+      imprimir(`Cheque ${d.numero_documento || d.folio}`, estilos + cuerpo, { sinEncabezado: modoCheque !== 'voucher', locId: d.localidad_id, orgId: d.organizacion_id });
       if (modoCheque !== 'voucher' && !d.impreso && d.estado === 'ACTIVO' && ctx.admin) {
         const { error } = await sb.rpc('procesar_movimiento_bancario', { p_id: d.id, p_accion: 'IMPRESO', p_motivo: null });
         if (error) return window.FIN.aviso(window.UI.traducirError(error));
