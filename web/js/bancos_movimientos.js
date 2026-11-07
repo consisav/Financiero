@@ -27,13 +27,15 @@
     'notas-credito': {
       tipo: 'NOTA_CREDITO', titulo: 'Notas de crédito / transferencias', icono: 'ti-file-plus', nombre: 'Nota de crédito', plural: 'notas de crédito', etiquetaNumero: 'Número de nota',
       terceros: [{ valor: 'CLIENTE', texto: 'Cliente' }, { valor: 'CLIENTES VARIOS', texto: 'Clientes varios' }], etiquetaTercero: 'Cliente', documentos: ['FACTURA', 'RECIBO'], tituloDocs: 'Facturas y recibos',
-      varios: true, etiquetaPor: 'Ordenante', ayudaPor: 'Quien hizo la transferencia o la nota', queImagen: 'de la nota', ayudaImagen: 'Comprobante de la nota o transferencia (imagen o PDF, hasta 10 MB)'
+      varios: true, etiquetaPor: 'Ordenante', ayudaPor: 'Quien hizo la transferencia o la nota', queImagen: 'de la nota', ayudaImagen: 'Comprobante de la nota o transferencia (imagen o PDF, hasta 10 MB)',
+      soloIngreso: true, consulta: 'consulta-de-notas'
     },
     'notas-debito': {
       tipo: 'NOTA_DEBITO', titulo: 'Notas de débito / transferencias', icono: 'ti-file-minus', nombre: 'Nota de débito', plural: 'notas de débito', etiquetaNumero: 'Número de nota',
       terceros: [{ valor: 'PROVEEDOR PRODUCTOS', texto: 'Proveedor de productos' }, { valor: 'PROVEEDOR SERVICIOS', texto: 'Proveedor de servicios' }], etiquetaTercero: 'Proveedor', documentos: ['NOTA', 'FACTURA', 'OTRO'], tituloDocs: 'Notas y documentos',
       radios: true, etiquetaPor: 'Beneficiario', ayudaPor: 'A quién se pagó o transfirió', queImagen: 'de la nota', ayudaImagen: 'Comprobante de la nota o transferencia (imagen o PDF, hasta 10 MB)',
-      liquidaciones: [{ texto: 'Liquidar caja chica', icono: 'ti-cash', modulo: 'Caja chica' }, { texto: 'Liquidar compras', icono: 'ti-shopping-cart', modulo: 'Compras' }]
+      liquidaciones: [{ texto: 'Liquidar caja chica', icono: 'ti-cash', modulo: 'Caja chica' }, { texto: 'Liquidar compras', icono: 'ti-shopping-cart', modulo: 'Compras' }],
+      soloIngreso: true, consulta: 'consulta-de-notas'
     },
     // Cheques · Emisión de cheques: el número sale de la chequera de la cuenta bancaria.
     'emision-de-cheques': {
@@ -41,7 +43,7 @@
       terceros: [{ valor: 'PROVEEDOR PRODUCTOS', texto: 'Proveedor de productos' }, { valor: 'PROVEEDOR SERVICIOS', texto: 'Proveedor de servicios' }], etiquetaTercero: 'Proveedor', documentos: ['FACTURA', 'OTRO'], tituloDocs: 'Facturas pagadas',
       radios: true, etiquetaPor: 'A favor de', ayudaPor: 'Beneficiario: el nombre que se imprime en el cheque', queImagen: 'del cheque', ayudaImagen: 'Cheque firmado o constancia de entrega (imagen o PDF, hasta 10 MB)',
       liquidaciones: [{ texto: 'Liquidar compras', icono: 'ti-shopping-cart', modulo: 'Compras' }],
-      cheque: true
+      cheque: true, soloIngreso: true, consulta: 'consulta-de-cheques'
     }
   };
   const IVA = 0.12;
@@ -328,7 +330,9 @@
       const marca = d ? (d.estado === 'ANULADO' ? '<span class="pc-marca anulada">Anulado</span>' : '<span class="pc-marca aprobada">Activo</span>') : '<span class="pc-marca pendiente">Sin registrar</span>';
       const dato = (etq, val, extra = '') => `<div class="bm-dato ${extra}"><dt>${etq}</dt><dd>${val || '<span class="tk-tenue">—</span>'}</dd></div>`;
       const puede = ctx.admin && d && d.estado === 'ACTIVO' && !modificando;
-      // Depósitos (opción B): franja de control bajo el título, banda «Depósito» con el valor destacado y banda «Cliente y descripción».
+      // Ingreso (depósitos, notas y cheques · opción B): franja de control bajo el título, banda del documento con el valor
+      // destacado y banda del tercero con la descripción.
+      const nomDoc = cfg.cheque ? 'Cheque' : cfg.tipo === 'DEPOSITO' ? 'Depósito' : 'Nota';
       const cabA = !cfg.soloIngreso ? '' : `
           <div class="dpb ${ed ? 'editando' : 'consulta'}">
             <div class="dpb-control">
@@ -336,17 +340,21 @@
               <span><small>Estado</small><b class="${!d ? 'dpb-pend' : d.estado === 'ANULADO' ? 'pc-rojo' : 'dpb-ok'}">${d ? esc(d.estado) : 'Sin registrar'}</b></span>
               <span><small>Operador</small><b ${d ? '' : 'data-reloj'}>${esc(d ? d.usuario || '' : (ctx.yo.usuario || '').toUpperCase())}</b><em>${esc(fmt.fechaHora(d ? d.fecha_operacion : new Date()))}</em></span>
               <span><small>Póliza</small><b>${d?.partida_id ? esc(nombrePartida(d.partida_id)) : '—'}</b></span>
+              ${cfg.cheque ? `<span><small>Cheques disp.</small>${ch ? `<b data-cheques-disp class="${ch.disponibles <= ch.minimo ? 'pc-rojo' : ''}">${ch.disponibles}</b>` : '<b class="pc-rojo" data-cheques-disp>Sin chequera</b>'}</span>` : ''}
+              ${cfg.cheque && d?.impreso ? `<span><small>Impreso</small><b>${esc(d.impreso_por || '')}</b><em>${esc(fmt.fechaHora(d.impreso_en))}</em></span>` : ''}
               ${d?.modificado_en ? `<span><small>Actualiza</small><b>${esc(d.modificado_por_nombre || '')}</b><em>${esc(fmt.fechaHora(d.modificado_en))}</em></span>` : ''}
               ${d?.anulado_en ? `<span title="${esc(d.motivo_anulacion || '')}"><small>Anuló</small><b>${esc(d.anulado_por || '')}</b><em>${esc(fmt.fechaHora(d.anulado_en))}</em></span>` : ''}
               <div class="dpb-adjunto">${window.BANCOS.adjunto.html(adjuntoActual({ ed, puede }))}</div>
             </div>
             <section class="bm-bloque dpb-banda dpb-deposito">
               <div class="dpb-campos">
-                <h3 class="ta-col-titulo"><i class="ti ti-building-bank" aria-hidden="true"></i> Depósito</h3>
+                <h3 class="ta-col-titulo"><i class="ti ${cfg.cheque ? 'ti-writing' : 'ti-building-bank'}" aria-hidden="true"></i> ${nomDoc}</h3>
                 <div class="dpb-g dpb-g1">
                   <div class="dpb-banco"><span class="bk-cod" data-banco-cod>${banco?.codigo ?? ''}</span><div><small>Banco</small><b data-banco-nombre title="${esc(banco?.nombre || '')}">${esc(banco?.nombre || '')}</b></div></div>
                   <label class="campo dpb-cta"><span>Cuenta bancaria *</span><select name="cuenta_bancaria_id" ${disC}>${cuentas.filter((c) => c.activo || c.id === v.cuenta_bancaria_id).map((c) => `<option value="${c.id}" ${v.cuenta_bancaria_id === c.id ? 'selected' : ''}>${esc(c.numero)} · ${esc(c.nombre)}</option>`).join('')}</select></label>
-                  <label class="campo"><span>No. depósito</span><input name="numero_documento" value="${esc(v.numero_documento || '')}" maxlength="40" ${dis}></label>
+                  ${cfg.cheque
+                    ? `<div class="campo" title="El número lo asigna la chequera de la cuenta al registrar el cheque"><span>${d ? 'No. cheque' : 'Siguiente cheque'}</span><input value="${esc(d ? d.numero_documento || '' : ch ? String(ch.siguiente) : 'Sin chequera')}" disabled data-cheque-num aria-label="Número de cheque"></div>`
+                    : `<label class="campo"><span>No. ${cfg.tipo === 'DEPOSITO' ? 'depósito' : 'nota'}</span><input name="numero_documento" value="${esc(v.numero_documento || '')}" maxlength="40" ${dis}></label>`}
                   <label class="campo"><span>Fecha *</span><input type="date" name="fecha" value="${esc(v.fecha)}" ${disC}></label>
                   <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis || disImp}>${ctx.monedas.map((m) => `<option value="${m.id}" ${v.moneda_id === m.id ? 'selected' : ''}>${esc(m.nombre)}</option>`).join('')}</select></label>
                   <label class="campo"><span>Cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
@@ -359,18 +367,24 @@
             </section>
             <section class="bm-bloque dpb-banda">
               <h3 class="ta-col-titulo"><i class="ti ti-user" aria-hidden="true"></i> ${esc(cfg.etiquetaTercero)} y descripción</h3>
-              <div class="dpb-g dpb-g2">
+              <div class="dpb-g dpb-g2 ${cfg.cheque ? 'dpb-g2c' : ''}">
                 <label class="campo"><span>Código</span><input name="tercero_codigo" value="${esc(v.tercero_codigo || '')}" maxlength="20" ${dis}></label>
                 <label class="campo"><span>${esc(cfg.etiquetaTercero)}</span><input name="tercero_nombre" value="${esc(v.tercero_nombre || '')}" maxlength="150" ${dis}></label>
                 <label class="campo"><span>${esc(cfg.etiquetaPor)}</span><input name="deposito_por" value="${esc(v.deposito_por || '')}" maxlength="120" placeholder="${esc(cfg.ayudaPor)}" ${dis || disImp}></label>
-                <label class="campo"><span>Descripción</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="250" placeholder="Ej. FE-7074 FE-7075" ${dis}></label>
+                <label class="campo"><span>Descripción</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="250" placeholder="${cfg.tipo === 'DEPOSITO' ? 'Ej. FE-7074 FE-7075' : cfg.cheque ? 'Concepto del pago' : 'Concepto de la nota o transferencia'}" ${dis}></label>
                 <label class="campo"><span>Tipo de operación</span><input list="bm-operaciones" name="tipo_operacion" value="${esc(v.tipo_operacion || '')}" maxlength="40" ${dis}><datalist id="bm-operaciones">${tiposOperacion.map((t) => `<option value="${esc(t)}">`).join('')}</datalist></label>
+                ${cfg.cheque ? `<label class="campo" title="Solicitud de cheque aprobada con la que se emite"><span>Solicitud</span><select name="solicitud_id" ${disC || disImp}><option value="">Sin solicitud</option>${solicitudesCheque.filter((x) => x.estado === 'APROBADA' || x.id === v.solicitud_id).map((x) => `<option value="${x.id}" ${v.solicitud_id === x.id ? 'selected' : ''}>${String(x.numero).padStart(5, '0')} · ${esc(x.beneficiario)} · ${fmt.monto(x.monto)}</option>`).join('')}</select></label>` : ''}
               </div>
               <div class="dpb-checks">
-                <label class="pc-check"><input type="checkbox" name="caja_chica" ${v.caja_chica ? 'checked' : ''} ${dis}> Caja chica</label>
+                ${cfg.radios ? `<div class="pc-radios dpb-radios">${cfg.terceros.map((t) => `<label><input type="radio" name="tipo_tercero" value="${t.valor}" ${v.tipo_tercero === t.valor ? 'checked' : ''} ${dis}> ${esc(t.texto)}</label>`).join('')}</div>` : `<input type="hidden" name="tipo_tercero" value="${cfg.terceros[0].valor}">`}
+                ${cfg.cheque
+                  ? `<label class="pc-check" title="Solo se deposita en la cuenta del beneficiario"><input type="checkbox" name="no_negociable" ${v.no_negociable ? 'checked' : ''} ${dis}> No negociable</label>
+                    <label class="pc-check" title="El cheque genera una cuenta por cobrar"><input type="checkbox" name="cxc" ${v.cxc ? 'checked' : ''} ${dis}> CXC</label>
+                    <label class="pc-check" title="El cheque ya está firmado"><input type="checkbox" name="firmado" ${v.firmado ? 'checked' : ''} ${dis}> Firmado</label>
+                    <label class="campo dpb-codbanco"><span>Código banco</span><input name="codigo_banco" value="${esc(v.codigo_banco || '')}" maxlength="30" ${dis}></label>`
+                  : `<label class="pc-check"><input type="checkbox" name="caja_chica" ${v.caja_chica ? 'checked' : ''} ${dis}> Caja chica</label>`}
                 ${cfg.varios ? `<label class="pc-check"><input type="checkbox" name="clientes_varios" ${v.clientes_varios || v.tipo_tercero === 'CLIENTES VARIOS' ? 'checked' : ''} ${dis}> Clientes varios</label>` : ''}
               </div>
-              <input type="hidden" name="tipo_tercero" value="${cfg.terceros[0].valor}">
             </section>
           </div>`;
       ctx.pDet.innerHTML = `
@@ -733,7 +747,7 @@
 
     function excelDocumento() {
       const d = actual;
-      if (!d) return window.FIN.aviso(`Registra primero el ${cfg.nombre.toLowerCase()}`);
+      if (!d) return window.FIN.aviso(`Registra primero ${cfg.tipo.startsWith('NOTA') ? 'la' : 'el'} ${cfg.nombre.toLowerCase()}`);
       if (!window.REPORTE_XLSX) return;
       const cb = cuentaBancaria(d.cuenta_bancaria_id);
       const l = ctx.localidad(d.localidad_id);
@@ -1026,7 +1040,7 @@
         if (a === 'ver-comprobante') return verComprobante();
         if (a === 'quitar-comprobante') { if (comprobanteNuevo) comprobanteNuevo = null; else quitarComprobante = true; return repintar(); }
         if (a === 'imprimir') return imprimirDocumento();
-        if (a === 'doc-pdf') return actual ? imprimirDocumento() : window.FIN.aviso(`Registra primero el ${cfg.nombre.toLowerCase()}`);
+        if (a === 'doc-pdf') return actual ? imprimirDocumento() : window.FIN.aviso(`Registra primero ${cfg.tipo.startsWith('NOTA') ? 'la' : 'el'} ${cfg.nombre.toLowerCase()}`);
         if (a === 'doc-excel') return excelDocumento();
         if (a === 'imprimir-cheque') return imprimirCheque();
         if (a === 'anular') return procesar('ANULAR');

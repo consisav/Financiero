@@ -4631,3 +4631,11 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
   .dpb .campo input, .dpb .campo select { padding: 6px 8px; font-size: 13px; }
   .dpb-control { gap: 16px; }
 }
+/* Ingreso de notas y cheques (mismo diseño de depósitos): campos propios. */
+.dpb-g2c { grid-template-columns: minmax(80px, .55fr) minmax(180px, 1.5fr) minmax(170px, 1.3fr) minmax(180px, 1.5fr) minmax(130px, .9fr) minmax(170px, 1.1fr); }
+.dpb-checks { align-items: center; flex-wrap: wrap; }
+.dpb-radios { display: inline-flex; gap: 16px; padding-right: 10px; margin-right: 4px; border-right: 1px solid var(--borde); }
+.dpb-radios label { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.dpb-codbanco { flex-direction: row !important; align-items: center; gap: 8px !important; }
+.dpb-codbanco input { width: 140px !important; }
+.bm-solo .bm-titulo .tk-titulo-acciones { flex-wrap: wrap; justify-content: flex-end; }
