@@ -4789,3 +4789,41 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .vfb .vf-lineas .pc-n { width: 34px; } .vfb .vf-lineas .vf-c-prod { width: 80px; } .vfb .vf-lineas .vf-c-tipo { width: 108px; }
 .vfb .vf-lineas .vf-c-num { width: 92px; } .vfb .vf-lineas .vf-c-chk { width: 38px; } .vfb .vf-lineas .vf-c-fecha { width: 128px; } .vfb .vf-lineas .pq-x { width: 34px; }
 @media (max-width: 1750px) { .vfb .vf-lineas .vf-c-num { width: 80px; } .vfb .vf-lineas .vf-c-fecha { width: 118px; } .vfb .vf-lineas .vf-c-tipo { width: 96px; } }
+/* Facturas Ventas · opción A: cliente y resumen arriba, tarjetas en franja, productos a lo ancho */
+.vfa { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.vfa-arriba { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 8px; }
+.vfa-arriba > .bm-bloque { grid-column: auto !important; margin: 0; padding: 8px 14px 10px; display: flex; flex-direction: column; gap: 6px; }
+.vfa-resumen { display: grid !important; grid-template-columns: 1fr 1fr; gap: 2px 14px !important; align-content: center; padding: 8px 12px !important; }
+.vfa-resumen > div { font-size: 12px !important; }
+.vfa-resumen .vfb-total { grid-column: 1 / -1; order: -1; border-top: 0 !important; border-bottom: 1px solid color-mix(in srgb, #23955a 30%, transparent); padding: 0 0 4px !important; margin: 0 0 2px !important; }
+.vfa-resumen .vfb-total b { font-size: 22px !important; }
+.vfa-resumen .vf-saldo b { font-size: 13px !important; }
+.vfa-cards { display: grid; grid-template-columns: 1.15fr 1.15fr 1fr .8fr; gap: 8px; }
+.vfa-cards .vfb-card { padding: 6px 10px 8px; gap: 4px; }
+.vfa-cards .vfb-g { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px 6px; }
+.vfa-cards .vfb-g .vfb-c3 { grid-column: 1 / -1; }
+.vfa-cards .vf-checks { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
+.vfa-cards .campo input, .vfa-cards .campo select { padding: 3px 6px; font-size: 12px; }
+.vfa .bm-pestanas { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.vfa .bm-panel:not([hidden]) { flex: 1; min-height: 0; overflow: auto; }
+.vfa .vf-detalle { display: flex; flex-direction: column; gap: 6px; }
+.vfa-linea { display: grid; grid-template-columns: minmax(160px, 1.3fr) repeat(5, minmax(0, 1fr)); gap: 6px 10px; align-items: end; padding: 6px 10px; border: 1px solid var(--borde); border-radius: 10px; background: var(--fondo); }
+.vfa-linea > small { align-self: center; color: var(--tenue); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vfa-linea .campo { gap: 2px; font-size: 11px; min-width: 0; }
+.vfa-linea .campo input { padding: 3px 6px; font-size: 12px; width: 100%; }
+.vfa .vf-lineas { table-layout: fixed; width: 100%; }
+.vfa .vf-lineas .pc-n { width: 34px; } .vfa .vf-lineas .vf-c-prod { width: 90px; } .vfa .vf-lineas .vf-c-tipo { width: 110px; }
+.vfa .vf-lineas .vf-c-num { width: 96px; } .vfa .vf-lineas .vf-c-chk { width: 40px; } .vfa .vf-lineas .vf-c-fecha { width: 130px; } .vfa .vf-lineas .pq-x { width: 34px; }
+@media (max-width: 1750px) {
+  .vfa-arriba { grid-template-columns: minmax(0, 1fr) 260px; }
+  .vfb-g1 { grid-template-columns: minmax(80px, .6fr) minmax(180px, 2.2fr) minmax(100px, .9fr) auto minmax(100px, .8fr) minmax(120px, 1fr); }
+  .vfa .vf-lineas .vf-c-num { width: 84px; } .vfa .vf-lineas .vf-c-fecha { width: 120px; }
+}
+.vfa-cards { grid-template-columns: 1.15fr 1.15fr 1.1fr 1fr; }
+.vfa-lado { display: contents; }
+.vfa-lado > small { align-self: end; padding-bottom: 6px; color: var(--tenue); font-weight: 700; font-size: 11px; white-space: nowrap; }
+.vfa-lado > label:nth-of-type(3) { grid-column: span 2; }
+.vfa-lado > label:nth-of-type(4), .vfa-lado > label:nth-of-type(5) { grid-column: span 2; }
+.vfb-g2 { grid-template-columns: minmax(220px, 2fr) minmax(180px, 1.6fr) minmax(160px, 1.2fr) minmax(110px, .8fr); }
+.vfa-resumen > div span { white-space: nowrap; }
+@media (max-width: 1750px) { .vfa-lado > small { display: none; } .vfa-cards { grid-template-columns: 1.1fr 1.2fr 1.1fr 1fr; } }

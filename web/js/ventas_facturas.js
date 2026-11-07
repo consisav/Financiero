@@ -147,8 +147,8 @@
               ${v.autorizacion ? `<span><small>Autorización</small><b>${esc(v.autorizacion)}</b></span>` : ''}
             </div>
           </div>
-          <div class="vfb">
-            <div class="vfb-izq">
+          <div class="vfa">
+            <div class="vfa-arriba">
               <section class="bm-bloque dpb-banda vf">
                 <h3 class="ta-col-titulo"><i class="ti ti-user" aria-hidden="true"></i> Cliente</h3>
                 <div class="dpb-g vfb-g1">
@@ -163,9 +163,80 @@
                   <label class="campo"><span>Dirección</span><input name="direccion" value="${esc(v.direccion || '')}" maxlength="300" ${dis}></label>
                   <label class="campo"><span>Dirección de envío</span><input name="direccion_envio" value="${esc(v.direccion_envio || '')}" maxlength="300" ${dis}></label>
                   <label class="campo"><span>Correo</span><input name="correo" value="${esc(v.correo || '')}" maxlength="120" ${dis}></label>
+                  <label class="campo"><span>NIT externo</span><input name="nit_externo" value="${esc(v.nit_externo || '')}" maxlength="40" ${dis}></label>
                 </div>
                 <datalist id="vf-clientes">${clientes.filter((c) => c.estado === 'ACTIVO').map((c) => `<option value="${c.codigo}">${esc(c.nombre)}${c.tipo_documento !== 'CF' ? ` · ${esc(c.documento)}` : ''}</option>`).join('')}</datalist>
               </section>
+              <section class="vfb-card vfb-resumen vfa-resumen">
+                <div><span>Subtotal</span><b data-calc="subtotal">${fmt.monto(total - iva)}</b></div>
+                <div><span>IVA</span><b data-calc="iva">${fmt.monto(iva)}</b></div>
+                ${retIva || v.agente_retenedor ? `<div><span>Retención IVA</span><b data-calc="retiva2">${fmt.monto(retIva)}</b></div>` : ''}
+                ${Number(v.monto_retencion_isr || 0) ? `<div><span>Retención ISR</span><b>${fmt.monto(v.monto_retencion_isr)}</b></div>` : ''}
+                <div class="vfb-total"><span>Total</span><b data-calc="total">${esc(sim(v.moneda_id))} ${fmt.monto(total)}</b></div>
+                <div><span>Valor MI</span><b data-calc="mi">${fmt.monto(total / tc)}</b></div>
+                <div><span>Pagado</span><b data-calc="pagado">${fmt.monto(pagado)}</b></div>
+                <div class="vf-saldo"><span>Saldo</span><b data-calc="saldo">${fmt.monto(saldo)}</b></div>
+              </section>
+            </div>
+            <div class="vfa-cards vf">
+              <section class="vfb-card">
+                <h3 class="ta-col-titulo"><i class="ti ti-certificate" aria-hidden="true"></i> Documento FEL</h3>
+                <div class="vfb-g">
+                  <label class="campo vfb-c2"><span>Tipo de factura</span><select name="tipo_factura" ${dis}>${TIPOS_FACTURA.map((t) => `<option ${v.tipo_factura === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Tipo DTE</span><select name="tipo_dte" ${dis}>${TIPOS_DTE.map(([k, t]) => `<option value="${k}" ${v.tipo_dte === k ? 'selected' : ''} title="${t}">${k}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
+                  <label class="campo vfb-c2"><span>No. DTE</span><input name="numero_dte" value="${esc(v.numero_dte || '')}" maxlength="20" ${dis}></label>
+                  <label class="campo vfb-c2"><span>No. de autorización</span><input name="autorizacion" value="${esc(v.autorizacion || '')}" maxlength="60" placeholder="Lo asigna COFIDI al certificar" ${dis}></label>
+                  <label class="campo vfb-c2"><span>Tipo de documento</span><input name="tipo_documento" value="${esc(v.tipo_documento || '')}" maxlength="80" placeholder="Ej. Factura cambiaria · genéricos" ${dis}></label>
+                  <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((x) => `<option value="${x.id}" ${v.moneda_id === x.id ? 'selected' : ''}>${esc(x.nombre)}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
+                </div>
+              </section>
+              <section class="vfb-card">
+                <h3 class="ta-col-titulo"><i class="ti ti-briefcase" aria-hidden="true"></i> Venta y crédito</h3>
+                <div class="vfb-g">
+                  <label class="campo vfb-c2"><span>Vendedor</span><select name="vendedor_id" ${dis}>${opt(vendedores, v.vendedor_id)}</select></label>
+                  <label class="campo vfb-c2"><span>Tipo de precio</span><select name="tipo_precio_id" ${dis}>${opt(precios, v.tipo_precio_id)}</select></label>
+                  <label class="campo vfb-c2"><span>Bodega</span><select name="bodega_id" ${dis}>${opt(bodegas, v.bodega_id)}</select></label>
+                  <label class="campo"><span>Pago</span><select name="forma_pago" ${dis}>${['CONTADO', 'CRÉDITO'].map((x) => `<option ${v.forma_pago === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Días</span><input type="number" min="0" max="365" name="dias_credito" value="${esc(String(v.dias_credito ?? 0))}" ${dis || (v.forma_pago === 'CONTADO' ? 'disabled' : '')}></label>
+                  <label class="campo"><span>Cobro</span><input type="date" name="fecha_cobro" value="${esc(v.fecha_cobro || '')}" ${dis}></label>
+                  <label class="campo"><span>Contraseña</span><input name="contrasena" value="${esc(v.contrasena || '')}" maxlength="40" ${dis}></label>
+                  <label class="campo"><span>Entrega</span><select name="modo_entrega" ${dis}>${ENTREGAS.map((x) => `<option ${v.modo_entrega === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                  <label class="pc-check vf-chk"><input type="checkbox" name="unificar_productos" ${v.unificar_productos ? 'checked' : ''} ${dis}> Unificar</label>
+                </div>
+              </section>
+              <section class="vfb-card">
+                <h3 class="ta-col-titulo"><i class="ti ti-receipt-tax" aria-hidden="true"></i> Impuestos y cobro</h3>
+                <div class="vf-checks">
+                  <label class="pc-check"><input type="checkbox" name="exento_iva" ${v.exento_iva ? 'checked' : ''} ${dis}> Exento de IVA</label>
+                  <label class="pc-check"><input type="checkbox" name="agente_retenedor" ${v.agente_retenedor ? 'checked' : ''} ${dis}> Agente retenedor</label>
+                  <label class="pc-check"><input type="checkbox" name="retencion_isr" ${v.retencion_isr ? 'checked' : ''} ${dis}> Retención ISR</label>
+                </div>
+                <div class="vfb-g">
+                  <label class="campo"><span>% ret. IVA</span><input type="number" step="0.01" min="0" max="100" name="pct_retencion_iva" value="${esc(String(v.pct_retencion_iva ?? 0))}" ${dis || (v.agente_retenedor ? '' : 'disabled')}></label>
+                  <label class="campo"><span>Retenido</span><input value="${fmt.monto(retIva)}" disabled data-calc="retiva"></label>
+                  <label class="campo"><span>Ret. ISR</span><input type="number" step="0.01" min="0" name="monto_retencion_isr" value="${esc(String(v.monto_retencion_isr ?? 0))}" ${dis || (v.retencion_isr ? '' : 'disabled')}></label>
+                  <label class="campo"><span>Clasif.</span><select name="clasificacion" ${dis}>${CLASIFICACIONES.map((x) => `<option ${v.clasificacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                  <label class="campo vfb-c2"><span>Cuenta x cobrar</span><select name="cuenta_por_cobrar" ${dis}>${['C X C', 'CONTADO'].map((x) => `<option ${v.cuenta_por_cobrar === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                  <label class="campo vfb-c2"><span>Incoterm</span><select name="incoterm" ${dis}><option value="">—</option>${INCOTERMS.map((x) => `<option ${v.incoterm === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+                </div>
+              </section>
+              <section class="vfb-card">
+                <h3 class="ta-col-titulo"><i class="ti ti-pill" aria-hidden="true"></i> Producto y línea</h3>
+                <div class="vfb-g">
+                  <label class="campo vfb-c2"><span>Lab. fab.</span><input name="lab_fab" value="${esc(v.lab_fab || '')}" maxlength="120" ${dis}></label>
+                  <label class="pc-check vf-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> Genérico</label>
+                  <div class="vf-lado vfa-lado">${pestana === 'DETALLE' && l ? `
+                <small>Línea ${lineaSel + 1}</small>
+                <label class="campo"><span>Unidad</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
+                <label class="campo"><span>Lote</span><input data-lado="lote" value="${esc(l.lote || '')}" maxlength="40" ${dis}></label>
+                <label class="campo"><span>Registro sanitario</span><input data-lado="registro_sanitario" value="${esc(l.registro_sanitario || '')}" maxlength="60" ${dis}></label>
+                <label class="campo"><span>Vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
+                <label class="campo"><span>Fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>` : ''}</div>
+                </div>
+              </section>
+            </div>
           <section class="bm-pestanas">
             <div class="bm-tabs-barra">
               <div class="rp-pestanas" role="tablist">${PESTANAS.map(([k, t, i]) => `<button type="button" role="tab" data-pestana="${k}" class="${pestana === k ? 'activa' : ''}" aria-selected="${pestana === k}"><i class="ti ${i}" aria-hidden="true"></i> ${t}${k === 'DETALLE' ? ` <b>${lineas.length}</b>` : k === 'PAGOS' && pagos.length ? ` <b>${pagos.length}</b>` : ''}</button>`).join('')}</div>
@@ -209,77 +280,6 @@
                 <span class="rx-par"><button type="button" class="boton secundario-sm" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button></span></div>
             </div>
           </section>
-            </div>
-            <aside class="vfb-lado vf">
-              <section class="vfb-card vfb-resumen">
-                <div><span>Subtotal (sin IVA)</span><b data-calc="subtotal">${fmt.monto(total - iva)}</b></div>
-                <div><span>IVA</span><b data-calc="iva">${fmt.monto(iva)}</b></div>
-                ${retIva || v.agente_retenedor ? `<div><span>Retención IVA</span><b data-calc="retiva2">${fmt.monto(retIva)}</b></div>` : ''}
-                ${Number(v.monto_retencion_isr || 0) ? `<div><span>Retención ISR</span><b>${fmt.monto(v.monto_retencion_isr)}</b></div>` : ''}
-                <div class="vfb-total"><span>Total</span><b data-calc="total">${esc(sim(v.moneda_id))} ${fmt.monto(total)}</b></div>
-                <div><span>Valor MI</span><b data-calc="mi">${fmt.monto(total / tc)}</b></div>
-                <div><span>Pagado</span><b data-calc="pagado">${fmt.monto(pagado)}</b></div>
-                <div class="vf-saldo"><span>Saldo</span><b data-calc="saldo">${fmt.monto(saldo)}</b></div>
-              </section>
-              <section class="vfb-card">
-                <h3 class="ta-col-titulo"><i class="ti ti-certificate" aria-hidden="true"></i> Documento FEL</h3>
-                <div class="vfb-g">
-                  <label class="campo vfb-c2"><span>Tipo de factura</span><select name="tipo_factura" ${dis}>${TIPOS_FACTURA.map((t) => `<option ${v.tipo_factura === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-                  <label class="campo"><span>Tipo DTE</span><select name="tipo_dte" ${dis}>${TIPOS_DTE.map(([k, t]) => `<option value="${k}" ${v.tipo_dte === k ? 'selected' : ''} title="${t}">${k}</option>`).join('')}</select></label>
-                  <label class="campo"><span>Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
-                  <label class="campo vfb-c2"><span>No. DTE</span><input name="numero_dte" value="${esc(v.numero_dte || '')}" maxlength="20" ${dis}></label>
-                  <label class="campo vfb-c3"><span>No. de autorización</span><input name="autorizacion" value="${esc(v.autorizacion || '')}" maxlength="60" placeholder="Lo asigna COFIDI al certificar" ${dis}></label>
-                  <label class="campo vfb-c3"><span>Tipo de documento</span><input name="tipo_documento" value="${esc(v.tipo_documento || '')}" maxlength="80" placeholder="Ej. Factura cambiaria · genéricos" ${dis}></label>
-                  <label class="campo vfb-c2"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((x) => `<option value="${x.id}" ${v.moneda_id === x.id ? 'selected' : ''}>${esc(x.nombre)}</option>`).join('')}</select></label>
-                  <label class="campo"><span>Cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
-                </div>
-              </section>
-              <section class="vfb-card">
-                <h3 class="ta-col-titulo"><i class="ti ti-briefcase" aria-hidden="true"></i> Venta y crédito</h3>
-                <div class="vfb-g">
-                  <label class="campo vfb-c3"><span>Vendedor</span><select name="vendedor_id" ${dis}>${opt(vendedores, v.vendedor_id)}</select></label>
-                  <label class="campo vfb-c3"><span>Tipo de precio</span><select name="tipo_precio_id" ${dis}>${opt(precios, v.tipo_precio_id)}</select></label>
-                  <label class="campo vfb-c3"><span>Bodega</span><select name="bodega_id" ${dis}>${opt(bodegas, v.bodega_id)}</select></label>
-                  <label class="campo vfb-c2"><span>Forma de pago</span><select name="forma_pago" ${dis}>${['CONTADO', 'CRÉDITO'].map((x) => `<option ${v.forma_pago === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                  <label class="campo"><span>Días</span><input type="number" min="0" max="365" name="dias_credito" value="${esc(String(v.dias_credito ?? 0))}" ${dis || (v.forma_pago === 'CONTADO' ? 'disabled' : '')}></label>
-                  <label class="campo vfb-c2"><span>Fecha de cobro</span><input type="date" name="fecha_cobro" value="${esc(v.fecha_cobro || '')}" ${dis}></label>
-                  <label class="campo"><span>Contraseña</span><input name="contrasena" value="${esc(v.contrasena || '')}" maxlength="40" ${dis}></label>
-                  <label class="campo vfb-c2"><span>Entrega</span><select name="modo_entrega" ${dis}>${ENTREGAS.map((x) => `<option ${v.modo_entrega === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                  <label class="pc-check vf-chk"><input type="checkbox" name="unificar_productos" ${v.unificar_productos ? 'checked' : ''} ${dis}> Unificar</label>
-                </div>
-              </section>
-              <section class="vfb-card">
-                <h3 class="ta-col-titulo"><i class="ti ti-receipt-tax" aria-hidden="true"></i> Impuestos y cobro</h3>
-                <div class="vf-checks">
-                  <label class="pc-check"><input type="checkbox" name="exento_iva" ${v.exento_iva ? 'checked' : ''} ${dis}> Exento de IVA</label>
-                  <label class="pc-check"><input type="checkbox" name="agente_retenedor" ${v.agente_retenedor ? 'checked' : ''} ${dis}> Agente retenedor</label>
-                  <label class="pc-check"><input type="checkbox" name="retencion_isr" ${v.retencion_isr ? 'checked' : ''} ${dis}> Retención ISR</label>
-                </div>
-                <div class="vfb-g">
-                  <label class="campo"><span>% ret. IVA</span><input type="number" step="0.01" min="0" max="100" name="pct_retencion_iva" value="${esc(String(v.pct_retencion_iva ?? 0))}" ${dis || (v.agente_retenedor ? '' : 'disabled')}></label>
-                  <label class="campo"><span>Retenido IVA</span><input value="${fmt.monto(retIva)}" disabled data-calc="retiva"></label>
-                  <label class="campo"><span>Ret. ISR</span><input type="number" step="0.01" min="0" name="monto_retencion_isr" value="${esc(String(v.monto_retencion_isr ?? 0))}" ${dis || (v.retencion_isr ? '' : 'disabled')}></label>
-                  <label class="campo"><span>Clasificación</span><select name="clasificacion" ${dis}>${CLASIFICACIONES.map((x) => `<option ${v.clasificacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                  <label class="campo"><span>Cuenta x cobrar</span><select name="cuenta_por_cobrar" ${dis}>${['C X C', 'CONTADO'].map((x) => `<option ${v.cuenta_por_cobrar === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                  <label class="campo"><span>Incoterm</span><select name="incoterm" ${dis}><option value="">—</option>${INCOTERMS.map((x) => `<option ${v.incoterm === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                </div>
-              </section>
-              <section class="vfb-card">
-                <h3 class="ta-col-titulo"><i class="ti ti-dots" aria-hidden="true"></i> Otros datos</h3>
-                <div class="vfb-g">
-                  <label class="campo vfb-c3"><span>NIT externo</span><input name="nit_externo" value="${esc(v.nit_externo || '')}" maxlength="40" ${dis}></label>
-                  <label class="campo vfb-c2"><span>Lab. fab.</span><input name="lab_fab" value="${esc(v.lab_fab || '')}" maxlength="120" ${dis}></label>
-                  <label class="pc-check vf-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> Genérico</label>
-                </div>
-              </section>
-              ${pestana === 'DETALLE' ? `<section class="vfb-card vf-lado">${l ? `
-                <small>Línea ${lineaSel + 1}${l.descripcion ? ` · ${esc(l.descripcion)}` : ''}</small>
-                <label class="campo"><span>Unidad de medida</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
-                <label class="campo"><span>Lote</span><input data-lado="lote" value="${esc(l.lote || '')}" maxlength="40" ${dis}></label>
-                <label class="campo"><span>Registro sanitario</span><input data-lado="registro_sanitario" value="${esc(l.registro_sanitario || '')}" maxlength="60" ${dis}></label>
-                <label class="campo"><span>Fecha de vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
-                <label class="campo"><span>Fecha de fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>` : '<small>Elige una línea para ver su lote y fechas.</small>'}</section>` : ''}
-            </aside>
           </div>
         </form>`;
       cuadre();
@@ -507,12 +507,12 @@
       ctx.pDet.querySelectorAll('tr[data-linea]').forEach((x) => x.classList.toggle('actual', x === tr));
       const lado = ctx.pDet.querySelector('.vf-lado');
       const l = lineas[lineaSel]; const dis = editable() ? '' : 'disabled';
-      if (lado && l) lado.innerHTML = `<small>Línea ${lineaSel + 1}${l.descripcion ? ` · ${esc(l.descripcion)}` : ''}</small>
-        <label class="campo"><span>Unidad de medida</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
+      if (lado && l) lado.innerHTML = `<small>Línea ${lineaSel + 1}</small>
+        <label class="campo"><span>Unidad</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
         <label class="campo"><span>Lote</span><input data-lado="lote" value="${esc(l.lote || '')}" maxlength="40" ${dis}></label>
         <label class="campo"><span>Registro sanitario</span><input data-lado="registro_sanitario" value="${esc(l.registro_sanitario || '')}" maxlength="60" ${dis}></label>
-        <label class="campo"><span>Fecha de vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
-        <label class="campo"><span>Fecha de fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>`;
+        <label class="campo"><span>Vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
+        <label class="campo"><span>Fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>`;
     });
     cont.addEventListener('click', async (e) => {
       const tab = e.target.closest('[data-pestana]');
