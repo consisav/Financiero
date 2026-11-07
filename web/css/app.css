@@ -4591,3 +4591,43 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
   .dpa-g3 { grid-template-columns: minmax(80px, .6fr) minmax(180px, 1.8fr) minmax(160px, 1.5fr) minmax(120px, .8fr); }
   .dpa .campo input, .dpa .campo select { padding: 6px 8px; font-size: 13px; }
 }
+
+/* ===== Depósitos · ingreso (opción B): franja de control, banda «Depósito» con el valor y banda «Cliente y descripción» ===== */
+.dpb { display: flex; flex-direction: column; gap: 8px; }
+.dpb-control { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; padding: 6px 14px; border-radius: 12px; background: var(--fondo); border: 1px solid var(--borde); }
+.dpb-control > span { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; font-size: 13px; }
+.dpb-control small { font-size: 11.5px; color: var(--tenue); }
+.dpb-control b { font-weight: 700; }
+.dpb-control em { font-style: normal; font-size: 11px; color: var(--tenue); }
+.dpb-control .dpb-pend { color: #a3610b; }
+.dpb-control .dpb-ok { color: #1f7a45; }
+.dpb-adjunto { margin-left: auto; }
+.dpb-adjunto > * { margin: 0 !important; padding: 3px 10px !important; min-height: 0 !important; background: none !important; border: 0 !important; }
+.dpb-adjunto small, .dpb-adjunto p { display: none; }
+.dpb .bm-bloque { grid-column: auto !important; margin: 0; padding: 9px 14px 11px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.dpb .ta-col-titulo { margin: 0; display: flex; align-items: center; gap: 6px; }
+.dpb-deposito { flex-direction: row !important; align-items: stretch; gap: 14px !important; }
+.dpb-campos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.dpb-g { display: grid; gap: 8px 12px; align-items: end; }
+.dpb-g1 { grid-template-columns: minmax(150px, 1fr) minmax(240px, 2fr) minmax(120px, .9fr) minmax(140px, 1fr) minmax(130px, 1fr) minmax(80px, .55fr); }
+.dpb-g2 { grid-template-columns: minmax(90px, .6fr) minmax(200px, 1.7fr) minmax(170px, 1.3fr) minmax(220px, 1.8fr) minmax(150px, 1fr); }
+.dpb .campo { gap: 3px; font-size: 12px; min-width: 0; }
+.dpb .campo input, .dpb .campo select { padding: 7px 10px; font-size: 13.5px; width: 100%; }
+.dpb-banco { display: flex; align-items: center; gap: 10px; padding: 5px 10px; border-radius: 10px; background: var(--acento-fondo); min-width: 0; height: 100%; }
+.dpb-banco small { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); }
+.dpb-banco b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dpb-banco > div { min-width: 0; }
+.dpb-cta select { font-weight: 700; color: var(--acento); }
+.dpb-valor { flex: 0 0 230px; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 8px 14px; border-radius: 12px; background: color-mix(in srgb, #23955a 14%, var(--panel)); border: 1px solid color-mix(in srgb, #23955a 30%, transparent); }
+.dpb-valor .campo span { color: #1f7a45; font-weight: 700; text-align: right; }
+.dpb-valor input { text-align: right; font-size: 17px !important; font-weight: 800; font-variant-numeric: tabular-nums; }
+.dpb-valor > b { align-self: flex-end; font-size: 22px; color: #1f7a45; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dpb-checks { display: flex; gap: 22px; font-size: 13px; }
+.dpb.consulta .campo input, .dpb.consulta .campo select { background: var(--fondo); }
+@media (max-width: 1750px) {
+  .dpb-g1 { grid-template-columns: minmax(130px, .9fr) minmax(200px, 1.8fr) minmax(100px, .8fr) minmax(130px, 1fr) minmax(110px, .9fr) minmax(64px, .5fr); }
+  .dpb-g2 { grid-template-columns: minmax(80px, .55fr) minmax(170px, 1.6fr) minmax(150px, 1.3fr) minmax(180px, 1.7fr) minmax(130px, 1fr); }
+  .dpb-valor { flex-basis: 200px; }
+  .dpb .campo input, .dpb .campo select { padding: 6px 8px; font-size: 13px; }
+  .dpb-control { gap: 16px; }
+}
