@@ -311,9 +311,29 @@
     }
     if (elegida && empresas.some((x) => String(x.id) === elegida && x.id === perfil.localidad_id)) return false;
     const rolDe = (r) => ((roles.length ? roles : rolesCache).find((x) => x.id === r) || {}).nombre || r;
+    // Logo de cada empresa: el de la localidad o, si no tiene, el de su organización (como en el encabezado).
+    const logos = new Map();
+    try {
+      const desde = sb.__fromOriginal || sb.from.bind(sb);
+      const url = (ruta) => ruta ? sb.storage.from('organizaciones').getPublicUrl(ruta).data.publicUrl : null;
+      const [ls, os] = await Promise.all([
+        desde('localidades').select('id, logo_ruta').in('id', empresas.map((x) => x.id)),
+        desde('organizaciones').select('id, logo_ruta').in('id', [...new Set(empresas.map((x) => x.organizacion_id).filter(Boolean))])
+      ]);
+      const deOrg = new Map((os.data || []).map((o) => [o.id, url(o.logo_ruta)]));
+      const deLoc = new Map((ls.data || []).map((l) => [l.id, url(l.logo_ruta)]));
+      empresas.forEach((x) => logos.set(x.id, { loc: deLoc.get(x.id), org: deOrg.get(x.organizacion_id) }));
+    } catch (e) { /* sin logos: se muestran el código y el nombre */ }
+    const icono = '<i class="ti ti-building" aria-hidden="true"></i>';
+    const logoDe = (x) => { const g = logos.get(x.id) || {}; const src = g.loc || g.org; return src ? `<img src="${esc(src)}" alt="Logo de ${esc(x.nombre_comercial)}" data-org="${esc(g.org || '')}">` : icono; };
     const caja = document.querySelector('[data-empresas]');
     caja.innerHTML = empresas.map((x) => `<button type="button" class="emp-opcion ${x.id === perfil.localidad_id ? 'ultima' : ''}" data-empresa="${x.id}">
-        <span class="emp-cod">${esc(x.codigo)}</span><span class="emp-nom"><b>${esc(x.nombre_comercial)}</b><small>${esc(rolDe(x.rol_id))}${x.id === perfil.localidad_id ? ' · última usada' : ''}</small></span><i class="ti ti-chevron-right" aria-hidden="true"></i></button>`).join('');
+        <span class="emp-cod">${esc(x.codigo)}</span><span class="emp-logo">${logoDe(x)}</span><span class="emp-nom"><b>${esc(x.nombre_comercial)}</b><small>${esc(rolDe(x.rol_id))}${x.id === perfil.localidad_id ? ' · última usada' : ''}</small></span><i class="ti ti-chevron-right" aria-hidden="true"></i></button>`).join('');
+    // Si el logo de la localidad no carga se prueba el de la organización; si tampoco, el ícono.
+    caja.querySelectorAll('.emp-logo img').forEach((img) => img.addEventListener('error', () => {
+      if (img.dataset.org && img.src !== img.dataset.org) { img.src = img.dataset.org; return; }
+      img.outerHTML = icono;
+    }));
     caja.onclick = (e) => { const b = e.target.closest('[data-empresa]'); if (b) { caja.querySelectorAll('button').forEach((x) => { x.disabled = true; }); activar(Number(b.dataset.empresa)); } };
     mostrarAcceso('empresa');
     return true;
