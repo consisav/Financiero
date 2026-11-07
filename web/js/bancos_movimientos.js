@@ -223,31 +223,30 @@
           <h2>${esc(cfg.titulo)} <small>${docs.length}</small></h2>
           <div class="ta-totales pc-resumen"><span class="ta-total"><b>Q ${fmt.monto(activos.reduce((s, d) => s + Number(d.valor_ml), 0))}</b> en el período</span><span class="ta-total sin"><b>${activos.filter((d) => !d.partida_id).length}</b> sin partida</span></div>
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar folio, documento, tercero…" value="${esc(buscar)}" aria-label="Buscar documentos"></label>
+          <div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="lista-pdf" title="Reporte de la lista en PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Resumido o detallado</small></span></button><button type="button" class="boton cqc-excel" data-accion="lista-excel" title="Reporte de la lista en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Resumido o detallado</small></span></button></div>
           ${ctx.admin && ctx.sel.loc && cuentas.length ? `<button type="button" class="boton primario-sm" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>` : ''}
         </header>
         <div class="ta-tabla">
-          <table>
-            <thead><tr><th>Folio</th><th>Fecha</th><th>Cuenta bancaria</th><th>${esc(cfg.etiquetaNumero)}</th><th>${esc(cfg.cheque ? cfg.etiquetaPor : cfg.etiquetaTercero)}</th><th class="num">Valor</th><th class="num">Valor Q</th><th>Tipo operación</th><th>Estado</th><th>Partida</th><th>Conciliado</th><th><span class="oculto">Acciones</span></th></tr></thead>
+          <table class="bmc-tabla"><colgroup><col class="w-folio"><col class="w-fecha"><col class="w-cta"><col><col class="w-valor"><col class="w-estado"><col class="w-acc"></colgroup>
+            <thead><tr><th>Folio · ${esc(cfg.etiquetaNumero.replace('Número de ', '').replace('número de ', ''))}</th><th>Fecha</th><th>Cuenta bancaria</th><th>${esc(cfg.cheque ? cfg.etiquetaPor : cfg.etiquetaTercero)} · descripción</th><th class="num">Valor</th><th>Estado</th><th aria-label="Acciones"></th></tr></thead>
             <tbody>
               ${filas.map((d) => {
                 const abierto = ctx.admin && d.estado === 'ACTIVO';
+                const cb = cuentaBancaria(d.cuenta_bancaria_id);
+                const quien = (cfg.cheque ? d.deposito_por : '') || d.tercero_nombre || (d.clientes_varios ? 'CLIENTES VARIOS' : '') || '';
+                const otra = d.moneda_id !== ctx.monedaBase()?.id;
                 return `<tr class="${actual && actual.id === d.id ? 'actual' : ''} ${d.estado === 'ANULADO' ? 'pc-anulada' : ''}" data-doc="${d.id}" tabindex="0">
-                  <td class="fuerte">${d.folio}</td>
+                  <td><b>${d.folio}</b><small>${esc(d.numero_documento || '—')}</small></td>
                   <td>${esc(fmt.fechaDia(d.fecha))}</td>
-                  <td>${esc(ctx.nombreCuentaBancaria(cuentaBancaria(d.cuenta_bancaria_id)))}</td>
-                  <td>${esc(d.numero_documento || '')}</td>
-                  <td>${esc((cfg.cheque ? d.deposito_por : '') || d.tercero_nombre || '')}</td>
-                  <td class="num">${esc(ctx.moneda(d.moneda_id)?.simbolo || '')} ${fmt.monto(d.valor)}</td>
-                  <td class="num">${fmt.monto(d.valor_ml)}</td>
-                  <td>${esc(d.tipo_operacion || '')}</td>
-                  <td>${d.estado === 'ANULADO' ? '<span class="pc-marca anulada">Anulado</span>' : '<span class="pc-marca aprobada">Activo</span>'}</td>
-                  <td>${d.partida_id ? `<span class="pc-tipo">${esc(nombrePartida(d.partida_id))}</span>` : '<span class="tk-tenue">—</span>'}</td>
-                  <td>${d.conciliado ? '<i class="ti ti-square-check marca-si" aria-label="Sí"></i>' : '<i class="ti ti-square marca-no" aria-label="No"></i>'}</td>
-                  <td class="tk-acciones">
-                    <button type="button" class="tk-accion-btn" data-modificar="${d.id}"><i class="ti ${abierto ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i> ${abierto ? 'Modificar' : 'Ver'}</button>
-                    <button type="button" class="tk-accion-btn peligro" data-eliminar="${d.id}" ${ctx.superAdmin && !d.partida_id && !cfg.cheque ? '' : 'disabled'} title="${cfg.cheque ? 'Un cheque no se elimina: anúlalo' : !ctx.superAdmin ? 'Solo el Super Administrador' : d.partida_id ? 'Ya generó su partida: anúlalo' : 'Eliminar'}"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>
+                  <td title="${esc(ctx.nombreCuentaBancaria(cb))}"><b class="bmc-n">${esc(cb?.numero || '')}</b><small>${esc(ctx.banco(cb?.banco_id)?.siglas || ctx.banco(cb?.banco_id)?.nombre || '')}${cb && ctx.moneda(cb.moneda_id)?.iso !== 'GTQ' ? ` · ${esc(ctx.moneda(cb.moneda_id)?.simbolo || '')}` : ''}</small></td>
+                  <td title="${esc(quien)}${d.descripcion ? ` · ${esc(d.descripcion)}` : ''}"><b>${esc(quien || '—')}</b><small>${esc([d.tipo_operacion, d.descripcion].filter(Boolean).join(' · '))}</small></td>
+                  <td class="num"><b>${esc(ctx.moneda(d.moneda_id)?.simbolo || '')} ${fmt.monto(d.valor)}</b>${otra ? `<small>Q ${fmt.monto(d.valor_ml)}</small>` : ''}</td>
+                  <td class="bmc-estado">${d.estado === 'ANULADO' ? '<span class="pc-marca anulada">Anulado</span>' : '<span class="pc-marca aprobada">Activo</span>'}${d.conciliado ? ' <span class="pc-marca definitiva" title="Conciliado">Concil.</span>' : ''}<small>${d.partida_id ? `Partida ${esc(nombrePartida(d.partida_id))}` : d.origen_anterior ? 'Sistema anterior' : 'Sin partida'}</small></td>
+                  <td class="tk-acciones bmc-acc">
+                    <button type="button" class="icono-boton bmc-btn" data-modificar="${d.id}" title="${abierto ? 'Modificar' : 'Ver'}" aria-label="${abierto ? 'Modificar' : 'Ver'} el documento ${d.folio}"><i class="ti ${abierto ? 'ti-pencil' : 'ti-eye'}" aria-hidden="true"></i></button>
+                    <button type="button" class="icono-boton bmc-btn peligro" data-eliminar="${d.id}" ${ctx.superAdmin && !d.partida_id && !cfg.cheque ? '' : 'disabled'} title="${cfg.cheque ? 'Un cheque no se elimina: anúlalo' : !ctx.superAdmin ? 'Solo el Super Administrador' : d.partida_id ? 'Ya generó su partida: anúlalo' : 'Eliminar'}" aria-label="Eliminar el documento ${d.folio}"><i class="ti ti-trash" aria-hidden="true"></i></button>
                   </td></tr>`;
-              }).join('') || `<tr><td colspan="12" class="tk-vacio"><i class="ti ${cfg.icono}" aria-hidden="true"></i>${!cuentas.length ? 'La localidad no tiene cuentas bancarias: créalas en Bancos · Cuentas bancarias.' : docs.length ? 'Ningún documento coincide con la búsqueda.' : rango ? `No hay ${esc(cfg.plural)} entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> ${esc(cfg.plural)}, del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton primario-sm" data-ver-todos>Ver todos</button>` : 'No hay documentos en ese rango de fechas.'}</td></tr>`}
+              }).join('') || `<tr><td colspan="7" class="tk-vacio"><i class="ti ${cfg.icono}" aria-hidden="true"></i>${!cuentas.length ? 'La localidad no tiene cuentas bancarias: créalas en Bancos · Cuentas bancarias.' : docs.length ? 'Ningún documento coincide con la búsqueda.' : rango ? `No hay ${esc(cfg.plural)} entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> ${esc(cfg.plural)}, del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))}. <button type="button" class="boton primario-sm" data-ver-todos>Ver todos</button>` : 'No hay documentos en ese rango de fechas.'}</td></tr>`}
             </tbody>
           </table>
         </div>`;
@@ -829,7 +828,83 @@
         totalizar();
       }
     });
+    // ---------- Reportes de la lista (PDF y Excel) con los parámetros del encabezado ----------
+    // Resumido: los documentos de la lista. Detallado: cada documento con su detalle contable.
+    const parametrosLista = () => {
+      const l = ctx.localidad(ctx.sel.loc);
+      const cb = cuentaBancaria(Number(f.cuenta));
+      return [`Empresa: ${l ? `${l.codigo} · ${l.nombre_comercial}` : '—'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Cuenta: ${cb ? ctx.nombreCuentaBancaria(cb) : 'Todas'}`,
+        `Estado: ${f.estado || 'Todos'}`, ...(buscar.trim() ? [`Búsqueda: ${buscar.trim()}`] : [])];
+    };
+    const filasLista = () => { const q = buscar.trim().toLowerCase(); return docs.filter((d) => !q || [d.folio, d.numero_documento, d.tercero_nombre, d.descripcion, d.tipo_operacion].some((v) => String(v || '').toLowerCase().includes(q))); };
+    function dialogoReporte(formato) {
+      const filas = filasLista();
+      if (!filas.length) return window.FIN.aviso(`No hay ${cfg.plural} con estos parámetros`);
+      let formRef = null;
+      window.UI.formulario({
+        titulo: `${cfg.titulo} · ${formato === 'PDF' ? 'Imprimir en PDF' : 'Generar Excel'}`,
+        campos: [],
+        alPreparar: (form) => {
+          formRef = form;
+          form.querySelector('.modal-cuerpo').innerHTML = `
+            <fieldset class="cqc-tipos"><legend>Tipo de reporte</legend>
+              <label class="cqc-tipo"><input type="radio" name="tipo" value="RESUMIDO" checked><i class="ti ti-list" aria-hidden="true"></i><span><b>Resumido</b><small>El listado de los ${filas.length.toLocaleString('es-GT')} documentos.</small></span></label>
+              <label class="cqc-tipo"><input type="radio" name="tipo" value="DETALLADO"><i class="ti ti-list-details" aria-hidden="true"></i><span><b>Detallado</b><small>Cada documento con su detalle contable.</small></span></label>
+            </fieldset>
+            <p class="bu-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> Con los parámetros del encabezado: ${esc(parametrosLista().join(' · '))}.</p>`;
+          form.querySelector('[type=submit]').innerHTML = formato === 'PDF' ? '<i class="ti ti-file-type-pdf" aria-hidden="true"></i> Imprimir en PDF' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel';
+        },
+        alGuardar: async () => { await reporteLista(formato, formRef?.elements.tipo?.value || 'RESUMIDO', filas); }
+      });
+    }
+    async function reporteLista(formato, tipo, filas) {
+      const lineasDe = new Map();
+      if (tipo === 'DETALLADO') {
+        const ids = filas.map((d) => d.id);
+        for (let i = 0; i < ids.length; i += 200) {
+          const { data } = await sb.from('movimiento_lineas').select('movimiento_id, linea, debe, haber, cuentas(codigo, nombre)').in('movimiento_id', ids.slice(i, i + 200)).order('linea');
+          (data || []).forEach((l) => { if (!lineasDe.has(l.movimiento_id)) lineasDe.set(l.movimiento_id, []); lineasDe.get(l.movimiento_id).push(l); });
+        }
+      }
+      const quien = (d) => (cfg.cheque ? d.deposito_por : '') || d.tercero_nombre || (d.clientes_varios ? 'CLIENTES VARIOS' : '') || '';
+      const estado = (d) => `${d.estado === 'ANULADO' ? 'Anulado' : 'Activo'}${d.conciliado ? ' · conciliado' : ''}`;
+      const activos = filas.filter((d) => d.estado === 'ACTIVO');
+      const total = activos.reduce((s, d) => s + Number(d.valor_ml || 0), 0);
+      if (formato === 'PDF') {
+        window.BANCOS.imprimir(cfg.titulo, `
+          <h1>${esc(cfg.titulo)} · ${tipo === 'DETALLADO' ? 'detallado' : 'resumido'}</h1>
+          <h2>${esc(parametrosLista().join(' · '))} · generado el ${esc(fmt.fechaHora(new Date()))} por ${esc((ctx.yo.usuario || '').toUpperCase())}</h2>
+          <table><thead><tr><th>Folio</th><th>${esc(cfg.etiquetaNumero)}</th><th>Fecha</th><th>Cuenta</th><th>${esc(cfg.cheque ? cfg.etiquetaPor : cfg.etiquetaTercero)}</th><th>Descripción</th><th class="n">Valor</th><th class="n">Valor Q</th><th>Estado</th><th>Partida</th></tr></thead><tbody>
+          ${filas.map((d) => `<tr class="${tipo === 'DETALLADO' ? 's' : ''}"><td>${d.folio}</td><td>${esc(d.numero_documento || '')}</td><td>${esc(fmt.fechaDia(d.fecha))}</td><td>${esc(cuentaBancaria(d.cuenta_bancaria_id)?.numero || '')}</td><td>${esc(quien(d))}</td><td>${esc(d.descripcion || '')}</td><td class="n">${esc(ctx.moneda(d.moneda_id)?.simbolo || '')} ${fmt.monto(d.valor)}</td><td class="n">${fmt.monto(d.valor_ml)}</td><td>${estado(d)}</td><td>${esc(nombrePartida(d.partida_id))}</td></tr>
+            ${tipo === 'DETALLADO' ? (lineasDe.get(d.id) || []).map((l) => `<tr><td></td><td colspan="2">${esc(l.cuentas?.codigo || '')}</td><td colspan="3">${esc(l.cuentas?.nombre || '')}</td><td class="n">${Number(l.debe) ? fmt.monto(l.debe) : ''}</td><td class="n">${Number(l.haber) ? fmt.monto(l.haber) : ''}</td><td colspan="2"></td></tr>`).join('') || '<tr><td></td><td colspan="9">Sin detalle contable</td></tr>' : ''}`).join('')}
+          </tbody><tfoot><tr><td colspan="7">Total de ${activos.length} documentos activos (de ${filas.length})</td><td class="n">${fmt.monto(total)}</td><td colspan="2"></td></tr></tfoot></table>`);
+        return;
+      }
+      if (!window.REPORTE_XLSX) return;
+      const datos = [];
+      filas.forEach((d) => {
+        datos.push({ resaltar: tipo === 'DETALLADO' ? 1 : 0, tenue: d.estado === 'ANULADO', valores: [d.folio, d.numero_documento || '', fmt.fechaDia(d.fecha), cuentaBancaria(d.cuenta_bancaria_id)?.numero || '', quien(d), d.descripcion || '',
+          ctx.moneda(d.moneda_id)?.simbolo || '', Number(d.valor || 0), Number(d.valor_ml || 0), estado(d), nombrePartida(d.partida_id) || (d.origen_anterior ? 'Sist. anterior' : '')] });
+        if (tipo === 'DETALLADO') {
+          const ls = lineasDe.get(d.id) || [];
+          ls.forEach((l) => datos.push({ tipo: 'nota', valores: ['', l.linea, l.cuentas?.codigo || '', '', l.cuentas?.nombre || '', '', '', Number(l.debe) || null, Number(l.haber) || null] }));
+          if (!ls.length) datos.push({ tipo: 'nota', valores: ['', '', '', '', 'Sin detalle contable'] });
+        }
+      });
+      datos.push({ tipo: 'total', valores: ['', '', '', '', `Total de ${activos.length} documentos activos (de ${filas.length})`, '', '', null, total, '', ''] });
+      window.REPORTE_XLSX.generar({
+        titulo: `${cfg.titulo} · ${tipo === 'DETALLADO' ? 'Detallado' : 'Resumido'}`, parametros: parametrosLista(), orgId: ctx.sel.org, locId: ctx.sel.loc,
+        hoja: cfg.titulo.replace(/[\\/?*[\]:]/g, '-').slice(0, 28), archivo: `${cfg.plural}_${tipo.toLowerCase()}_${f.desde}_${f.hasta}`, autofiltro: tipo !== 'DETALLADO',
+        columnas: [{ titulo: 'Folio', ancho: 8 }, { titulo: cfg.etiquetaNumero, ancho: 16 }, { titulo: 'Fecha', ancho: 11 }, { titulo: 'Cuenta bancaria', ancho: 16 }, { titulo: cfg.cheque ? cfg.etiquetaPor : cfg.etiquetaTercero, ancho: 34 },
+          { titulo: 'Descripción', ancho: 44 }, { titulo: 'Moneda', ancho: 8 }, { titulo: tipo === 'DETALLADO' ? 'Valor · Debe' : 'Valor', ancho: 15, tipo: 'monto' }, { titulo: tipo === 'DETALLADO' ? 'Valor Q · Haber' : 'Valor Q', ancho: 15, tipo: 'monto' },
+          { titulo: 'Estado', ancho: 16 }, { titulo: 'Partida', ancho: 12 }],
+        filas: datos
+      });
+    }
+
     cont.addEventListener('click', async (e) => {
+      const rl = e.target.closest('[data-accion=lista-pdf], [data-accion=lista-excel]');
+      if (rl) return dialogoReporte(rl.dataset.accion === 'lista-pdf' ? 'PDF' : 'EXCEL');
       const tab = e.target.closest('[data-pestana]');
       if (tab) {
         pestana = tab.dataset.pestana;

@@ -4156,3 +4156,71 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .dsp-fila1 { grid-template-columns: minmax(280px, 1.4fr) repeat(4, minmax(0, 1fr)) auto; }
 .dsp-kpi { padding: 8px 10px; }
 .dsp-cuentas th { white-space: normal; line-height: 1.2; vertical-align: bottom; }
+
+/* Ver u ocultar la clave en los campos de contraseña. */
+.clave-caja { position: relative; display: block; }
+.clave-caja input { width: 100%; padding-right: 42px !important; box-sizing: border-box; }
+.clave-ojo { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #6b7891; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; }
+.clave-ojo:hover, .clave-ojo:focus-visible { background: rgba(31, 58, 95, .08); color: #1f3a5f; outline: none; }
+
+/* Depósitos, notas de crédito y débito y emisión de cheques: lista compacta sin desplazamiento horizontal y
+   reportes de la lista (PDF y Excel) en el encabezado. */
+.bmc-tabla { table-layout: fixed; width: 100%; min-width: 0 !important; }
+.bmc-tabla col.w-folio { width: 120px; } .bmc-tabla col.w-fecha { width: 96px; } .bmc-tabla col.w-cta { width: 150px; }
+.bmc-tabla col.w-valor { width: 140px; } .bmc-tabla col.w-estado { width: 170px; } .bmc-tabla col.w-acc { width: 80px; }
+.bmc-tabla td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; padding-top: 4px; padding-bottom: 4px; }
+.bmc-tabla th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bmc-tabla td b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.bmc-tabla td small { display: block; font-size: 11px; color: var(--tenue); overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.bmc-tabla .bmc-n { font-weight: 500; }
+.bmc-estado .pc-marca { font-size: 10.5px; }
+.bmc-acc { text-align: right; white-space: nowrap; }
+.bmc-btn { width: 30px; height: 30px; }
+.bmc-btn.peligro:not([disabled]):hover { color: #b23a32; border-color: #e4574c; }
+.bk-movimientos .ta-tabla:has(.bmc-tabla) { overflow-x: hidden; }
+.bmc-reportes { display: flex; gap: 8px; align-items: center; }
+.bmc-reportes .boton { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 4px 12px 4px 10px; border-radius: 10px; }
+.bmc-reportes .boton .ti { font-size: 20px; }
+.bmc-reportes .boton span { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.bmc-reportes .boton b { font-size: 12.5px; } .bmc-reportes .boton small { font-size: 10px; opacity: .85; font-weight: 500; }
+/* Detalle compacto de depósitos, notas y cheques: título y acciones en una sola fila, cabecera más baja y
+   botones de reporte pequeños en la barra de la lista. */
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
+.bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo { display: flex; flex-wrap: nowrap; align-items: center; padding-bottom: 4px; margin-bottom: 4px; }
+.bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto { min-width: 0; }
+.bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 11px; }
+.bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto h2 { font-size: 16px; white-space: nowrap; }
+.bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-acciones { margin-left: auto; flex-wrap: nowrap; gap: 6px; }
+.bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-acciones .boton { padding: 5px 10px; font-size: 13px; white-space: nowrap; }
+.bk-movimientos:not(.bk-conc) .bm-cabecera { gap: 6px; }
+.bk-movimientos:not(.bk-conc) .bm-cabecera .campo { gap: 2px; }
+.bk-movimientos:not(.bk-conc) .bm-cabecera .campo span { font-size: 11px; }
+.bk-movimientos:not(.bk-conc) .bm-cabecera input, .bk-movimientos:not(.bk-conc) .bm-cabecera select { padding-top: 4px; padding-bottom: 4px; }
+.bk-movimientos:not(.bk-conc) .bm-bloque { padding: 6px 10px; }
+.bk-movimientos:not(.bk-conc) .bm-bloque .ta-col-titulo { margin-bottom: 2px; }
+.bk-movimientos:not(.bk-conc) .bm-ml b { font-size: 18px; white-space: nowrap; }
+.bk-movimientos:not(.bk-conc) .bm-comprobante { padding: 4px 8px; min-height: 0; }
+.bk-movimientos:not(.bk-conc) .bm-pestanas { margin-top: 4px; }
+.tg-cab .bmc-reportes .boton { height: 34px; padding: 3px 10px 3px 8px; }
+.tg-cab .bmc-reportes .boton .ti { font-size: 17px; }
+.tg-cab .bmc-reportes .boton small { display: none; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bk-detalle { display: flex; flex-direction: column; overflow: hidden; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bk-detalle > .bm-form { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bm-form > .bm-pestanas { flex: 1 1 0; min-height: 90px; display: flex; flex-direction: column; overflow: hidden; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bm-form > .bm-pestanas > .bm-panel:not([hidden]) { flex: 1 1 0; min-height: 0; overflow: auto; }
+.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .bm-form > .bm-pestanas .pc-lineas { max-height: none; }
+.bk-movimientos:not(.bk-conc) .bm-cabecera .campo > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bk-movimientos:not(.bk-conc) .bm-cabecera .ta-col-titulo { font-size: 11.5px; }
+/* Datos y tercero en dos filas cada uno: la descripción ocupa la fila completa y «Clientes varios» va junto
+   a quien depositó u ordenó. */
+.bk-movimientos:not(.bk-conc) .bm-datos .bm-campos > .campo:has([name=descripcion]) { grid-column: 1 / -1; }
+.bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }
+.bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-c3 { grid-column: span 3; }
+.bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-check { grid-column: span 1; padding-bottom: 6px; white-space: nowrap; font-size: 12px; }
+.bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-radios { grid-column: 1 / -1; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
+.bk-movimientos:not(.bk-conc) .tg-cab h2 { white-space: nowrap; }
+.bk-movimientos:not(.bk-conc) .tg-cab .ta-total { white-space: nowrap; }
+.bk-movimientos:not(.bk-conc) .bm-control .bm-comprobante { padding: 3px 8px; }
+.bk-movimientos:not(.bk-conc) .bm-control .bm-sin-imagen { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 11.5px; }
+.bmc-tabla td.bmc-acc { overflow: visible; text-overflow: clip; display: table-cell; } .bmc-tabla td.bmc-acc .bmc-btn { display: inline-flex; vertical-align: middle; } .bmc-tabla col.w-acc { width: 84px; }

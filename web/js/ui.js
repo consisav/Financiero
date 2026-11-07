@@ -226,3 +226,37 @@
 
   window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar };
 })();
+
+// Ver u ocultar la clave: cada campo de contraseña (inicio de sesión, crear cuenta, cambiar clave y los
+// formularios) recibe un botón con un ojo. Sirve también cuando el navegador llenó la clave guardada en el equipo.
+(function () {
+  const preparar = (input) => {
+    if (input.dataset.ojo) return;
+    input.dataset.ojo = '1';
+    const caja = document.createElement('span');
+    caja.className = 'clave-caja';
+    input.parentNode.insertBefore(caja, input);
+    caja.appendChild(input);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'clave-ojo';
+    b.setAttribute('aria-label', 'Mostrar la contraseña');
+    b.title = 'Mostrar la contraseña';
+    b.innerHTML = '<i class="ti ti-eye" aria-hidden="true"></i>';
+    b.addEventListener('click', () => {
+      const ver = input.type === 'password';
+      input.type = ver ? 'text' : 'password';
+      b.innerHTML = `<i class="ti ${ver ? 'ti-eye-off' : 'ti-eye'}" aria-hidden="true"></i>`;
+      b.setAttribute('aria-label', ver ? 'Ocultar la contraseña' : 'Mostrar la contraseña');
+      b.title = ver ? 'Ocultar la contraseña' : 'Mostrar la contraseña';
+      input.focus();
+    });
+    caja.appendChild(b);
+  };
+  const buscar = (raiz) => raiz.querySelectorAll && raiz.querySelectorAll('input[type=password]:not([data-ojo])').forEach(preparar);
+  const iniciar = () => {
+    buscar(document);
+    new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) { if (n.matches?.('input[type=password]')) preparar(n); buscar(n); } }))).observe(document.body, { childList: true, subtree: true });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
+})();
