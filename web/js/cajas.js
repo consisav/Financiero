@@ -270,64 +270,57 @@
       const pendLiq = fmt.redondear(gastos - fondos);           // > 0: gastos sobre el fondo, por reembolsar
       const reembolso = p ? Number(p.liquidacion_valor || 0) : 0;
       const pendReem = p && p.estado === 'ABIERTA' ? Math.max(0, pendLiq - reembolso) : 0;
+      const anticipos = p ? fmt.redondear(Number(p.anticipo_valor) + Number(p.adelanto_valor)) : 0;
+      const disponible = p ? fmt.redondear(Number(p.valor || 0) - gastos) : 0;
+      const pop = (clase, icono, texto, cuerpo) => `<details class="cd-pop ${clase}"><summary class="boton secundario-sm"><i class="ti ${icono}" aria-hidden="true"></i> ${texto} <i class="ti ti-chevron-down cd-flecha" aria-hidden="true"></i></summary><div class="cd-pop-cuerpo">${cuerpo}</div></details>`;
+      const listaSub = `<table class="cd-lista-sub"><thead><tr><th class="num">Subcaja</th><th>Mes</th><th class="num">Docs</th><th class="num">Gastos</th><th></th></tr></thead>
+        <tbody>${periodos.map((x) => `<tr data-periodo="${x.id}" class="${p && p.id === x.id ? 'actual' : ''}" tabindex="0"><td class="num fuerte">${x.numero}</td><td>${MESES[x.mes - 1]} ${x.anio}</td><td class="num">${x.documentos ?? ''}</td><td class="num">${fmt.monto(x.liquidado)}</td>
+          <td>${x.estado === 'LIQUIDADA' ? '<i class="ti ti-lock cc-si" title="Liquidada" aria-label="Liquidada"></i>' : '<i class="ti ti-circle-dot cd-abierta" title="Abierta" aria-label="Abierta"></i>'}</td></tr>`).join('')
+          || '<tr><td colspan="5" class="tk-vacio">La caja no tiene subcajas.</td></tr>'}</tbody></table>`;
+      const selector = `<details class="cd-pop cd-selector"><summary><i class="ti ti-folders" aria-hidden="true"></i><span class="cd-sel-n">${p ? `Subcaja ${p.numero}` : 'Sin subcajas'}</span>${p ? `<small>${esc(mesTxt(p).toLowerCase())}</small>` : ''}<i class="ti ti-chevron-down cd-flecha" aria-hidden="true"></i></summary>
+        <div class="cd-pop-cuerpo cd-pop-lista"><header><b>Subcajas de la caja</b> <small>${periodos.length}</small></header><div class="cd-lista-cont">${listaSub}</div></div></details>`;
+      const nueva = ctx.admin ? pop('cd-pop-nueva', 'ti-folder-plus', 'Nueva subcaja', `
+        <div class="cd-campos">
+          <label class="campo"><span>Año</span><input type="number" name="anio" min="1900" max="2999" value="${anio}"></label>
+          <label class="campo cd-c2"><span>Mes</span><select name="mes">${MESES.map((m, i) => `<option value="${i + 1}" ${mes === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
+          <label class="campo cd-c2"><span>Cta bancaria del anticipo</span><select name="cta_anticipo"><option value="">—</option>${cuentas.filter((x) => x.activo).map((x) => `<option value="${x.id}" ${x.id === caja.cuenta_bancaria_id ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(x))}</option>`).join('')}</select></label>
+          <label class="campo"><span>No. cheque</span><input name="cheque_anticipo" maxlength="20"></label>
+        </div>
+        <div class="cd-botones">
+          <button type="button" class="boton primario-sm" data-accion="crear-subcaja"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear subcaja</button>
+          <button type="button" class="boton secundario-sm" data-accion="cambiar-mes" ${abierta() ? '' : 'disabled'} title="Pasa la subcaja elegida al año y mes indicados"><i class="ti ti-calendar-repeat" aria-hidden="true"></i> Cambiar mes de la subcaja ${p ? p.numero : ''}</button>
+        </div>`) : '';
+      const reportes = p ? pop('cd-pop-rep', 'ti-report', 'Reportes', `
+        <div class="cd-formato" role="radiogroup" aria-label="Formato">${[['PDF', 'ti-file-type-pdf', 'PDF'], ['EXCEL', 'ti-file-spreadsheet', 'Excel']].map(([k, ic, t]) => `<button type="button" role="radio" aria-checked="${formatoRep === k}" class="${formatoRep === k ? 'activo' : ''} cd-f-${k}" data-formato="${k}"><i class="ti ${ic}" aria-hidden="true"></i> ${t}</button>`).join('')}</div>
+        <label class="campo"><span>Documentos</span><select name="tipo_reporte">${REPORTES.map(([k, t]) => `<option value="${k}" ${tipoReporte === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+        <div class="cd-rep-botones">
+          <button type="button" class="boton secundario-sm" data-reporte="RESUMEN">Resumen contable</button>
+          <button type="button" class="boton secundario-sm" data-reporte="CONTABLE">Detalle contable</button>
+          <button type="button" class="boton secundario-sm" data-reporte="MOVIMIENTOS">Detalle movimientos</button>
+          <button type="button" class="boton secundario-sm" data-reporte="DETALLE">Detalle documentos</button>
+        </div>`) : '';
+      const kpi = (t, v, s, clase = '') => `<div class="${clase}"><span>${t}</span><b>${esc(sim)} ${fmt.monto(v)}</b><small>${s}</small></div>`;
       ctx.pMae.innerHTML = `
-        <div class="cd-arriba">
-          <section class="bm-bloque cd-subcajas">
-            <h3 class="ta-col-titulo"><i class="ti ti-folders" aria-hidden="true"></i> Subcajas <small>${periodos.length}</small></h3>
-            <div class="pc-lineas"><table>
-              <thead><tr><th class="num">Subcaja</th><th class="num">Año</th><th>Mes</th><th class="num">Gastos</th><th></th></tr></thead>
-              <tbody>${periodos.map((x) => `<tr data-periodo="${x.id}" class="${p && p.id === x.id ? 'actual' : ''}" tabindex="0"><td class="num fuerte">${x.numero}</td><td class="num">${x.anio}</td><td>${MESES[x.mes - 1]}</td><td class="num">${fmt.monto(x.liquidado)}</td>
-                <td>${x.estado === 'LIQUIDADA' ? '<i class="ti ti-lock cc-si" title="Liquidada" aria-label="Liquidada"></i>' : '<i class="ti ti-circle-dot cd-abierta" title="Abierta" aria-label="Abierta"></i>'}</td></tr>`).join('')
-                || `<tr><td colspan="5" class="tk-vacio">${ctx.admin ? 'Sin subcajas: créala a la derecha.' : 'La caja no tiene subcajas.'}</td></tr>`}</tbody>
-            </table></div>
-          </section>
-          <section class="bm-bloque cd-crear">
-            <h3 class="ta-col-titulo"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear nueva subcaja</h3>
-            ${ctx.admin ? `<div class="cd-campos">
-              <label class="campo"><span>Año</span><input type="number" name="anio" min="1900" max="2999" value="${anio}"></label>
-              <label class="campo cd-c2"><span>Mes</span><select name="mes">${MESES.map((m, i) => `<option value="${i + 1}" ${mes === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
-              <label class="campo cd-c2"><span>Cta bancaria del anticipo</span><select name="cta_anticipo"><option value="">—</option>${cuentas.filter((x) => x.activo).map((x) => `<option value="${x.id}" ${x.id === caja.cuenta_bancaria_id ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(x))}</option>`).join('')}</select></label>
-              <label class="campo"><span>No. cheque</span><input name="cheque_anticipo" maxlength="20"></label>
-            </div>
-            <div class="cd-botones">
-              <button type="button" class="boton primario-sm" data-accion="crear-subcaja"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear subcaja</button>
-              <button type="button" class="boton secundario-sm" data-accion="cambiar-mes" ${abierta() ? '' : 'disabled'} title="Pasa la subcaja elegida al año y mes indicados"><i class="ti ti-calendar-repeat" aria-hidden="true"></i> Cambiar mes</button>
-            </div>
-            <div class="cd-campos cd-fecha">
-              <label class="campo cd-c2"><span>Fecha de presentación</span><input type="date" name="fecha_presentacion_sub" value="${esc(p?.fecha_presentacion || '')}" ${puede() ? '' : 'disabled'}></label>
-              <button type="button" class="boton secundario-sm" data-accion="actualizar-fecha" ${puede() ? '' : 'disabled'} title="Aplica la fecha a la subcaja y a sus documentos"><i class="ti ti-calendar-check" aria-hidden="true"></i> Actualizar fecha</button>
-            </div>` : '<p class="tk-tenue">Solo un administrador crea subcajas.</p>'}
-            <p class="cd-creacion">Creación <b>${p ? esc(p.usuario || '') : '—'}</b> ${p ? esc(fmt.fechaHora(p.creado_en)) : ''}</p>
-          </section>
-          <section class="bm-bloque cd-resumen">
-            <h3 class="ta-col-titulo"><i class="ti ti-calculator" aria-hidden="true"></i> Resumen de la liquidación ${p ? `<small>subcaja ${p.numero} · ${esc(mesTxt(p).toLowerCase())}</small>` : ''}</h3>
-            <div class="cd-kpis">
-              <div><span>Total liquidado</span><b>${esc(sim)} ${fmt.monto(fondos)}</b><small>Anticipo + adelanto</small></div>
-              <div><span>Total gastos</span><b>${esc(sim)} ${fmt.monto(gastos)}</b><small>${documentos.length} documentos</small></div>
-              <div class="${pendLiq > 0 ? 'alerta' : pendLiq < 0 ? 'ok' : ''}"><span>${pendLiq < 0 ? 'Disponible' : 'Pendiente de liquidar'}</span><b>${esc(sim)} ${fmt.monto(Math.abs(pendLiq))}</b><small>${pendLiq < 0 ? 'Fondo sin usar' : 'Gastos sobre el fondo'}</small></div>
-              <div class="${pendReem > 0 ? 'alerta' : ''}"><span>Pendiente de reembolso</span><b>${esc(sim)} ${fmt.monto(pendReem)}</b><small>Por reintegrar</small></div>
-              <div><span>Total reembolso</span><b>${esc(sim)} ${fmt.monto(reembolso)}</b><small>${p?.liquidacion_nota ? `Nota ${esc(p.liquidacion_nota)}` : p?.liquidacion_cheque ? `Cheque ${esc(p.liquidacion_cheque)}` : 'Nota o cheque de liquidación'}</small></div>
-            </div>
-          </section>
-          <section class="bm-bloque cd-reportes">
-            <h3 class="ta-col-titulo"><i class="ti ti-report" aria-hidden="true"></i> Reportes</h3>
-            ${p ? `<div class="cd-formato" role="radiogroup" aria-label="Formato">${[['PDF', 'ti-file-type-pdf', 'PDF'], ['EXCEL', 'ti-file-spreadsheet', 'Excel']].map(([k, ic, t]) => `<button type="button" role="radio" aria-checked="${formatoRep === k}" class="${formatoRep === k ? 'activo' : ''} cd-f-${k}" data-formato="${k}"><i class="ti ${ic}" aria-hidden="true"></i> ${t}</button>`).join('')}</div>
-            <label class="campo"><span>Documentos</span><select name="tipo_reporte">${REPORTES.map(([k, t]) => `<option value="${k}" ${tipoReporte === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-            <div class="cd-rep-botones">
-              <button type="button" class="boton secundario-sm" data-reporte="RESUMEN">Resumen contable</button>
-              <button type="button" class="boton secundario-sm" data-reporte="CONTABLE">Detalle contable</button>
-              <button type="button" class="boton secundario-sm" data-reporte="MOVIMIENTOS">Detalle movimientos</button>
-              <button type="button" class="boton secundario-sm" data-reporte="DETALLE">Detalle documentos</button>
-            </div>` : ctx.vacio('Elige una subcaja.', 'ti-report')}
-          </section>
-          <section class="bm-bloque cd-estado">
-            <h3 class="ta-col-titulo"><i class="ti ti-lock" aria-hidden="true"></i> Estado de la subcaja</h3>
-            ${p ? `<span class="cd-estado-v ${p.estado === 'ABIERTA' ? 'vigente' : 'cerrada'}">${p.estado === 'ABIERTA' ? 'VIGENTE' : 'LIQUIDADA'}</span>
-              <dl><div><dt>Fecha de cierre</dt><dd>${p.liquidado_en ? esc(fmt.fechaHora(p.liquidado_en)) : '—'}</dd></div><div><dt>Cerró</dt><dd>${esc(p.liquidado_por || '—')}</dd></div><div><dt>Póliza</dt><dd>${p.partida_id ? `<span class="pc-tipo">${esc(partidaTxt())}</span>` : '—'}</dd></div></dl>
-              ${ctx.admin && abierta() ? '<button type="button" class="boton primario-sm cc-liquidar" data-accion="liquidar"><i class="ti ti-file-check" aria-hidden="true"></i> Cerrar y liquidar</button>' : ''}
-              ${ctx.admin && p.estado === 'LIQUIDADA' ? '<button type="button" class="boton secundario-sm" data-accion="reabrir"><i class="ti ti-lock-open" aria-hidden="true"></i> Reabrir</button>' : ''}` : ctx.vacio('Sin subcaja.', 'ti-lock')}
-          </section>
-        </div>`;
+        <div class="cd-barra">
+          ${selector}
+          ${p ? `<span class="cd-estado-v ${p.estado === 'ABIERTA' ? 'vigente' : 'cerrada'}" title="${esc(`Creó ${p.usuario || '—'} ${fmt.fechaHora(p.creado_en)}${p.estado === 'LIQUIDADA' ? ` · cerró ${p.liquidado_por || '—'} ${fmt.fechaHora(p.liquidado_en)}` : ''}`)}">${p.estado === 'ABIERTA' ? 'VIGENTE' : 'LIQUIDADA'}</span>` : ''}
+          ${p ? `<span class="cd-meta">Creó <b>${esc(p.usuario || '—')}</b> ${esc(fmt.fechaHora(p.creado_en))}${p.estado === 'LIQUIDADA' ? ` · cerró <b>${esc(p.liquidado_por || '—')}</b> ${esc(fmt.fechaHora(p.liquidado_en))}${p.partida_id ? ` · póliza <span class="pc-tipo">${esc(partidaTxt())}</span>` : ''}` : ''}</span>` : ''}
+          ${nueva}
+          ${p && ctx.admin ? `<span class="cd-fecha-pres"><label><span>F. presentación</span><input type="date" name="fecha_presentacion_sub" value="${esc(p.fecha_presentacion || '')}" ${puede() ? '' : 'disabled'}></label>
+            <button type="button" class="icono-boton" data-accion="actualizar-fecha" ${puede() ? '' : 'disabled'} title="Aplica la fecha a la subcaja y a sus documentos" aria-label="Actualizar la fecha de presentación"><i class="ti ti-calendar-check" aria-hidden="true"></i></button></span>` : ''}
+          <span class="cd-esp"></span>
+          ${reportes}
+          ${p && ctx.admin && abierta() ? '<button type="button" class="boton primario-sm cc-liquidar" data-accion="liquidar"><i class="ti ti-file-check" aria-hidden="true"></i> Cerrar y liquidar</button>' : ''}
+          ${p && ctx.admin && p.estado === 'LIQUIDADA' ? '<button type="button" class="boton secundario-sm" data-accion="reabrir"><i class="ti ti-lock-open" aria-hidden="true"></i> Reabrir</button>' : ''}
+        </div>
+        ${p ? `<div class="cd-franja">
+          ${kpi('Fondo', p.valor, `Tasa ${fmt.monto(p.tipo_cambio)}`)}
+          ${kpi('Gastos', gastos, `${documentos.length} documentos`, 'cd-k-gasto')}
+          ${kpi(disponible < 0 ? 'Excedido' : 'Disponible', Math.abs(disponible), disponible < 0 ? 'Gastos sobre el fondo' : 'Fondo sin usar', disponible < 0 ? 'alerta' : 'ok')}
+          ${kpi('Anticipos', anticipos, 'Anticipo + adelanto')}
+          ${kpi('Por reembolsar', pendReem, 'Por reintegrar', pendReem > 0 ? 'alerta' : '')}
+          ${kpi('Reembolsado', reembolso, p.liquidacion_nota ? `Nota ${esc(p.liquidacion_nota)}` : p.liquidacion_cheque ? `Cheque ${esc(p.liquidacion_cheque)}` : 'Nota o cheque')}
+        </div>` : `<div class="cd-franja-vacia">${ctx.admin ? 'La caja no tiene subcajas: créala con «Nueva subcaja».' : 'La caja no tiene subcajas.'}</div>`}`;
     }
     let partidas = new Map();
     const partidaTxt = () => partidas.get(periodo?.partida_id) || `Partida ${periodo?.partida_id}`;
@@ -362,7 +355,7 @@
                 <tbody>${lineas.map((l) => { const k = contable(l.cuenta_id); const cc = centro(l.centro_id); return `<tr><td class="pc-n">${l.linea}</td><td class="fuerte">${esc(k?.codigo || '')}</td><td>${esc(k?.nombre || '')}</td><td>${esc(l.concepto || '')}</td><td>${esc(cc?.codigo || '')}</td><td class="num">${Number(l.debe) ? fmt.monto(l.debe) : ''}</td><td class="num">${Number(l.haber) ? fmt.monto(l.haber) : ''}</td></tr>`; }).join('')
                   || `<tr><td colspan="7" class="tk-vacio">Sin detalle contable${puede() ? ': presiona «Reconstruir detalle contable».' : '.'}</td></tr>`}</tbody>
                 <tfoot><tr><td colspan="5">Totales (Q)</td><td class="num">${fmt.monto(debe)}</td><td class="num">${fmt.monto(haber)}</td></tr></tfoot></table>`
-              : `<table><thead><tr><th class="pc-n">#</th><th>Serie</th><th>Documento</th><th>Tipo</th><th>Fecha</th><th>NIT</th><th>Proveedor</th><th class="num">Valor</th><th class="cc-det" title="Entra al detalle contable">Det. contable</th></tr></thead>
+              : `<table><thead><tr><th class="pc-n">#</th><th>Serie</th><th>Documento</th><th>Tipo</th><th>Fecha</th><th>NIT</th><th>Proveedor</th><th class="num">Valor</th><th class="cc-det" title="Entra al detalle contable">Contable</th></tr></thead>
                 <tbody>${filas.map((d) => `<tr data-doc="${d.id}" class="${doc && doc.id === d.id ? 'actual' : ''}" tabindex="0">
                   <td class="pc-n">${d.linea}</td><td>${esc(d.serie || '')}</td><td class="fuerte">${esc(d.documento)}</td>
                   <td><span class="pc-tipo" title="${esc(d.tipo_documento)}">${esc((TIPOS_DOC.find(([k]) => k === d.tipo_documento) || [])[1] || '')}</span></td>
@@ -424,8 +417,9 @@
       return `
         <form class="tk-form bm-form cc-doc-form" novalidate>
           <header class="cc-doc-cab">
-            <div><small>${d ? `Documento ${d.linea}` : 'Nuevo documento'}</small><h3>${d ? esc(`${(TIPOS_DOC.find(([k]) => k === d.tipo_documento) || [])[1] || ''} ${docTxt(d)}`) : ed ? 'Ingresa la factura o el recibo' : 'Sin documento elegido'}</h3></div>
+            <div><small title="${d && d.modificado_en ? esc(`Modificó ${d.modificado_por_nombre || ''} ${fmt.fechaHora(d.modificado_en)}`) : ''}">${d ? `Documento ${d.linea} · ingresó ${esc(d.usuario || '')} ${esc(fmt.fechaHora(d.creado_en))}` : 'Nuevo documento'}</small><h3>${d ? esc(`${(TIPOS_DOC.find(([k]) => k === d.tipo_documento) || [])[1] || ''} ${docTxt(d)}`) : ed ? 'Ingresa la factura o el recibo' : 'Sin documento elegido'}</h3></div>
             <div class="cc-doc-acc">
+              <label class="pc-check cc-contable" title="El documento entra al detalle contable de la subcaja"><input type="checkbox" name="contable" ${v.contable ? 'checked' : ''} ${dis}> Contable</label>
               ${ed && d ? '<button type="button" class="boton secundario-sm" data-accion="nuevo-doc"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button><button type="button" class="icono-boton rp-peligro" data-accion="quitar-doc" title="Quitar el documento" aria-label="Quitar el documento"><i class="ti ti-trash" aria-hidden="true"></i></button>' : ''}
               ${ed ? `<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${d ? 'Guardar' : 'Agregar'}</button>` : ''}
             </div>
@@ -446,18 +440,18 @@
               <label class="campo cc-total-doc cc-c2"><span>Total factura *</span><input type="number" step="0.01" min="0" name="total" value="${esc(String(v.total ?? ''))}" ${dis}></label>
             </div>
             <fieldset class="cc-fiscal"><legend>Desglose fiscal</legend>
-              <div class="cc-g cc-g4">
+              <div class="cc-g cc-g6">
                 ${num('exento', 'Exento', v.exento)}
                 ${num('inguat', 'INGUAT', v.inguat)}
-                ${num('timbre_prensa', 'Timbre prensa', v.timbre_prensa)}
-                ${num('no_deducible', 'Gastos no deducibles', v.no_deducible)}
-                ${num('galones_super', 'Galones súper', v.galones_super, '', '0.001')}
-                ${num('galones_regular', 'Galones regular', v.galones_regular, '', '0.001')}
-                ${num('galones_diesel', 'Galones diésel', v.galones_diesel, '', '0.001')}
+                ${num('timbre_prensa', 'Timbre', v.timbre_prensa)}
+                ${num('no_deducible', 'No deducible', v.no_deducible)}
+                ${num('galones_super', 'Gal. súper', v.galones_super, '', '0.001')}
+                ${num('galones_regular', 'Gal. regular', v.galones_regular, '', '0.001')}
+                ${num('galones_diesel', 'Gal. diésel', v.galones_diesel, '', '0.001')}
                 <div class="cc-calc"><span>IDP</span><b data-calc="idp">${fmt.monto(c.idp)}</b></div>
                 ${num('porcentaje_iva', '% IVA', v.porcentaje_iva)}
                 <label class="pc-check cc-ret"><input type="checkbox" name="retencion" ${v.retencion ? 'checked' : ''} ${dis}> Retención</label>
-                <label class="campo"><span>Valor retención</span><input type="number" step="0.01" min="0" name="valor_retencion" value="${esc(String(v.valor_retencion ?? 0))}" ${dis || (v.retencion ? '' : 'disabled')}></label>
+                <label class="campo"><span>Valor ret.</span><input type="number" step="0.01" min="0" name="valor_retencion" value="${esc(String(v.valor_retencion ?? 0))}" ${dis || (v.retencion ? '' : 'disabled')}></label>
                 <div class="cc-calc"><span>A pagar</span><b data-calc="pagar">${fmt.monto(c.pagar)}</b></div>
               </div>
               <div class="cc-resumen-fiscal">
@@ -466,14 +460,12 @@
                 <div class="${c.afecto < 0 ? 'cc-mal' : ''}" data-calc-caja="afecto"><span>Afecto</span><b data-calc="afecto">${esc(sim)} ${fmt.monto(c.afecto)}</b></div>
               </div>
             </fieldset>
-            <label class="campo"><span>Justificación</span><textarea name="justificacion" rows="2" maxlength="300" ${dis}>${esc(v.justificacion || '')}</textarea></label>
-            <div class="cc-g cc-g2">
+            <div class="cc-g cd-cuentas">
+              <label class="campo cd-justif"><span>Justificación</span><textarea name="justificacion" rows="1" maxlength="300" ${dis}>${esc(v.justificacion || '')}</textarea></label>
               ${cuentaCampo('cuenta_gasto', 'Cuenta de gasto', v.cuenta_gasto_id, dis)}
-              ${cuentaCampo('cuenta_no_deducible', 'Cuenta no deducibles', v.cuenta_no_deducible_id, dis)}
+              ${cuentaCampo('cuenta_no_deducible', 'Cuenta no deducible', v.cuenta_no_deducible_id, dis)}
               ${centroCampo('centro_costo', 'Centro de costo', v.centro_costo_id, dis)}
-              <label class="pc-check cc-contable"><input type="checkbox" name="contable" ${v.contable ? 'checked' : ''} ${dis}> Entra al detalle contable</label>
             </div>
-            ${d ? `<p class="cc-ingreso"><i class="ti ti-user" aria-hidden="true"></i> Ingresó ${esc(d.usuario || '')} · ${esc(fmt.fechaHora(d.creado_en))}${d.modificado_en ? ` · modificó ${esc(d.modificado_por_nombre || '')} ${esc(fmt.fechaHora(d.modificado_en))}` : ''}</p>` : ''}
           </div>
         </form>`;
     }
