@@ -81,11 +81,12 @@
       if (f) {
         const [l, c, p] = await Promise.all([
           sb.from('factura_venta_lineas').select('*').eq('factura_id', f.id).order('linea'),
-          sb.from('factura_venta_contable').select('*').eq('factura_id', f.id).order('linea'),
+          sb.from('factura_venta_contable').select('*, cuentas(codigo, nombre)').eq('factura_id', f.id).order('linea'),
           sb.from('factura_venta_pagos').select('*').eq('factura_id', f.id).order('fecha')
         ]);
         lineas = (l.data || []).map((x) => ({ ...x, fecha_compromiso: x.fecha_compromiso || '', fecha_vencimiento: x.fecha_vencimiento || '', fecha_fabricacion: x.fecha_fabricacion || '' }));
-        conta = (c.data || []).map((x) => ({ cuenta_id: x.cuenta_id, centro_id: x.centro_id, concepto: x.concepto || '', debe: Number(x.debe), haber: Number(x.haber) }));
+        // La cuenta puede ser de otro catálogo (p. ej. la versión 1 de las facturas migradas): su código y nombre vienen con la línea.
+        conta = (c.data || []).map((x) => ({ cuenta_id: x.cuenta_id, codigo: x.cuentas?.codigo || '', nombre: x.cuentas?.nombre || '', centro_id: x.centro_id, concepto: x.concepto || '', debe: Number(x.debe), haber: Number(x.haber) }));
         pagos = (p.data || []).map((x) => ({ fecha: x.fecha, forma: x.forma, documento: x.documento || '', banco: x.banco || '', valor: Number(x.valor) }));
         const ids = lineas.map((x) => x.id);
         if (ids.length) { const { data } = await sb.from('inventario_movimientos').select('fecha, cantidad, costo_unitario, lote, fecha_vencimiento, bodega_id, producto_id, factura_linea_id').in('factura_linea_id', ids); inventario = data || []; }
@@ -252,7 +253,7 @@
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
               <div class="pc-lineas"><table><thead><tr><th class="pc-n">#</th><th>Cuenta</th><th>Nombre de la cuenta</th><th>Concepto</th><th class="num">Debe</th><th class="num">Haber</th><th>Centro</th><th class="pq-x"></th></tr></thead>
-                <tbody>${conta.map((x, i) => { const k = cuenta(x.cuenta_id); const c = centro(x.centro_id); return `<tr data-conta="${i}"><td class="pc-n">${i + 1}</td><td><input list="vf-cuentas" data-c="cuenta" value="${esc(k?.codigo || x.codigo || '')}" ${dis}></td><td class="cc-nombre">${esc(k?.nombre || '')}</td><td><input data-c="concepto" value="${esc(x.concepto || '')}" maxlength="200" ${dis}></td><td class="num"><input type="number" step="0.01" min="0" data-c="debe" value="${x.debe || ''}" ${dis}></td><td class="num"><input type="number" step="0.01" min="0" data-c="haber" value="${x.haber || ''}" ${dis}></td><td><input list="vf-centros" data-c="centro" value="${esc(c?.codigo || '')}" ${dis}></td><td class="pq-x">${ed ? `<button type="button" class="icono-boton" data-quitar-conta="${i}" aria-label="Quitar la línea ${i + 1}"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="tk-vacio">Sin detalle contable.</td></tr>'}</tbody>
+                <tbody>${conta.map((x, i) => { const k = cuenta(x.cuenta_id); const c = centro(x.centro_id); return `<tr data-conta="${i}"><td class="pc-n">${i + 1}</td><td><input list="vf-cuentas" data-c="cuenta" value="${esc(k?.codigo || x.codigo || '')}" ${dis}></td><td class="cc-nombre">${esc(k?.nombre || x.nombre || '')}</td><td><input data-c="concepto" value="${esc(x.concepto || '')}" maxlength="200" ${dis}></td><td class="num"><input type="number" step="0.01" min="0" data-c="debe" value="${x.debe || ''}" ${dis}></td><td class="num"><input type="number" step="0.01" min="0" data-c="haber" value="${x.haber || ''}" ${dis}></td><td><input list="vf-centros" data-c="centro" value="${esc(c?.codigo || '')}" ${dis}></td><td class="pq-x">${ed ? `<button type="button" class="icono-boton" data-quitar-conta="${i}" aria-label="Quitar la línea ${i + 1}"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="tk-vacio">Sin detalle contable.</td></tr>'}</tbody>
                 <tfoot><tr><td colspan="4">Totales <span data-cuadre></span></td><td class="num" data-calc="debe">${fmt.monto(conta.reduce((t, x) => t + Number(x.debe || 0), 0))}</td><td class="num" data-calc="haber">${fmt.monto(conta.reduce((t, x) => t + Number(x.haber || 0), 0))}</td><td colspan="2"></td></tr></tfoot></table></div>
               <datalist id="vf-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
               <datalist id="vf-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
@@ -338,7 +339,8 @@
       ctx.pDet.querySelectorAll('tr[data-conta]').forEach((tr) => {
         const x = conta[Number(tr.dataset.conta)]; if (!x) return;
         const v = (k) => tr.querySelector(`[data-c=${k}]`).value.trim();
-        const k = cuentaPorCodigo(v('cuenta')); x.cuenta_id = k ? k.id : null; x.codigo = v('cuenta');
+        // Si no cambió el código se conserva la cuenta original aunque sea de otro catálogo.
+        if (!(x.cuenta_id && v('cuenta') === x.codigo && !cuenta(x.cuenta_id))) { const k = cuentaPorCodigo(v('cuenta')); x.cuenta_id = k ? k.id : null; x.nombre = k?.nombre || ''; x.codigo = v('cuenta'); }
         const c = centros.find((y) => y.codigo === v('centro') && y.movimiento); x.centro_id = c ? c.id : null; x.centro_codigo = v('centro');
         x.concepto = v('concepto'); x.debe = Number(v('debe')) || 0; x.haber = Number(v('haber')) || 0;
       });
