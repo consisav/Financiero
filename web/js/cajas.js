@@ -44,10 +44,20 @@
     let pestanaDet = 'DOCUMENTOS';   // Documentos o Liquidación
     let formatoRep = 'PDF';           // PDF o Excel
     let buscar = '';
+    let paginaSub = 0;            // página de la lista de subcajas (5 por página)
+    let paginaFijada = false;     // true cuando el usuario cambió de página
 
     const contable = (id) => contables.find((x) => x.id === id);
     const centro = (id) => centros.find((x) => x.id === id);
-    const porCodigo = (cod) => contables.find((x) => x.codigo === String(cod || '').trim() && x.movimiento);
+    const porCodigo = (cod) => { const c = String(cod || '').trim(); return contables.find((x) => x.codigo === c && x.movimiento && !x.anterior) || contables.find((x) => x.codigo === c && x.anterior); };
+    // Las cajas, documentos y asientos migrados usan cuentas de una versión anterior del catálogo: se cargan para mostrarlas.
+    async function asegurarCuentas(ids) {
+      const faltan = [...new Set(ids.filter((x) => x && !contables.some((k) => k.id === x)))];
+      for (let i = 0; i < faltan.length; i += 150) {
+        const { data } = await sb.from('cuentas').select('id, codigo, nombre, cuenta_mayor_id, vigente').in('id', faltan.slice(i, i + 150));
+        (data || []).forEach((c) => contables.push({ ...c, movimiento: true, anterior: true }));
+      }
+    }
     const centroPorCodigo = (cod) => centros.find((x) => x.codigo === String(cod || '').trim() && x.movimiento);
     const simbolo = (id) => ctx.moneda(id)?.simbolo || 'Q';
     const mesTxt = (p) => p ? `${MESES[p.mes - 1]} ${p.anio}` : '';
@@ -61,8 +71,8 @@
     function pintarFiltros() {
       ctx.titulo = 'Selección de caja a operar';
       ctx.filtros(`<label class="campo"><span>Cajas</span><select name="estado">${[['ACTIVAS', 'Activas'], ['TODAS', 'Todas']].map(([k, t]) => `<option value="${k}" ${f.estado === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`,
-        `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="cajas-pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Cajas a operar</small></span></button>
-         <button type="button" class="boton cqc-excel" data-accion="cajas-excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Cajas a operar</small></span></button>
+        `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="cajas-pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Cajas y subcajas</small></span></button>
+         <button type="button" class="boton cqc-excel" data-accion="cajas-excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Cajas y subcajas</small></span></button>
          ${ctx.admin ? '<button type="button" class="boton secundario-sm" data-accion="nueva-caja" title="Se crea en Cajas · Definición de Cajas"><i class="ti ti-plus" aria-hidden="true"></i> Nueva caja</button>' : ''}
          <button type="button" class="boton primario-sm cc-ir" data-accion="ir-detalle" ${caja ? '' : 'disabled'}>Ir a detalle <i class="ti ti-arrow-right" aria-hidden="true"></i></button></div>`);
     }
@@ -102,6 +112,7 @@
       const { data, error } = await q;
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       cajas = data || [];
+      await asegurarCuentas(cajas.flatMap((c) => [c.cuenta_id, c.cuenta_caja_id, c.cuenta_iva_id, c.cuenta_retencion_id, c.cuenta_anticipo_id]));
       const ids = cajas.map((c) => c.id);
       const { data: ps } = ids.length ? await sb.from('caja_periodos_resumen').select('id, caja_id, numero, anio, mes, estado, liquidado, anticipo_valor, adelanto_valor, disponible, documentos').in('caja_id', ids).order('numero', { ascending: false }) : { data: [] };
       ultimo = new Map();
@@ -142,7 +153,7 @@
     const cuentaCampo = (name, etq, id, dis, clase = '') => { const k = contable(id); return `<label class="campo ${clase}"><span>${etq}</span><input list="cc-cuentas" name="${name}" value="${esc(k ? k.codigo : '')}" placeholder="Código" ${dis}><small class="cc-nombre-cta" data-nombre-de="${name}">${k ? esc(k.nombre) : ''}</small></label>`; };
     const centroCampo = (name, etq, id, dis, clase = '') => { const k = centro(id); return `<label class="campo ${clase}"><span>${etq}</span><input list="cc-centros" name="${name}" value="${esc(k ? k.codigo : '')}" placeholder="Código" ${dis}><small class="cc-nombre-cta" data-nombre-de="${name}">${k ? esc(k.nombre) : ''}</small></label>`; };
     const listas = () => `
-      <datalist id="cc-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
+      <datalist id="cc-cuentas">${contables.filter((x) => x.movimiento && !x.anterior).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
       <datalist id="cc-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>`;
 
     function pintarCaja() {
@@ -241,6 +252,7 @@
         ]);
         documentos = d.data || [];
         lineas = l.data || [];
+        await asegurarCuentas([...documentos.flatMap((x) => [x.cuenta_gasto_id, x.cuenta_no_deducible_id]), ...lineas.map((x) => x.cuenta_id)]);
       }
       doc = documentos.find((x) => x.id === docId) || (abierta() && ctx.admin ? null : documentos[0] || null);
       pintarCabecera();
@@ -270,57 +282,72 @@
       const pendLiq = fmt.redondear(gastos - fondos);           // > 0: gastos sobre el fondo, por reembolsar
       const reembolso = p ? Number(p.liquidacion_valor || 0) : 0;
       const pendReem = p && p.estado === 'ABIERTA' ? Math.max(0, pendLiq - reembolso) : 0;
-      const anticipos = p ? fmt.redondear(Number(p.anticipo_valor) + Number(p.adelanto_valor)) : 0;
-      const disponible = p ? fmt.redondear(Number(p.valor || 0) - gastos) : 0;
-      const pop = (clase, icono, texto, cuerpo) => `<details class="cd-pop ${clase}"><summary class="boton secundario-sm"><i class="ti ${icono}" aria-hidden="true"></i> ${texto} <i class="ti ti-chevron-down cd-flecha" aria-hidden="true"></i></summary><div class="cd-pop-cuerpo">${cuerpo}</div></details>`;
-      const listaSub = `<table class="cd-lista-sub"><thead><tr><th class="num">Subcaja</th><th>Mes</th><th class="num">Docs</th><th class="num">Gastos</th><th></th></tr></thead>
-        <tbody>${periodos.map((x) => `<tr data-periodo="${x.id}" class="${p && p.id === x.id ? 'actual' : ''}" tabindex="0"><td class="num fuerte">${x.numero}</td><td>${MESES[x.mes - 1]} ${x.anio}</td><td class="num">${x.documentos ?? ''}</td><td class="num">${fmt.monto(x.liquidado)}</td>
-          <td>${x.estado === 'LIQUIDADA' ? '<i class="ti ti-lock cc-si" title="Liquidada" aria-label="Liquidada"></i>' : '<i class="ti ti-circle-dot cd-abierta" title="Abierta" aria-label="Abierta"></i>'}</td></tr>`).join('')
-          || '<tr><td colspan="5" class="tk-vacio">La caja no tiene subcajas.</td></tr>'}</tbody></table>`;
-      const selector = `<details class="cd-pop cd-selector"><summary><i class="ti ti-folders" aria-hidden="true"></i><span class="cd-sel-n">${p ? `Subcaja ${p.numero}` : 'Sin subcajas'}</span>${p ? `<small>${esc(mesTxt(p).toLowerCase())}</small>` : ''}<i class="ti ti-chevron-down cd-flecha" aria-hidden="true"></i></summary>
-        <div class="cd-pop-cuerpo cd-pop-lista"><header><b>Subcajas de la caja</b> <small>${periodos.length}</small></header><div class="cd-lista-cont">${listaSub}</div></div></details>`;
-      const nueva = ctx.admin ? pop('cd-pop-nueva', 'ti-folder-plus', 'Nueva subcaja', `
-        <div class="cd-campos">
-          <label class="campo"><span>Año</span><input type="number" name="anio" min="1900" max="2999" value="${anio}"></label>
-          <label class="campo cd-c2"><span>Mes</span><select name="mes">${MESES.map((m, i) => `<option value="${i + 1}" ${mes === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
-          <label class="campo cd-c2"><span>Cta bancaria del anticipo</span><select name="cta_anticipo"><option value="">—</option>${cuentas.filter((x) => x.activo).map((x) => `<option value="${x.id}" ${x.id === caja.cuenta_bancaria_id ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(x))}</option>`).join('')}</select></label>
-          <label class="campo"><span>No. cheque</span><input name="cheque_anticipo" maxlength="20"></label>
-        </div>
-        <div class="cd-botones">
-          <button type="button" class="boton primario-sm" data-accion="crear-subcaja"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear subcaja</button>
-          <button type="button" class="boton secundario-sm" data-accion="cambiar-mes" ${abierta() ? '' : 'disabled'} title="Pasa la subcaja elegida al año y mes indicados"><i class="ti ti-calendar-repeat" aria-hidden="true"></i> Cambiar mes de la subcaja ${p ? p.numero : ''}</button>
-        </div>`) : '';
-      const reportes = p ? pop('cd-pop-rep', 'ti-report', 'Reportes', `
-        <div class="cd-formato" role="radiogroup" aria-label="Formato">${[['PDF', 'ti-file-type-pdf', 'PDF'], ['EXCEL', 'ti-file-spreadsheet', 'Excel']].map(([k, ic, t]) => `<button type="button" role="radio" aria-checked="${formatoRep === k}" class="${formatoRep === k ? 'activo' : ''} cd-f-${k}" data-formato="${k}"><i class="ti ${ic}" aria-hidden="true"></i> ${t}</button>`).join('')}</div>
-        <label class="campo"><span>Documentos</span><select name="tipo_reporte">${REPORTES.map(([k, t]) => `<option value="${k}" ${tipoReporte === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-        <div class="cd-rep-botones">
-          <button type="button" class="boton secundario-sm" data-reporte="RESUMEN">Resumen contable</button>
-          <button type="button" class="boton secundario-sm" data-reporte="CONTABLE">Detalle contable</button>
-          <button type="button" class="boton secundario-sm" data-reporte="MOVIMIENTOS">Detalle movimientos</button>
-          <button type="button" class="boton secundario-sm" data-reporte="DETALLE">Detalle documentos</button>
-        </div>`) : '';
-      const kpi = (t, v, s, clase = '') => `<div class="${clase}"><span>${t}</span><b>${esc(sim)} ${fmt.monto(v)}</b><small>${s}</small></div>`;
+      const porPag = 5;
+      const paginas = Math.max(1, Math.ceil(periodos.length / porPag));
+      if (p && !paginaFijada) { const i = periodos.findIndex((x) => x.id === p.id); if (i >= 0) paginaSub = Math.floor(i / porPag); }
+      paginaFijada = false;
+      paginaSub = Math.min(Math.max(paginaSub, 0), paginas - 1);
+      const vis = periodos.slice(paginaSub * porPag, paginaSub * porPag + porPag);
+      const fila = (t, v, clase = '') => `<div class="cd5-fila ${clase}"><span>${t}</span><b>${esc(sim)} ${fmt.monto(v)}</b></div>`;
+      const dato = (t, v) => `<div class="cd5-dato"><span>${t}</span><b>${v}</b></div>`;
       ctx.pMae.innerHTML = `
-        <div class="cd-barra">
-          ${selector}
-          ${p ? `<span class="cd-estado-v ${p.estado === 'ABIERTA' ? 'vigente' : 'cerrada'}" title="${esc(`Creó ${p.usuario || '—'} ${fmt.fechaHora(p.creado_en)}${p.estado === 'LIQUIDADA' ? ` · cerró ${p.liquidado_por || '—'} ${fmt.fechaHora(p.liquidado_en)}` : ''}`)}">${p.estado === 'ABIERTA' ? 'VIGENTE' : 'LIQUIDADA'}</span>` : ''}
-          ${p ? `<span class="cd-meta">Creó <b>${esc(p.usuario || '—')}</b> ${esc(fmt.fechaHora(p.creado_en))}${p.estado === 'LIQUIDADA' ? ` · cerró <b>${esc(p.liquidado_por || '—')}</b> ${esc(fmt.fechaHora(p.liquidado_en))}${p.partida_id ? ` · póliza <span class="pc-tipo">${esc(partidaTxt())}</span>` : ''}` : ''}</span>` : ''}
-          ${nueva}
-          ${p && ctx.admin ? `<span class="cd-fecha-pres"><label><span>F. presentación</span><input type="date" name="fecha_presentacion_sub" value="${esc(p.fecha_presentacion || '')}" ${puede() ? '' : 'disabled'}></label>
-            <button type="button" class="icono-boton" data-accion="actualizar-fecha" ${puede() ? '' : 'disabled'} title="Aplica la fecha a la subcaja y a sus documentos" aria-label="Actualizar la fecha de presentación"><i class="ti ti-calendar-check" aria-hidden="true"></i></button></span>` : ''}
-          <span class="cd-esp"></span>
-          ${reportes}
-          ${p && ctx.admin && abierta() ? '<button type="button" class="boton primario-sm cc-liquidar" data-accion="liquidar"><i class="ti ti-file-check" aria-hidden="true"></i> Cerrar y liquidar</button>' : ''}
-          ${p && ctx.admin && p.estado === 'LIQUIDADA' ? '<button type="button" class="boton secundario-sm" data-accion="reabrir"><i class="ti ti-lock-open" aria-hidden="true"></i> Reabrir</button>' : ''}
-        </div>
-        ${p ? `<div class="cd-franja">
-          ${kpi('Fondo', p.valor, `Tasa ${fmt.monto(p.tipo_cambio)}`)}
-          ${kpi('Gastos', gastos, `${documentos.length} documentos`, 'cd-k-gasto')}
-          ${kpi(disponible < 0 ? 'Excedido' : 'Disponible', Math.abs(disponible), disponible < 0 ? 'Gastos sobre el fondo' : 'Fondo sin usar', disponible < 0 ? 'alerta' : 'ok')}
-          ${kpi('Anticipos', anticipos, 'Anticipo + adelanto')}
-          ${kpi('Por reembolsar', pendReem, 'Por reintegrar', pendReem > 0 ? 'alerta' : '')}
-          ${kpi('Reembolsado', reembolso, p.liquidacion_nota ? `Nota ${esc(p.liquidacion_nota)}` : p.liquidacion_cheque ? `Cheque ${esc(p.liquidacion_cheque)}` : 'Nota o cheque')}
-        </div>` : `<div class="cd-franja-vacia">${ctx.admin ? 'La caja no tiene subcajas: créala con «Nueva subcaja».' : 'La caja no tiene subcajas.'}</div>`}`;
+        <div class="cd-cinco">
+          <section class="bm-bloque cd5-sub">
+            <h3 class="ta-col-titulo"><i class="ti ti-folders" aria-hidden="true"></i> Subcajas <small>${periodos.length}</small>
+              ${paginas > 1 ? `<span class="cd5-pag"><button type="button" class="icono-boton" data-pag-sub="-1" ${paginaSub ? '' : 'disabled'} aria-label="Subcajas más recientes"><i class="ti ti-chevron-left" aria-hidden="true"></i></button><small>${paginaSub + 1} de ${paginas}</small><button type="button" class="icono-boton" data-pag-sub="1" ${paginaSub < paginas - 1 ? '' : 'disabled'} aria-label="Subcajas anteriores"><i class="ti ti-chevron-right" aria-hidden="true"></i></button></span>` : ''}</h3>
+            <table class="cd5-tabla"><thead><tr><th class="num">Subcaja</th><th class="num">Año</th><th>Mes</th><th class="num">Gastos</th><th></th></tr></thead>
+              <tbody>${vis.map((x) => `<tr data-periodo="${x.id}" class="${p && p.id === x.id ? 'actual' : ''}" tabindex="0"><td class="num fuerte">${x.numero}</td><td class="num">${x.anio}</td><td>${MESES[x.mes - 1]}</td><td class="num">${fmt.monto(x.liquidado)}</td>
+                <td>${x.estado === 'LIQUIDADA' ? '<i class="ti ti-lock cc-si" title="Liquidada" aria-label="Liquidada"></i>' : '<i class="ti ti-circle-dot cd-abierta" title="Abierta" aria-label="Abierta"></i>'}</td></tr>`).join('')
+                || `<tr><td colspan="5" class="tk-vacio">${ctx.admin ? 'Sin subcajas: créala a la derecha.' : 'La caja no tiene subcajas.'}</td></tr>`}</tbody></table>
+          </section>
+          <section class="bm-bloque cd5-crear">
+            <h3 class="ta-col-titulo"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear nueva subcaja</h3>
+            ${ctx.admin ? `<div class="cd5-am">
+              <label class="campo"><span>Año</span><input type="number" name="anio" min="1900" max="2999" value="${anio}"></label>
+              <label class="campo"><span>Mes</span><select name="mes">${MESES.map((m, i) => `<option value="${i + 1}" ${mes === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
+            </div>
+            <div class="cd5-botones">
+              <button type="button" class="boton primario-sm" data-accion="crear-subcaja"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear subcaja</button>
+              <button type="button" class="boton secundario-sm" data-accion="cambiar-mes" ${abierta() ? '' : 'disabled'} title="Pasa la subcaja elegida al año y mes indicados"><i class="ti ti-calendar-repeat" aria-hidden="true"></i> Cambiar mes</button>
+            </div>
+            <div class="cd5-fecha">
+              <label class="campo"><span>F. presentación</span><input type="date" name="fecha_presentacion_sub" value="${esc(p?.fecha_presentacion || '')}" ${puede() ? '' : 'disabled'}></label>
+              <button type="button" class="boton secundario-sm" data-accion="actualizar-fecha" ${puede() ? '' : 'disabled'} title="Aplica la fecha a la subcaja y a sus documentos"><i class="ti ti-calendar-check" aria-hidden="true"></i> Actualizar fecha</button>
+            </div>` : '<p class="tk-tenue">Solo un administrador crea subcajas.</p>'}
+            <p class="cd-creacion">Creación <b>${p ? esc(p.usuario || '') : '—'}</b> ${p ? esc(fmt.fechaHora(p.creado_en)) : ''}</p>
+          </section>
+          <section class="bm-bloque cd5-resumen">
+            <h3 class="ta-col-titulo"><i class="ti ti-calculator" aria-hidden="true"></i> Resumen liquidación ${p ? `<small title="${esc(mesTxt(p).toLowerCase())}">subcaja ${p.numero}</small>` : ''}</h3>
+            <div class="cd5-grupo">
+              ${fila('Total liquidado', fondos)}
+              ${fila('Total gastos', gastos)}
+              ${fila(pendLiq < 0 ? 'Disponible' : 'Pend. liquidar', Math.abs(pendLiq), pendLiq > 0 ? 'alerta' : pendLiq < 0 ? 'ok' : '')}
+            </div>
+            <div class="cd5-grupo">
+              ${fila('Pend. reembolso', pendReem, pendReem > 0 ? 'alerta' : '')}
+              ${fila('Total reembolso', reembolso)}
+            </div>
+          </section>
+          <section class="bm-bloque cd-reportes cd5-rep">
+            <h3 class="ta-col-titulo"><i class="ti ti-report" aria-hidden="true"></i> Reportes</h3>
+            ${p ? `<div class="cd5-rep-cab"><div class="cd-formato" role="radiogroup" aria-label="Formato">${[['PDF', 'ti-file-type-pdf', 'PDF'], ['EXCEL', 'ti-file-spreadsheet', 'Excel']].map(([k, ic, t]) => `<button type="button" role="radio" aria-checked="${formatoRep === k}" class="${formatoRep === k ? 'activo' : ''} cd-f-${k}" data-formato="${k}"><i class="ti ${ic}" aria-hidden="true"></i> ${t}</button>`).join('')}</div>
+              <select name="tipo_reporte" aria-label="Documentos del reporte">${REPORTES.map(([k, t]) => `<option value="${k}" ${tipoReporte === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+            <div class="cd-rep-botones">
+              <button type="button" class="boton secundario-sm" data-reporte="RESUMEN">Resumen contable</button>
+              <button type="button" class="boton secundario-sm" data-reporte="CONTABLE">Detalle contable</button>
+              <button type="button" class="boton secundario-sm" data-reporte="MOVIMIENTOS">Movimientos</button>
+              <button type="button" class="boton secundario-sm" data-reporte="DETALLE">Documentos</button>
+            </div>` : ctx.vacio('Elige una subcaja.', 'ti-report')}
+          </section>
+          <section class="bm-bloque cd5-estado">
+            ${p && ctx.admin && abierta() ? '<button type="button" class="boton primario-sm cc-liquidar" data-accion="liquidar"><i class="ti ti-file-check" aria-hidden="true"></i> Cerrar caja</button>' : ''}
+            ${p && ctx.admin && p.estado === 'LIQUIDADA' ? '<button type="button" class="boton secundario-sm" data-accion="reabrir"><i class="ti ti-lock-open" aria-hidden="true"></i> Reabrir caja</button>' : ''}
+            ${p ? `${dato('Estado caja', `<span class="cd-estado-v ${p.estado === 'ABIERTA' ? 'vigente' : 'cerrada'}">${p.estado === 'ABIERTA' ? 'VIGENTE' : 'LIQUIDADA'}</span>`)}
+              ${dato('Fecha cierre', p.liquidado_en ? esc(fmt.fechaHora(p.liquidado_en)) : '—')}
+              ${dato('Cierre', esc(p.liquidado_por || '—'))}
+              ${p.partida_id ? dato('Póliza', `<span class="pc-tipo">${esc(partidaTxt())}</span>`) : ''}` : ctx.vacio('Sin subcaja.', 'ti-lock')}
+          </section>
+        </div>`;
     }
     let partidas = new Map();
     const partidaTxt = () => partidas.get(periodo?.partida_id) || `Partida ${periodo?.partida_id}`;
@@ -579,11 +606,11 @@
       const mismo = periodos.find((p) => p.anio === anio && p.mes === mes);
       const aviso = [mismo ? `Ya existe la subcaja ${mismo.numero} de ${mesTxt(mismo).toLowerCase()}.` : '', abiertas.length ? `Hay ${abiertas.length} subcaja(s) abierta(s).` : ''].filter(Boolean).join(' ');
       if (!confirm(`${aviso ? `${aviso}\n\n` : ''}¿Crear la subcaja de ${MESES[mes - 1].toLowerCase()} ${anio} con un fondo de ${simbolo(caja.moneda_id)} ${fmt.monto(caja.monto_fondo)}?`)) return;
-      const cuenta = el('cta_anticipo').value ? Number(el('cta_anticipo').value) : null;
+      const cuenta = el('cta_anticipo')?.value ? Number(el('cta_anticipo').value) : caja.cuenta_bancaria_id || null;
       const m = ctx.moneda(caja.moneda_id);
       const { data, error } = await sb.from('caja_periodos').insert({
         caja_id: caja.id, organizacion_id: caja.organizacion_id, localidad_id: caja.localidad_id, numero: 0, anio, mes,
-        valor: caja.monto_fondo, anticipo_valor: caja.monto_fondo, anticipo_cuenta_id: cuenta, anticipo_cheque: el('cheque_anticipo').value.trim() || null,
+        valor: caja.monto_fondo, anticipo_valor: caja.monto_fondo, anticipo_cuenta_id: cuenta, anticipo_cheque: el('cheque_anticipo')?.value.trim() || null,
         tipo_cambio: m && m.iso !== 'GTQ' ? m.cambio : 1
       }).select('id, numero').single();
       if (error) return window.FIN.aviso(window.UI.traducirError(error));
@@ -716,23 +743,137 @@
         hoja: titulos[tipo], archivo: `caja_${caja.codigo}_subcaja_${p.numero}_${tipo.toLowerCase()}`, columnas, filas });
     }
 
-    // Listado de las cajas a operar (selección) en PDF o Excel.
-    function listadoCajas(formato) {
+    // ---------- Reporte de cajas (selección): parámetros confirmados con casillas ----------
+    async function dialogoReporte(formato) {
       if (!cajas.length) return window.FIN.aviso('No hay cajas');
-      const l = ctx.localidad(ctx.sel.loc);
-      const filas = cajas.map((c) => { const k = contable(c.cuenta_id); const u = ultimo.get(c.id); return { c, k, u }; });
-      if (formato === 'PDF') {
-        return imprimir('Selección de caja a operar', `<h1>Cajas chicas · selección de caja a operar</h1><h2>Empresa: ${esc(l ? `${l.codigo} · ${l.nombre_comercial}` : '')} · Cajas: ${esc(f.estado)} · ${cajas.length} cajas</h2>
-          <table><thead><tr><th>Caja</th><th>Nombre</th><th>Responsable</th><th>Cuenta contable</th><th class="n">Fondo</th><th>Subcaja actual</th><th class="n">Gastos</th><th class="n">Disponible</th><th>Estado</th></tr></thead><tbody>
-          ${filas.map(({ c, k, u }) => `<tr><td>${c.codigo}</td><td>${esc(c.nombre)}</td><td>${esc(c.responsable || '')}</td><td>${esc(k ? `${k.codigo} ${k.nombre}` : '')}</td><td class="n">${esc(simbolo(c.moneda_id))} ${fmt.monto(c.monto_fondo)}</td><td>${u ? `${u.numero} · ${esc(mesTxt(u).toLowerCase())}` : ''}</td><td class="n">${u ? fmt.monto(u.liquidado) : ''}</td><td class="n">${u ? fmt.monto(u.disponible) : ''}</td><td>${!c.activa ? 'Inactiva' : u ? (u.estado === 'ABIERTA' ? 'Abierta' : 'Liquidada') : 'Activa'}</td></tr>`).join('')}</tbody></table>`, { locId: ctx.sel.loc });
-      }
-      window.REPORTE_XLSX.generar({
-        titulo: 'Cajas chicas · selección de caja a operar', parametros: [`Empresa: ${l ? `${l.codigo} · ${l.nombre_comercial}` : ''}`, `Cajas: ${f.estado}`, `${cajas.length} cajas`],
-        orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Cajas', archivo: `cajas_chicas_${l?.codigo || ''}`, autofiltro: true,
-        columnas: [{ titulo: 'Caja', ancho: 7 }, { titulo: 'Nombre', ancho: 38 }, { titulo: 'Responsable', ancho: 22 }, { titulo: 'Cuenta', ancho: 14 }, { titulo: 'Nombre de la cuenta', ancho: 32 }, { titulo: 'Fondo', ancho: 14, tipo: 'monto' },
-          { titulo: 'Subcaja actual', ancho: 20 }, { titulo: 'Gastos', ancho: 14, tipo: 'monto' }, { titulo: 'Disponible', ancho: 14, tipo: 'monto' }, { titulo: 'Estado', ancho: 11 }],
-        filas: filas.map(({ c, k, u }) => ({ tenue: !c.activa, valores: [c.codigo, c.nombre, c.responsable || '', k?.codigo || '', k?.nombre || '', Number(c.monto_fondo || 0), u ? `${u.numero} · ${mesTxt(u).toLowerCase()}` : '', u ? Number(u.liquidado) : null, u ? Number(u.disponible) : null, !c.activa ? 'Inactiva' : u ? (u.estado === 'ABIERTA' ? 'Abierta' : 'Liquidada') : 'Activa'] }))
+      const { data: pr } = await sb.from('caja_periodos').select('anio, mes').in('caja_id', cajas.map((c) => c.id)).order('anio').order('mes').limit(1);
+      const ini = pr?.[0] ? `${pr[0].anio}-${String(pr[0].mes).padStart(2, '0')}-01` : `${fmt.hoy().slice(0, 4)}-01-01`;
+      const opcion = (name, titulo, ayuda, marcado, extra = '') => `<div class="cr-opcion"><label class="cr-check"><input type="checkbox" name="${name}" ${marcado ? 'checked' : ''}> ${titulo}</label><small>${ayuda}</small>${extra}</div>`;
+      const velo = document.createElement('div');
+      velo.className = 'modal-velo';
+      velo.innerHTML = `<form class="modal cr-modal" novalidate>
+        <header class="modal-cab"><h2><i class="ti ${formato === 'PDF' ? 'ti-file-type-pdf' : 'ti-file-spreadsheet'}" aria-hidden="true"></i> Reporte de cajas chicas · ${formato === 'PDF' ? 'PDF' : 'Excel'}</h2>
+          <button type="button" class="icono-boton" data-cr="cerrar" aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></header>
+        <div class="modal-cuerpo">
+          ${opcion('todas', 'Imprimir todas las cajas', 'Desmarca para elegir una sola caja.', true,
+            `<div class="cr-sub" data-cr-caja hidden><label class="campo"><span>Caja</span><select name="caja">${cajas.map((c) => `<option value="${c.id}" ${caja && caja.id === c.id ? 'selected' : ''}>${c.codigo} · ${esc(c.nombre)}</option>`).join('')}</select></label></div>`)}
+          ${opcion('rango', 'De una fecha inicial a una fecha final', 'Subcajas cuyo mes cae en el rango y documentos con fecha en el rango.', true,
+            `<div class="cr-sub" data-cr-rango><label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${ini}"></label><label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${fmt.hoy()}"></label></div>`)}
+          ${opcion('subcajas', 'Ver las subcajas', 'Resumen de cada subcaja: mes, estado, fondo, anticipos, gastos y disponible.', true)}
+          ${opcion('movimientos', 'Ver los movimientos de la subcaja', 'Los documentos (facturas y recibos) de cada subcaja.', false)}
+          ${opcion('contable', 'Mostrar el detalle contable', 'Las líneas contables de cada subcaja con sus totales.', false)}
+        </div>
+        <p class="modal-error tk-error" role="alert"></p>
+        <footer class="modal-pie"><button type="button" class="boton secundario-sm" data-cr="cerrar">Cancelar</button>
+          <button type="submit" class="boton primario-sm"><i class="ti ti-player-play" aria-hidden="true"></i> Generar</button></footer>
+      </form>`;
+      document.body.appendChild(velo);
+      const form = velo.querySelector('form');
+      const cerrar = () => { velo.remove(); document.removeEventListener('keydown', tecla); };
+      const tecla = (e) => { if (e.key === 'Escape') cerrar(); };
+      document.addEventListener('keydown', tecla);
+      velo.addEventListener('click', (e) => { if (e.target === velo || e.target.closest('[data-cr=cerrar]')) cerrar(); });
+      form.addEventListener('change', () => {
+        form.querySelector('[data-cr-caja]').hidden = form.elements.todas.checked;
+        form.querySelector('[data-cr-rango]').hidden = !form.elements.rango.checked;
       });
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const el = form.elements;
+        const error = form.querySelector('.modal-error');
+        const o = { formato, todas: el.todas.checked, cajaId: Number(el.caja.value), rango: el.rango.checked, desde: el.desde.value, hasta: el.hasta.value,
+          subcajas: el.subcajas.checked, movimientos: el.movimientos.checked, contable: el.contable.checked };
+        if (o.rango && (!o.desde || !o.hasta || o.desde > o.hasta)) { error.textContent = 'Revisa el rango: la fecha inicial no puede pasar de la final.'; return; }
+        if (!o.subcajas && !o.movimientos && !o.contable) { error.textContent = 'Marca al menos una opción: subcajas, movimientos o detalle contable.'; return; }
+        const b = form.querySelector('[type=submit]');
+        b.disabled = true; error.textContent = '';
+        try { await generarReporteCajas(o); cerrar(); } catch (x) { error.textContent = x.message || String(x); b.disabled = false; }
+      });
+      form.elements.todas.focus();
+    }
+
+    // Lee todas las filas de una consulta, de 1,000 en 1,000.
+    async function leerTodo(consulta) {
+      const out = [];
+      for (let i = 0; ; i += 1000) {
+        const { data, error } = await consulta().range(i, i + 999);
+        if (error) throw new Error(error.message);
+        out.push(...(data || []));
+        if (!data || data.length < 1000) return out;
+      }
+    }
+
+    async function generarReporteCajas(o) {
+      const sel = o.todas ? cajas : cajas.filter((c) => c.id === o.cajaId);
+      const am = (d) => Number(d.slice(0, 4)) * 100 + Number(d.slice(5, 7));
+      let ps = await leerTodo(() => sb.from('caja_periodos_resumen').select('*').in('caja_id', sel.map((c) => c.id)).order('caja_id').order('numero'));
+      if (o.rango) ps = ps.filter((p) => p.anio * 100 + p.mes >= am(o.desde) && p.anio * 100 + p.mes <= am(o.hasta));
+      if (!ps.length) throw new Error('No hay subcajas con esos parámetros.');
+      const docs = []; const lins = [];
+      const pids = ps.map((p) => p.id);
+      for (let i = 0; i < pids.length; i += 80) {
+        const parte = pids.slice(i, i + 80);
+        if (o.movimientos) docs.push(...await leerTodo(() => { let q = sb.from('caja_documentos').select('id, periodo_id, linea, serie, documento, tipo_documento, fecha, nit, proveedor_nombre, justificacion, total, iva, cuenta_gasto_id').in('periodo_id', parte).order('periodo_id').order('linea'); if (o.rango) q = q.gte('fecha', o.desde).lte('fecha', o.hasta); return q; }));
+        if (o.contable) lins.push(...await leerTodo(() => sb.from('caja_lineas').select('id, periodo_id, linea, cuenta_id, concepto, debe, haber, centro_id').in('periodo_id', parte).order('periodo_id').order('linea')));
+      }
+      await asegurarCuentas([...docs.map((d) => d.cuenta_gasto_id), ...lins.map((l) => l.cuenta_id)]);
+      const docsDe = (id) => docs.filter((d) => d.periodo_id === id);
+      const linsDe = (id) => lins.filter((l) => l.periodo_id === id);
+      const sum = (arr, k) => fmt.redondear(arr.reduce((t, x) => t + Number(x[k] || 0), 0));
+      const anticipos = (p) => fmt.redondear(Number(p.anticipo_valor || 0) + Number(p.adelanto_valor || 0));
+      const estado = (p) => p.estado === 'ABIERTA' ? 'Abierta' : 'Liquidada';
+      const l = ctx.localidad(ctx.sel.loc);
+      const contenido = [o.subcajas && 'Subcajas', o.movimientos && 'Movimientos', o.contable && 'Detalle contable'].filter(Boolean).join(', ');
+      const parametros = [`Empresa: ${l ? `${l.codigo} · ${l.nombre_comercial}` : ''}`, `Cajas: ${o.todas ? `todas (${sel.length})` : `${sel[0].codigo} · ${sel[0].nombre}`}`,
+        `Período: ${o.rango ? `del ${fmt.fechaDia(o.desde)} al ${fmt.fechaDia(o.hasta)}` : 'todas las fechas'}`, `Contenido: ${contenido}`];
+      const grupos = sel.map((c) => ({ c, ps: ps.filter((p) => p.caja_id === c.id) })).filter((g) => g.ps.length);
+      const archivo = `cajas_chicas_${l?.codigo || ''}${o.todas ? '' : `_caja_${sel[0].codigo}`}`;
+      if (o.formato === 'PDF') {
+        const tablaSub = (lista) => `<table><thead><tr><th>Subcaja</th><th>Mes</th><th>Estado</th><th class="n">Docs</th><th class="n">Fondo</th><th class="n">Anticipos</th><th class="n">Gastos</th><th class="n">Disponible</th></tr></thead>
+          <tbody>${lista.map((p) => `<tr><td>${p.numero}</td><td>${esc(mesTxt(p))}</td><td>${estado(p)}</td><td class="n">${p.documentos ?? 0}</td><td class="n">${fmt.monto(p.valor)}</td><td class="n">${fmt.monto(anticipos(p))}</td><td class="n">${fmt.monto(p.liquidado)}</td><td class="n">${fmt.monto(p.disponible)}</td></tr>`).join('')}</tbody>
+          <tfoot><tr><td colspan="3">${lista.length} subcajas</td><td class="n">${lista.reduce((t, p) => t + Number(p.documentos || 0), 0)}</td><td class="n">${fmt.monto(sum(lista, 'valor'))}</td><td class="n">${fmt.monto(lista.reduce((t, p) => t + anticipos(p), 0))}</td><td class="n">${fmt.monto(sum(lista, 'liquidado'))}</td><td class="n">${fmt.monto(sum(lista, 'disponible'))}</td></tr></tfoot></table>`;
+        const tablaDocs = (ds) => `<table><thead><tr><th>#</th><th>Fecha</th><th>Tipo</th><th>Documento</th><th>NIT</th><th>Proveedor</th><th>Justificación</th><th>Cuenta</th><th class="n">IVA</th><th class="n">Valor</th></tr></thead>
+          <tbody>${ds.map((d) => `<tr><td>${d.linea}</td><td>${esc(fmt.fechaDia(d.fecha))}</td><td>${esc((TIPOS_DOC.find(([k]) => k === d.tipo_documento) || [])[1] || '')}</td><td>${esc(docTxt(d))}</td><td>${esc(d.nit || '')}</td><td>${esc(d.proveedor_nombre)}</td><td>${esc(d.justificacion || '')}</td><td>${esc(contable(d.cuenta_gasto_id)?.codigo || '')}</td><td class="n">${fmt.monto(d.iva)}</td><td class="n">${fmt.monto(d.total)}</td></tr>`).join('')
+            || '<tr><td colspan="10">Sin documentos en el período.</td></tr>'}</tbody>
+          <tfoot><tr><td colspan="8">${ds.length} documentos</td><td class="n">${fmt.monto(sum(ds, 'iva'))}</td><td class="n">${fmt.monto(sum(ds, 'total'))}</td></tr></tfoot></table>`;
+        const tablaLin = (ls) => `<table><thead><tr><th>Línea</th><th>Cuenta</th><th>Nombre de la cuenta</th><th>Concepto</th><th class="n">Debe</th><th class="n">Haber</th></tr></thead>
+          <tbody>${ls.map((x) => { const k = contable(x.cuenta_id); return `<tr><td>${x.linea}</td><td>${esc(k?.codigo || '')}</td><td>${esc(k?.nombre || '')}</td><td>${esc(x.concepto || '')}</td><td class="n">${Number(x.debe) ? fmt.monto(x.debe) : ''}</td><td class="n">${Number(x.haber) ? fmt.monto(x.haber) : ''}</td></tr>`; }).join('')
+            || '<tr><td colspan="6">Sin detalle contable.</td></tr>'}</tbody>
+          <tfoot><tr><td colspan="4">Totales (Q)</td><td class="n">${fmt.monto(sum(ls, 'debe'))}</td><td class="n">${fmt.monto(sum(ls, 'haber'))}</td></tr></tfoot></table>`;
+        const cuerpo = grupos.map(({ c, ps: lista }) => `
+          <h3 style="margin:14px 0 4px;font-size:13px;border-bottom:1.5px solid #1f3b63;padding-bottom:2px">Caja ${c.codigo} · ${esc(c.nombre)} <small style="font-weight:400">· ${esc(c.responsable || '')} · fondo ${esc(simbolo(c.moneda_id))} ${fmt.monto(c.monto_fondo)}</small></h3>
+          ${o.subcajas ? tablaSub(lista) : ''}
+          ${o.movimientos || o.contable ? lista.map((p) => `<h4 style="margin:8px 0 3px;font-size:12px">Subcaja ${p.numero} · ${esc(mesTxt(p).toLowerCase())} · ${estado(p)}</h4>
+            ${o.movimientos ? tablaDocs(docsDe(p.id)) : ''}${o.contable ? tablaLin(linsDe(p.id)) : ''}`).join('') : ''}`).join('');
+        const total = o.todas && grupos.length > 1 && o.subcajas ? `<h3 style="margin:14px 0 4px;font-size:13px">Total de las cajas</h3>${tablaSub(ps)}` : '';
+        return imprimir('Reporte de cajas chicas', `<h1>Cajas chicas · reporte de cajas y subcajas</h1><h2>${esc(parametros.join(' · '))}</h2>${cuerpo}${total}`, { locId: ctx.sel.loc, horizontal: true });
+      }
+      if (!window.REPORTE_XLSX) throw new Error('No se pudo cargar el generador de Excel.');
+      const columnas = [{ titulo: 'Caja · subcaja', ancho: 30 }, { titulo: 'Mes · fecha', ancho: 16 }, { titulo: 'Documento · cuenta', ancho: 20 }, { titulo: 'Proveedor · nombre de la cuenta', ancho: 38 },
+        { titulo: 'Justificación · concepto', ancho: 36 }, { titulo: 'Estado', ancho: 11 }, { titulo: 'Docs', ancho: 7, tipo: 'numero' }, { titulo: 'Fondo', ancho: 13, tipo: 'monto' }, { titulo: 'Anticipos', ancho: 13, tipo: 'monto' },
+        { titulo: 'Gastos · valor', ancho: 14, tipo: 'monto' }, { titulo: 'Debe', ancho: 13, tipo: 'monto' }, { titulo: 'Haber', ancho: 13, tipo: 'monto' }, { titulo: 'Disponible', ancho: 13, tipo: 'monto' }];
+      const fila = (v, extra = {}) => ({ valores: Array.from({ length: columnas.length }, (_, i) => v[i] ?? ''), ...extra });
+      const filas = [];
+      grupos.forEach(({ c, ps: lista }) => {
+        filas.push(fila([`Caja ${c.codigo} · ${c.nombre}`, '', '', c.responsable || '', '', '', '', Number(c.monto_fondo || 0)], { tipo: 'grupo' }));
+        lista.forEach((p) => {
+          filas.push(o.subcajas ? fila([`Subcaja ${p.numero}`, mesTxt(p), '', '', '', estado(p), Number(p.documentos || 0), Number(p.valor || 0), anticipos(p), Number(p.liquidado || 0), null, null, Number(p.disponible || 0)], { tipo: 'subtotal', sangria: 1 })
+            : fila([`Subcaja ${p.numero}`, mesTxt(p), '', '', '', estado(p)], { tipo: 'nota', sangria: 1 }));
+          if (o.movimientos) {
+            const ds = docsDe(p.id);
+            ds.forEach((d) => filas.push(fila([`Documento ${d.linea}`, fmt.fechaDia(d.fecha), docTxt(d), d.proveedor_nombre, d.justificacion || '', (TIPOS_DOC.find(([k]) => k === d.tipo_documento) || [])[1] || '', null, null, null, Number(d.total)], { sangria: 2 })));
+            filas.push(fila([`${ds.length} documentos`, '', '', '', '', '', null, null, null, sum(ds, 'total')], { tipo: 'nota', sangria: 2 }));
+          }
+          if (o.contable) {
+            const ls = linsDe(p.id);
+            ls.forEach((x) => { const k = contable(x.cuenta_id); filas.push(fila([`Línea ${x.linea}`, '', k?.codigo || '', k?.nombre || '', x.concepto || '', '', null, null, null, null, Number(x.debe) || null, Number(x.haber) || null], { sangria: 2, tenue: true })); });
+            filas.push(fila(['Totales del detalle contable', '', '', '', '', '', null, null, null, null, sum(ls, 'debe'), sum(ls, 'haber')], { tipo: 'nota', sangria: 2 }));
+          }
+        });
+        if (o.subcajas) filas.push(fila([`Total caja ${c.codigo}`, '', '', '', '', '', lista.reduce((t, p) => t + Number(p.documentos || 0), 0), sum(lista, 'valor'), fmt.redondear(lista.reduce((t, p) => t + anticipos(p), 0)), sum(lista, 'liquidado'), null, null, sum(lista, 'disponible')], { tipo: 'subtotal' }));
+      });
+      if (o.subcajas) filas.push(fila(['Total general', '', '', '', '', '', ps.reduce((t, p) => t + Number(p.documentos || 0), 0), sum(ps, 'valor'), fmt.redondear(ps.reduce((t, p) => t + anticipos(p), 0)), sum(ps, 'liquidado'), null, null, sum(ps, 'disponible')], { tipo: 'total' }));
+      window.REPORTE_XLSX.generar({ titulo: 'Cajas chicas · reporte de cajas y subcajas', parametros, orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Cajas', archivo, columnas, filas });
     }
 
     // ---------- Eventos ----------
@@ -795,6 +936,8 @@
         pintarFiltros();
         return pintarCaja();
       }
+      const pag = e.target.closest('[data-pag-sub]');
+      if (pag) { paginaSub += Number(pag.dataset.pagSub); paginaFijada = true; return pintarSubcajas(); }
       const filaP = e.target.closest('tr[data-periodo]');
       if (filaP) { verContable = false; return abrirPeriodo(periodos.find((p) => String(p.id) === filaP.dataset.periodo)); }
       const filaD = e.target.closest('tr[data-doc]');
@@ -809,8 +952,8 @@
       const a = ac.dataset.accion;
       if (a === 'nueva-caja') { guardarSesion('fin.caja.nueva', '1'); location.hash = '#/caja-bancos/definicion-cajas'; return; }
       if (a === 'definir' && caja) { guardarSesion('fin.caja', String(caja.id)); return; }
-      if (a === 'cajas-pdf') return listadoCajas('PDF');
-      if (a === 'cajas-excel') return listadoCajas('EXCEL');
+      if (a === 'cajas-pdf') return dialogoReporte('PDF');
+      if (a === 'cajas-excel') return dialogoReporte('EXCEL');
       if (a === 'cancelar-caja') return consultarCajas();
       if (a === 'ir-detalle') return irDetalle();
       if (a === 'ir-cajas') return irCajas();
