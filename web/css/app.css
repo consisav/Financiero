@@ -5400,3 +5400,71 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ivv-tabs .ivv-rojo.activa { color: #b42318; border-color: #b42318; }
 .ivv-pronto { color: #b54708; font-weight: 700; }
 .iv-ceros { align-self: end; height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+
+/* ===== Inventarios: compactación (sin bloques vacíos ni desplazamientos innecesarios) ===== */
+/* Catálogo de productos (Kardex y Precios de venta): el nombre se recorta y la lista usa el espacio disponible. */
+.kx-productos table { width: 100%; }
+.kx-productos td.cx-nombre { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kx-productos td.cx-nombre:nth-child(3) { width: 60%; }
+.kx-productos td.cx-nombre:nth-child(4) { width: 24%; }
+.kx-kardex:not(.pv-precios) .kx-productos { max-height: clamp(150px, 27vh, 330px); }
+.pv-precios .kx-cat { flex: 1 1 auto; min-height: 0; }
+.pv-precios .kx-productos { flex: 1 1 auto; max-height: none; min-height: 120px; }
+.pv-precios .pv-cuerpo { flex: 0 0 auto; grid-template-columns: minmax(0, 1fr); }
+.pv-barra { flex-wrap: nowrap !important; }
+.pv-prod { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-barra > span { flex: none; }
+.pv-acc { margin-left: auto; display: inline-flex; gap: 6px; }
+.pv-error:empty { display: none; }
+.pv-precios .pv-aud { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 2px 0 0; padding: 0; border: 0; font-size: 12px; color: var(--texto-suave); }
+.pv-precios .pv-aud b { color: var(--texto); font-weight: 600; margin-left: 4px; }
+.pv-precios .pv-tabla .pc-lineas td { padding-top: 3px; padding-bottom: 3px; }
+
+/* Traslados, ajustes y devoluciones: encabezado en dos renglones y acciones en la barra de pestañas. */
+.iv-doc .iv-cab { grid-template-columns: minmax(0, 1fr); grid-template-areas: "id" "datos"; gap: 8px; padding: 8px 12px; }
+.iv-doc .iv-id { grid-template-columns: 100px 210px 140px repeat(2, minmax(0, 1fr)); padding-bottom: 8px; }
+.iv-doc .iv-datos { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.iv-doc .iv-datos .iv-desc { grid-column: span 2; }
+.iv-doc .bm-tabs-barra { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.iv-doc .bm-tabs-barra .iv-acc { margin-left: auto; display: inline-flex; flex-direction: row; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.iv-doc .iv-imp { display: inline-flex; gap: 4px; align-items: center; }
+.iv-doc .iv-imp select { height: 30px; }
+.iv-doc .iv-lineas td.iv-nom > div { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-doc .iv-sin { padding: 18px !important; }
+
+/* Entradas y salidas: proveedor o cliente y producto recortados; sin desplazamiento horizontal. */
+.iv-tabla table { width: 100%; }
+.iv-tabla td.iv-nom > div { max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-tabla td.iv-prod > div { max-width: 380px; }
+.iv-mov .bk-filtros { min-width: 0; }
+.iv-mov .ec-kpis { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+
+/* Vencimientos: las bodegas se acomodan en varios renglones. */
+.ivv-bodegas { flex-wrap: wrap; overflow: visible; }
+@media (max-width: 1100px) { .iv-doc .iv-id { grid-template-columns: repeat(2, minmax(0, 1fr)); } .iv-doc .iv-datos .iv-desc { grid-column: 1 / -1; } }
+.iv-venc .ivv-bod { flex: 1 1 280px; }
+.iv-venc .ivv-bod select { min-width: 260px; }
+.iv-venc .ivv-tabs button b { margin-left: 4px; }
+/* Radios ocultos del selector añadir / disminuir: sin ancho (no ensanchan la página). */
+.iv-seg input[type=radio] { width: 0 !important; height: 0 !important; margin: 0; padding: 0; }
+.iv-tabla td.iv-nom > div { max-width: 190px; }
+.iv-tabla td.iv-prod > div { max-width: 320px; }
+.iv-tabla td { padding-left: 5px !important; padding-right: 5px !important; }
+.kx-kardex:not(.pv-precios) .kx-productos { max-height: clamp(150px, 30vh, 330px); }
+/* Pantallas de 1366 a 1500 px: columnas y nombres más angostos. */
+@media (max-width: 1500px) {
+  .iv-tabla th { white-space: normal; line-height: 1.15; }
+  .iv-tabla td { font-size: 12px; }
+  .iv-tabla td.iv-nom > div { max-width: 130px; }
+  .iv-tabla td.iv-prod > div { max-width: 200px; }
+  .iv-doc .iv-id { grid-template-columns: 90px 200px 120px repeat(2, minmax(0, 1fr)); }
+  .iv-doc .bm-tabs-barra .ck-docs-acc { flex: 1 1 240px; min-width: 0; }
+  .iv-doc .bm-tabs-barra .ck-docs-acc input { width: 100%; }
+  .iv-doc .iv-lineas td.iv-nom > div { max-width: 260px; }
+}
+.iv-doc .bk-detalle, .iv-doc .iv-form, .iv-mov .bk-detalle { min-width: 0; }
+@media (max-width: 1500px) {
+  .iv-tabla td { white-space: normal; overflow-wrap: anywhere; padding-left: 4px !important; padding-right: 4px !important; }
+  .iv-tabla td.num { white-space: nowrap; overflow-wrap: normal; }
+  .iv-tabla td.iv-nom > div { white-space: nowrap; }
+}

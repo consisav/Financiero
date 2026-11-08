@@ -32,7 +32,7 @@
   // op: { titulo, grupo, costos } · costos false: Kardex sin costos (solo cantidades por lote y existencias).
   function kardex(cont, op = {}) {
     const conCostos = op.costos !== false;
-    const ctx = montar(cont, { titulo: op.titulo || 'Kardex de Productos', icono: 'ti-list-numbers', clase: `bk-movimientos kx-kardex ${conCostos ? 'kx-costos' : 'kx-sin-costos'}`, grupo: op.grupo || 'Compras · Mantenimientos' });
+    const ctx = montar(cont, { titulo: op.titulo || 'Kardex de Productos', icono: 'ti-list-numbers', clase: `bk-movimientos bm-solo kx-kardex ${conCostos ? 'kx-costos' : 'kx-sin-costos'}`, grupo: op.grupo || 'Compras · Mantenimientos' });
     const { sb } = ctx;
     const f = { bodega: '', todas: false, desde: '', hasta: fmt.hoy(), formato: 'PDF', inactivos: false, buscar: '' };
     let tipoVenta = null, productos = [], bodegas = [], existencias = new Map();

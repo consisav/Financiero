@@ -29,18 +29,23 @@
     const f = { bodega: '', pestana: 'VENCIDOS', buscar: '', ceros: false };
     let bodegas = [], productos = new Map(), lotes = [];
 
+    // Bodega con el número de lotes de la pestaña elegida (las que tienen lotes primero).
     function pintarFiltros() {
+      const n = (id) => enPestana(lotes.filter((a) => (f.ceros || a.ex > 0.00001) && (!id || a.bodega_id === id)), f.pestana).length;
+      const ops = bodegas.map((x) => ({ x, c: n(x.id) })).sort((a, b) => (b.c > 0) - (a.c > 0) || a.x.codigo - b.x.codigo);
       ctx.filtros(`
+        <label class="campo ivv-bod"><span>Bodega</span><select name="bodega"><option value="">TODAS (${n(null)} lote(s))</option>${ops.map(({ x, c }) => `<option value="${x.id}" ${String(f.bodega) === String(x.id) ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)} (${c})</option>`).join('')}</select></label>
         <label class="campo cx-prov"><span>Buscar</span><input type="search" name="buscar" value="${esc(f.buscar)}" placeholder="Código, nombre o lote" autocomplete="off"></label>
         <label class="pc-check iv-ceros"><input type="checkbox" name="ceros" ${f.ceros ? 'checked' : ''}> Incluir lotes sin existencia</label>`,
         `<button type="button" class="boton primario-sm" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button>
          <button type="button" class="boton primario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
     }
-    async function iniciar() { if (!(await ctx.cargarBase())) return; pintarFiltros(); await cargarLocalidad(); }
+    async function iniciar() { if (!(await ctx.cargarBase())) return; ctx.filtros(''); await cargarLocalidad(); }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc;
       if (!loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-calendar-exclamation'); return; }
+      f.bodega = '';
       ctx.pDet.innerHTML = '<p class="vacio">Consultando los lotes…</p>';
       try {
         const [b, p, mv] = await Promise.all([
@@ -63,6 +68,7 @@
         });
         lotes = [...g.values()].filter((a) => a.vence).map((a) => { const pp = productos.get(a.producto_id); return { ...a, costo: a.costo || Number(pp?.precio_costo) || 0, codigo: pp?.codigo ?? '', codigo_producto: pp?.codigo_producto || '', nombre: pp?.nombre || '', dias: dias(hoy, a.vence) }; });
       } catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
+      pintarFiltros();
       pintar();
     }
     // Lotes con los parámetros: bodega, búsqueda, con o sin existencia; y por pestaña (vencidos o por vencer en N meses).
@@ -72,17 +78,12 @@
     function pintar() {
       const b0 = base(), rows = enPestana(b0, f.pestana);
       const todas = !f.bodega;
-      const porBod = (id) => enPestana(lotes.filter((a) => (f.ceros || a.ex > 0.00001) && a.bodega_id === id), f.pestana).length;
       const uds = rows.reduce((t, a) => t + a.ex, 0), val = rows.reduce((t, a) => t + a.ex * a.costo, 0);
       const kpi = (t, v, cls = '') => `<div class="ec-kpi ${cls}"><small>${t}</small><b>${v}</b></div>`;
       const venc = f.pestana === 'VENCIDOS';
       ctx.pDet.innerHTML = `
         <div class="bm-form cx-form cl-clasico">
-          <div class="cl-banda">Productos vencidos y por vencer · al ${esc(fmt.fechaDia(hoy))}</div>
-          <div class="ivv-bodegas" role="tablist" aria-label="Bodega">
-            <button type="button" data-bodega="" class="${todas ? 'activo' : ''}"><b>Todas</b><small>${enPestana(lotes.filter((a) => f.ceros || a.ex > 0.00001), f.pestana).length}</small></button>
-            ${bodegas.map((x) => { const n = porBod(x.id); return `<button type="button" data-bodega="${x.id}" class="${String(f.bodega) === String(x.id) ? 'activo' : ''} ${n ? '' : 'vacia'}"><b>${x.codigo} · ${esc(x.nombre)}</b><small>${n}</small></button>`; }).join('')}
-          </div>
+          <div class="cl-banda">Productos vencidos y por vencer · al ${esc(fmt.fechaDia(hoy))} · ${esc(todas ? 'todas las bodegas' : bodegas.find((x) => String(x.id) === String(f.bodega))?.nombre || '')}</div>
           <div class="rp-pestanas ivv-tabs" role="tablist">${PESTANAS.map(([k, t]) => `<button type="button" role="tab" data-pestana="${k}" class="${f.pestana === k ? 'activa' : ''} ${k === 'VENCIDOS' ? 'ivv-rojo' : ''}"><i class="ti ${k === 'VENCIDOS' ? 'ti-alert-octagon' : 'ti-hourglass'}" aria-hidden="true"></i> ${t} <b>${enPestana(b0, k).length}</b></button>`).join('')}</div>
           <div class="ec-kpis">${kpi('Lotes', rows.length)}${kpi('Productos', new Set(rows.map((a) => a.producto_id)).size)}${kpi('Unidades', cant(uds))}${kpi('Valor al costo Q', fmt.monto(val), venc && val > 0 ? 'ec-alerta' : 'ec-fin')}</div>
           <div class="pc-lineas cx-tabla iv-tabla"><table>
@@ -112,14 +113,13 @@
     cont.addEventListener('change', (e) => {
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') return cargarLocalidad();
-      if (e.target.name === 'ceros') { f.ceros = e.target.checked; return pintar(); }
+      if (e.target.name === 'ceros') { f.ceros = e.target.checked; pintarFiltros(); return pintar(); }
+      if (e.target.name === 'bodega') { f.bodega = e.target.value; return pintar(); }
     });
     cont.addEventListener('input', (e) => { if (e.target.name === 'buscar') { f.buscar = e.target.value; pintar(); ctx.pFil.querySelector('[name=buscar]')?.focus(); } });
     cont.addEventListener('click', (e) => {
-      const bd = e.target.closest('[data-bodega]');
-      if (bd) { f.bodega = bd.dataset.bodega; return pintar(); }
       const t = e.target.closest('[data-pestana]');
-      if (t) { f.pestana = t.dataset.pestana; return pintar(); }
+      if (t) { f.pestana = t.dataset.pestana; pintarFiltros(); return pintar(); }
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (a === 'pdf') return exportar('PDF');
       if (a === 'excel') return exportar('EXCEL');

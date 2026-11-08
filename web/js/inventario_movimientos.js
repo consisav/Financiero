@@ -171,7 +171,9 @@
       const docs = new Set(rows.map((x) => x.doc)).size, prods = new Set(rows.map((x) => x.producto_id)).size;
       const qty = rows.reduce((s, x) => s + x.cantidad, 0), val = rows.reduce((s, x) => s + x.valor, 0);
       const t = tabla(rows);
-      const celda = (v, tp) => (v === '' || v == null ? '<td></td>' : tp === 'monto' ? `<td class="num">${fmt.monto(v)}</td>` : tp === 'numero' ? `<td class="num ${v < 0 ? 'pc-rojo' : ''}">${cant(v)}</td>` : tp === 'entero' ? `<td class="num">${v}</td>` : `<td>${esc(String(v))}</td>`);
+      const largas = new Set(['Producto', C.tercero, `Nombre ${C.tercero.toLowerCase()}`]);
+      const celda = (v, tp, col) => (v === '' || v == null ? '<td></td>' : tp === 'monto' ? `<td class="num">${fmt.monto(v)}</td>` : tp === 'numero' ? `<td class="num ${v < 0 ? 'pc-rojo' : ''}">${cant(v)}</td>` : tp === 'entero' ? `<td class="num">${v}</td>`
+        : largas.has(col) ? `<td class="iv-nom ${col === 'Producto' ? 'iv-prod' : ''}" title="${esc(String(v))}"><div>${esc(String(v))}</div></td>` : `<td>${esc(String(v))}</td>`);
       const kpi = (tx, v, cls = '') => `<div class="ec-kpi ${cls}"><small>${tx}</small><b>${v}</b></div>`;
       const porTipo = C.tipos.slice(1).map(([k, tx]) => { const r = rows.filter((x) => x.clase === k); return kpi(tx.replace(/ \(.*\)/, ''), `${new Set(r.map((x) => x.doc)).size} · Q ${fmt.monto(r.reduce((s, x) => s + x.valor, 0))}`); }).join('');
       ctx.pDet.innerHTML = `
@@ -181,7 +183,7 @@
           <div class="pc-lineas cx-tabla iv-tabla"><table>
             <thead><tr>${t.columnas.map(([n, tp]) => `<th class="${tp === 'texto' ? '' : 'num'}">${esc(n)}</th>`).join('')}</tr></thead>
             <tbody>${t.filas.map((r) => (r.tipo === 'grupo' ? `<tr class="ec-sec"><td colspan="${t.columnas.length}">${esc(r.valores[0])}</td></tr>`
-              : `<tr class="${r.tipo === 'subtotal' ? 'ec-sub' : ''}">${t.columnas.map(([, tp], i) => celda(r.valores[i], tp)).join('')}</tr>`)).join('')
+              : `<tr class="${r.tipo === 'subtotal' ? 'ec-sub' : ''}">${t.columnas.map(([n, tp], i) => celda(r.valores[i], tp, n)).join('')}</tr>`)).join('')
               || `<tr><td colspan="${t.columnas.length}" class="tk-vacio"><i class="ti ${C.icono}" aria-hidden="true"></i>Sin ${clave} con esos parámetros.</td></tr>`}</tbody>
             <tfoot><tr>${(() => { const tf = totalFila(t, rows); return t.columnas.map(([, tp], i) => (i === 0 ? `<td>${esc(tf.valores[0])}</td>` : celda(tf.valores[i], tp))).join(''); })()}</tr></tfoot>
           </table></div>

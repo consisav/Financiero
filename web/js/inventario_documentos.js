@@ -149,7 +149,7 @@
         const costoCel = `<td class="num"><input type="number" step="0.0001" min="0" data-c="costo_unitario" value="${l.costo_unitario ?? ''}" ${dis} aria-label="Costo unitario"></td><td class="num" data-ct>${fmt.monto(Number(l.cantidad || 0) * Number(l.costo_unitario || 0))}</td>`;
         const inv = `<td class="cc-det"><i class="ti ${operado ? 'ti-square-check-filled iv-ok' : 'ti-square'}" aria-label="${operado ? 'Movido en el inventario' : 'Pendiente'}"></i></td>`;
         const quitar = `<td>${ed ? `<button type="button" class="icono-boton" data-quitar="${i}" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td>`;
-        const nombre = `<td class="nq-desc" title="${esc(p?.nombre || '')}">${esc(p?.nombre || '')}</td>`;
+        const nombre = `<td class="iv-nom" title="${esc(p?.nombre || '')}"><div>${esc(p?.nombre || '')}</div></td>`;
         if (tras) return `<tr data-l="${i}"><td class="num">${p?.codigo ?? ''}</td><td class="fuerte">${esc(p?.codigo_producto || '')}</td>${nombre}<td>${lt}</td><td>${fecha('fecha_vencimiento')}</td>${exCel}${cantCel}${inv}${quitar}</tr>`;
         if (lote) return `<tr data-l="${i}"><td class="fuerte">${esc(p ? p.codigo_producto || String(p.codigo) : '')}</td>${nombre}<td>${lt}</td><td>${fecha('fecha_fabricacion')}</td><td>${fecha('fecha_vencimiento')}</td>${exCel}
           <td class="iv-nuevo"><input data-c="nuevo_lote" value="${esc(l.nuevo_lote || '')}" ${dis} aria-label="Nuevo lote"></td><td class="iv-nuevo">${fecha('nueva_fabricacion')}</td><td class="iv-nuevo">${fecha('nuevo_vencimiento')}</td>${cantCel}${costoCel}${quitar}</tr>`;
@@ -158,7 +158,6 @@
       const nCol = cols.length + 1;
       ctx.pDet.innerHTML = `
         <form id="iv-form" class="tk-form ta-form bm-form kq-form iv-form cl-clasico" novalidate>
-          <div class="cl-banda">${esc(C.titulo)}</div>
           ${!d && !ed ? `<p class="ck-elige"><i class="ti ti-hand-click" aria-hidden="true"></i> No hay documentos con esos filtros${ctx.admin ? ': crea uno con «Nuevo»' : ''}.</p>` : `
           <section class="iv-cab">
             <div class="iv-id">
@@ -166,6 +165,7 @@
               <label class="campo"><span>Fecha</span><input type="datetime-local" name="fecha" value="${aLocal(v.fecha)}" ${dis}></label>
               <div class="campo"><span>Estado</span>${marca(v.estado || 'REGISTRADO')}</div>
               <div class="campo iv-usr"><span>Usuario</span><b>${esc(d ? `${d.usuario || ''}${d.usuario_nombre ? ` · ${d.usuario_nombre}` : ''}` : (window.FIN.perfil?.()?.usuario || '').toUpperCase())}</b></div>
+              ${d?.operado_por ? `<div class="campo iv-usr"><span>Operado</span><b>${esc(d.operado_por)} · ${esc(horaGt(d.operado_en))}</b></div>` : ''}
             </div>
             <div class="iv-datos">
               ${tras ? `<label class="campo"><span>Bodega origen *</span>${selBod('bodega_id', v.bodega_id)}</label>
@@ -178,13 +178,6 @@
                 <label class="campo"><span>Referencia</span><input name="referencia" value="${esc(v.referencia || '')}" maxlength="120" placeholder="Nota de débito, devolución o despacho" ${dis}></label>` : ''}`}
               <label class="campo iv-desc"><span>${tras ? 'Descripción' : prodAj ? 'Justificación' : 'Observaciones'}</span><input name="descripcion" value="${esc(v.descripcion || '')}" maxlength="300" ${dis}></label>
             </div>
-            <div class="kq-acc iv-acc">
-              ${boton('OPERAR', C.operar[1], C.operar[0], consulta && ctx.admin && d.estado === 'REGISTRADO', 'primario-sm')}
-              ${boton('REVERTIR', 'ti-arrow-back-up', C.revertir, consulta && ctx.admin && d.estado === 'OPERADO')}
-              ${boton('ANULAR', 'ti-ban', C.anular, consulta && ctx.admin && d.estado === 'REGISTRADO')}
-              <div class="kq-imp">${boton('imprimir', 'ti-printer', 'Imprimir', !!d)}<select name="formato" aria-label="Formato"><option ${f.formato === 'PDF' ? 'selected' : ''}>PDF</option><option ${f.formato === 'EXCEL' ? 'selected' : ''}>EXCEL</option></select></div>
-              ${d?.operado_por ? `<small class="tk-tenue">Operó ${esc(d.operado_por)} · ${esc(horaGt(d.operado_en))}</small>` : ''}
-            </div>
           </section>`}
           <p class="modal-error tk-error" role="alert"></p>
           ${d?.estado === 'ANULADO' ? `<p class="tk-aviso bm-anulado"><i class="ti ti-ban" aria-hidden="true"></i> Anulado por ${esc(d.anulado_por || '')} · ${esc(horaGt(d.anulado_en))}: ${esc(d.motivo_anulacion || '')}</p>` : ''}
@@ -193,11 +186,17 @@
               ${!d && !ed ? '' : `<button type="button" role="tab" data-pestana="DETALLE" class="${tab === 'DETALLE' ? 'activa' : ''}"><i class="ti ti-packages" aria-hidden="true"></i> Productos${lineas.length ? ` <b>${lineas.length}</b>` : ''}</button>`}
               <button type="button" role="tab" data-pestana="LISTA" class="${tab === 'LISTA' ? 'activa' : ''}"><i class="ti ti-list-search" aria-hidden="true"></i> ${C.lista}${lista.length ? ` <b>${lista.length}</b>` : ''}</button>
             </div>
-            ${ed && tab === 'DETALLE' ? '<div class="ck-docs-acc"><input list="iv-productos" data-agregar placeholder="Agregar producto (código, código de barras o nombre)…" aria-label="Agregar producto" autocomplete="off"></div>' : ''}</div>
+            ${ed && tab === 'DETALLE' ? '<div class="ck-docs-acc"><input list="iv-productos" data-agregar placeholder="Agregar producto (código, código de barras o nombre)…" aria-label="Agregar producto" autocomplete="off"></div>' : ''}
+            ${d && !ed ? `<div class="iv-acc">
+              ${boton('OPERAR', C.operar[1], C.operar[0], consulta && ctx.admin && d.estado === 'REGISTRADO', 'primario-sm')}
+              ${boton('REVERTIR', 'ti-arrow-back-up', C.revertir, consulta && ctx.admin && d.estado === 'OPERADO')}
+              ${boton('ANULAR', 'ti-ban', C.anular, consulta && ctx.admin && d.estado === 'REGISTRADO')}
+              <span class="iv-imp">${boton('imprimir', 'ti-printer', 'Imprimir', true)}<select name="formato" aria-label="Formato"><option ${f.formato === 'PDF' ? 'selected' : ''}>PDF</option><option ${f.formato === 'EXCEL' ? 'selected' : ''}>EXCEL</option></select></span>
+            </div>` : ''}</div>
             <div class="bm-panel" data-panel="DETALLE" ${tab === 'DETALLE' ? '' : 'hidden'}>
               <div class="pc-lineas iv-lineas"><table>
                 <thead><tr>${cols.map((c, i) => `<th class="${num.has(c) ? 'num' : ''} ${lote && i >= 6 && i <= 8 ? 'iv-nuevo-th' : ''}">${c}</th>`).join('')}<th></th></tr></thead>
-                <tbody>${filas}${Array.from({ length: Math.max(0, 8 - lineas.length) }, () => `<tr class="rg-vacia"><td colspan="${nCol}"></td></tr>`).join('')}</tbody>
+                <tbody>${filas || `<tr><td colspan="${nCol}" class="tk-vacio iv-sin"><i class="ti ti-packages" aria-hidden="true"></i>${ed ? 'Agrega los productos con el buscador de arriba (código, código de barras o nombre).' : 'Sin productos.'}</td></tr>`}</tbody>
                 <tfoot><tr><td colspan="${tras ? 6 : lote ? 9 : 6}">${lineas.length} producto(s)</td><td class="num" data-tc>${cant(lineas.reduce((t, l) => t + Number(l.cantidad || 0), 0))}</td>${tras ? '<td colspan="2"></td>' : `<td class="num">Total</td><td class="num" data-tt>${fmt.monto(total())}</td><td colspan="${lote ? 1 : 2}"></td>`}</tr></tfoot>
               </table></div>
             </div>

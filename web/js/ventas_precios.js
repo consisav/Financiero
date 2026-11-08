@@ -22,7 +22,7 @@
 
   window.PANTALLAS['precios-de-venta'] = function (cont, m) {
     const grupo = m?.id === 'inventarios' ? 'Inventarios · Catálogos' : 'Ventas · Catálogos';
-    const ctx = montar(cont, { titulo: 'Precios de venta', icono: 'ti-tags', clase: 'bk-movimientos kx-kardex pv-precios', grupo });
+    const ctx = montar(cont, { titulo: 'Precios de venta', icono: 'ti-tags', clase: 'bk-movimientos bm-solo kx-kardex pv-precios', grupo });
     const { sb } = ctx;
     const f = { buscar: '', inactivos: false, sinPrecio: false };
     let productos = [], tipos = [], precios = [], sel = null, filas = [], cambios = false;
@@ -103,7 +103,9 @@
       const mod = conAud.filter((x) => x.fecha_modifica).sort((a, b) => String(b.fecha_modifica).localeCompare(String(a.fecha_modifica)))[0];
       caja.innerHTML = `
         <div class="pv-tabla">
-          <div class="kx-resumen"><b>${esc(p.codigo_producto || String(p.codigo))} · ${esc(p.nombre)}</b><span>Costo <b>Q ${fmt.monto(costo)}</b></span><span class="tk-tenue">${esc(p.clasificaciones_producto?.nombre || '')}</span></div>
+          <div class="kx-resumen pv-barra"><b class="pv-prod" title="${esc(p.nombre)}">${esc(p.codigo_producto || String(p.codigo))} · ${esc(p.nombre)}</b><span>Costo <b>Q ${fmt.monto(costo)}</b></span><span>Precios <b>${conAud.length} de ${filas.length}</b></span>
+            ${ed ? `<span class="pv-acc"><button type="button" class="boton secundario-sm" data-accion="sugeridos" ${costo ? '' : 'disabled'} title="${costo ? 'Llena los precios vacíos con el sugerido de cada tipo' : 'El producto no tiene costo'}"><i class="ti ti-wand" aria-hidden="true"></i> Aplicar sugeridos</button><button type="button" class="boton primario-sm" data-accion="guardar"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar precios</button></span>` : ''}</div>
+          <p class="modal-error tk-error pv-error" role="alert"></p>
           <div class="pc-lineas"><table>
             <thead><tr><th>Tipo precio</th><th>Fecha</th><th class="num">Precio Q</th><th class="num">Margen s/costo</th><th class="num">Sugerido</th><th class="cc-det">Vigente</th><th></th></tr></thead>
             <tbody>${filas.map((r, i) => { const pr = Number(r.precio) || 0, mg = costo && pr ? ((pr - costo) / costo) * 100 : null, sg = sugerido(r.t, costo); return `<tr data-f="${i}" class="${!r.t.activo ? 'tk-tenue' : ''}">
@@ -115,22 +117,16 @@
               <td class="cc-det"><input type="checkbox" data-p="vigente" ${r.vigente ? 'checked' : ''} ${ed ? '' : 'disabled'} aria-label="Vigente"></td>
               <td>${ed && r.id ? `<button type="button" class="icono-boton" data-borrar="${i}" title="Quitar este precio" aria-label="Quitar"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="7" class="tk-vacio">La empresa no tiene tipos de precio: créalos en «Tipos de precio».</td></tr>'}</tbody>
           </table></div>
+          <div class="pv-aud"><span>Ingreso <b>${esc(ing ? `${ing.usuario_ingresa || ''} · ${horaGt(ing.fecha_ingresa)}` : '—')}</b></span><span>Modificación <b>${esc(mod ? `${mod.usuario_modifica || ''} · ${horaGt(mod.fecha_modifica)}` : '—')}</b></span>${costo ? '' : '<span class="pc-rojo">Sin costo en el catálogo: el margen y el sugerido no se calculan.</span>'}</div>
         </div>
-        <aside class="ac-lado pv-lado">
-          <div class="ac-dato ac-prom"><span>Costo del producto</span><b>Q ${fmt.monto(costo)}</b><small>${costo ? 'del catálogo de productos' : 'sin costo: el margen y el sugerido no se calculan'}</small></div>
-          <div class="ac-dato"><span>Precios guardados</span><b>${conAud.length} de ${filas.length}</b></div>
-          ${ed ? `<button type="button" class="boton secundario-sm" data-accion="sugeridos" ${costo ? '' : 'disabled'}><i class="ti ti-wand" aria-hidden="true"></i> Aplicar sugeridos vacíos</button>
-          <button type="button" class="boton primario-sm" data-accion="guardar"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar precios</button>` : ''}
-          <p class="modal-error tk-error" role="alert"></p>
-          <div class="pv-aud"><div><span>Ingreso</span><b>${esc(ing ? `${ing.usuario_ingresa || ''} · ${horaGt(ing.fecha_ingresa)}` : '—')}</b></div><div><span>Modificación</span><b>${esc(mod ? `${mod.usuario_modifica || ''} · ${horaGt(mod.fecha_modifica)}` : '—')}</b></div></div>
-        </aside>`;
+        `;
     }
     function leerFilas() { ctx.pDet.querySelectorAll('tr[data-f]').forEach((tr) => { const r = filas[Number(tr.dataset.f)]; const pi = tr.querySelector('[data-p=precio]'); r.precio = pi.value === '' ? '' : Number(pi.value); r.vigente = tr.querySelector('[data-p=vigente]').checked; }); }
     function margen(tr) { const r = filas[Number(tr.dataset.f)]; const costo = Number(prod(sel)?.precio_costo) || 0; const pr = Number(tr.querySelector('[data-p=precio]').value) || 0; const c = tr.querySelector('[data-mg]'); const mg = costo && pr ? ((pr - costo) / costo) * 100 : null; c.textContent = mg === null ? '—' : `${mg.toFixed(1)} %`; c.className = `num ${mg === null ? 'tk-tenue' : mg < 0 ? 'pc-rojo' : 'kx-ent'}`; cambios = true; return r; }
 
     async function guardar() {
       leerFilas();
-      const err = ctx.pDet.querySelector('.pv-lado .modal-error');
+      const err = ctx.pDet.querySelector('.pv-error');
       const mal = filas.find((r) => r.precio !== '' && !(r.precio >= 0));
       if (mal) { err.textContent = `Revisa el precio ${mal.t.nombre}.`; return; }
       err.textContent = '';
