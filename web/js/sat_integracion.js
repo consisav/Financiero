@@ -597,4 +597,91 @@
     iniciar();
   };
 
+  // ===================== Operaciones SAT (Compras y Ventas) =====================
+  // Todas las operaciones del mes con efecto fiscal, listas para la SAT: las de venta salen de las facturas y notas
+  // certificadas en línea (FEL con el certificador); las de compra, de las compras, notas de proveedores y retenciones,
+  // cruzadas con los DTE recibidos que trae el archivo del portal de la SAT (Carga Facturas SAT).
+  function operaciones(cont, lado) {
+    const V = lado === 'VENTAS';
+    const ctx = montar(cont, { titulo: 'Operaciones SAT · ' + (V ? 'ventas' : 'compras'), icono: 'ti-building-bank', clase: 'bk-movimientos bm-solo cx-rep pr-rep sat-rep', grupo: (V ? 'Facturación/Ventas' : 'Compras') + ' · Procesos' });
+    const { sb } = ctx;
+    const h = new Date(); const f = { anio: h.getFullYear(), mes: h.getMonth() + 1, graficas: true };
+    let cfg = null, info = null;
+    async function iniciar() { if (!(await ctx.cargarBase())) return; await cargar(); }
+    async function cargar() {
+      if (!ctx.sel.loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-building-bank'); return; }
+      ctx.filtros('<label class="campo cx-anio"><span>Año</span><input type="number" name="anio" value="' + f.anio + '" min="2000" max="2999"></label><label class="campo"><span>Mes</span><select name="mes">' + MES.map((m, i) => '<option value="' + (i + 1) + '" ' + (f.mes === i + 1 ? 'selected' : '') + '>' + m + '</option>').join('') + '</select></label><label class="pc-check"><input type="checkbox" name="graficas" ' + (f.graficas ? 'checked' : '') + '> Gráficas</label>', '<button type="button" class="boton secundario-sm" data-accion="actualizar"><i class="ti ti-refresh" aria-hidden="true"></i> Actualizar</button>' + botonesExp);
+      ctx.pDet.innerHTML = '<p class="vacio">Obteniendo las operaciones del mes…</p>';
+      try { await construir(); } catch (e) { return faltaScript(ctx, e); }
+      pintar();
+    }
+    async function construir() {
+      const a = iniMes(f.anio, f.mes), b = finMes(f.anio, f.mes);
+      const D = await datosFiscales(ctx, a, b, { ventas: V, compras: !V, retenciones: true });
+      const [carga, ncp] = await Promise.all([
+        sb.from('cargas_sat').select('numero, fecha, archivo, usuario').eq('localidad_id', ctx.sel.loc).order('fecha', { ascending: false }).limit(1),
+        V ? { data: [] } : sb.from('notas_compra').select('numero, tipo, serie, documento, numero_autorizacion, fecha, proveedor_nombre, nit, valor, moneda_id, tipo_cambio, estado, motivo').eq('localidad_id', ctx.sel.loc).neq('estado', 'ANULADA').gte('fecha', a).lte('fecha', b).order('fecha')]);
+      const satL = V ? [] : await leerTodo(() => sb.from('carga_sat_lineas').select('fecha_emision, tipo_dte, serie, numero, nit_emisor, nombre_emisor, gran_total, iva, anulada, compra_id, caja_documento_id, generado').eq('localidad_id', ctx.sel.loc).gte('fecha_emision', ini(a)).lte('fecha_emision', fin(b)).order('fecha_emision'));
+      info = { carga: carga.data?.[0] || null, satL, D };
+      const filas = [], porTipo = new Map();
+      const sumar = (t, x) => { const p = porTipo.get(t) || { n: 0, gravado: 0, exento: 0, iva: 0, total: 0 }; p.n++; p.gravado += x.gravado; p.exento += x.exento; p.iva += x.iva; p.total += x.total; porTipo.set(t, p); };
+      if (V) {
+        const fac = D.ventas, notas = D.notas;
+        filas.push({ valores: ['FACTURAS EMITIDAS (FEL)'], tipo: 'grupo', combinar: true });
+        fac.forEach((d) => { sumar(d.tipo, d); filas.push({ valores: [fmt.fechaDia(d.fecha), d.tipo, (d.serie ? d.serie + '-' : '') + d.numero, d.nit, d.anulada ? 'ANULADA' : d.nombre, r2(d.gravado), r2(d.exento), r2(d.iva), r2(d.total), '¤' + d.estadoDte], resaltar: d.estadoDte === 'PENDIENTE' }); });
+        filas.push({ valores: ['Subtotal facturas (' + fac.length + ')', '', '', '', '', r2(sum(fac.map((d) => d.gravado))), r2(sum(fac.map((d) => d.exento))), r2(sum(fac.map((d) => d.iva))), r2(sum(fac.map((d) => d.total))), ''], tipo: 'subtotal' });
+        filas.push({ valores: ['NOTAS DE CRÉDITO, DÉBITO Y ABONO (AJUSTES)'], tipo: 'grupo', combinar: true });
+        notas.forEach((d) => { sumar(d.tipo, d); filas.push({ valores: [fmt.fechaDia(d.fecha), d.tipo, (d.serie ? d.serie + '-' : '') + d.numero, d.nit, d.anulada ? 'ANULADA' : d.nombre, r2(d.gravado), r2(d.exento), r2(d.iva), r2(d.total), '¤' + d.estadoDte], resaltar: d.estadoDte === 'PENDIENTE' }); });
+        filas.push({ valores: ['Subtotal notas (' + notas.length + ')', '', '', '', '', r2(sum(notas.map((d) => d.gravado))), r2(sum(notas.map((d) => d.exento))), r2(sum(notas.map((d) => d.iva))), r2(sum(notas.map((d) => d.total))), ''], tipo: 'subtotal' });
+        filas.push({ valores: ['RETENCIONES RECIBIDAS DE CLIENTES'], tipo: 'grupo', combinar: true });
+        D.retenciones.forEach((r) => filas.push({ valores: [fmt.fechaDia(r.fecha), 'RET-' + r.tipo, r.constancia || r.documento, '', r.nombre, '', '', r.tipo === 'IVA' ? r2(r.monto) : '', r2(r.monto), ''] }));
+        const docs = [...fac, ...notas];
+        filas.push({ valores: ['TOTAL DE OPERACIONES DE VENTA DEL MES', '', '', '', '', r2(sum(docs.map((d) => d.gravado))), r2(sum(docs.map((d) => d.exento))), r2(sum(docs.map((d) => d.iva))), r2(sum(docs.map((d) => d.total))), ''], tipo: 'total' });
+        const pend = docs.filter((d) => d.estadoDte === 'PENDIENTE').length;
+        cfg = { titulo: 'Operaciones SAT de ventas · ' + MES[f.mes - 1] + ' ' + f.anio, archivo: 'operaciones_sat_ventas_' + f.anio + '_' + f.mes,
+          columnas: [col('Fecha', 'texto', 11), col('Tipo DTE', 'texto', 9), col('Documento', 'texto', 22), col('NIT', 'texto', 12), col('Cliente', 'texto', 34), col('Gravado Q', 'monto', 14), col('Exento Q', 'monto', 13), col('IVA Q', 'monto', 13), col('Total Q', 'monto', 14), col('Estado FEL', 'texto', 12)], filas,
+          kpis: [['Facturas', fac.length], ['Notas (ajustes)', notas.length], ['Certificadas en línea', docs.filter((d) => d.estadoDte === 'CERTIFICADO').length, 'ec-fin'], ['Pendientes de certificar', pend, pend ? 'ec-alerta' : ''], ['IVA débito', q(sum(docs.map((d) => d.iva)))], ['Total del mes', q(sum(docs.map((d) => d.total)))]] };
+      } else {
+        const cs = D.compras, ns = (ncp.data || []).map((n) => { const kk = ctx.moneda(n.moneda_id)?.iso && ctx.moneda(n.moneda_id).iso !== 'GTQ' ? num(n.tipo_cambio) || 1 : 1; const total = -num(n.valor) * kk; return { ...n, total, iva: total - total / 1.12 }; });
+        const clave = (nit, serie, numero) => nitN(nit) + '|' + String(serie || '').toUpperCase() + '|' + String(numero || '').replace(/^0+/, '');
+        const mSat = new Set(satL.filter((l) => !l.anulada).map((l) => clave(l.nit_emisor, l.serie, l.numero)));
+        filas.push({ valores: ['COMPRAS Y SERVICIOS DEL PERÍODO'], tipo: 'grupo', combinar: true });
+        cs.forEach((c) => { sumar(c.tipo, { gravado: c.bienes + c.servicios, exento: c.exento + c.idp, iva: c.iva, total: c.total }); const enSat = mSat.has(clave(c.nit, c.serie, c.documento)); filas.push({ valores: [fmt.fechaDia(c.fecha), c.tipo, (c.serie ? c.serie + '-' : '') + c.documento, c.nit, c.nombre, r2(c.bienes + c.servicios), r2(c.exento + c.idp), r2(c.iva), r2(c.total), satL.length ? (enSat ? '¤REGISTRADA' : '¤SIN REGISTRAR') : ''], resaltar: satL.length && !enSat && /FACTURA|ELECTR/i.test(c.tipo) }); });
+        filas.push({ valores: ['Subtotal compras (' + cs.length + ')', '', '', '', '', r2(sum(cs.map((c) => c.bienes + c.servicios))), r2(sum(cs.map((c) => c.exento + c.idp))), r2(sum(cs.map((c) => c.iva))), r2(sum(cs.map((c) => c.total))), ''], tipo: 'subtotal' });
+        filas.push({ valores: ['NOTAS DE CRÉDITO Y DÉBITO DE PROVEEDORES (AJUSTES)'], tipo: 'grupo', combinar: true });
+        ns.forEach((n) => filas.push({ valores: [fmt.fechaDia(n.fecha), n.tipo === 'NOTA DE DÉBITO' ? 'NDEB' : 'NCRE', (n.serie ? n.serie + '-' : '') + (n.documento || n.numero), n.nit || '', n.proveedor_nombre || '', '', '', r2(n.iva), r2(n.total), ''] }));
+        filas.push({ valores: ['RETENCIONES EMITIDAS A PROVEEDORES'], tipo: 'grupo', combinar: true });
+        cs.filter((c) => c.retIsr || c.retIva).forEach((c) => filas.push({ valores: [fmt.fechaDia(c.fechaRet || c.fecha), 'RET', c.formulario || '', c.nit, c.nombre, '', '', r2(c.retIva), r2(c.retIsr + c.retIva), ''] }));
+        const sinReg = satL.filter((l) => !l.anulada && !l.compra_id && !l.caja_documento_id && !l.generado);
+        if (satL.length) { filas.push({ valores: ['DTE EN LA SAT SIN REGISTRAR EN COMPRAS (' + sinReg.length + ')'], tipo: 'grupo', combinar: true }); sinReg.forEach((l) => filas.push({ valores: [diaLocal(l.fecha_emision), l.tipo_dte || '', (l.serie ? l.serie + '-' : '') + l.numero, l.nit_emisor || '', l.nombre_emisor || '', '', '', r2(l.iva), r2(l.gran_total), '¤SIN REGISTRAR'], resaltar: true })); }
+        filas.push({ valores: ['TOTAL DE OPERACIONES DE COMPRA DEL MES', '', '', '', '', r2(sum(cs.map((c) => c.bienes + c.servicios))), r2(sum(cs.map((c) => c.exento + c.idp))), r2(sum(cs.map((c) => c.iva)) + sum(ns.map((n) => n.iva))), r2(sum(cs.map((c) => c.total)) + sum(ns.map((n) => n.total))), ''], tipo: 'total' });
+        cfg = { titulo: 'Operaciones SAT de compras · ' + MES[f.mes - 1] + ' ' + f.anio, archivo: 'operaciones_sat_compras_' + f.anio + '_' + f.mes,
+          columnas: [col('Fecha', 'texto', 11), col('Tipo', 'texto', 10), col('Documento', 'texto', 20), col('NIT', 'texto', 12), col('Proveedor', 'texto', 34), col('Gravado Q', 'monto', 14), col('Exento / IDP Q', 'monto', 13), col('IVA Q', 'monto', 13), col('Total Q', 'monto', 14), col('En la SAT', 'texto', 13)], filas,
+          kpis: [['Compras', cs.length], ['Notas de proveedores', ns.length], ['IVA crédito', q(sum(cs.map((c) => c.iva)))], ['Retenciones emitidas', q(sum(cs.map((c) => c.retIsr + c.retIva)))], ['DTE en la SAT', satL.length || '—'], ['Sin registrar', satL.length ? sinReg.length : '—', sinReg.length ? 'ec-alerta' : '']] };
+      }
+      cfg.orgId = ctx.sel.org; cfg.locId = ctx.sel.loc; cfg.hoja = 'Operaciones SAT'; cfg.firmas = ['Contador registrado', 'Representante legal'];
+      cfg.parametros = ['Empresa: ' + empresaDe(ctx), 'NIT: ' + (D.em?.nit || '—'), 'Período: ' + MES[f.mes - 1] + ' ' + f.anio];
+      cfg.graficas = [G().barras('Operaciones por tipo de documento (Q)', [...porTipo.entries()].map(([t, p]) => ({ etiqueta: t + ' (' + p.n + ')', valor: Math.abs(p.total), texto: q(p.total) })).sort((x, y) => y.valor - x.valor)),
+        G().barras('IVA por tipo de documento (Q)', [...porTipo.entries()].map(([t, p]) => ({ etiqueta: t, valor: Math.abs(p.iva), texto: q(p.iva) })), G().COLORES.VERDE)];
+    }
+    function pintar() {
+      const c = cfg, cg = info.carga;
+      ctx.pDet.innerHTML = '<div class="bm-form cx-form cl-clasico"><div class="cl-banda">' + esc(c.titulo) + ' · ' + esc(c.parametros.slice(0, 2).join(' · ')) + '</div><div class="ec-kpis">' + c.kpis.map(([t, v, k]) => kpi(t, v, k)).join('') + '</div>'
+        + '<div class="sat-con"><i class="ti ti-plug-connected" aria-hidden="true"></i><div>' + (V ? '<b>Ventas en línea con la SAT:</b> cada factura y nota se certifica en línea en la FEL con el certificador (' + esc(info.D.em?.certificador || 'COFIDI') + '); el estado FEL de cada documento es el que devolvió la SAT. Las pendientes se certifican en Facturas Ventas o Notas.'
+          : '<b>Compras frente a la SAT:</b> ' + (cg ? 'último archivo de DTE recibidos cargado el ' + fmt.fechaDia(cg.fecha) + ' (carga ' + cg.numero + ' · ' + esc(cg.usuario || '') + ').' : 'todavía no se ha cargado el archivo de DTE recibidos del portal de la SAT.') + ' Descarga el archivo del mes en la Agencia Virtual y cárgalo para conciliar.') + '</div>' + (V ? '' : '<button type="button" class="boton secundario-sm" data-accion="carga"><i class="ti ti-upload" aria-hidden="true"></i> Cargar archivo de la SAT</button>') + '</div>'
+        + tabla(c, f.graficas) + '</div>';
+      window.CUENTAS_XLSX.ajustarAlto(cont);
+    }
+    cont.addEventListener('change', (e) => { const cm = ctx.cambioOrgLoc(e); if (cm === 'org' || cm === 'loc') return cargar(); const n = e.target.name; if (['anio', 'mes'].includes(n)) { f[n] = Number(e.target.value) || f[n]; return cargar(); } if (n === 'graficas') { f.graficas = e.target.checked; pintar(); } });
+    cont.addEventListener('click', (e) => {
+      const ex = e.target.closest('[data-exp]'); if (ex) return exportar(cfg, ex.dataset.exp, f.graficas);
+      const a = e.target.closest('[data-accion]')?.dataset.accion;
+      if (a === 'actualizar') return cargar();
+      if (a === 'carga') location.hash = '#/compras/carga-facturas-sat';
+    });
+    iniciar();
+  }
+  window.PANTALLAS['operaciones-sat-ventas'] = (cont) => operaciones(cont, 'VENTAS');
+  window.PANTALLAS['operaciones-sat-compras'] = (cont) => operaciones(cont, 'COMPRAS');
+
 })();

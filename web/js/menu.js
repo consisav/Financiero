@@ -252,7 +252,8 @@ window.MODULOS = [
           subgrupo: 'Procesos',
           icono: 'ti-settings-automation',
           pantallas: [
-            { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' }
+            { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' },
+            { id: 'operaciones-sat-ventas', nombre: 'Operaciones SAT', icono: 'ti-building-bank', descripcion: 'Facturas, notas (ajustes) y retenciones del mes con su estado FEL ante la SAT, resumen por tipo de DTE. PDF y Excel.' }
           ]
         },
         {
@@ -356,7 +357,8 @@ window.MODULOS = [
           subgrupo: 'Procesos',
           icono: 'ti-settings-automation',
           pantallas: [
-            { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' }
+            { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' },
+            { id: 'operaciones-sat-compras', nombre: 'Operaciones SAT', icono: 'ti-building-bank', descripcion: 'Compras, notas de proveedores (ajustes) y retenciones del mes, cruzadas con los DTE recibidos de la SAT. PDF y Excel.' }
           ]
         },
         {

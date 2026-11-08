@@ -2376,5 +2376,29 @@
    "Abre Hospital › Reportes y gráficas › Indicadores hospitalarios y elige {empresa}.",
    "Elige el período: % de ocupación, estancia promedio, giro de cama, intervalo de sustitución, ingreso por egreso, mortalidad y pacientes asegurados, con su fórmula y referencia."
   ]
+ },
+ "operaciones-sat-ventas": {
+  "puntos": [
+   "Todas las operaciones de venta del mes con efecto fiscal: facturas, notas de crédito, débito y abono, retenciones recibidas; con su estado FEL en la SAT."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Procesos › Operaciones SAT y elige {empresa}.",
+   "El mes actual se carga solo; cambia el año o el mes si necesitas otro.",
+   "Revisa los indicadores: certificadas en línea y pendientes de certificar (en rojo); certifícalas en Facturas Ventas o Notas.",
+   "Revisa el resumen por tipo de DTE en las gráficas y el total de IVA débito.",
+   "Imprime en PDF (con firmas) o Excel; «Actualizar» vuelve a leer las operaciones."
+  ]
+ },
+ "operaciones-sat-compras": {
+  "puntos": [
+   "Operaciones de compra del mes: compras, notas de proveedores, retenciones emitidas y DTE de la SAT sin registrar."
+  ],
+  "pasos": [
+   "Abre Compras › Procesos › Operaciones SAT y elige {empresa}.",
+   "Descarga en la Agencia Virtual de la SAT el archivo de facturas recibidas del mes y cárgalo con «Cargar archivo de la SAT».",
+   "Vuelve a Operaciones SAT: cada compra muestra si está en la SAT y al final aparecen los DTE de la SAT sin registrar (crédito fiscal en riesgo).",
+   "Registra lo faltante en Ingreso de compras y presiona «Actualizar».",
+   "Imprime en PDF (con firmas) o Excel."
+  ]
  }
 }
