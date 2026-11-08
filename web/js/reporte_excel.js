@@ -107,6 +107,8 @@
       // Los montos se redondean a centavos (evita residuos de la suma en coma flotante).
       r.values = f.valores.map((v, i) => (cols[i] && cols[i].tipo === 'monto' && typeof v === 'number') ? Math.round(v * 100) / 100 : plano(v ?? ''));
       cols.forEach((c, i) => { if (c.tipo === 'monto') r.getCell(i + 1).numFmt = MONTO; if (c.tipo === 'numero') r.getCell(i + 1).numFmt = NUMERO; if (c.tipo === 'entero') r.getCell(i + 1).numFmt = '#,##0'; if (c.tipo === 'porcentaje') r.getCell(i + 1).numFmt = '0.0%'; });
+      // formatos: { índice de columna: 'monto' | 'entero' } para un renglón (p. ej. un resumen al final del reporte).
+      if (f.formatos) Object.entries(f.formatos).forEach(([i, t]) => { const v = f.valores[Number(i)]; const c = r.getCell(Number(i) + 1); if (typeof v === 'number') c.value = t === 'monto' ? Math.round(v * 100) / 100 : v; c.numFmt = t === 'monto' ? MONTO : '#,##0'; c.alignment = { horizontal: 'right' }; });
       if (f.sangria) r.getCell(1).alignment = { indent: f.sangria };
       if (f.sangria && cfg.sangriaEn) cfg.sangriaEn.forEach((k) => { r.getCell(k).alignment = { indent: f.sangria }; });
       if (f.tipo === 'grupo') { r.font = { bold: true, color: { argb: AZUL } }; r.eachCell({ includeEmpty: true }, (x) => { x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF0F7' } }; }); }

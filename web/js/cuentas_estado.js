@@ -154,13 +154,13 @@
     function calcular() {
       const sel = selT();
       const g = new Map();
-      const de = (k) => { if (!g.has(k)) g.set(k, { t: terceros.find((x) => x.key === k) || { key: k, codigo: '', nombre: k, nit: '', tipo: '' }, ant: 0, cargos: 0, abonos: 0, movs: [], docs: new Map(), vence: new Map() }); return g.get(k); };
+      const de = (k) => { if (!g.has(k)) g.set(k, { t: terceros.find((x) => x.key === k) || { key: k, codigo: '', nombre: k, nit: '', tipo: '' }, ant: 0, cargos: 0, abonos: 0, movs: [], prev: [], docs: new Map(), vence: new Map() }); return g.get(k); };
       movs.forEach((m) => {
         if (m.fecha > f.hasta) return;
         if (sel && m.tercero !== sel.key) return;
         const a = de(m.tercero);
         if (f.tipo && a.t.tipo !== f.tipo) return;
-        if (m.fecha < f.desde) a.ant += m.cargo - m.abono; else { a.cargos += m.cargo; a.abonos += m.abono; a.movs.push(m); }
+        if (m.fecha < f.desde) { a.ant += m.cargo - m.abono; a.prev.push(m); } else { a.cargos += m.cargo; a.abonos += m.abono; a.movs.push(m); }
         a.docs.set(m.doc, (a.docs.get(m.doc) || 0) + m.cargo - m.abono);
         if (m.vence) a.vence.set(m.doc, m.vence);
       });
@@ -171,6 +171,17 @@
         a.docs.forEach((s, d) => { if (cero(s)) return; const v = a.vence.get(d); const mora = s > 0 && v && v < f.hasta ? diasEntre(v, f.hasta) : 0; a.mora = Math.max(a.mora, mora); a.aging[ANT.findIndex(([, x, y]) => mora >= x && mora <= y)] += s; });
         a.aging = a.aging.map(r2); a.vencido = r2(a.aging.slice(1).reduce((s, x) => s + x, 0));
         let s = a.ant; a.movs = a.movs.map((m) => { s += m.cargo - m.abono; return { ...m, saldo: r2(s) }; });
+        // Documentos pendientes al inicio del periodo: cada factura (o compra) con saldo, con todos sus movimientos
+        // anteriores (notas, retenciones, cobros o pagos) en orden; su saldo acumulado llega al saldo anterior.
+        const antDoc = new Map(), ini = new Map();
+        a.prev.forEach((m) => { antDoc.set(m.doc, (antDoc.get(m.doc) || 0) + m.cargo - m.abono); if (!ini.has(m.doc) || m.fecha < ini.get(m.doc)) ini.set(m.doc, m.fecha); });
+        let p = 0;
+        a.pend = a.prev.filter((m) => !cero(antDoc.get(m.doc)))
+          .sort((x, y) => ini.get(x.doc).localeCompare(ini.get(y.doc)) || String(x.doc).localeCompare(String(y.doc)) || x.fecha.localeCompare(y.fecha) || y.cargo - x.cargo)
+          .map((m) => { p += m.cargo - m.abono; return { ...m, saldo: r2(p) }; });
+        a.pendDocs = [...antDoc.values()].filter((x) => !cero(x)).length;
+        a.pendC = r2(a.pend.reduce((t, m) => t + m.cargo, 0)); a.pendA = r2(a.pend.reduce((t, m) => t + m.abono, 0));
+        delete a.prev;
         return a;
       });
       if (!sel) lista = lista.filter((a) => (f.mostrar === 'TODOS' ? true : f.mostrar === 'CON MOVIMIENTO' ? a.movs.length || !cero(a.fin) : f.mostrar === 'VENCIDOS' ? a.vencido > 0.004 : !cero(a.fin)));
@@ -181,14 +192,35 @@
       return { lista, tot, uno: sel };
     }
 
+    // Detalle de un cliente o proveedor: documentos pendientes al inicio (saldo anterior), movimientos del periodo
+    // y su resumen. Cada renglón: { sec } título de sección, { mov } movimiento, { sub, c, a, s } subtotal.
+    const detalle = (a) => {
+      const out = [];
+      const corte = fmt.fechaDia(sumar(f.desde, -1));
+      out.push({ sec: `Documentos pendientes al ${corte}${a.pendDocs ? ` · ${a.pendDocs} documento(s)` : ''}` });
+      if (a.pend.length) a.pend.forEach((x) => out.push({ mov: x }));
+      else out.push({ nada: 'Sin documentos pendientes.' });
+      out.push({ sub: `Saldo anterior al ${corte}`, c: a.pendC, a: a.pendA, s: a.ant });
+      out.push({ sec: `Movimientos del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` });
+      if (a.movs.length) a.movs.forEach((x) => out.push({ mov: x }));
+      else out.push({ nada: 'Sin movimientos en el periodo.' });
+      out.push({ sub: 'Movimientos del periodo', c: a.cargos, a: a.abonos, s: a.fin });
+      return out;
+    };
+
     // ---------- Pantalla ----------
     const m = (n) => fmt.monto(n);
     const tablaMovs = (a) => `
       <table class="ec-movs"><thead><tr><th>Fecha</th><th>Tipo</th><th>Documento</th><th>Detalle</th><th>Vence</th><th class="num">Cargos</th><th class="num">Abonos</th><th class="num">Saldo</th></tr></thead>
-      <tbody><tr class="ec-ant"><td>${esc(fmt.fechaDia(f.desde))}</td><td colspan="6">Saldo anterior</td><td class="num">${m(a.ant)}</td></tr>
-      ${a.movs.map((x) => `<tr><td>${esc(fmt.fechaDia(x.fecha))}</td><td><span class="ec-tipo ec-${x.cargo ? 'c' : 'a'}">${esc(x.tipo)}</span></td><td>${esc(x.documento)}</td><td class="ec-det">${esc(x.detalle)}</td><td>${esc(fmt.fechaDia(x.vence || ''))}</td><td class="num">${x.cargo ? m(x.cargo) : ''}</td><td class="num">${x.abono ? m(x.abono) : ''}</td><td class="num fuerte">${m(x.saldo)}</td></tr>`).join('') || '<tr><td colspan="8" class="ec-sin">Sin movimientos en el periodo.</td></tr>'}</tbody>
-      <tfoot><tr><td colspan="5">Saldo al ${esc(fmt.fechaDia(f.hasta))}</td><td class="num">${m(a.cargos)}</td><td class="num">${m(a.abonos)}</td><td class="num">${m(a.fin)}</td></tr></tfoot></table>
-      ${antiguedad(a.aging, a.fin)}`;
+      <tbody>${detalle(a).map((r) => r.sec ? `<tr class="ec-sec"><td colspan="8">${esc(r.sec)}</td></tr>`
+        : r.nada ? `<tr><td colspan="8" class="ec-sin">${esc(r.nada)}</td></tr>`
+        : r.sub ? `<tr class="ec-sub"><td colspan="5">${esc(r.sub)}</td><td class="num">${m(r.c)}</td><td class="num">${m(r.a)}</td><td class="num">${m(r.s)}</td></tr>`
+        : (({ mov: x }) => `<tr><td>${esc(fmt.fechaDia(x.fecha))}</td><td><span class="ec-tipo ec-${x.cargo ? 'c' : 'a'}">${esc(x.tipo)}</span></td><td>${esc(x.documento)}</td><td class="ec-det">${esc(x.detalle)}</td><td>${esc(fmt.fechaDia(x.vence || ''))}</td><td class="num">${x.cargo ? m(x.cargo) : ''}</td><td class="num">${x.abono ? m(x.abono) : ''}</td><td class="num fuerte">${m(x.saldo)}</td></tr>`)(r)).join('')}</tbody></table>
+      ${resumenDe(a)}`;
+    // Resumen de cada cliente o proveedor, al final de su detalle.
+    const resumenDe = (a) => `<div class="ec-resumen"><b class="ec-resumen-t"><i class="ti ti-report-analytics" aria-hidden="true"></i> Resumen</b>
+      <div class="ec-res-k"><span><small>Saldo anterior</small>${m(a.ant)}</span><span><small>(+) Cargos</small>${m(a.cargos)}</span><span><small>(−) Abonos</small>${m(a.abonos)}</span><span class="ec-fin"><small>Saldo al ${fmt.fechaDia(f.hasta)}</small>${m(a.fin)}</span><span class="${a.vencido > 0.004 ? 'ec-venc' : ''}"><small>Vencido</small>${m(a.vencido)}</span><span><small>Mayor mora</small>${a.mora} días</span></div>
+      ${antiguedad(a.aging, a.fin)}</div>`;
     const antiguedad = (ag, fin) => `<div class="ec-ant-bar">${ANT.map(([t], i) => `<div class="${i && ag[i] > 0.004 ? 'ec-venc' : ''}"><small>${t}${i ? ' días' : ''}</small><b>${m(ag[i])}</b>${fin > 0.004 ? `<i style="width:${Math.max(0, Math.min(100, (ag[i] / fin) * 100)).toFixed(1)}%"></i>` : ''}</div>`).join('')}</div>`;
 
     function pintar() {
@@ -231,7 +263,8 @@
         .ec-k .r b{color:#b42318}
         table.m td,table.m th{font-size:10.5px;padding:3px 5px}tr.a td{background:#f4f6fa;font-style:italic}
         .ag{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid #c9d4e3;margin:-4px 0 10px;font-size:10px}.ag div{padding:3px 6px;border-right:1px solid #e3e8f0}.ag div:last-child{border:0}.ag b{display:block;font-size:11px}.ag .r b{color:#b42318}
-        .blq{break-inside:avoid}
+        .blq{break-inside:avoid}tr.sec td{background:#dfe7f2;color:#1f3a5f;font-weight:bold;font-size:10.5px}tr.s td{font-weight:bold;background:#f1f4f9}td.a{font-style:italic;color:#666}
+        .rs{border:1px solid #c9d4e3;border-radius:4px;padding:6px 8px 2px;margin:-4px 0 14px;break-inside:avoid}.rs>b{font-size:11px;color:#1f3a5f;text-transform:uppercase}.rs .ec-k{margin:4px 0 6px}.rs .ag{margin:0 0 6px}
       </style>`;
       const k = `<div class="ec-k"><div><small>Saldo anterior</small><b>${m(tot.ant)}</b></div><div><small>Cargos</small><b>${m(tot.cargos)}</b></div><div><small>Abonos</small><b>${m(tot.abonos)}</b></div><div><small>Saldo al ${fmt.fechaDia(f.hasta)}</small><b>${m(tot.fin)}</b></div><div class="${tot.vencido > 0.004 ? 'r' : ''}"><small>Vencido</small><b>${m(tot.vencido)}</b></div></div>`;
       const ag = (x) => `<div class="ag">${ANT.map(([t], i) => `<div class="${i && x[i] > 0.004 ? 'r' : ''}">${t}${i ? ' días' : ''}<b>${m(x[i])}</b></div>`).join('')}</div>`;
@@ -241,12 +274,14 @@
       let cuerpo;
       if (f.contenido === 'RESUMIDO') cuerpo = k + ag(tot.aging) + res;
       else {
-        cuerpo = (lista.length > 1 ? k + ag(tot.aging) : '') + lista.map((a) => `<div class="${a.movs.length < 25 ? 'blq' : ''}">
+        cuerpo = (lista.length > 1 ? k + ag(tot.aging) : '') + lista.map((a) => `<div class="${a.movs.length + a.pend.length < 25 ? 'blq' : ''}">
           <div class="ec-t"><b>${esc(`${a.t.codigo !== '' ? `${a.t.codigo} · ` : ''}${a.t.nombre}`)}</b><span>NIT ${esc(a.t.nit || '—')}${a.t.tipo ? ` · ${esc(a.t.tipo)}` : ''}${a.t.dias != null ? ` · Crédito ${a.t.dias} días` : ''}${a.mora ? ` · Mayor mora ${a.mora} días` : ''}</span></div>
           <table class="m"><thead><tr><th>Fecha</th><th>Tipo</th><th>Documento</th><th>Detalle</th><th>Vence</th><th class="n">Cargos</th><th class="n">Abonos</th><th class="n">Saldo</th></tr></thead>
-          <tbody><tr class="a"><td>${esc(fmt.fechaDia(f.desde))}</td><td colspan="6">Saldo anterior</td><td class="n">${m(a.ant)}</td></tr>
-          ${a.movs.map((x) => `<tr><td>${esc(fmt.fechaDia(x.fecha))}</td><td>${esc(x.tipo)}</td><td>${esc(x.documento)}</td><td>${esc(x.detalle)}</td><td>${esc(fmt.fechaDia(x.vence || ''))}</td><td class="n">${x.cargo ? m(x.cargo) : ''}</td><td class="n">${x.abono ? m(x.abono) : ''}</td><td class="n">${m(x.saldo)}</td></tr>`).join('')}</tbody>
-          <tfoot><tr><td colspan="5">Saldo al ${esc(fmt.fechaDia(f.hasta))}</td><td class="n">${m(a.cargos)}</td><td class="n">${m(a.abonos)}</td><td class="n">${m(a.fin)}</td></tr></tfoot></table>${ag(a.aging)}</div>`).join('')
+          <tbody>${detalle(a).map((r) => r.sec ? `<tr class="sec"><td colspan="8">${esc(r.sec)}</td></tr>`
+            : r.nada ? `<tr><td colspan="8" class="a">${esc(r.nada)}</td></tr>`
+            : r.sub ? `<tr class="s"><td colspan="5">${esc(r.sub)}</td><td class="n">${m(r.c)}</td><td class="n">${m(r.a)}</td><td class="n">${m(r.s)}</td></tr>`
+            : (({ mov: x }) => `<tr><td>${esc(fmt.fechaDia(x.fecha))}</td><td>${esc(x.tipo)}</td><td>${esc(x.documento)}</td><td>${esc(x.detalle)}</td><td>${esc(fmt.fechaDia(x.vence || ''))}</td><td class="n">${x.cargo ? m(x.cargo) : ''}</td><td class="n">${x.abono ? m(x.abono) : ''}</td><td class="n">${m(x.saldo)}</td></tr>`)(r)).join('')}</tbody></table>
+          <div class="rs"><b>Resumen</b><div class="ec-k"><div><small>Saldo anterior</small><b>${m(a.ant)}</b></div><div><small>(+) Cargos</small><b>${m(a.cargos)}</b></div><div><small>(−) Abonos</small><b>${m(a.abonos)}</b></div><div><small>Saldo al ${fmt.fechaDia(f.hasta)}</small><b>${m(a.fin)}</b></div><div class="${a.vencido > 0.004 ? 'r' : ''}"><small>Vencido</small><b>${m(a.vencido)}</b></div></div>${ag(a.aging)}</div></div>`).join('')
           + (lista.length > 1 ? `<h3>Resumen por ${F.tercero.toLowerCase()}</h3>${res}` : '');
       }
       imprimir(F.titulo, `${est}<h1>${esc(F.titulo)}${f.contenido === 'RESUMIDO' ? ' · Resumido' : ''}</h1><h2>${esc(parametros().join(' · '))}</h2>${cuerpo}`, { orgId: ctx.sel.org, locId: ctx.sel.loc, horizontal: f.contenido === 'RESUMIDO' });
@@ -266,14 +301,26 @@
         const filas = [];
         lista.forEach((a) => {
           filas.push({ valores: [`${a.t.codigo !== '' ? `${a.t.codigo} · ` : ''}${a.t.nombre}   ·   NIT ${a.t.nit || '—'}${a.t.tipo ? `   ·   ${a.t.tipo}` : ''}${a.t.dias != null ? `   ·   Crédito ${a.t.dias} días` : ''}${a.mora ? `   ·   Mayor mora ${a.mora} días` : ''}`], tipo: 'grupo', combinar: true });
-          filas.push({ valores: [fmt.fechaDia(f.desde), 'Saldo anterior', '', '', '', '', '', a.ant], tenue: true });
-          a.movs.forEach((x) => filas.push({ valores: [fmt.fechaDia(x.fecha), x.tipo, x.documento, x.detalle, fmt.fechaDia(x.vence || ''), x.cargo || '', x.abono || '', x.saldo] }));
-          filas.push({ valores: [`Saldo al ${fmt.fechaDia(f.hasta)}`, '', '', '', '', r2(a.cargos), r2(a.abonos), a.fin], tipo: 'subtotal' });
+          detalle(a).forEach((r) => {
+            if (r.sec) filas.push({ valores: [r.sec], combinar: true, tipo: 'subtotal' });
+            else if (r.nada) filas.push({ valores: ['', r.nada], tenue: true });
+            else if (r.sub) filas.push({ valores: [r.sub, '', '', '', '', r2(r.c), r2(r.a), r2(r.s)], tipo: 'subtotal' });
+            else { const x = r.mov; filas.push({ valores: [fmt.fechaDia(x.fecha), x.tipo, x.documento, x.detalle, fmt.fechaDia(x.vence || ''), x.cargo || '', x.abono || '', x.saldo] }); }
+          });
+          filas.push({ valores: ['Resumen', '', '', `Saldo anterior Q ${m(a.ant)}   ·   Vencido Q ${m(a.vencido)}${a.mora ? `   ·   Mayor mora ${a.mora} días` : ''}`, '', r2(a.cargos), r2(a.abonos), a.fin], resaltar: 2 });
           filas.push({ valores: [agTxt(a.aging)], tipo: 'nota', combinar: true });
+          filas.push({ valores: [''] });
         });
         filas.push({ valores: [`Total · ${lista.length} ${F.plural}`, '', '', '', '', r2(tot.cargos), r2(tot.abonos), r2(tot.fin)], tipo: 'total' });
-        if (lista.length > 1) filas.push({ valores: [`Saldo anterior total Q ${m(tot.ant)}   ·   Vencido Q ${m(tot.vencido)}   ·   ${agTxt(tot.aging)}`], tipo: 'nota', combinar: true });
-        cfg = { ...base, hoja: 'Detallado', columnas: [{ titulo: 'Fecha', ancho: 12, tipo: 'texto' }, { titulo: 'Tipo', ancho: 16, tipo: 'texto' }, { titulo: 'Documento', ancho: 20, tipo: 'texto' }, { titulo: 'Detalle', ancho: 40, tipo: 'texto' }, { titulo: 'Vence', ancho: 12, tipo: 'texto' }, { titulo: 'Cargos', ancho: 15, tipo: 'monto' }, { titulo: 'Abonos', ancho: 15, tipo: 'monto' }, { titulo: 'Saldo', ancho: 16, tipo: 'monto' }], filas };
+        if (lista.length > 1) {
+          filas.push({ valores: [`Saldo anterior total Q ${m(tot.ant)}   ·   Vencido Q ${m(tot.vencido)}   ·   ${agTxt(tot.aging)}`], tipo: 'nota', combinar: true });
+          filas.push({ valores: [''] });
+          filas.push({ valores: [`RESUMEN POR ${F.tercero.toUpperCase()}`], tipo: 'grupo', combinar: true });
+          filas.push({ valores: ['Código', 'NIT', 'Mayor mora', 'Nombre', 'Saldo anterior', 'Cargos', 'Abonos', 'Saldo final'], resaltar: 2 });
+          lista.forEach((a) => filas.push({ valores: [String(a.t.codigo ?? ''), a.t.nit || '', a.mora, a.t.nombre, a.ant, r2(a.cargos), r2(a.abonos), a.fin], formatos: { 2: 'entero', 4: 'monto' } }));
+          filas.push({ valores: [`${lista.length} ${F.plural}`, '', '', '', r2(tot.ant), r2(tot.cargos), r2(tot.abonos), r2(tot.fin)], tipo: 'total', formatos: { 4: 'monto' } });
+        }
+        cfg = { ...base, hoja: 'Detallado', columnas: [{ titulo: 'Fecha', ancho: 12, tipo: 'texto' }, { titulo: 'Tipo', ancho: 16, tipo: 'texto' }, { titulo: 'Documento', ancho: 20, tipo: 'texto' }, { titulo: 'Detalle', ancho: 40, tipo: 'texto' }, { titulo: 'Vence', ancho: 15, tipo: 'texto' }, { titulo: 'Cargos', ancho: 15, tipo: 'monto' }, { titulo: 'Abonos', ancho: 15, tipo: 'monto' }, { titulo: 'Saldo', ancho: 16, tipo: 'monto' }], filas };
       }
       return window.REPORTE_XLSX.generar(cfg).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
     }
