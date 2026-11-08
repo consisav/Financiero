@@ -162,7 +162,7 @@
           ${f?.estado === 'ANULADA' ? `<p class="tk-aviso bm-anulado"><i class="ti ti-ban" aria-hidden="true"></i> Anulada por ${esc(f.anulada_por || '')} el ${esc(fmt.fechaHora(f.anulada_en))}: ${esc(f.motivo_anulacion || '')}</p>` : ''}
           <div class="dpb vf ${ed ? 'editando' : 'consulta'}">
             <div class="dpb-control">
-              <span><small>Interno</small><b>${f ? f.numero : 'Automático'}</b></span>
+              <span><small>Interno</small><b>${f ? `${f.no_interno ? `${esc(f.no_interno)} · ` : ''}${f.numero}` : 'Automático'}</b></span>
               <span><small>Emisión</small><b>${esc(fmt.fechaHora(v.fecha_emision))}</b></span>
               <span><small>Certificación</small><b>${v.fecha_certificacion ? esc(fmt.fechaHora(v.fecha_certificacion)) : '—'}</b></span>
               <span><small>Usuario</small><b>${esc(f ? f.usuario || '' : (ctx.yo.usuario || '').toUpperCase())}</b></span>

@@ -253,7 +253,9 @@ window.MODULOS = [
           icono: 'ti-user-dollar',
           pantallas: [
             { id: 'clientes', nombre: 'Clientes', icono: 'ti-users', descripcion: 'Clientes de la empresa: documento (NIT, CUI…), contacto, vendedor, tipo de precio, entrega, crédito, ubicación y datos de exportación.' },
-            { id: 'vendedores', nombre: 'Vendedores', icono: 'ti-user-dollar', descripcion: 'Vendedores de la empresa: contacto, comisiones (general, crédito y contado), siglas y usuario del sistema.' }
+            { id: 'vendedores', nombre: 'Vendedores', icono: 'ti-user-dollar', descripcion: 'Vendedores de la empresa: contacto, comisiones (general, crédito y contado), siglas y usuario del sistema.' },
+            { id: 'series-recibos', nombre: 'Series Recibos', icono: 'ti-list-numbers', descripcion: 'Series de los recibos, retenciones y exenciones: recibo inicial, serie principal, tipo y si se muestra en la lista.' },
+            { id: 'correlativo-dte', nombre: 'Correlativo - DTE', icono: 'ti-123', descripcion: 'Correlativo interno de las facturas (FE) y de las notas de crédito (NC): el siguiente documento toma el número siguiente.' }
           ]
         },
         {
@@ -265,6 +267,19 @@ window.MODULOS = [
             { id: 'tipos-de-precio', nombre: 'Tipos de precio', icono: 'ti-currency-dollar', descripcion: 'Listas de precio: % de utilidad, % de descuento, factor y estado.' },
             { id: 'presentaciones-productos', nombre: 'Presentación productos', icono: 'ti-box', descripcion: 'Presentaciones en que vienen los productos.', separador: true },
             { id: 'productos-y-servicios', nombre: 'Productos y servicios', icono: 'ti-package', descripcion: 'Definición de artículos: clasificación y tipo, proveedor, presentación, medida, punto mínimo, costo, ubicación, bodega, precios e imagen.' }
+          ]
+        }
+      ],
+      mantenimientos: [
+        {
+          subgrupo: 'Ventas',
+          icono: 'ti-truck-delivery',
+          pantallas: [
+            { id: 'envios', nombre: 'Envíos', icono: 'ti-truck', descripcion: 'Envíos de productos a un cliente: bodega, cliente, forma de pago, precios y productos con lote y vencimiento; impresión tipo factura o tipo envío.' },
+            { id: 'contrasenas-cobros', nombre: 'Administración de Contraseñas Cobros', icono: 'ti-key', descripcion: 'Recepción de facturas por el cliente: contraseña de cobro, días de crédito y fecha estimada de cobro de cada factura.' },
+            { id: 'despachos', nombre: 'Despachos', icono: 'ti-package-export', descripcion: 'Facturas por despachar por fechas, cliente y estado; despacho de productos con guías, reportes de salida y envío, mensajero y entrega.' },
+            { id: 'retenciones', nombre: 'Retenciones', icono: 'ti-receipt-tax', descripcion: 'Constancias de retención (IVA o ISR) recibidas del cliente y aplicadas a sus facturas.' },
+            { id: 'exenciones', nombre: 'Exenciones', icono: 'ti-shield-check', descripcion: 'Constancias de exención del cliente aplicadas a sus facturas.' }
           ]
         }
       ],
@@ -301,7 +316,7 @@ window.MODULOS = [
     opciones: {
       catalogos: ['Formas de pago'],
       registros: ['Cotizaciones', 'Pedidos', 'Notas de crédito', 'Cobros'],
-      mantenimientos: ['Series de documentos', 'Listas de precios', 'Descuentos'],
+      mantenimientos: ['Listas de precios', 'Descuentos'],
       procesos: ['Anulación de documentos', 'Antigüedad de saldos', 'Comisiones'],
       reportes: ['Ventas por período', 'Ventas por cliente', 'Cuentas por cobrar', 'Gráfica de ventas'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']

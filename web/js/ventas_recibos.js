@@ -15,10 +15,19 @@
   const TIPOS_PAGO = ['CANCELACIÓN', 'ABONO', 'ANTICIPO'];
   const PESTANAS = [['FACTURAS', 'Facturas', 'ti-file-invoice'], ['RECIBOS', 'Recibos', 'ti-receipt-2']];
 
-  window.PANTALLAS.recibos = function (cont, m, extra) {
-    const ctx = montar(cont, { titulo: 'Recibos', icono: 'ti-receipt-2', clase: 'bk-movimientos bm-solo vf-facturas vr-recibos', grupo: 'Ventas · Registros' });
+  // Recibos, Retenciones y Exenciones: la misma pantalla con su clase, su serie y sus textos.
+  const CLASES = {
+    recibos: { clase: 'RECIBO', titulo: 'Recibos', nombre: 'Recibo', nuevo: 'Nuevo recibo', fisico: 'Recibo físico', serie: 'DIG', icono: 'ti-receipt-2' },
+    retenciones: { clase: 'RETENCIÓN', titulo: 'Retenciones', nombre: 'Retención', nuevo: 'Nueva retención', fisico: 'Retención física', serie: 'RET', icono: 'ti-receipt-tax', retencion: true },
+    exenciones: { clase: 'EXENCIÓN', titulo: 'Exenciones', nombre: 'Exención', nuevo: 'Nueva exención', fisico: 'Exención física', serie: 'EXE', icono: 'ti-shield-check' }
+  };
+  const RUTA = { RECIBO: 'recibos', 'RETENCIÓN': 'retenciones', 'EXENCIÓN': 'exenciones' };
+  Object.entries(CLASES).forEach(([clave, cfg]) => { window.PANTALLAS[clave] = (cont, m, extra) => pantalla(cont, m, extra, cfg); });
+
+  function pantalla(cont, m, extra, cfg) {
+    const ctx = montar(cont, { titulo: cfg.titulo, icono: cfg.icono, clase: 'bk-movimientos bm-solo vf-facturas vr-recibos', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
-    let clientes = [], vendedores = [], locCargada = null;
+    let clientes = [], vendedores = [], series = [], conClase = false, locCargada = null;
     let actual = null, modificando = false, pestana = 'FACTURAS', serieLibre = false, tipoImp = 'ORIGINAL';
     let lineas = [], asociado = null, listado = null, listaTexto = '';
 
@@ -41,6 +50,7 @@
       await cargarLocalidad();
       if (extra && /^\d+$/.test(String(extra))) {
         const { data } = await sb.from('recibos_venta').select('*').eq('id', Number(extra)).maybeSingle();
+        if (data && data.clase && data.clase !== cfg.clase && RUTA[data.clase]) { location.hash = `#/facturacion/${RUTA[data.clase]}/${data.id}`; return; }
         if (data) return abrir(data);
       }
       // Desde Facturas Ventas («Registrar recibo»): recibo nuevo con el cliente, el saldo y la factura.
@@ -64,7 +74,11 @@
         sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo')
       ]);
       clientes = c.data || []; vendedores = v.data || [];
+      // Series de la clase (script 138); sin él, la serie se escribe libre.
+      const se = await sb.from('series_recibo').select('serie, recibo_inicial, principal, tipo, mostrar').eq('localidad_id', loc).eq('tipo', cfg.clase).order('serie');
+      conClase = !se.error; series = se.data || [];
     }
+    const serieDef = () => (series.find((x) => x.principal) || series.find((x) => x.mostrar) || {}).serie || cfg.serie;
 
     async function abrir(r) {
       if (r && r.localidad_id !== locCargada) { ctx.sel.loc = r.localidad_id; ctx.sel.org = r.organizacion_id; pintarFiltros(); await cargarLocalidad(); }
@@ -86,8 +100,8 @@
 
     const valoresNuevos = () => {
       const q = gtq();
-      return { serie: 'DIG', recibo_fisico: '', fecha: fmt.hoy(), moneda_id: q?.id || null, tipo_cambio: 1, valor: 0, cliente_id: null, nombre: '', descripcion: '', observaciones: '', vendedor_id: null,
-        forma: 'TRANSFERENCIA', tipo_pago: 'CANCELACIÓN', cuenta_bancaria: '', banco: '', documento: '', valor_documento: 0, incluir_retencion: false, tipo_retencion: 'IVA', pct_retencion: 0, valor_retencion: 0,
+      return { serie: serieDef(), recibo_fisico: '', fecha: fmt.hoy(), moneda_id: q?.id || null, tipo_cambio: 1, valor: 0, cliente_id: null, nombre: '', descripcion: '', observaciones: '', vendedor_id: null,
+        forma: 'TRANSFERENCIA', tipo_pago: 'CANCELACIÓN', cuenta_bancaria: '', banco: '', documento: '', valor_documento: 0, incluir_retencion: !!cfg.retencion, tipo_retencion: 'IVA', pct_retencion: cfg.retencion ? 25 : 0, valor_retencion: 0,
         gasto_fecha: fmt.hoy(), gasto_concepto: '', gasto_valor: 0, firma_digital: true, situacion: 'EMITIDO' };
     };
 
@@ -106,7 +120,7 @@
       ctx.pDet.innerHTML = `
         <form class="tk-form ta-form bm-form vf-form vr-form" novalidate>
           <header class="tk-titulo bm-titulo">
-            <div class="tk-titulo-texto"><small>Recibos · ${esc(ctx.localidad(r?.localidad_id || ctx.sel.loc)?.codigo || '')} ${esc(ctx.localidad(r?.localidad_id || ctx.sel.loc)?.nombre_comercial || '')}</small><h2>${r ? `Recibo ${esc([r.serie, r.recibo_fisico].filter((x) => x != null && x !== '').join('-') || r.numero)}` : 'Nuevo recibo'}</h2></div>
+            <div class="tk-titulo-texto"><small>${esc(cfg.titulo)} · ${esc(ctx.localidad(r?.localidad_id || ctx.sel.loc)?.codigo || '')} ${esc(ctx.localidad(r?.localidad_id || ctx.sel.loc)?.nombre_comercial || '')}</small><h2>${r ? `${esc(cfg.nombre)} ${esc([r.serie, r.recibo_fisico].filter((x) => x != null && x !== '').join('-') || r.numero)}` : esc(cfg.nuevo)}</h2></div>
             <div class="tk-marcas"><span class="pc-marca ${cls}">${txt}</span>${modificando ? ' <span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}</div>
             <div class="tk-titulo-acciones">
               <a class="boton secundario-sm" href="#/facturacion/consulta-de-recibos"><i class="ti ti-file-search" aria-hidden="true"></i> Consulta</a>
@@ -120,8 +134,8 @@
           <div class="vr-arriba">
             <section class="vfb-card vr-enc">
               <div class="vr-g vr-g1">
-                <label class="campo"><span>Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="10" ${ed && (serieLibre || !r) ? '' : 'disabled'}></label>
-                <label class="campo"><span>Recibo físico</span><input name="recibo_fisico" inputmode="numeric" value="${esc(String(v.recibo_fisico ?? ''))}" ${ed && (serieLibre || !r) ? '' : 'disabled'}></label>
+                <label class="campo"><span>Serie</span><input name="serie" list="vr-series" value="${esc(v.serie || '')}" maxlength="10" ${ed && (serieLibre || !r) ? '' : 'disabled'}></label>
+                <label class="campo"><span>${esc(cfg.fisico)}</span><input name="recibo_fisico" inputmode="numeric" value="${esc(String(v.recibo_fisico ?? ''))}" ${ed && (serieLibre || !r) ? '' : 'disabled'}></label>
                 <label class="campo"><span>Fecha</span><input type="date" name="fecha" value="${esc(v.fecha || '')}" ${dis}></label>
                 <label class="campo"><span>Estado</span><input value="${txt}" disabled></label>
                 <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((x) => `<option value="${x.id}" ${x.id === v.moneda_id ? 'selected' : ''}>${esc(x.nombre)}</option>`).join('')}</select></label>
@@ -145,6 +159,7 @@
                 <label class="campo"><span>Documento</span><input name="documento" value="${esc(v.documento || '')}" maxlength="60" ${dis}></label>
                 <label class="campo"><span>Valor documento</span><input type="number" step="0.01" min="0" name="valor_documento" value="${esc(String(v.valor_documento ?? ''))}" ${dis}></label>
               </div>
+              <datalist id="vr-series">${series.filter((x) => x.mostrar).map((x) => `<option value="${esc(x.serie)}"></option>`).join('')}</datalist>
               <datalist id="vr-clientes">${clientes.filter((x) => x.estado !== 'INACTIVO').map((x) => `<option value="${esc(x.nombre)}${x.tipo_documento !== 'CF' && x.documento ? ` · NIT ${esc(x.documento)}` : ''} — ${x.codigo}"></option>`).join('')}</datalist>
             </section>
             <aside class="vr-lado">
@@ -223,6 +238,7 @@
     async function cargarListado() {
       const txt = listaTexto.trim();
       let q = sb.from('recibos_venta').select('id, numero, serie, recibo_fisico, fecha, estado, situacion, nombre, valor, forma, tipo_pago, cliente_id').eq('localidad_id', ctx.sel.loc);
+      if (conClase) q = q.eq('clase', cfg.clase);
       if (actual?.cliente_id && txt === (actual.nombre || '')) q = q.eq('cliente_id', actual.cliente_id);
       else if (txt) q = q.ilike('nombre', `%${txt.replace(/[%_]/g, '')}%`);
       const { data, error } = await q.order('fecha', { ascending: false }).order('numero', { ascending: false }).limit(500);
@@ -235,7 +251,7 @@
       return `<div class="vf-lista-barra">
           <label class="campo vf-lista-cliente"><span>Consultar por cliente</span><input name="lista_texto" value="${esc(listaTexto)}" placeholder="Nombre del cliente" autocomplete="off"></label>
           <button type="button" class="boton secundario-sm" data-accion="lista-consultar"><i class="ti ti-search" aria-hidden="true"></i> Consultar</button>
-          <span class="vf-lista-resumen">${listado ? `<b>${l.length}</b> recibos · <b>${fmt.monto(vig.reduce((t, x) => t + Number(x.valor || 0), 0))}</b> vigentes` : ''}</span>
+          <span class="vf-lista-resumen">${listado ? `<b>${l.length}</b> ${esc(cfg.titulo.toLowerCase())} · <b>${fmt.monto(vig.reduce((t, x) => t + Number(x.valor || 0), 0))}</b> vigentes` : ''}</span>
         </div>
         <div class="pc-lineas">${!listado ? '<p class="tk-vacio">Cargando…</p>' : `<table class="vf-lista"><thead><tr><th>No.</th><th>Serie</th><th>Recibo físico</th><th>Fecha</th><th>Estado</th><th>Nombre</th><th>Forma</th><th>Tipo</th><th class="num">Valor</th></tr></thead>
           <tbody>${l.map((x) => { const [cls, txt] = estadoDe(x); return `<tr data-abrir-recibo="${x.id}" class="${x.id === actual?.id ? 'actual' : ''}" title="Abrir el recibo"><td class="fuerte">${x.numero ?? ''}</td><td>${esc(x.serie || '')}</td><td>${esc(String(x.recibo_fisico ?? ''))}</td><td>${esc(fmt.fechaDia(x.fecha))}</td><td><span class="pc-marca ${cls}">${txt}</span></td><td>${esc(x.nombre || '')}</td><td>${esc(x.forma || '')}</td><td>${esc(x.tipo_pago || '')}</td><td class="num fuerte">${fmt.monto(x.valor)}</td></tr>`; }).join('') || '<tr><td colspan="9" class="tk-vacio">No hay recibos para ese cliente.</td></tr>'}</tbody></table>`}</div>`;
@@ -320,7 +336,7 @@
         if (id) {
           const r = await sb.from('recibos_venta').update({ ...datos, modificado_por: quien, modificado_en: new Date().toISOString() }).eq('id', id); if (r.error) throw r.error;
         } else {
-          const r = await sb.from('recibos_venta').insert({ ...datos, organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, estado: 'VIGENTE', situacion: liquidar ? 'LIQUIDADO' : 'EMITIDO', usuario: quien, fecha_ingreso: new Date().toISOString() }).select('id').single();
+          const r = await sb.from('recibos_venta').insert({ ...datos, organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, estado: 'VIGENTE', ...(conClase ? { clase: cfg.clase } : {}), situacion: liquidar ? 'LIQUIDADO' : 'EMITIDO', usuario: quien, fecha_ingreso: new Date().toISOString() }).select('id').single();
           if (r.error) throw r.error; id = r.data.id;
         }
         // Facturas: las quitadas se borran, las demás se actualizan o se agregan (los datos migrados de cada una se conservan).
@@ -332,7 +348,8 @@
         const filas = lineas.filter((x) => x.abono > 0 || x.migrada).map((x) => ({ factura_id: x.factura_id, recibo_id: id, fecha: h.fecha, forma: h.forma, documento: doc.slice(0, 120), banco: h.banco, valor: x.abono, usuario: quien }));
         if (filas.length) { const u = await sb.from('factura_venta_pagos').upsert(filas, { onConflict: 'recibo_id,factura_id' }); if (u.error) throw u.error; }
       } catch (e) { error.textContent = window.UI.traducirError(e); return false; }
-      window.FIN.aviso(liquidar ? 'Recibo liquidado' : actual ? 'Recibo actualizado' : 'Recibo registrado');
+      const o = cfg.clase === 'RECIBO' ? 'o' : 'a';
+      window.FIN.aviso(`${cfg.nombre} ${liquidar ? `liquidad${o}` : actual ? `actualizad${o}` : `registrad${o}`}`);
       const { data } = await sb.from('recibos_venta').select('*').eq('id', id).single();
       listado = null;
       await abrir(data);
@@ -376,7 +393,9 @@
     async function irRecibo(n) {
       if (!/^\d+$/.test(String(n).trim())) return;
       const v = Number(n);
-      const { data } = await sb.from('recibos_venta').select('*').eq('localidad_id', ctx.sel.loc).or(`numero.eq.${v},recibo_fisico.eq.${v}`).order('fecha', { ascending: false }).limit(1);
+      let qq = sb.from('recibos_venta').select('*').eq('localidad_id', ctx.sel.loc).or(`numero.eq.${v},recibo_fisico.eq.${v}`);
+      if (conClase) qq = qq.eq('clase', cfg.clase);
+      const { data } = await qq.order('fecha', { ascending: false }).limit(1);
       if (!data?.[0]) return window.FIN.aviso(`No hay un recibo ${v} en la empresa`);
       abrir(data[0]);
     }
@@ -385,7 +404,7 @@
       const r = actual; if (!r) return;
       const c = cliente(r.cliente_id); const ven = vendedores.find((x) => x.id === r.vendedor_id); const mon = ctx.moneda(r.moneda_id);
       const letras = window.BANCOS.enLetras ? window.BANCOS.enLetras(r.valor, (mon?.nombre || 'QUETZALES').toUpperCase()) : '';
-      imprimir(`Recibo ${r.numero}`, `<h1>Recibo ${esc([r.serie, r.recibo_fisico].filter((x) => x != null && x !== '').join('-'))} · ${tipoImp}${r.estado === 'ANULADO' ? ' · ANULADO' : ''}</h1>
+      imprimir(`${cfg.nombre} ${r.numero}`, `<h1>${esc(cfg.nombre)} ${esc([r.serie, r.recibo_fisico].filter((x) => x != null && x !== '').join('-'))} · ${tipoImp}${r.estado === 'ANULADO' ? ' · ANULADO' : ''}</h1>
         <h2>${esc([`No. interno: ${r.numero}`, `Fecha: ${fmt.fechaDia(r.fecha)}`, `Cliente: ${c ? `${c.codigo} · ` : ''}${r.nombre || ''}`, `Vendedor: ${ven ? ven.nombre : '—'}`, `Forma de pago: ${r.forma || ''}`, `Tipo: ${r.tipo_pago || ''}`, `Estado: ${estadoDe(r)[1]}`].join(' · '))}</h2>
         <table><tbody>
           <tr><th>Recibimos de</th><td>${esc(r.nombre || '')}</td><th>Valor</th><td class="n"><b>${esc(sim(r.moneda_id))} ${fmt.monto(r.valor)}</b></td></tr>
@@ -459,5 +478,5 @@
     });
 
     iniciar();
-  };
+  }
 })();
