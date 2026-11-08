@@ -338,7 +338,7 @@ window.MODULOS = [
       registros: ['Cotizaciones', 'Pedidos', 'Notas de crédito', 'Cobros'],
       mantenimientos: ['Listas de precios', 'Descuentos'],
       procesos: ['Anulación de documentos', 'Antigüedad de saldos', 'Comisiones'],
-      reportes: ['Ventas por período', 'Ventas por cliente', 'Cuentas por cobrar', 'Gráfica de ventas'],
+      reportes: [],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },
@@ -442,7 +442,7 @@ window.MODULOS = [
       catalogos: ['Compradores', 'Condiciones de pago'],
       mantenimientos: ['Series de documentos', 'Listas de precios de proveedores'],
       procesos: ['Aprobación de órdenes de compra', 'Anulación de documentos', 'Antigüedad de saldos'],
-      reportes: ['Compras por período', 'Compras por proveedor', 'Cuentas por pagar', 'Gráfica de compras'],
+      reportes: [],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },
@@ -635,4 +635,22 @@ window.MODULOS = [
     ...(com.subgrupos.catalogos || []),
     ...(fac.subgrupos.catalogos || []).filter((s) => s.subgrupo === 'Productos')
   ];
+})();
+
+// Reportes de Facturación/Ventas y de Compras (reportes_comerciales.js).
+(function () {
+  const mod = (id) => window.MODULOS.find((m) => m.id === id);
+  const pon = (id, subgrupo, pantallas) => { const m = mod(id); if (!m) return; m.subgrupos = m.subgrupos || {}; m.subgrupos.reportes = [{ subgrupo, icono: 'ti-report-analytics', pantallas }]; };
+  pon('facturacion', 'Reportes de ventas', [
+    { id: 'ventas-por-periodo', nombre: 'Ventas por período', icono: 'ti-calendar-stats', descripcion: 'Ventas del período por mes (resumido) o por factura (detallado), de un producto o de todos, con gráfica. PDF y Excel.' },
+    { id: 'ventas-por-cliente', nombre: 'Ventas por cliente', icono: 'ti-users', descripcion: 'Ventas del período por cliente con su participación, de un producto o de todos; detallado con sus facturas. PDF y Excel.' },
+    { id: 'reporte-cuentas-por-cobrar', nombre: 'Cuentas por cobrar', icono: 'ti-cash', descripcion: 'Saldo por cobrar a una fecha con antigüedad (no vencido, 1-30, 31-60, 61-90 y más de 90 días), por cliente o por factura. PDF y Excel.' },
+    { id: 'grafica-de-ventas', nombre: 'Gráfica de ventas', icono: 'ti-chart-histogram', descripcion: 'Ventas por mes, clientes principales y productos principales del período, con su tabla de datos. PDF y Excel.' }
+  ]);
+  pon('compras', 'Reportes de compras', [
+    { id: 'compras-por-periodo', nombre: 'Compras por período', icono: 'ti-calendar-stats', descripcion: 'Compras del período por mes (resumido) o por documento (detallado), de un producto o de todos, con gráfica. PDF y Excel.' },
+    { id: 'compras-por-proveedor', nombre: 'Compras por proveedor', icono: 'ti-truck', descripcion: 'Compras del período por proveedor con su participación, de un producto o de todos; detallado con sus documentos. PDF y Excel.' },
+    { id: 'reporte-cuentas-por-pagar', nombre: 'Cuentas por pagar', icono: 'ti-receipt-2', descripcion: 'Saldo por pagar a una fecha con antigüedad (no vencido, 1-30, 31-60, 61-90 y más de 90 días), por proveedor o por documento. PDF y Excel.' },
+    { id: 'grafica-de-compras', nombre: 'Gráfica de compras', icono: 'ti-chart-histogram', descripcion: 'Compras por mes, proveedores principales y productos principales del período, con su tabla de datos. PDF y Excel.' }
+  ]);
 })();
