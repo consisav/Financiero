@@ -1513,17 +1513,6 @@
  "compras|Anulación de documentos": "se anula desde cada documento con su motivo.",
  "compras|Antigüedad de saldos": "se consulta en Reportes › Cuentas por pagar.",
  "inventarios|Ubicaciones": "ubicación física (pasillo, estante) dentro de cada bodega.",
- "presupuesto-flujo|Rubros de flujo": "clasificación de ingresos y egresos del flujo de efectivo (operación, inversión, financiamiento).",
- "presupuesto-flujo|Escenarios": "escenarios base, optimista y conservador de la proyección.",
- "presupuesto-flujo|Presupuesto de flujo": "presupuesto mensual de entradas y salidas de efectivo por rubro.",
- "presupuesto-flujo|Proyección de ingresos": "cobros esperados (cuentas por cobrar, ventas proyectadas).",
- "presupuesto-flujo|Proyección de egresos": "pagos esperados (cuentas por pagar, planilla, impuestos, préstamos).",
- "presupuesto-flujo|Períodos de proyección": "horizonte semanal, mensual o anual de la proyección.",
- "presupuesto-flujo|Cálculo del flujo proyectado": "saldo inicial de bancos + entradas − salidas por período.",
- "presupuesto-flujo|Comparativo real vs. proyectado": "compara el flujo proyectado con los movimientos bancarios reales.",
- "presupuesto-flujo|Flujo de efectivo": "estado de flujo de efectivo por actividades de operación, inversión y financiamiento.",
- "presupuesto-flujo|Presupuesto vs. ejecutado": "hoy disponible en Contabilidad › Reportes › Presupuesto vs. ejecutado.",
- "presupuesto-flujo|Gráfica de flujo": "gráfica de entradas, salidas y saldo proyectado.",
  "activos-fijos|Tipos de activo": "clases de activo (mobiliario, vehículos, equipo de cómputo, edificios) con su cuenta.",
  "activos-fijos|Ubicaciones": "lugar físico de cada activo.",
  "activos-fijos|Responsables": "persona a cargo de cada activo.",
@@ -1590,5 +1579,153 @@
  "comercio|Ingreso a inventario": "ingreso de la importación a la bodega.",
  "comercio|Importaciones por período": "importaciones del período.",
  "comercio|Costo por póliza": "costo total por póliza.",
- "comercio|Exportaciones por destino": "exportaciones por país."
+ "comercio|Exportaciones por destino": "exportaciones por país.",
+ "rubros-cuentas": {
+  "puntos": [
+   "Cada rubro de presupuesto con las cuentas contables de donde sale su ejecución (una cuenta mayor incluye sus subcuentas)."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Catálogos › Presupuesto › Rubros y cuentas contables y elige {empresa}.",
+   "Revisa los indicadores: rubros con cuentas y sin cuentas (los sin cuentas no muestran ejecución).",
+   "En la fila del rubro escribe el código de la cuenta en «Agregar cuenta» (ejemplo: {cuenta}, o la cuenta mayor 4 para todos los ingresos) y sal de la celda.",
+   "Para quitar una cuenta toca la × de su etiqueta.",
+   "Imprime la relación en PDF o Excel para que el contador la valide."
+  ]
+ },
+ "escenarios-presupuesto": {
+  "puntos": [
+   "Escenarios base, optimista y conservador con el factor que multiplica ingresos y egresos en la proyección de flujo."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Catálogos › Presupuesto › Escenarios y elige {empresa}.",
+   "Presiona «Cargar los de la norma»: crea BASE (1.00), OPTIMISTA (ingresos 1.10, egresos 0.95) y CONSERVADOR (ingresos 0.90, egresos 1.05).",
+   "Ajusta los factores en la tabla (se guardan al salir de la celda) o agrega uno con «Nuevo».",
+   "El escenario conservador sirve como prueba de estrés de liquidez."
+  ]
+ },
+ "rubros-de-flujo": {
+  "puntos": [
+   "Rubros del flujo de efectivo por actividad (NIC 7): operación, inversión y financiamiento, de entrada o salida.",
+   "Origen COBROS y PAGOS: se llenan solos con las cuentas por cobrar y por pagar."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Catálogos › Flujo de efectivo › Rubros de flujo y elige {empresa}.",
+   "Presiona «Cargar los de la norma»: crea los 12 rubros estándar (cobros a clientes, pagos a proveedores, planilla, impuestos, activos fijos, préstamos, aportes y dividendos).",
+   "Edita el nombre, la actividad, el tipo o el origen en la tabla; agrega rubros con «Nuevo».",
+   "Marca inactivo lo que no uses en lugar de borrarlo."
+  ]
+ },
+ "formulacion-presupuesto": {
+  "puntos": [
+   "Presupuesto anual por rubro y mes con supuestos, versiones y el ciclo Formular › Revisar › Aprobar › Ejecutar › Cerrar."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Registros › Presupuesto › Formulación del presupuesto, elige {empresa} y el año.",
+   "Presiona «Nuevo presupuesto»: tipo (maestro, ingresos, gastos de operación, inversión…), escenario y descripción. Puedes copiar los montos del presupuesto elegido con un % de ajuste.",
+   "Con «Agregar rubro…» incorpora cada rubro (ejemplo: 104 Ventas de bienes y servicios, 201 Sueldos y salarios).",
+   "Escribe el total en «Anual» para repartirlo en 12 meses iguales, o cada mes por separado si hay estacionalidad (aguinaldo en diciembre, Bono 14 en julio).",
+   "En «Supuesto» anota la base del cálculo (por ejemplo: «crecimiento 8 % sobre 2025», «12 empleados»).",
+   "Revisa los indicadores: ingresos, egresos y resultado presupuestado.",
+   "Presiona «Enviar a revisión»: ya no se modifica hasta que lo devuelvan. Imprime en PDF (con firmas) o Excel.",
+   "Para un ajuste después de aprobado usa «Nueva versión» o las Modificaciones presupuestarias."
+  ]
+ },
+ "modificaciones-presupuestarias": {
+  "puntos": [
+   "Traslados entre rubros, ampliaciones y reducciones del presupuesto aprobado, con justificación y aplicación controlada."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Registros › Presupuesto › Modificaciones presupuestarias y elige el presupuesto aprobado.",
+   "Elige el tipo: TRASLADO (de un rubro a otro), AMPLIACIÓN (aumenta un rubro) o REDUCCIÓN (lo rebaja).",
+   "Indica el rubro de origen y/o destino, el mes, el monto y la justificación (mínimo 10 caracteres).",
+   "Presiona «Registrar»: queda REGISTRADA.",
+   "Presiona «Aplicar»: el sistema valida que el origen tenga disponible en ese mes y actualiza el presupuesto (queda MODIFICADO). «Anular» la descarta.",
+   "Imprime la bitácora en PDF o Excel para el respaldo de auditoría."
+  ]
+ },
+ "proyeccion-de-flujo": {
+  "puntos": [
+   "Flujo de efectivo de 13 semanas o 12 meses con el saldo de bancos, cobros y pagos automáticos, partidas manuales, escenario y alerta de saldo mínimo."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Registros › Flujo de efectivo › Proyección de flujo y elige {empresa}.",
+   "Presiona «Nueva proyección»: nombre, tipo (semanal 13 semanas o mensual 12 meses), fecha de inicio (el próximo lunes), escenario y saldo mínimo de caja.",
+   "Al crearla, el sistema toma el saldo de caja y bancos de la contabilidad y carga los cobros (facturas con saldo por fecha estimada de cobro) y los pagos (compras con saldo por vencimiento).",
+   "Completa los rubros manuales por período: planilla, impuestos, gastos de operación, préstamos, activos.",
+   "Revisa el saldo final de cada período: si queda bajo el mínimo aparece la alerta de déficit de liquidez.",
+   "«Cargar cobros y pagos» actualiza lo automático; «Saldo de bancos» recalcula el saldo inicial.",
+   "Imprime en PDF o Excel con gráficas y presiona «Aprobar» cuando tesorería la valide."
+  ]
+ },
+ "aprobacion-presupuesto": {
+  "puntos": [
+   "Bandeja de presupuestos por estado con su resumen por grupo y trimestre; aprobar, devolver, cerrar o anular.",
+   "Segregación de funciones: quien elaboró no puede aprobar (salvo el Super Administrador)."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Procesos › Presupuesto › Aprobación de presupuestos.",
+   "Filtra «EN REVISIÓN» y elige el presupuesto.",
+   "Revisa el resumen por grupo y trimestre, el resultado y el margen presupuestado.",
+   "«Aprobar» lo deja vigente (solo cambia con modificaciones); «Devolver» con observaciones lo regresa a formulación.",
+   "Al terminar el año, «Cerrar» lo bloquea; «Anular» con motivo lo deja sin efecto."
+  ]
+ },
+ "ejecucion-presupuestaria": {
+  "puntos": [
+   "Calcula la ejecución mes a mes desde las partidas contables vigentes en las cuentas vinculadas a cada rubro."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Procesos › Presupuesto › Ejecución presupuestaria y elige el año y el presupuesto aprobado.",
+   "Elige el mes de corte ({mes}).",
+   "Presiona «Calcular ejecución»: toma las partidas del año (ejemplo: {partida}) y llena el ejecutado de cada mes; el presupuesto pasa a EN EJECUCIÓN.",
+   "Revisa el mes y el acumulado: variación, % de ejecución y semáforo (ingresos verde ≥ 95 %; egresos verde ≤ 100 %).",
+   "Recalcula cada vez que se cierre un mes contable."
+  ]
+ },
+ "presupuesto-vs-ejecutado-pf": {
+  "puntos": [
+   "Presupuesto vs. ejecutado del mes y acumulado por rubro, con variación, % de ejecución, semáforo y % del anual."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Reportes y gráficas › Presupuesto vs. ejecutado.",
+   "Elige {empresa}, el año, el presupuesto y el mes de corte.",
+   "En «Vista» elige «Mes y acumulado» o «Ejecutado por mes» (una columna por mes).",
+   "Revisa los indicadores y las filas en rojo (fuera de meta).",
+   "Imprime el PDF (con firmas) o el Excel con gráficas para el comité de presupuesto."
+  ]
+ },
+ "estado-flujo-efectivo": {
+  "puntos": [
+   "Estado de flujo de efectivo (NIC 7, método indirecto): operación, inversión y financiamiento, conciliado con caja y bancos."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Reportes y gráficas › Estado de flujo de efectivo.",
+   "Elige {empresa} y el período (Desde – Al).",
+   "Lee el reporte: parte del resultado del período y suma las variaciones del capital de trabajo (operación), del activo no corriente (inversión) y del pasivo no corriente y patrimonio (financiamiento).",
+   "Verifica el indicador «Comprobación con bancos»: el efectivo final debe igualar el saldo de caja y bancos.",
+   "Imprime el PDF con firmas o el Excel."
+  ]
+ },
+ "flujo-proyectado-vs-real": {
+  "puntos": [
+   "Entradas, salidas y saldo proyectados contra los movimientos reales de caja y bancos de cada período."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Reportes y gráficas › Flujo proyectado vs. real.",
+   "Elige la proyección.",
+   "Compara por semana o mes las entradas y salidas proyectadas con las reales (movimientos contables de caja y bancos) y la variación.",
+   "Usa las diferencias para afinar la siguiente proyección; imprime en PDF o Excel."
+  ]
+ },
+ "indicadores-financieros": {
+  "puntos": [
+   "Liquidez corriente, prueba ácida, liquidez inmediata, capital de trabajo, endeudamiento, solvencia, margen neto, ROA, ROE y días de cobro, con referencia y semáforo."
+  ],
+  "pasos": [
+   "Abre Presupuesto y Flujo › Reportes y gráficas › Indicadores financieros.",
+   "Elige {empresa} y la fecha de corte (por ejemplo, el último día del mes cerrado).",
+   "Revisa cada indicador contra su referencia; el semáforo marca en rojo lo que requiere acción.",
+   "Imprime el PDF (con firmas) o el Excel para el informe a gerencia."
+  ]
+ }
 }

@@ -1,0 +1,54 @@
+{
+ "version": "2026.11c",
+ "titulo": "Manual del módulo Presupuesto y Flujo de efectivo",
+ "resumen": "Formulación, aprobación, modificaciones y ejecución del presupuesto; proyección y estado de flujo de efectivo; indicadores.",
+ "nombresTablas": {},
+ "diapositivas": [
+  {
+   "tipo": "portada",
+   "titulo": "Módulo de Presupuesto y Flujo de efectivo",
+   "subtitulo": "Planear, controlar y asegurar la liquidez de la empresa"
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "El ciclo anual del presupuesto",
+   "subtitulo": "Formular › Revisar › Aprobar › Ejecutar › Modificar › Cerrar",
+   "pasos": [
+    "Formular (octubre–noviembre): cada rubro por mes con sus supuestos, a partir del histórico y las metas.",
+    "Revisar y aprobar: lo revisa y aprueba una persona distinta de quien lo elaboró (segregación de funciones).",
+    "Ejecutar: cada mes, al cerrar la contabilidad, se calcula la ejecución desde las partidas.",
+    "Modificar: los cambios se hacen con traslados, ampliaciones o reducciones justificadas, nunca editando el aprobado.",
+    "Evaluar: presupuesto vs. ejecutado con semáforo; flujo proyectado vs. real; indicadores financieros.",
+    "Cerrar al terminar el año y formular el siguiente (se puede copiar con un % de ajuste)."
+   ]
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "Flujo de efectivo y liquidez",
+   "subtitulo": "NIC 7 y la práctica de tesorería",
+   "pasos": [
+    "Proyección de 13 semanas para la liquidez inmediata y de 12 meses para el plan anual.",
+    "Saldo inicial de caja y bancos según la contabilidad; cobros y pagos automáticos desde cuentas por cobrar y por pagar.",
+    "Saldo mínimo de caja: el sistema alerta el déficit de liquidez por período.",
+    "Escenario conservador como prueba de estrés: ingresos −10 % y egresos +5 %.",
+    "Estado de flujo de efectivo (método indirecto) conciliado con caja y bancos."
+   ]
+  },
+  {
+   "tipo": "consejos",
+   "titulo": "Buenas prácticas",
+   "puntos": [
+    "Vincula todos los rubros a sus cuentas contables antes de calcular la ejecución.",
+    "Documenta los supuestos de cada rubro: son la base para explicar las variaciones.",
+    "Calcula la ejecución después de cerrar cada mes contable.",
+    "Explica toda variación mayor al 10 % en el comité de presupuesto.",
+    "Actualiza la proyección de flujo cada semana y compárala con lo real."
+   ]
+  },
+  {
+   "tipo": "cierre",
+   "titulo": "¡Listo para planear!",
+   "subtitulo": "Consulta este manual en Presupuesto y Flujo › Ayuda › Manual del módulo"
+  }
+ ]
+}

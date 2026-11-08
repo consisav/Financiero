@@ -566,12 +566,42 @@ window.MODULOS = [
     nombre: 'Presupuesto y flujo de efectivo',
     icono: 'ti-report-money',
     descripcion: 'Proyección de ingresos y egresos, flujo de efectivo y comparativo contra lo ejecutado.',
+    subgrupos: {
+      catalogos: [
+        { subgrupo: 'Presupuesto', icono: 'ti-table', pantallas: [
+          { id: 'rubros-presupuesto', nombre: 'Rubros de presupuesto', icono: 'ti-list-details', descripcion: 'Rubros que se presupuestan por grupo: ingresos, personal, financieros, administrativos, impuestos e inversiones.' },
+          { id: 'rubros-cuentas', nombre: 'Rubros y cuentas contables', icono: 'ti-link', descripcion: 'Cuentas contables de cada rubro: de ellas sale la ejecución del presupuesto.' },
+          { id: 'escenarios-presupuesto', nombre: 'Escenarios', icono: 'ti-adjustments', descripcion: 'Escenarios base, optimista y conservador con sus factores de ingresos y egresos.' }
+        ] },
+        { subgrupo: 'Flujo de efectivo', icono: 'ti-arrows-exchange', pantallas: [
+          { id: 'rubros-de-flujo', nombre: 'Rubros de flujo', icono: 'ti-arrows-exchange', descripcion: 'Rubros del flujo por actividad (NIC 7) con su origen: manual, cobros o pagos.' }
+        ] }
+      ],
+      registros: [
+        { subgrupo: 'Presupuesto', icono: 'ti-table-plus', pantallas: [
+          { id: 'formulacion-presupuesto', nombre: 'Formulación del presupuesto', icono: 'ti-table-plus', descripcion: 'Presupuesto por rubro y mes con supuestos, versiones y envío a revisión.' },
+          { id: 'modificaciones-presupuestarias', nombre: 'Modificaciones presupuestarias', icono: 'ti-arrows-shuffle', descripcion: 'Traslados, ampliaciones y reducciones del presupuesto aprobado con justificación.' }
+        ] },
+        { subgrupo: 'Flujo de efectivo', icono: 'ti-timeline', pantallas: [
+          { id: 'proyeccion-de-flujo', nombre: 'Proyección de flujo', icono: 'ti-timeline', descripcion: 'Flujo de 13 semanas o 12 meses con saldo de bancos, cobros y pagos automáticos, escenario y alerta de saldo mínimo.' }
+        ] }
+      ],
+      procesos: [
+        { subgrupo: 'Presupuesto', icono: 'ti-settings-automation', pantallas: [
+          { id: 'aprobacion-presupuesto', nombre: 'Aprobación de presupuestos', icono: 'ti-checks', descripcion: 'Revisión, aprobación (segregación de funciones), devolución, cierre y anulación de presupuestos.' },
+          { id: 'ejecucion-presupuestaria', nombre: 'Ejecución presupuestaria', icono: 'ti-player-play', descripcion: 'Calcula la ejecución mes a mes desde las partidas contables y muestra el avance con semáforo.' }
+        ] }
+      ],
+      reportes: [
+        { subgrupo: 'Reportes', icono: 'ti-report-analytics', pantallas: [
+          { id: 'presupuesto-vs-ejecutado-pf', nombre: 'Presupuesto vs. ejecutado', icono: 'ti-target-arrow', descripcion: 'Mes y acumulado por rubro con variación, % de ejecución y semáforo; o el ejecutado por mes. PDF y Excel.' },
+          { id: 'estado-flujo-efectivo', nombre: 'Estado de flujo de efectivo', icono: 'ti-arrows-exchange-2', descripcion: 'NIC 7 por el método indirecto: operación, inversión y financiamiento, conciliado con caja y bancos. PDF y Excel.' },
+          { id: 'flujo-proyectado-vs-real', nombre: 'Flujo proyectado vs. real', icono: 'ti-chart-arrows', descripcion: 'Entradas, salidas y saldo proyectados contra los movimientos reales de caja y bancos por período. PDF y Excel.' },
+          { id: 'indicadores-financieros', nombre: 'Indicadores financieros', icono: 'ti-gauge', descripcion: 'Liquidez, prueba ácida, capital de trabajo, endeudamiento, rentabilidad y días de cobro con semáforo. PDF y Excel.' }
+        ] }
+      ]
+    },
     opciones: {
-      catalogos: ['Rubros de flujo', 'Escenarios'],
-      registros: ['Presupuesto de flujo', 'Proyección de ingresos', 'Proyección de egresos'],
-      mantenimientos: ['Períodos de proyección'],
-      procesos: ['Cálculo del flujo proyectado', 'Comparativo real vs. proyectado'],
-      reportes: ['Flujo de efectivo', 'Presupuesto vs. ejecutado', 'Gráfica de flujo'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },
