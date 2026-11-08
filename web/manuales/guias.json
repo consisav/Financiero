@@ -1,0 +1,1594 @@
+{
+ "usuarios": {
+  "puntos": [
+   "Usuarios del sistema con su organización, localidad principal, empresas adicionales, rol y estado.",
+   "Solo un administrador crea y modifica usuarios."
+  ],
+  "pasos": [
+   "Abre Administración › Catálogos › Usuarios.",
+   "Presiona «Nuevo usuario» y escribe nombres, apellidos y correo; el sistema propone el usuario (iniciales + primer apellido).",
+   "Elige la organización ({organizacion}) y la localidad principal ({empresa}); agrega otras empresas si el usuario trabajará en varias.",
+   "Asigna el rol (define qué módulos y opciones ve) y deja el estado ACTIVO.",
+   "Guarda y genera la clave en «Generar clave»: se muestra una sola vez y vence hoy, para que el usuario la cambie al entrar.",
+   "Para bloquear el acceso cambia el estado a INACTIVO; no se borra para conservar la auditoría."
+  ]
+ },
+ "generar-usuario": {
+  "puntos": [
+   "Genera la clave temporal de un usuario (solo administrador).",
+   "El usuario se forma con las iniciales de los nombres y el primer apellido completo."
+  ],
+  "pasos": [
+   "Abre Administración › Catálogos › Usuarios › Generar clave.",
+   "Busca y elige el usuario en la lista.",
+   "Presiona «Generar clave»: la clave aparece una sola vez; cópiala o entrégala de forma segura.",
+   "Indica al usuario que al entrar el sistema le pedirá cambiarla (vence hoy, {hoy})."
+  ]
+ },
+ "modulos": {
+  "puntos": [
+   "Módulos y sub módulos del sistema con su estado y orden en el menú."
+  ],
+  "pasos": [
+   "Abre Administración › Catálogos › Módulos › Módulos.",
+   "Revisa cada módulo y sus opciones; marca activo o inactivo según lo que usa {organizacion}.",
+   "Guarda los cambios; los menús se actualizan al volver a entrar."
+  ]
+ },
+ "roles-modulos": {
+  "puntos": [
+   "Roles a la izquierda; a la derecha sus usuarios y la matriz de accesos por módulo: ver, crear, modificar, anular, imprimir.",
+   "Cada usuario puede tener excepciones que reemplazan lo del rol."
+  ],
+  "pasos": [
+   "Abre Administración › Catálogos › Módulos › Roles módulos.",
+   "Elige el rol (o crea uno con «Nuevo rol») y revisa sus usuarios en el encabezado.",
+   "En el navegador de módulos elige el módulo (por ejemplo Contabilidad) y marca en la matriz los permisos de cada opción.",
+   "Guarda: los usuarios con ese rol tienen los permisos al volver a entrar.",
+   "Para un caso especial, abre el usuario y define su excepción (en blanco hereda del rol)."
+  ]
+ },
+ "geografia": {
+  "puntos": [
+   "Países, departamentos y municipios que usan las direcciones de organizaciones, clientes y proveedores."
+  ],
+  "pasos": [
+   "Abre Administración › Catálogos › Parámetros › Geografía.",
+   "Elige el país (Guatemala) y revisa sus departamentos y municipios.",
+   "Agrega o corrige un municipio con «Nuevo» y guarda."
+  ]
+ },
+ "organizaciones": {
+  "puntos": [
+   "Organizaciones (grupos) y sus localidades (empresas): datos fiscales, logo, lo que venden y estado.",
+   "Todo en el sistema pertenece a una organización y una localidad."
+  ],
+  "pasos": [
+   "Abre Administración › Catálogos › Parámetros › Organizaciones.",
+   "Elige la organización ({organizacion}) y revisa sus localidades; {empresa} es la empresa activa.",
+   "Para una empresa nueva presiona «Nueva localidad»: código, nombre comercial, razón social, NIT, dirección y teléfonos.",
+   "Indica la venta de productos (medicamentos, perecederos o no perecederos): define cómo se ve el Kardex y si se controla lote y vencimiento.",
+   "Sube el logo y el eslogan: salen en los reportes PDF y Excel.",
+   "Guarda; luego configura sus Parámetros generales en Contabilidad."
+  ]
+ },
+ "tickets-generacion": {
+  "puntos": [
+   "Solicitudes de soporte o requerimientos con prioridad, módulo, adjuntos e historial."
+  ],
+  "pasos": [
+   "Abre Administración › Tickets › Generación.",
+   "Elige la organización, la localidad ({empresa}) y el rango de fechas; la lista muestra los tickets.",
+   "Presiona «Nuevo ticket», elige el módulo y la prioridad y describe el requerimiento con detalle.",
+   "Adjunta capturas o archivos de respaldo y guarda: el ticket queda PENDIENTE con su número.",
+   "Sigue su avance en la gráfica del proceso y en el historial."
+  ]
+ },
+ "tickets-asignacion": {
+  "puntos": [
+   "Asigna cada ticket a un recurso con fecha estimada de entrega y procesos de solución."
+  ],
+  "pasos": [
+   "Abre Administración › Tickets › Asignación y filtra los tickets «No asignados».",
+   "Elige el ticket, selecciona el recurso responsable y la fecha estimada de entrega.",
+   "Agrega los procesos de la solución (descripción, responsable y fecha) y guarda: la fecha, hora y usuario de la asignación se graban solos."
+  ]
+ },
+ "tickets-seguimiento": {
+  "puntos": [
+   "Estado de cada ticket por color, tiempo transcurrido y bitácora de seguimiento."
+  ],
+  "pasos": [
+   "Abre Administración › Tickets › Seguimiento y filtra por estado o prioridad.",
+   "Elige el ticket y revisa su gráfica del proceso y los tiempos.",
+   "Escribe la observación de avance en la bitácora y guarda (fecha y usuario automáticos)."
+  ]
+ },
+ "tickets-cierre": {
+  "puntos": [
+   "Cierre del ticket con quien entrega, quien recibe, tipo de pruebas y archivos de respaldo."
+  ],
+  "pasos": [
+   "Abre Administración › Tickets › Cierre y filtra «Pendientes de cierre».",
+   "Elige el ticket, indica quién entrega y quién recibe, el tipo de pruebas y las observaciones.",
+   "Adjunta las pruebas y presiona «Grabar»: el ticket pasa a CERRADO con la fecha, hora y usuario."
+  ]
+ },
+ "tickets-visualizacion": {
+  "puntos": [
+   "Todos los tickets de {organizacion} en una tabla con asignación y tiempo transcurrido."
+  ],
+  "pasos": [
+   "Abre Administración › Tickets › Visualización General.",
+   "Elige el orden (columna y ascendente o descendente) o toca el encabezado de una columna.",
+   "Imprime en PDF o Excel para la reunión de seguimiento."
+  ]
+ },
+ "backup": {
+  "puntos": [
+   "Respaldo de la información de una organización y localidad en un archivo, manual o programado."
+  ],
+  "pasos": [
+   "Abre Administración › Procesos › Backup.",
+   "Elige la organización y la localidad ({empresa}) o todas.",
+   "Presiona «Generar backup»: se descarga el archivo con la fecha ({hoy}); guárdalo fuera del equipo.",
+   "Para el respaldo programado indica frecuencia, día y hora; el servidor lo hace aunque nadie esté conectado."
+  ]
+ },
+ "reporte-organizaciones": {
+  "puntos": [
+   "Organizaciones con sus localidades: datos fiscales, venta de productos, ubicación y estado."
+  ],
+  "pasos": [
+   "Abre Administración › Reportes y gráficas › Organizaciones y localidades.",
+   "Elige la organización ({organizacion}) o todas, y la localidad o todas.",
+   "Revisa el resultado en pantalla y presiona «PDF» o «Excel»."
+  ]
+ },
+ "reporte-modulos": {
+  "puntos": [
+   "Módulos, sub módulos y opciones con los usuarios que tienen acceso."
+  ],
+  "pasos": [
+   "Abre Administración › Reportes y gráficas › Módulos y sub módulos.",
+   "Elige la organización y la localidad; revisa qué usuarios ven cada opción.",
+   "Imprime en PDF o Excel para la revisión de accesos (control interno)."
+  ]
+ },
+ "reporte-roles": {
+  "puntos": [
+   "Roles con sus usuarios y las opciones y permisos que otorgan."
+  ],
+  "pasos": [
+   "Abre Administración › Reportes y gráficas › Roles módulos.",
+   "Elige la organización y la localidad.",
+   "Revisa cada rol con sus permisos y genera el PDF o Excel."
+  ]
+ },
+ "reporte-usuarios": {
+  "puntos": [
+   "Usuarios por organización y localidad con su rol, roles funcionales y estado."
+  ],
+  "pasos": [
+   "Abre Administración › Reportes y gráficas › Listado de usuarios.",
+   "Elige la organización ({organizacion}) y la localidad o todas.",
+   "Revisa los usuarios activos e inactivos y genera el PDF o Excel."
+  ]
+ },
+ "parametros": {
+  "puntos": [
+   "Un registro por empresa: período contable, impuestos (IVA, IDP), monedas, centros de costo y firmantes de los estados financieros."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Parámetros › Parámetros generales y elige {empresa}.",
+   "Revisa el año y mes actual, el inicio y fin del período fiscal y el primer y último mes contable.",
+   "Confirma los impuestos (IVA 12 %, IDP por galón) y la moneda de integración y de ingreso.",
+   "Indica si se usan centros de costo y el monto que requiere autorización de cheques.",
+   "Registra los firmantes (representante legal, contador) que aparecen en los estados financieros.",
+   "Presiona «Guardar cambios»."
+  ]
+ },
+ "monedas-y-tipos-de-cambio": {
+  "puntos": [
+   "Monedas y su tipo de cambio por fecha (compra y venta), con actualización automática programada."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Parámetros › Tipos de cambio.",
+   "Elige la moneda (por ejemplo, US$) en el maestro; abajo ves sus tipos de cambio del más reciente al más antiguo.",
+   "Presiona «Tasa cambio actual» para grabar hoy ({hoy}) la compra y venta de todas las monedas con la referencia del banco.",
+   "O agrega a mano la fecha, la tasa de compra y de venta, y guarda.",
+   "En «Actualización automática» define la frecuencia y la hora: el servidor la actualiza solo y deja el resultado en el historial."
+  ]
+ },
+ "tipos-cuenta": {
+  "puntos": [
+   "Naturaleza de cada tipo (DEBE-HABER o HABER-DEBE), si va al balance (B) o al estado de resultados (E) y si suma o resta en el resultado."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Cuentas y CC › Tipos de cuentas y elige {empresa}.",
+   "Revisa los tipos: 1 Activo, 2 Pasivo, 3 Patrimonio (balance); 4 Ingresos, 5 Costo de ventas, 6 Gastos (resultados).",
+   "Para uno nuevo presiona «Nuevo», indica la naturaleza, el reporte financiero y la operación en el resultado.",
+   "Si la empresa es nueva, usa «Copiar de otra empresa» para traer los tipos ya definidos.",
+   "Guarda: los reportes contables usan estos datos para el balance y el estado de resultados."
+  ]
+ },
+ "cuentas": {
+  "puntos": [
+   "Catálogo de cuentas por organización, localidad y versión, en árbol: cuentas mayores y cuentas de movimiento (detalle).",
+   "Ejemplo de cuenta de movimiento de {empresa}: {cuenta}."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Cuentas y CC › Cuentas contables.",
+   "Elige la organización, la localidad ({empresa}) y la versión del catálogo.",
+   "Recorre el árbol: Activo › Corriente › Caja y bancos…; la ficha de la derecha muestra la cuenta elegida.",
+   "Para crear una subcuenta, selecciona la cuenta mayor y presiona «Nueva»: escribe el código (sigue la máscara), el nombre y el tipo de cuenta.",
+   "Marca si integra (cuenta mayor) o si es de movimiento (recibe partidas); guarda.",
+   "Una cuenta con movimientos no se borra: márcala no vigente."
+  ]
+ },
+ "centros-costo": {
+  "puntos": [
+   "Centros de costo por organización, en niveles (departamentos, sucursales, proyectos)."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Cuentas y CC › Centros de costos.",
+   "Elige la organización ({organizacion}) y la versión.",
+   "Selecciona el centro mayor y presiona «Nuevo» para agregar un centro con su código y nombre.",
+   "Guarda; las partidas y las cajas chicas lo eligen en cada línea."
+  ]
+ },
+ "tipos-de-partida": {
+  "puntos": [
+   "Clasificación de las partidas: apertura (PA), diario (PD), ingresos, egresos, compras, ventas, ajuste, cierre…"
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Cuentas y CC › Tipos de partida.",
+   "Revisa las siglas y la clasificación (apertura, operación, ajuste o cierre).",
+   "Agrega un tipo con «Nuevo» y guarda; aparece al registrar partidas y en el libro diario."
+  ]
+ },
+ "rubros-presupuesto": {
+  "puntos": [
+   "Rubros que se presupuestan por grupo: ingresos, gastos de personal, administrativos, financieros, impuestos e inversiones."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Cuentas y CC › Rubros de presupuesto.",
+   "Revisa los rubros por grupo y su naturaleza.",
+   "Agrega un rubro con «Nuevo» (código, nombre, grupo) y guarda; luego úsalo en Registros › Presupuesto."
+  ]
+ },
+ "objetos-definicion": {
+  "puntos": [
+   "Objetos contables de la empresa (bancos, cajas, clientes, proveedores…) con sus cuentas y transacciones."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Objetos contables › Definición de objetos y elige {empresa}.",
+   "Elige el objeto en el maestro; en el detalle revisa sus cuentas (cuentas x objeto).",
+   "Agrega las transacciones que usa ese objeto (por ejemplo, depósitos con su cuenta bancaria {cuentaBancaria}).",
+   "Guarda: así cada documento sabe con qué cuentas contabilizar."
+  ]
+ },
+ "objetos-transacciones": {
+  "puntos": [
+   "Plantillas de partida: cuentas con debe o haber, orden, operación y centro de costo.",
+   "Ejemplo: {transaccion}."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Objetos contables › Transacciones.",
+   "Elige la transacción en el maestro (o «Nueva»): estado, si aplica póliza y tipo de operación.",
+   "En el detalle agrega cada cuenta con debe o haber, el orden, la operación (valor, IVA, retención…) y el centro de costo.",
+   "Guarda y usa «Imprimir plantillas» para revisarlas con el contador.",
+   "Los depósitos, cheques, compras y cajas chicas usan la plantilla con «Contabilizar»."
+  ]
+ },
+ "replicacion-empresa": {
+  "puntos": [
+   "Copia la empresa y sus parámetros generales a otra organización o localidad, con respaldo para deshacer."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Replicación › Empresa y parámetros.",
+   "Presiona «Nueva réplica», elige la empresa origen ({empresa}) y la empresa destino.",
+   "Marca qué replicar: parámetros de la empresa, objetos de catálogos y objetos de operación.",
+   "Revisa a la derecha el resumen y la comparación de parámetros.",
+   "Presiona «Aplicar» (guarda un respaldo del destino); si algo sale mal, «Desaplicar» lo devuelve."
+  ]
+ },
+ "replicacion-nomenclatura": {
+  "puntos": [
+   "Replica el catálogo de cuentas contables en otras empresas."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Replicación › Nomenclatura.",
+   "Elige la organización y empresa fuente ({empresa}) y el rango de empresas destino.",
+   "Indica si solo cuentas madres y si se replica el catálogo o los parámetros.",
+   "Ejecuta: el área de mensajes muestra el resultado por empresa; el historial guarda cada replicación.",
+   "Si hay error, «Eliminar la última replicación» de una empresa la deshace."
+  ]
+ },
+ "replicacion-centros": {
+  "puntos": [
+   "Replica la estructura de centros de costo en otras empresas."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Replicación › Centros de costos.",
+   "Elige el origen y el rango de empresas destino y ejecuta.",
+   "Revisa el resultado por empresa en el área de mensajes."
+  ]
+ },
+ "partidas-contables": {
+  "puntos": [
+   "Pólizas de la empresa por año y mes: encabezado, detalle de cuentas con debe y haber, centro de costo, soporte, aprobación y definitiva.",
+   "Ejemplo de {empresa}: {partida}."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Registros › Partidas › Partidas contables.",
+   "A la izquierda elige la empresa ({empresa}), el año ({anio}), el mes, el tipo y el estado; verifica que el mes esté ABIERTO.",
+   "Presiona «Nueva partida»: fecha, tipo de partida (por ejemplo PD Partida de diario), moneda y descripción.",
+   "En «Detalle contable» agrega cada línea: cuenta de movimiento (ejemplo {cuenta}), concepto, debe o haber y centro de costo.",
+   "Revisa que los totales cuadren (debe = haber); el sistema no deja guardar una partida descuadrada como aprobada.",
+   "En «Soporte» escribe la justificación y adjunta el documento.",
+   "Guarda; el contador la revisa y presiona «Aprobar». «Definitiva» la bloquea; «Anular» con motivo la deja sin efecto.",
+   "Las partidas automáticas (bancos, compras, cajas) llegan desde su módulo y se consultan aquí."
+  ]
+ },
+ "consulta-de-partidas": {
+  "puntos": [
+   "Resumen de partidas por tipo, clasificación, fechas y estado, con su detalle contable y los documentos que las generaron."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Registros › Partidas › Consulta de Partidas.",
+   "Elige la empresa ({empresa}), el tipo de partida, la fecha inicial (por omisión la primera partida) y final, el orden y el estado.",
+   "Selecciona una partida: abajo ves su detalle contable y el depósito, cheque, nota o caja chica que la originó.",
+   "«Consultar» la abre en Partidas contables.",
+   "Genera el reporte resumido o detallado en PDF o Excel."
+  ]
+ },
+ "presupuesto": {
+  "puntos": [
+   "Presupuestos de la empresa por año: tipo, frecuencia, período, estado y rubros con presupuestado, ejecutado, variación y % de ejecución."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Registros › Presupuestos › Presupuesto y elige {empresa} y el año {anio}.",
+   "Presiona «Nuevo»: fecha, tipo (operación, inversión…), frecuencia (mensual, trimestral, anual), período y descripción.",
+   "Agrega los rubros con su monto presupuestado; el ejecutado se compara en el período.",
+   "Guarda; el responsable lo revisa y lo aprueba (elaboró y aprobó se registran solos).",
+   "Consulta el avance en Reportes y gráficas › Presupuesto vs. ejecutado."
+  ]
+ },
+ "cierre-de-mes": {
+  "puntos": [
+   "Los 12 meses del año con sus partidas (vigentes, por aprobar, descuadradas, anuladas) y su estado.",
+   "Con el mes cerrado las partidas ya no se registran ni modifican."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Procesos › Cierres › Cierre de mes y elige {empresa} y el año {anio}.",
+   "Revisa el mes: todas las partidas vigentes deben estar aprobadas y cuadradas.",
+   "Corrige lo pendiente en Partidas contables (aprobar o cuadrar).",
+   "Presiona «Cerrar» en el mes: queda cerrado con usuario y fecha.",
+   "Si hay que corregir, solo el Super Administrador puede «Reabrir» con motivo."
+  ]
+ },
+ "libro-diario": {
+  "puntos": [
+   "Partidas del período en orden cronológico con su detalle de cuentas, o una línea por partida (resumido).",
+   "Alcance: la empresa o el consolidado de la organización."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Reportes y gráficas › Libros contables › Libro diario.",
+   "Elige la empresa ({empresa}) y el alcance: «Empresa» o «Consolidado organización» ({organizacion}).",
+   "Indica «Desde» (1 de enero) y «Al» (hoy, {hoy}).",
+   "En «Contenido» elige Detallado (cada partida con sus cuentas, conceptos y suma) o Resumido (una línea por partida).",
+   "Marca «Solo aprobadas» para el libro oficial; sin la marca incluye todas las vigentes.",
+   "Revisa los indicadores (partidas, total debe, total haber, cuadre) y genera el PDF o Excel."
+  ]
+ },
+ "libro-mayor": {
+  "puntos": [
+   "Movimientos de cada cuenta con saldo inicial, debe, haber y saldo acumulado según su naturaleza."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Reportes y gráficas › Libros contables › Libro mayor.",
+   "Elige la empresa ({empresa}), el alcance y el período.",
+   "En «Cuenta» deja vacío para todas o escribe parte del código o nombre (ejemplo: {cuenta}); una cuenta mayor incluye sus subcuentas.",
+   "Contenido Detallado: saldo inicial, cada movimiento con su partida y saldo; Resumido: una línea por cuenta.",
+   "Genera el PDF o Excel; la gráfica muestra las cuentas con mayor movimiento."
+  ]
+ },
+ "balanza-de-comprobacion": {
+  "puntos": [
+   "Saldos iniciales, movimientos del período y saldos finales deudores y acreedores por cuenta y nivel."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Reportes y gráficas › Libros contables › Balanza de comprobación.",
+   "Elige la empresa, el alcance y el período.",
+   "En «Nivel» elige el detalle: 1 (clases) a 5 (cuentas de movimiento).",
+   "Verifica el indicador «Cuadre de saldos»: los saldos deudores deben igualar a los acreedores.",
+   "Genera el PDF o Excel para el cierre del mes."
+  ]
+ },
+ "balance-general": {
+  "puntos": [
+   "Activo, pasivo y patrimonio a una fecha con el resultado del ejercicio, el cuadre y firmas."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Reportes y gráficas › Estados financieros › Balance general.",
+   "Elige la empresa ({empresa}) o el «Consolidado organización».",
+   "Indica la fecha de corte (por ejemplo, el último día del mes cerrado).",
+   "Elige el nivel de cuentas (3 para presentación, 5 para detalle).",
+   "Revisa el indicador «Cuadre»: Activo = Pasivo + Patrimonio (incluye el resultado del ejercicio {anio}).",
+   "Genera el PDF (con firmas de representante legal y contador) o el Excel."
+  ]
+ },
+ "estado-de-resultados": {
+  "puntos": [
+   "Ingresos, costos y gastos del período con utilidad bruta, de operación y neta, y el % sobre ventas."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Reportes y gráficas › Estados financieros › Estado de resultados.",
+   "Elige la empresa o el consolidado y el período (Desde – Al).",
+   "Elige el nivel de cuentas y en «Columnas» «Período» o «Por mes» (una columna por mes).",
+   "Revisa la utilidad bruta, la de operación, la neta y el margen neto en los indicadores.",
+   "Genera el PDF con firmas o el Excel; las gráficas comparan ingresos y gastos por mes."
+  ]
+ },
+ "presupuesto-vs-ejecutado": {
+  "puntos": [
+   "Rubros del presupuesto con presupuestado, ejecutado, variación y % de ejecución por grupo."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Reportes y gráficas › Estados financieros › Presupuesto vs. ejecutado.",
+   "Elige la empresa ({empresa}), el año ({anio}) y un presupuesto o todos los del año.",
+   "Revisa la ejecución por grupo; las filas en rojo superan el 105 % de lo presupuestado.",
+   "Genera el PDF o Excel con la gráfica presupuestado vs. ejecutado."
+  ]
+ },
+ "cuentas-bancarias": {
+  "puntos": [
+   "Bancos de la empresa y sus cuentas: moneda, saldos, chequera, formato de cheque y cuenta contable.",
+   "Ejemplo: {cuentaBancaria}."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Cuentas bancarias y elige {empresa}.",
+   "Elige el banco en el maestro; abajo ves sus cuentas.",
+   "Presiona «Nueva cuenta»: número, nombre, moneda, saldo inicial y su fecha, saldo mínimo.",
+   "Registra la chequera (cheque inicial y final, mínimo de cheques) y el formato de cheque.",
+   "Asigna la cuenta contable (Caja y bancos) y guarda."
+  ]
+ },
+ "depositos": {
+  "puntos": [
+   "Depósitos en cualquier moneda con su valor en quetzales, cliente, detalle contable, facturas que liquida y póliza."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Depósitos multimoneda y elige {empresa} y la cuenta bancaria ({cuentaBancaria}).",
+   "Presiona «Nuevo»: número de boleta, fecha, moneda, valor y valor de cambio.",
+   "Elige el cliente (ejemplo: {cliente}) y escribe quién depositó y la descripción.",
+   "En «Detalle contable» presiona «Contabilizar» y elige la transacción: se arma la partida con su centro de costo.",
+   "Si liquida facturas, asígnalas en su pestaña.",
+   "Guarda y genera la póliza; se concilia luego en Conciliación bancaria."
+  ]
+ },
+ "consulta-de-depositos": {
+  "puntos": [
+   "Depósitos de la empresa en un rango de fechas con su detalle contable y las facturas o recibos que tienen."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Consulta de Depósitos Monetarios.",
+   "Elige la cuenta, el cliente, las fechas, el estado (vigentes, anulados, conciliados, sin partida) y el orden.",
+   "Selecciona un depósito para ver su detalle abajo.",
+   "Genera el PDF o Excel resumido o detallado."
+  ]
+ },
+ "notas-credito": {
+  "puntos": [
+   "Notas de crédito bancarias y transferencias recibidas con su detalle contable y póliza."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Notas de crédito / transferencias y elige la cuenta ({cuentaBancaria}).",
+   "Presiona «Nuevo»: número, fecha, moneda, valor y descripción (por ejemplo, intereses ganados o transferencia de un cliente).",
+   "Elige el cliente o proveedor si aplica.",
+   "Presiona «Contabilizar», revisa el detalle contable y guarda."
+  ]
+ },
+ "notas-debito": {
+  "puntos": [
+   "Notas de débito bancarias y transferencias enviadas (comisiones, pagos electrónicos a proveedores)."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Notas de débito / transferencias y elige la cuenta.",
+   "Presiona «Nuevo»: número, fecha, valor y descripción.",
+   "Si es pago a proveedor, elige el proveedor (ejemplo: {proveedor}) y asigna las facturas.",
+   "Contabiliza, revisa el cuadre y guarda."
+  ]
+ },
+ "consulta-de-notas": {
+  "puntos": [
+   "Notas de crédito y débito de la empresa con su detalle y documentos asociados."
+  ],
+  "pasos": [
+   "Abre la Consulta de Notas.",
+   "Elige la cuenta, el tipo (crédito o débito), las fechas y el estado.",
+   "Selecciona una nota para ver su detalle y genera el PDF o Excel."
+  ]
+ },
+ "conciliacion-bancaria": {
+  "puntos": [
+   "Conciliación del mes por cuenta: saldo según banco, movimientos conciliados, en circulación y diferencias."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Conciliación bancaria y elige {empresa}, el año y el mes.",
+   "Elige la cuenta bancaria ({cuentaBancaria}) y digita el saldo según el estado de cuenta del banco.",
+   "En «Movimientos del mes» marca los depósitos, cheques y notas que aparecen en el estado de cuenta.",
+   "Revisa los saldos: contable, conciliados, en circulación y la diferencia (debe quedar en cero).",
+   "Sube la imagen del estado de cuenta y presiona «Cerrar»; «Reversar cierre» la reabre."
+  ]
+ },
+ "disponibilidad-bancaria": {
+  "puntos": [
+   "Genera la disponibilidad de las cuentas a una fecha de corte y la guarda en el histórico con su correlativo."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Disponibilidad bancaria.",
+   "Elige la empresa, el banco o todos, la cuenta o todas y la fecha de corte ({hoy}).",
+   "Presiona «Generar disponibilidad»: el tablero muestra los indicadores, las cuentas por banco y el resumen.",
+   "Imprime en PDF o Excel; la generación queda guardada con usuario, fecha y hora."
+  ]
+ },
+ "consulta-de-disponibilidad": {
+  "puntos": [
+   "Generaciones guardadas de la disponibilidad, tal como quedaron."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Consulta de Disponibilidad.",
+   "Elige el rango de fechas y la generación.",
+   "Revisa el tablero y reimprime en PDF o Excel."
+  ]
+ },
+ "disponibilidad-integrada": {
+  "puntos": [
+   "Saldo de cada cuenta en un rango (ingresos y egresos) y el disponible de todas las cuentas de la organización a una fecha."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Bancos › Disponibilidad integrada.",
+   "Elige la cuenta y el rango de fechas: ves saldo inicial, ingresos (depósitos, notas de crédito), egresos (cheques, notas de débito) y saldo final.",
+   "Cambia a la pestaña integrada para ver todas las cuentas de {organizacion} en su moneda y en quetzales.",
+   "Imprime o exporta el resultado."
+  ]
+ },
+ "solicitud-de-cheques": {
+  "puntos": [
+   "Requisición de cheque con beneficiario, monto, departamento y aprobación antes de emitirlo."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cheques › Solicitud de cheques y presiona «Nuevo».",
+   "Elige el tipo de solicitud, la moneda y el monto; el sistema calcula el monto en quetzales.",
+   "Elige el beneficiario (proveedor {proveedor}, empleado u otro) y escribe la descripción del pago.",
+   "Guarda: queda la requisición con su número para seguimiento.",
+   "El responsable la aprueba; luego se emite en Emisión de cheques."
+  ]
+ },
+ "emision-de-cheques": {
+  "puntos": [
+   "Cheques con su beneficiario, valor, detalle contable, facturas que paga, impresión y póliza."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cheques › Emisión de cheques y elige la cuenta ({cuentaBancaria}).",
+   "Presiona «Nuevo»: el número sale de la chequera; escribe fecha, beneficiario y valor (o trae la solicitud aprobada).",
+   "Asigna las facturas de compra que paga (ejemplo: {compra}).",
+   "Presiona «Contabilizar» y revisa el detalle contable.",
+   "Guarda e imprime el cheque en el formato de la cuenta."
+  ]
+ },
+ "consulta-de-cheques": {
+  "puntos": [
+   "Cheques de la empresa en un rango de fechas con su detalle contable y compras pagadas."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cheques › Consulta de Cheques.",
+   "Elige la cuenta, el beneficiario, las fechas, el estado y el orden.",
+   "Selecciona un cheque para ver su detalle y genera el PDF o Excel."
+  ]
+ },
+ "generacion-cheques": {
+  "puntos": [
+   "Pago automático de facturas de compra pendientes con cheques, uno por proveedor o por factura."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cheques › Generación cheques.",
+   "Revisa arriba las compras con saldo pendiente y marca «Generar» en las que se pagarán (ejemplo: {compra}).",
+   "Abajo elige la cuenta bancaria, la fecha, la transacción y si se genera uno por proveedor o por factura.",
+   "Presiona «Generar»: se crean los cheques con su partida; los mensajes muestran el resultado.",
+   "Imprime los cheques en Emisión de cheques."
+  ]
+ },
+ "generacion-transferencias": {
+  "puntos": [
+   "Igual que la generación de cheques, pero con transferencias a la cuenta del proveedor."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cheques › Generación transferencias.",
+   "Marca las compras a pagar; verifica que el proveedor tenga banco y cuenta en su ficha.",
+   "Elige la cuenta, la fecha y la transacción y presiona «Generar»: se crean las notas de débito con su partida."
+  ]
+ },
+ "facturas-de-compra": {
+  "puntos": [
+   "Facturas y recibos de compra por pagar con su neto, pagado y pendiente, detalle contable y pagos."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cheques › Facturas de compra por pagar.",
+   "Busca la compra (ejemplo: {compra}) y revisa su importe y pendiente.",
+   "En «Detalle contable» revisa o arma la partida con la cuenta por pagar.",
+   "En «Pagos» ves los cheques y transferencias que la pagaron."
+  ]
+ },
+ "definicion-cajas": {
+  "puntos": [
+   "Definición de cada caja chica: responsable, tipo, modalidad, fondo, cuentas contables y tipos de gasto."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cajas › Definición de Cajas y elige {empresa}.",
+   "Presiona «Nueva»: nombre, responsable, tipo de caja, modalidad (normal o liquidación), moneda y monto asignado.",
+   "Elige la transacción, la cuenta principal, los centros de costo, el usuario que liquida y la cuenta bancaria de reintegro.",
+   "Indica las cuentas del IVA y de retenciones y, en «Tipos de gasto», cada tipo con su cuenta («Cargar cuentas» las trae).",
+   "Guarda; la caja aparece en Cajas chicas (ejemplo: {caja})."
+  ]
+ },
+ "cajas-chicas": {
+  "puntos": [
+   "Selección de la caja y administración de sus subcajas mensuales: documentos con desglose fiscal, detalle contable, liquidación y reportes.",
+   "Ejemplo: {caja}."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cajas › Cajas chicas, elige la caja y presiona «Ir a detalle».",
+   "En «Crear nueva subcaja» elige año y mes y presiona «Crear subcaja».",
+   "En «Documentos» ingresa cada factura o recibo: serie, documento, fecha, tipo, NIT, proveedor, total y el desglose fiscal (exento, INGUAT, timbre, combustibles, % IVA, retención).",
+   "Elige justificación, cuenta de gasto y centro de costo; deja «Contable» marcado y presiona «Agregar».",
+   "Presiona «Reconstruir detalle contable» y revisa con «Ver contable» que cuadre.",
+   "En «Liquidación» registra anticipo, adelanto y liquidación (cuenta, cheque, nota, valor) y guarda.",
+   "Imprime con los botones «PDF» y «Excel» de la cabecera (lo que estés viendo) o con el panel «Reportes».",
+   "«Cerrar caja» liquida la subcaja y genera la póliza; «Reabrir caja» la devuelve si su póliza se anuló."
+  ]
+ },
+ "liquidacion-cajas-chicas": {
+  "puntos": [
+   "Subcajas de una caja o de todas con su gasto, anticipo y lo pendiente de liquidar; liquidación en lote con nota o cheque."
+  ],
+  "pasos": [
+   "Abre Caja y Bancos › Cajas › Liquidación de Cajas Chicas.",
+   "Elige la caja (o todas) y revisa las subcajas con su total de gastos y pendiente.",
+   "Marca las subcajas a liquidar.",
+   "Abajo elige nota o cheque, la cuenta bancaria, el número, la fecha y confirma el total.",
+   "Presiona «Liquidar»: cada subcaja queda liquidada con su póliza; imprime el listado en PDF o Excel."
+  ]
+ },
+ "administracion|Solicitudes": "solicitudes internas con flujo de aprobación.",
+ "administracion|Órdenes de compra": "se operan en Compras › Registros › Órdenes de compra.",
+ "administracion|Contratos": "registro de contratos con proveedores y clientes, vigencias y alertas.",
+ "administracion|Parámetros administrativos": "parámetros generales de la organización; hoy se configuran en Organizaciones y en Parámetros generales.",
+ "administracion|Niveles de aprobación": "montos y responsables de aprobación por documento.",
+ "administracion|Aprobaciones": "bandeja única de documentos por aprobar.",
+ "administracion|Cierre administrativo": "cierre de los procesos administrativos del período.",
+ "contabilidad|Períodos contables": "hoy se manejan en Parámetros generales (período fiscal) y en Procesos › Cierre de mes.",
+ "contabilidad|Empresas": "hoy se administran en Administración › Organizaciones.",
+ "contabilidad|Parámetros contables": "hoy están en Catálogos › Parámetros › Parámetros generales.",
+ "contabilidad|Mayorización": "los saldos se calculan en línea: consulta el Libro mayor y la Balanza de comprobación.",
+ "contabilidad|Cierre de año": "partida de cierre de resultados y apertura del nuevo ejercicio; mientras tanto el Balance general muestra los resultados de ejercicios anteriores no cerrados.",
+ "caja-bancos|Chequeras": "se registran en la ficha de la cuenta bancaria (cheque inicial, final y mínimo).",
+ "caja-bancos|Anulación de cheques": "se anula desde Emisión de cheques con el motivo.",
+ "caja-bancos|Cheques en circulación": "se ven en la Conciliación bancaria (pestaña de movimientos y saldos en circulación).",
+ "caja-bancos|Arqueo de caja": "conteo físico del fondo de caja chica contra documentos.",
+ "clientes": {
+  "puntos": [
+   "Ficha del cliente: documento (NIT o CUI), nombre y razón social, tipo, vendedor, tipo de precio, bodega, crédito y dirección.",
+   "Ejemplo de {empresa}: {cliente}."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Catálogos › Ventas › Clientes y elige {empresa}.",
+   "Busca por código, NIT o nombre; presiona «Nuevo» para crear uno.",
+   "Escribe el tipo de documento y el NIT (o CUI), el nombre y la razón social.",
+   "Asigna vendedor ({vendedor}), tipo de precio ({tipoPrecio}), bodega y modo de entrega.",
+   "En crédito indica la forma de pago, los días y el monto de crédito.",
+   "Completa la dirección (país, departamento, municipio) y guarda."
+  ]
+ },
+ "vendedores": {
+  "puntos": [
+   "Vendedores con su usuario, comisiones general, de crédito y de contado, y siglas."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Catálogos › Ventas › Vendedores.",
+   "Presiona «Nuevo»: código, nombre, correo, celular y siglas.",
+   "Indica los porcentajes de comisión y el usuario del sistema y guarda."
+  ]
+ },
+ "series-recibos": {
+  "puntos": [
+   "Series de recibos, retenciones y exenciones con su número inicial y la serie principal."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Catálogos › Ventas › Series Recibos.",
+   "Agrega la serie con su recibo inicial y el tipo (recibo, retención o exención).",
+   "Marca la principal de cada tipo y si se muestra en la lista; guarda."
+  ]
+ },
+ "correlativo-dte": {
+  "puntos": [
+   "Último correlativo interno de facturas (FE) y notas de crédito (NC) por serie."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Catálogos › Ventas › Correlativo - DTE.",
+   "Revisa el documento, la serie y el último correlativo; el siguiente documento toma el número siguiente.",
+   "Corrige el correlativo solo si lo indica el contador (por ejemplo, al migrar) y guarda."
+  ]
+ },
+ "clasificaciones-y-tipos": {
+  "puntos": [
+   "Clasificaciones de productos (con su cuenta, servicio, inventario y laboratorio) y sus tipos (cuenta de inventarios y de facturación)."
+  ],
+  "pasos": [
+   "Abre Catálogos › Productos › Clasificaciones y tipos.",
+   "Arriba agrega o edita la clasificación en la misma lista (descripción, tipo, cuenta, inventario).",
+   "Abajo, con la clasificación elegida, agrega sus tipos con siglas y cuentas de inventario y facturación.",
+   "Guarda; los productos se clasifican con estos datos y contabilizan con sus cuentas."
+  ]
+ },
+ "tipos-de-medida": {
+  "puntos": [
+   "Unidades de medida (unidad, caja, frasco, ampolla…) de la empresa."
+  ],
+  "pasos": [
+   "Abre Catálogos › Productos › Tipos de medida.",
+   "Agrega la medida en la lista con su descripción y guarda."
+  ]
+ },
+ "tipos-de-precio": {
+  "puntos": [
+   "Tipos de precio con % de utilidad y % de descuento (ejemplo: {tipoPrecio})."
+  ],
+  "pasos": [
+   "Abre Catálogos › Productos › Tipos de precio.",
+   "Agrega el tipo con su código, nombre, % de utilidad, % de descuento y factor; guarda.",
+   "El precio sugerido de cada producto se calcula con estos porcentajes en Precios de venta."
+  ]
+ },
+ "presentaciones-productos": {
+  "puntos": [
+   "Presentaciones (caja x 10, frasco 120 ml…) de los productos."
+  ],
+  "pasos": [
+   "Abre Catálogos › Productos › Presentación productos.",
+   "Agrega la presentación en la lista y guarda."
+  ]
+ },
+ "productos-y-servicios": {
+  "puntos": [
+   "Ficha del producto: clasificación y tipo, estado, marca, medida, presentación, costo, mínimos, registro sanitario y control de lote.",
+   "Ejemplo: {producto}."
+  ],
+  "pasos": [
+   "Abre Catálogos › Productos › Productos y servicios y elige {empresa}.",
+   "Busca por nombre o código o presiona «Nuevo».",
+   "Escribe el nombre, el código del producto y el código de barras; elige clasificación, tipo, medida y presentación.",
+   "Indica el costo, si controla inventario y lote, el registro sanitario y los mínimos y máximos.",
+   "Guarda; el producto queda disponible en compras, ventas e inventarios."
+  ]
+ },
+ "precios-de-venta": {
+  "puntos": [
+   "Precios de cada producto en cada tipo de precio con margen y precio sugerido."
+  ],
+  "pasos": [
+   "Abre Catálogos › Productos › Precios de venta.",
+   "Busca el producto ({producto}) en el catálogo de arriba.",
+   "Abajo escribe el precio de cada tipo de precio y la fecha; revisa el margen sobre el costo y el sugerido.",
+   "Guarda por producto; «Imprimir» genera la lista de precios en PDF o Excel."
+  ]
+ },
+ "facturas-ventas": {
+  "puntos": [
+   "Factura electrónica FEL: cliente, venta y crédito, productos con lote, impuestos, cobro, certificación con COFIDI e impresión.",
+   "Ejemplo de {empresa}: {factura}."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Registros › Facturas › Facturas Ventas y presiona «Nueva».",
+   "Elige el tipo de factura, la serie, la moneda y el tipo de precio.",
+   "Escribe el NIT o nombre del cliente y elígelo (ejemplo: {cliente}); revisa dirección, vendedor y bodega ({bodega}).",
+   "Indica la forma de pago y los días de crédito.",
+   "En «Detalle factura» presiona «Producto», elige el producto ({producto}), la cantidad, el precio y el lote.",
+   "Revisa total, IVA y retenciones; presiona «Validar factura» y luego «Certificar factura».",
+   "«Imprimir factura» genera la representación gráfica; la mercadería sale de la bodega y el saldo queda por cobrar."
+  ]
+ },
+ "consulta-de-facturas": {
+  "puntos": [
+   "Facturas de la empresa con sus totales, productos, detalle contable y pagos."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Registros › Facturas › Consulta de Facturas.",
+   "Elige cliente, vendedor, forma de pago, fechas (por omisión el mes en curso), orden y estado.",
+   "Selecciona una factura para ver sus productos, su contabilidad y sus pagos.",
+   "«Consultar» la abre en Facturas Ventas; genera el reporte resumido o detallado en PDF o Excel."
+  ]
+ },
+ "recibos": {
+  "puntos": [
+   "Recibo de cobro del cliente con su forma de pago, facturas que liquida, retenciones e impresión con firma.",
+   "Ejemplo: {recibo}."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Registros › Recibos › Recibos y presiona «Nuevo».",
+   "Elige la serie, la fecha, la moneda y el cliente ({cliente}).",
+   "Indica la forma y el tipo de pago, la cuenta, el banco, el documento y el valor.",
+   "En «Facturas» presiona «Asignar facturas» y escribe el abono de cada una (o «Liquidar facturas»).",
+   "Guarda: el saldo de las facturas baja. «Imprimir» genera el original o la copia."
+  ]
+ },
+ "consulta-de-recibos": {
+  "puntos": [
+   "Recibos de la empresa con las facturas que pagaron."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Registros › Recibos › Consulta de Recibos.",
+   "Elige cliente, vendedor, forma de pago, fechas y estado.",
+   "Selecciona un recibo para ver sus facturas; genera el PDF o Excel."
+  ]
+ },
+ "notas-de-credito-electronicas": {
+  "puntos": [
+   "Nota de crédito FEL que rebaja el saldo de una factura (devolución, descuento o ajuste)."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Registros › Notas electrónicas › Notas de Crédito y presiona «Nueva».",
+   "Elige el cliente y la factura de referencia; el sistema trae su autorización, DTE y saldo.",
+   "Indica el tipo de ajuste y el motivo; si hay devolución elige la bodega destino.",
+   "Agrega los productos («Copiar productos» trae los de la factura) y ajusta cantidades y valores.",
+   "«Validar nota», «Certificar nota» e «Imprimir nota»."
+  ]
+ },
+ "notas-de-debito-electronicas": {
+  "puntos": [
+   "Nota de débito FEL que aumenta el saldo de una factura (cargos adicionales)."
+  ],
+  "pasos": [
+   "Abre Notas electrónicas › Notas de Débito y presiona «Nueva».",
+   "Elige el cliente y la factura de referencia, el motivo y el valor.",
+   "Valida, certifica e imprime la nota."
+  ]
+ },
+ "notas-de-abono-electronicas": {
+  "puntos": [
+   "Nota de abono FEL que rebaja el saldo de la factura sin devolución de mercadería."
+  ],
+  "pasos": [
+   "Abre Notas electrónicas › Notas de Abono y presiona «Nueva».",
+   "Elige el cliente y la factura, el motivo y el valor.",
+   "Valida, certifica e imprime."
+  ]
+ },
+ "anulacion-de-documentos-dte": {
+  "puntos": [
+   "Anula facturas o notas certificadas con su motivo; la factura devuelve su inventario y deja saldo cero."
+  ],
+  "pasos": [
+   "Abre Notas electrónicas › Anulación de Documentos DTE.",
+   "Escribe el número interno de la factura o nota y revisa sus datos y el cliente.",
+   "Escribe el motivo y presiona «Anular»: queda registrada con número, usuario y fecha.",
+   "«Duplicar documento» crea una factura nueva igual (sin certificar) para volver a emitirla correctamente."
+  ]
+ },
+ "envios": {
+  "puntos": [
+   "Envíos de mercadería facturada al cliente."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Mantenimientos › Ventas › Envíos.",
+   "Elige la factura, la dirección de envío y quién entrega; imprime el reporte de envío."
+  ]
+ },
+ "contrasenas-cobros": {
+  "puntos": [
+   "Recepción de facturas por el cliente con su contraseña y fecha estimada de cobro."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Mantenimientos › Ventas › Contraseñas de Cobro y presiona «Nuevo».",
+   "Elige el cliente ({cliente}); se muestran sus días de crédito.",
+   "Presiona «Asignar facturas»: trae las facturas con saldo sin contraseña.",
+   "Guarda: cada factura toma la contraseña (C-n) y la fecha estimada de cobro."
+  ]
+ },
+ "despachos": {
+  "puntos": [
+   "Despacho de la mercadería facturada: impresión, salida y entrega."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Mantenimientos › Ventas › Despachos.",
+   "Elige la factura, imprime el reporte de despacho y registra quién despachó y quién entregó."
+  ]
+ },
+ "retenciones": {
+  "puntos": [
+   "Constancias de retención de IVA o ISR recibidas de clientes agentes retenedores."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Mantenimientos › Ventas › Retenciones.",
+   "Registra la constancia con su serie, número, fecha, tipo (IVA o ISR) y la factura; guarda."
+  ]
+ },
+ "exenciones": {
+  "puntos": [
+   "Constancias de exención de IVA de clientes exentos."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Mantenimientos › Ventas › Exenciones.",
+   "Registra la constancia con su número, fecha y factura; guarda."
+  ]
+ },
+ "carga-facturas-sat": {
+  "puntos": [
+   "Carga guiada del archivo de facturas de la SAT con clasificación y cuenta contable por factura."
+  ],
+  "pasos": [
+   "Abre Procesos › Carga Facturas SAT.",
+   "Paso 1 Cargar: elige el archivo descargado del portal de la SAT (.xls, .xlsx o .csv) con las columnas «Clasificación» y «Cuenta» al final.",
+   "Paso 2 Revisar: filtra y elige en cada fila la clasificación, la cuenta y las observaciones (se proponen para el mismo NIT).",
+   "Paso 3 Aplicar: registra las facturas; una factura ya cargada (misma autorización) solo se actualiza."
+  ]
+ },
+ "cxc-mensual": {
+  "puntos": [
+   "Facturas con saldo por mes según su fecha estimada de cobro, con resumen por cliente."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Procesos › Cuentas x Cobrar › Consolidado CXC mensual.",
+   "Elige el año y el mes, el tipo de cliente y el cliente o todos.",
+   "Ordena por fecha, mora, valor o saldo; imprime en PDF o Excel o abre el estado de cuenta."
+  ]
+ },
+ "cxc-general": {
+  "puntos": [
+   "Facturas de un rango de fechas con su saldo y días de mora."
+  ],
+  "pasos": [
+   "Abre Cuentas x Cobrar › Consolidado general.",
+   "Elige fecha inicial y final, «Con saldo» o «Todas», y el cliente.",
+   "Imprime el listado o el resumen por cliente."
+  ]
+ },
+ "cxc-periodo": {
+  "puntos": [
+   "Saldo de las facturas a una fecha, con los cobros y notas hasta ese día."
+  ],
+  "pasos": [
+   "Abre Cuentas x Cobrar › CXC por periodo.",
+   "Elige el año de venta y «Saldo al» (hoy, {hoy}).",
+   "Revisa el saldo por cliente y genera el PDF o Excel."
+  ]
+ },
+ "cxc-estado": {
+  "puntos": [
+   "Estado de cuenta de un cliente o de todos: resumido, detallado (cada movimiento) o por período."
+  ],
+  "pasos": [
+   "Abre Cuentas x Cobrar › Estado de cuenta clientes.",
+   "Elige el cliente ({cliente}) o todos y el período.",
+   "Elige el contenido (resumido, detallado o por período) y el formato (PDF o Excel) e imprime."
+  ]
+ },
+ "ventas-por-periodo": {
+  "pasos": [
+   "Abre Facturación/Ventas › Reportes y gráficas › «Ventas por período».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "«Desde» trae el 1 de enero y «Al» hoy ({hoy}).",
+   "«Contenido»: Resumido (por mes) o Detallado (cada factura por mes con subtotales).",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "ventas-por-cliente": {
+  "pasos": [
+   "Abre Facturación/Ventas › Reportes y gráficas › «Ventas por cliente».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "Elige el período.",
+   "«Contenido»: Resumido (un renglón por cliente con su %) o Detallado (sus facturas).",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "reporte-cuentas-por-cobrar": {
+  "pasos": [
+   "Abre Facturación/Ventas › Reportes y gráficas › «Cuentas por cobrar».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "«Saldo al»: la fecha de corte; el saldo se reconstruye con cobros y notas hasta ese día.",
+   "«Contenido»: Resumido (por cliente con antigüedad 0, 1-30, 31-60, 61-90, +90) o Detallado (cada factura con días de mora).",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "grafica-de-ventas": {
+  "pasos": [
+   "Abre Facturación/Ventas › Reportes y gráficas › «Gráfica de ventas».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "Elige el período: ventas por mes, 10 clientes y 10 productos principales.",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "clasificaciones-compra": {
+  "puntos": [
+   "Clasificación de compras: si va al libro de compras, si aplica IVA y si aplica inventarios."
+  ],
+  "pasos": [
+   "Abre Compras › Catálogos › Generales › Clasificación compras.",
+   "Agrega o edita en la lista la descripción y sus marcas; guarda."
+  ]
+ },
+ "tipos-documento-compra": {
+  "puntos": [
+   "Tipos de documento de compra (factura, recibo, especial…) y cómo calculan el IVA."
+  ],
+  "pasos": [
+   "Abre Compras › Catálogos › Generales › Tipo documento.",
+   "Agrega o edita el tipo y su cálculo de IVA; guarda."
+  ]
+ },
+ "parametros-compras": {
+  "puntos": [
+   "Encargados de compras, pedidos y facturación; quién recibe traslados; avisos por correo."
+  ],
+  "pasos": [
+   "Abre Compras › Catálogos › Generales › Parámetros módulo y elige {empresa}.",
+   "Asigna los usuarios encargados y la transacción principal de ventas.",
+   "Activa los avisos por correo de orden cotizada y autorizada; guarda."
+  ]
+ },
+ "proveedores": {
+  "puntos": [
+   "Ficha del proveedor: datos fiscales, régimen ISR, retenciones, días de crédito, cuenta de gastos, transacción y datos de pago.",
+   "Ejemplo: {proveedor}."
+  ],
+  "pasos": [
+   "Abre Compras › Catálogos › Proveedores › Proveedores y elige {empresa}.",
+   "Presiona «Nuevo proveedor»: NIT, nombre comercial, nombre fiscal SAT y de emisión del cheque.",
+   "Elige tipo de proveedor, régimen ISR, bodega y si es nacional.",
+   "En «Datos contables»: días de crédito, retención, cuenta de gastos y transacción.",
+   "En «Datos de pago»: forma (cheque o transferencia), banco, cuenta y titular.",
+   "Guarda; «Imprimir listado» genera el PDF o Excel por tipo de proveedor."
+  ]
+ },
+ "bodegas": {
+  "puntos": [
+   "Bodegas en árbol (generales y sub-bodegas) con su tipo y responsable (ejemplo: {bodega})."
+  ],
+  "pasos": [
+   "Abre Compras › Catálogos › Proveedores › Bodegas.",
+   "Elige la bodega general y presiona «Nueva» para una sub-bodega; indica código, nombre, tipo y estado.",
+   "Guarda; la bodega aparece en compras, ventas, traslados y tomas físicas."
+  ]
+ },
+ "solicitudes-de-compra": {
+  "puntos": [
+   "Genera la orden de compra con los productos del proveedor y la cantidad sugerida por su mínimo."
+  ],
+  "pasos": [
+   "Abre Compras › Registros › Compras › Órdenes de compra › Solicitudes de compra y presiona «Nueva».",
+   "Elige el proveedor ({proveedor}), la forma de pago, la moneda y la bodega ({bodega}).",
+   "Presiona «Cargar»: trae los productos del proveedor con la cantidad sugerida; ajusta cantidades y precios.",
+   "Revisa existencia, en tránsito, mínimo y máximo de cada producto.",
+   "Presiona «Generar orden»: pasa a autorización."
+  ]
+ },
+ "autorizaciones-de-compras": {
+  "puntos": [
+   "Revisión de la orden con la cantidad aprobada por producto."
+  ],
+  "pasos": [
+   "Abre Órdenes de compra › Autorizaciones compras.",
+   "Elige la orden, escribe la cantidad aprobada de cada producto.",
+   "Autoriza, rechaza o devuelve con observaciones."
+  ]
+ },
+ "autorizar-ordenes": {
+  "puntos": [
+   "Aprobación final de las órdenes autorizadas."
+  ],
+  "pasos": [
+   "Abre Órdenes de compra › Aprobación órdenes.",
+   "Revisa la orden y presiona «Aprobar» (o rechaza con motivo)."
+  ]
+ },
+ "ordenes-de-compra": {
+  "puntos": [
+   "Órdenes aprobadas e ingreso de la mercadería con lote y vencimiento."
+  ],
+  "pasos": [
+   "Abre Órdenes de compra › Órdenes de compra.",
+   "Elige la orden aprobada y registra lo recibido: cantidad, lote, fabricación y vencimiento.",
+   "Aplica al inventario: la mercadería entra a la bodega."
+  ]
+ },
+ "recepcion-de-mercaderia": {
+  "puntos": [
+   "Recepción de mercadería de las órdenes de compra."
+  ],
+  "pasos": [
+   "Abre Órdenes de compra › Recepción de mercadería.",
+   "Elige la orden, registra lo recibido con lote y vencimiento y aplica."
+  ]
+ },
+ "notas-de-credito-proveedores": {
+  "puntos": [
+   "Notas de crédito de proveedores ligadas a órdenes."
+  ],
+  "pasos": [
+   "Abre la opción, elige el proveedor y la orden y registra la nota."
+  ]
+ },
+ "facturas-compra": {
+  "puntos": [
+   "Ingreso completo de la compra: proveedor, documento, clasificación fiscal, desglose (IDP, exento, no deducible, INGUAT…), artículos o compras varias y detalle contable.",
+   "Ejemplo: {compra}."
+  ],
+  "pasos": [
+   "Abre Compras › Registros › Procesar Compras › Ingreso de compras y presiona «Nueva».",
+   "Elige el proveedor ({proveedor}): trae NIT, régimen, días de crédito, forma de pago y transacción.",
+   "Escribe tipo DTE, serie, número, fecha, mes y año de presentación y días de crédito.",
+   "Elige la clasificación (bienes o servicios), el tipo de operación y la descripción.",
+   "Completa el desglose fiscal; el sistema calcula base e IVA.",
+   "Bienes con inventario: agrega los artículos con cantidad, costo, lote y vencimiento; servicios: compras varias.",
+   "Revisa el detalle contable y guarda; queda por pagar en Caja y Bancos."
+  ]
+ },
+ "consultar-compras": {
+  "puntos": [
+   "Compras de la empresa por proveedor y fechas con su detalle y contabilidad."
+  ],
+  "pasos": [
+   "Abre Procesar Compras › Consultar Compras.",
+   "Elige proveedor, clasificación, fechas y orden.",
+   "Selecciona una compra; «Consultar» la abre y «Modificar ingreso de compra» la habilita si su mes está abierto."
+  ]
+ },
+ "regularizacion-anticipos": {
+  "puntos": [
+   "Liquida anticipos a proveedores contra compras por pagar con su póliza."
+  ],
+  "pasos": [
+   "Abre Procesar Compras › Regularización anticipos y presiona «Nueva».",
+   "Elige el proveedor, los anticipos (cheques o notas de débito) y las compras a liquidar con su valor.",
+   "Presiona «Procesar»: genera la póliza; «Reversar» la anula."
+  ]
+ },
+ "notas-credito-compras": {
+  "puntos": [
+   "Notas de crédito y débito de proveedores con productos, inventario y póliza."
+  ],
+  "pasos": [
+   "Abre Procesar Compras › Notas crédito compras y presiona «Nueva».",
+   "Registra autorización, serie, número, fecha, proveedor y la factura de referencia con el motivo.",
+   "Agrega los productos con lote; presiona «Descargar»: mueve el inventario, genera la póliza y rebaja la compra."
+  ]
+ },
+ "productos-consignacion": {
+  "puntos": [
+   "Partes de depósito de mercadería en consignación (envío o devolución)."
+  ],
+  "pasos": [
+   "Abre Procesar Compras › Productos en consignación y presiona «Nuevo».",
+   "Elige el proveedor, la bodega y los productos con lote y cantidad.",
+   "Guarda y aplica: la mercadería entra o sale de la bodega sin ser compra."
+  ]
+ },
+ "contrasenas-pago": {
+  "puntos": [
+   "Recepción de facturas de proveedores con su contraseña y fecha estimada de pago."
+  ],
+  "pasos": [
+   "Abre Procesar Compras › Contraseñas de pago y presiona «Nueva».",
+   "Elige el proveedor y el tipo de compra; agrega los documentos recibidos (serie, número, fecha, valor).",
+   "Guarda y autoriza; imprime la contraseña para el proveedor."
+  ]
+ },
+ "kardex-productos": {
+  "puntos": [
+   "Entradas y salidas de cada producto con lote, vencimiento, existencia por lote y costo promedio."
+  ],
+  "pasos": [
+   "Abre Compras › Mantenimientos › Inventarios › Kardex de Productos.",
+   "Busca el producto ({producto}) y elige la bodega y las fechas.",
+   "Revisa sus movimientos y genera el PDF o Excel."
+  ]
+ },
+ "analisis-costos": {
+  "puntos": [
+   "Compras de cada producto con promedio, descuentos, bonificaciones, notas de crédito y costo neto."
+  ],
+  "pasos": [
+   "Abre Compras › Mantenimientos › Inventarios › Análisis de Costos.",
+   "Elige el producto ({producto}) y el período.",
+   "Revisa los datos de la franja superior y las compras; imprime en PDF o Excel."
+  ]
+ },
+ "cxp-mensual": {
+  "puntos": [
+   "Compras con saldo por mes según su fecha de pago, con resumen por proveedor."
+  ],
+  "pasos": [
+   "Abre Compras › Procesos › Cuentas x Pagar › Consolidado CXP mensual.",
+   "Elige año, mes, tipo de proveedor y proveedor.",
+   "Ordena e imprime en PDF o Excel."
+  ]
+ },
+ "cxp-general": {
+  "puntos": [
+   "Compras de un rango de fechas con su saldo y días de mora."
+  ],
+  "pasos": [
+   "Abre Cuentas x Pagar › Consolidado general.",
+   "Elige las fechas y el proveedor e imprime."
+  ]
+ },
+ "cxp-periodo": {
+  "puntos": [
+   "Saldo de las compras a una fecha, con los pagos hasta ese día."
+  ],
+  "pasos": [
+   "Abre Cuentas x Pagar › CXP por periodo.",
+   "Elige el año y «Saldo al»; revisa el saldo por proveedor e imprime."
+  ]
+ },
+ "cxp-estado": {
+  "puntos": [
+   "Estado de cuenta de un proveedor o de todos."
+  ],
+  "pasos": [
+   "Abre Cuentas x Pagar › Estado de cuenta proveedores.",
+   "Elige el proveedor ({proveedor}) o todos, el período, el contenido y el formato e imprime."
+  ]
+ },
+ "compras-por-periodo": {
+  "pasos": [
+   "Abre Compras › Reportes y gráficas › «Compras por período».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "«Desde» trae el 1 de enero y «Al» hoy.",
+   "«Contenido»: Resumido (por mes con IVA) o Detallado (cada compra).",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "compras-por-proveedor": {
+  "pasos": [
+   "Abre Compras › Reportes y gráficas › «Compras por proveedor».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "Elige el período y el contenido (por proveedor o con sus documentos).",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "reporte-cuentas-por-pagar": {
+  "pasos": [
+   "Abre Compras › Reportes y gráficas › «Cuentas por pagar».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "«Saldo al»: la fecha de corte; el saldo se reconstruye con los pagos hasta ese día.",
+   "«Contenido»: Resumido (antigüedad por proveedor) o Detallado (cada compra con días de mora).",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "grafica-de-compras": {
+  "pasos": [
+   "Abre Compras › Reportes y gráficas › «Gráfica de compras».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "Elige el período: compras por mes, 10 proveedores y 10 productos principales.",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "entradas": {
+  "puntos": [
+   "Entradas de inventario (compras, ingresos, devoluciones, traslados, ajustes) por fechas, proveedor y producto."
+  ],
+  "pasos": [
+   "Abre Inventarios › Registros › Movimientos › Entradas.",
+   "Elige {empresa}, las fechas, el proveedor y uno o varios productos ({producto}).",
+   "Revisa los movimientos con documento, bodega, lote, cantidad y costo.",
+   "Imprime en PDF o Excel."
+  ]
+ },
+ "salidas": {
+  "puntos": [
+   "Salidas de inventario (ventas, notas, traslados, ajustes) por fechas, cliente y producto."
+  ],
+  "pasos": [
+   "Abre Inventarios › Registros › Movimientos › Salidas.",
+   "Elige las fechas, el cliente ({cliente}) y los productos.",
+   "Revisa e imprime en PDF o Excel."
+  ]
+ },
+ "vencimiento-productos": {
+  "puntos": [
+   "Productos vencidos y por vencer (3, 6, 12 o 18 meses) por bodega con lote, días y valor."
+  ],
+  "pasos": [
+   "Abre Inventarios › Registros › Movimientos › Vencimiento de productos.",
+   "Elige la bodega ({bodega}) y el horizonte.",
+   "Traslada lo vencido a la bodega de vencidos; imprime en PDF o Excel."
+  ]
+ },
+ "traslados-entre-bodegas": {
+  "puntos": [
+   "Traslado de producto con su lote de una bodega a otra al mismo costo."
+  ],
+  "pasos": [
+   "Abre Traslados y ajustes › Traslados entre bodegas y presiona «Nuevo».",
+   "Elige fecha, bodega origen ({bodega}) y destino, y la descripción.",
+   "Agrega productos con lote y cantidad (ves la existencia disponible).",
+   "Guarda (REGISTRADO) y presiona «Operar»; «Revertir» lo deshace y «Anular» con motivo."
+  ]
+ },
+ "ajustes-por-lotes": {
+  "puntos": [
+   "Cambia el lote (fabricación y vencimiento) de una cantidad de producto."
+  ],
+  "pasos": [
+   "Abre Traslados y ajustes › Ajustes al inventario por lotes y presiona «Nuevo».",
+   "Elige bodega, fecha y motivo; agrega el producto, el lote actual, la cantidad y el lote nuevo con su vencimiento.",
+   "Guarda y «Operar»."
+  ]
+ },
+ "ajustes-por-producto": {
+  "puntos": [
+   "Añade o disminuye existencias con motivo y justificación."
+  ],
+  "pasos": [
+   "Abre Traslados y ajustes › Ajustes al inventario por producto y presiona «Nuevo».",
+   "Elige bodega, fecha, motivo y la justificación.",
+   "Agrega los productos con lote y cantidad (añadir o disminuir).",
+   "Guarda y «Operar»; si la existencia no alcanza el sistema avisa."
+  ]
+ },
+ "devoluciones-reingresos": {
+  "puntos": [
+   "Devoluciones (salida) y reingresos (entrada) de mercadería."
+  ],
+  "pasos": [
+   "Abre Traslados y ajustes › Devoluciones y reingresos y presiona «Nuevo».",
+   "Elige el tipo, la bodega, la fecha y los productos con lote.",
+   "Guarda y «Operar»."
+  ]
+ },
+ "kardex-con-costos": {
+  "puntos": [
+   "Movimientos de un producto con costo unitario, costo promedio y valor."
+  ],
+  "pasos": [
+   "Abre Mantenimientos › Kardex › Movimiento de Kardex › Kardex con costos.",
+   "Busca el producto ({producto}) y elige la bodega y las fechas.",
+   "Revisa entradas, salidas, saldo y costo; imprime en PDF o Excel."
+  ]
+ },
+ "kardex-sin-costos": {
+  "puntos": [
+   "Movimientos de un producto solo en cantidades, por lote."
+  ],
+  "pasos": [
+   "Abre Kardex sin costos, busca el producto ({producto}) y la bodega.",
+   "Revisa cantidades por lote e imprime."
+  ]
+ },
+ "analisis-costos-local": {
+  "puntos": [
+   "Compras locales del producto con costo promedio, último costo y costo neto."
+  ],
+  "pasos": [
+   "Abre Kardex › Análisis de Costos › Análisis de costos local.",
+   "Elige el producto y el período; imprime en PDF o Excel."
+  ]
+ },
+ "analisis-costo-importacion": {
+  "puntos": [
+   "Compras de importación con gastos prorrateados: costo con gastos en quetzales y dólares."
+  ],
+  "pasos": [
+   "Abre Análisis de Costos › Análisis costo importación.",
+   "Elige las compras y los gastos de importación; revisa el costo por unidad.",
+   "Genera el reporte detallado, resumido o consolidado."
+  ]
+ },
+ "minimos-y-maximos": {
+  "puntos": [
+   "Existencia contra mínimo y máximo por producto, con cantidad a pedir y valor."
+  ],
+  "pasos": [
+   "Abre Mantenimientos › Control de inventario › Mínimos y máximos.",
+   "Elige la bodega; edita el mínimo y máximo en la tabla.",
+   "Filtra «Bajo el mínimo» para preparar la solicitud de compra; imprime."
+  ]
+ },
+ "costos": {
+  "puntos": [
+   "Costo del catálogo contra el último costo y el promedio de compras."
+  ],
+  "pasos": [
+   "Abre Mantenimientos › Control de inventario › Costos.",
+   "Revisa la diferencia y actualiza el costo del catálogo; queda el historial."
+  ]
+ },
+ "toma-fisica": {
+  "puntos": [
+   "Conteo físico de una bodega a una fecha de corte (ciego), diferencias valuadas y ajustes automáticos; hoja de conteo y acta con firmas."
+  ],
+  "pasos": [
+   "Abre Inventarios › Procesos › Toma física y presiona «Nueva toma física».",
+   "Elige la bodega ({bodega}), la fecha de corte, el responsable y deja «Conteo ciego».",
+   "Presiona «Abrir toma física» e imprime la «Hoja de conteo» en PDF.",
+   "Registra el «Conteo físico» de cada fila (se guarda solo); agrega productos encontrados que no estaban.",
+   "Presiona «Cerrar y ajustar»: se operan los ajustes de sobrantes y faltantes.",
+   "Imprime el «Acta de toma física» con firmas."
+  ]
+ },
+ "recalcular-costo-promedio": {
+  "puntos": [
+   "Promedio ponderado perpetuo de cada producto contra el costo del catálogo (Decreto 10-2012, art. 55)."
+  ],
+  "pasos": [
+   "Abre Procesos › Recalcular costo promedio y elige la fecha de corte.",
+   "Revisa la diferencia por producto; marca los que se corrigen.",
+   "Presiona «Aplicar a los marcados»; queda el historial. Imprime el cálculo."
+  ]
+ },
+ "cierre-de-inventario": {
+  "puntos": [
+   "Cierre mensual con saldos por producto y bodega; libro de inventarios."
+  ],
+  "pasos": [
+   "Abre Procesos › Cierre de inventario y elige el año {anio}.",
+   "En el mes terminado presiona «Cerrar»: ya no se aceptan movimientos de ese mes.",
+   "«Libro» imprime el libro de inventarios; «Reabrir» con motivo."
+  ]
+ },
+ "existencias-inventario": {
+  "pasos": [
+   "Abre Inventarios › Reportes y gráficas › «Existencias».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "«A la fecha»: el corte; marca «Incluir en cero» para ver lotes agotados.",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "kardex-por-producto": {
+  "pasos": [
+   "Abre Inventarios › Reportes y gráficas › «Kardex por producto».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "«A la fecha»: el corte; el reporte va del 1 de enero a esa fecha con saldo inicial.",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "valuacion-de-inventario": {
+  "pasos": [
+   "Abre Inventarios › Reportes y gráficas › «Valuación de inventario».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "«A la fecha»: el corte de la valuación al costo promedio; incluye la clasificación ABC.",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "rotacion-de-inventario": {
+  "pasos": [
+   "Abre Inventarios › Reportes y gráficas › «Rotación».",
+   "Elige la organización y la localidad ({empresa}); al cambiarla se recargan los datos.",
+   "«A la fecha»: el corte; rotación = costo de salidas ÷ inventario promedio; alta ≤ 30 días, media ≤ 90, baja > 90.",
+   "En «Producto» deja vacío para todos o escribe parte del nombre o código y elígelo (ejemplo: {producto}).",
+   "Revisa los indicadores, la tabla con grupos, subtotales y total, y las gráficas al final (casilla «Gráficas»).",
+   "Presiona «PDF» para imprimir o «Excel» para descargar con las gráficas."
+  ]
+ },
+ "facturacion|Formas de pago": "catálogo de formas de pago; hoy se eligen en la factura y el recibo.",
+ "facturacion|Cotizaciones": "cotizaciones a clientes que se convierten en pedido o factura.",
+ "facturacion|Pedidos": "pedidos de clientes con reserva de existencias.",
+ "facturacion|Notas de crédito": "se operan en Registros › Notas electrónicas.",
+ "facturacion|Cobros": "se operan con Recibos.",
+ "facturacion|Listas de precios": "se operan en Catálogos › Productos › Precios de venta.",
+ "facturacion|Descuentos": "políticas de descuento por cliente o producto.",
+ "facturacion|Anulación de documentos": "se opera en Notas electrónicas › Anulación de Documentos DTE.",
+ "facturacion|Antigüedad de saldos": "se consulta en Reportes › Cuentas por cobrar (antigüedad 0 a +90 días).",
+ "facturacion|Comisiones": "cálculo de comisiones por vendedor con los porcentajes de su ficha.",
+ "compras|Compradores": "catálogo de compradores; hoy se definen en Parámetros módulo.",
+ "compras|Condiciones de pago": "se definen en la ficha del proveedor (días de crédito y forma de pago).",
+ "compras|Series de documentos": "series internas de documentos de compra.",
+ "compras|Listas de precios de proveedores": "precios pactados por proveedor y producto.",
+ "compras|Aprobación de órdenes de compra": "se opera en Registros › Órdenes de compra › Aprobación órdenes.",
+ "compras|Anulación de documentos": "se anula desde cada documento con su motivo.",
+ "compras|Antigüedad de saldos": "se consulta en Reportes › Cuentas por pagar.",
+ "inventarios|Ubicaciones": "ubicación física (pasillo, estante) dentro de cada bodega.",
+ "presupuesto-flujo|Rubros de flujo": "clasificación de ingresos y egresos del flujo de efectivo (operación, inversión, financiamiento).",
+ "presupuesto-flujo|Escenarios": "escenarios base, optimista y conservador de la proyección.",
+ "presupuesto-flujo|Presupuesto de flujo": "presupuesto mensual de entradas y salidas de efectivo por rubro.",
+ "presupuesto-flujo|Proyección de ingresos": "cobros esperados (cuentas por cobrar, ventas proyectadas).",
+ "presupuesto-flujo|Proyección de egresos": "pagos esperados (cuentas por pagar, planilla, impuestos, préstamos).",
+ "presupuesto-flujo|Períodos de proyección": "horizonte semanal, mensual o anual de la proyección.",
+ "presupuesto-flujo|Cálculo del flujo proyectado": "saldo inicial de bancos + entradas − salidas por período.",
+ "presupuesto-flujo|Comparativo real vs. proyectado": "compara el flujo proyectado con los movimientos bancarios reales.",
+ "presupuesto-flujo|Flujo de efectivo": "estado de flujo de efectivo por actividades de operación, inversión y financiamiento.",
+ "presupuesto-flujo|Presupuesto vs. ejecutado": "hoy disponible en Contabilidad › Reportes › Presupuesto vs. ejecutado.",
+ "presupuesto-flujo|Gráfica de flujo": "gráfica de entradas, salidas y saldo proyectado.",
+ "activos-fijos|Tipos de activo": "clases de activo (mobiliario, vehículos, equipo de cómputo, edificios) con su cuenta.",
+ "activos-fijos|Ubicaciones": "lugar físico de cada activo.",
+ "activos-fijos|Responsables": "persona a cargo de cada activo.",
+ "activos-fijos|Métodos de depreciación": "línea recta (porcentajes del art. 28 de la Ley del ISR).",
+ "activos-fijos|Altas de activos": "registro del activo con costo, fecha de compra y factura.",
+ "activos-fijos|Bajas": "retiro del activo por venta, robo o deterioro.",
+ "activos-fijos|Traslados": "cambio de ubicación o responsable.",
+ "activos-fijos|Revaluaciones": "ajuste del valor del activo.",
+ "activos-fijos|Vidas útiles": "vida útil por tipo de activo.",
+ "activos-fijos|Porcentajes de depreciación": "porcentajes anuales máximos por tipo (ISR).",
+ "activos-fijos|Depreciación mensual": "cálculo y partida de depreciación del mes.",
+ "activos-fijos|Cierre de activos": "cierre del período de activos.",
+ "activos-fijos|Inventario de activos": "listado de activos con valor en libros.",
+ "activos-fijos|Depreciación acumulada": "depreciación acumulada por activo y cuenta.",
+ "activos-fijos|Activos por ubicación": "activos agrupados por ubicación y responsable.",
+ "sat|Certificadores FEL": "certificadores autorizados por la SAT (la empresa usa COFIDI).",
+ "sat|Tipos de DTE": "tipos de documento tributario electrónico (FACT, FCAM, NCRE, NDEB, NABN…).",
+ "sat|Frases y escenarios": "frases y escenarios requeridos en el DTE.",
+ "sat|Establecimientos": "establecimientos registrados en la SAT.",
+ "sat|Documentos FEL emitidos": "hoy se consultan en Facturación › Consulta de Facturas y de Notas.",
+ "sat|Documentos recibidos": "hoy se cargan en Procesos › Carga Facturas SAT.",
+ "sat|Retenciones de IVA e ISR": "hoy en Facturación › Mantenimientos › Retenciones.",
+ "sat|Credenciales del certificador": "credenciales de COFIDI (se configuran fuera de la aplicación por seguridad).",
+ "sat|Datos del emisor": "datos del emisor (NIT, nombre, establecimiento).",
+ "sat|Certificar DTE": "hoy desde cada factura o nota con «Certificar».",
+ "sat|Anular DTE": "hoy en Notas electrónicas › Anulación de Documentos DTE.",
+ "sat|Consultar NIT": "consulta del nombre de un NIT en la SAT.",
+ "sat|Declaración de IVA": "preparación de la declaración mensual de IVA.",
+ "sat|Libro de compras": "libro de compras y servicios del mes.",
+ "sat|Libro de ventas": "libro de ventas y servicios del mes.",
+ "sat|DTE por estado": "documentos por estado de certificación.",
+ "sat|Gráfica de IVA": "IVA débito contra crédito por mes.",
+ "nominas|Empleados": "ficha del empleado.",
+ "nominas|Puestos": "puestos y salario base.",
+ "nominas|Departamentos": "departamentos de la empresa.",
+ "nominas|Conceptos de pago y descuento": "ingresos y descuentos de planilla.",
+ "nominas|Horas extra": "registro de horas extra.",
+ "nominas|Ausencias": "faltas, permisos y suspensiones IGSS.",
+ "nominas|Anticipos y préstamos": "anticipos y préstamos con descuento en planilla.",
+ "nominas|Vacaciones": "control de vacaciones.",
+ "nominas|Tablas de IGSS e ISR": "cuotas IGSS (4.83 % laboral, 12.67 % patronal) e ISR asalariados.",
+ "nominas|Salario mínimo": "salario mínimo vigente por actividad.",
+ "nominas|Bonificación incentivo": "bonificación incentivo (Decreto 37-2001).",
+ "nominas|Generar planilla": "cálculo de la planilla del período.",
+ "nominas|Bono 14": "cálculo del Bono 14 (julio).",
+ "nominas|Aguinaldo": "cálculo del aguinaldo (diciembre).",
+ "nominas|Indemnización": "cálculo de indemnización y prestaciones.",
+ "nominas|Planilla del período": "planilla impresa.",
+ "nominas|Boletas de pago": "boleta de cada empleado.",
+ "nominas|Planilla IGSS": "planilla de seguridad social.",
+ "nominas|Costo de personal": "costo de personal por departamento.",
+ "comercio|Agentes aduanales": "agentes aduanales.",
+ "comercio|Aduanas": "aduanas de Guatemala.",
+ "comercio|Incoterms": "términos de comercio internacional.",
+ "comercio|Partidas arancelarias": "partidas arancelarias con su DAI.",
+ "comercio|Pólizas de importación": "póliza (DUCA) con valores y gastos.",
+ "comercio|Exportaciones": "exportaciones.",
+ "comercio|Gastos de importación": "fletes, seguros y gastos.",
+ "comercio|Embarques": "seguimiento de embarques.",
+ "comercio|Tasas de DAI": "tasas de derechos arancelarios.",
+ "comercio|Navieras y transportistas": "navieras y transportistas.",
+ "comercio|Liquidación de póliza": "liquidación de la póliza de importación.",
+ "comercio|Prorrateo de costos": "hoy en Inventarios › Análisis costo importación.",
+ "comercio|Ingreso a inventario": "ingreso de la importación a la bodega.",
+ "comercio|Importaciones por período": "importaciones del período.",
+ "comercio|Costo por póliza": "costo total por póliza.",
+ "comercio|Exportaciones por destino": "exportaciones por país."
+}

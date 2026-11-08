@@ -304,7 +304,7 @@
     raiz.querySelectorAll('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== id; });
   };
 
-  window.BANCOS = { montar, fmt, imprimir, adjunto, pestanas, activarPestana };
+  window.BANCOS = { montar, fmt, imprimir, adjunto, pestanas, activarPestana, seleccion };
 
   // ===================== Cuentas bancarias =====================
   window.PANTALLAS = window.PANTALLAS || {};
