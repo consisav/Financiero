@@ -5024,3 +5024,8 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 @media (max-width: 1100px) { .vr-arriba, .vr-fac { grid-template-columns: minmax(0, 1fr); } }
 .vr-valor-num { font-size: 20px; font-weight: 800; color: #1f7a45; font-variant-numeric: tabular-nums; }
 .vrc-tabla col.w-vf-pago { width: 150px; }
+/* Pagos ligados a recibos */
+.vf-p-link { display: inline-flex; align-items: center; gap: 4px; color: var(--acento); font-weight: 700; text-decoration: none; }
+.vf-p-link:hover { text-decoration: underline; }
+.vf-pagos .vf-p-rec { width: 170px; }
+.vf-pagos tr.vf-p-recibo td { height: 30px; font-variant-numeric: tabular-nums; }

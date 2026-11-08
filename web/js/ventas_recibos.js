@@ -43,6 +43,17 @@
         const { data } = await sb.from('recibos_venta').select('*').eq('id', Number(extra)).maybeSingle();
         if (data) return abrir(data);
       }
+      // Desde Facturas Ventas («Registrar recibo»): recibo nuevo con el cliente, el saldo y la factura.
+      const mf = /^factura-(\d+)$/.exec(String(extra || ''));
+      if (mf) {
+        const { data: fa } = await sb.from('facturas_venta').select('id, numero, serie, numero_dte, nombre, fecha_emision, total, saldo, estado, cliente_id, vendedor_id, localidad_id, organizacion_id, moneda_id, tipo_cambio').eq('id', Number(mf[1])).maybeSingle();
+        if (fa) {
+          if (fa.localidad_id !== locCargada) { ctx.sel.loc = fa.localidad_id; ctx.sel.org = fa.organizacion_id; pintarFiltros(); await cargarLocalidad(); }
+          await abrir(null);
+          lineas = Number(fa.saldo) > 0 ? [{ factura_id: fa.id, factura: fa, saldo: Number(fa.saldo), abono: Number(fa.saldo) }] : [];
+          return pintar({ ...valoresNuevos(), cliente_id: fa.cliente_id, nombre: fa.nombre, vendedor_id: fa.vendedor_id, valor: Number(fa.saldo) || 0, descripcion: `PAGO DE FACTURA ${fa.serie ? `${fa.serie}-${fa.numero_dte || ''}` : fa.numero}` });
+        }
+      }
       abrir(null);
     }
     async function cargarLocalidad() {
@@ -174,7 +185,7 @@
               <div class="vr-fac">
                 <div class="pc-lineas"><table class="vr-lineas"><thead><tr><th class="pc-n">#</th><th class="vr-c-fac">No. factura</th><th>Nombre factura</th><th class="vr-c-fecha">Fecha</th><th class="num vr-c-m">Valor factura</th><th class="num vr-c-m">Saldo factura</th><th class="num vr-c-m">Valor abono</th><th class="vr-c-chk">Liquidada</th><th class="pq-x"></th></tr></thead>
                   <tbody>${lineas.map((x, i) => { const liq = x.abono > 0 && x.abono >= x.saldo - 0.005; return `<tr data-linea="${i}">
-                    <td class="pc-n">${i + 1}</td><td class="fuerte">${esc(nombreFac(x.factura))}<small class="cq-ant">interno ${x.factura?.numero ?? ''}</small></td>
+                    <td class="pc-n">${i + 1}</td><td class="fuerte"><a class="vf-p-link" href="#/facturacion/facturas-ventas/${x.factura_id}" title="Abrir la factura en Facturas Ventas">${esc(nombreFac(x.factura))}</a><small class="cq-ant">interno ${x.factura?.numero ?? ''}</small></td>
                     <td class="cc-nombre">${esc(x.factura?.nombre || '')}</td><td>${esc(fmt.fechaDia(String(x.factura?.fecha_emision || '').slice(0, 10)))}</td>
                     <td class="num">${fmt.monto(x.factura?.total)}</td><td class="num">${fmt.monto(x.saldo)}</td>
                     <td class="num">${ed ? `<input type="number" step="0.01" min="0" data-abono value="${x.abono || ''}">` : `<b>${fmt.monto(x.abono)}</b>`}</td>

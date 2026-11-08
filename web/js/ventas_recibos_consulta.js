@@ -1,6 +1,6 @@
 // Facturación/Ventas · Registros · Consulta de Recibos: el mismo diseño de la Consulta de Facturas.
-//   Arriba los parámetros (empresa, cliente, vendedor, forma de pago, fechas —la inicial, por omisión, la del primer
-//   recibo de la empresa—, orden y estado) y la lista con sus totales; abajo el recibo elegido con las facturas que
+//   Arriba los parámetros (empresa, cliente, vendedor, forma de pago, fechas —la inicial, por omisión, el primer
+//   día del mes en curso—, orden y estado) y la lista con sus totales; abajo el recibo elegido con las facturas que
 //   pagó. «Consultar» abre el recibo en Recibos. Reportes en PDF y Excel, resumidos o detallados.
 (function () {
   const { esc } = window.UI;
@@ -14,8 +14,9 @@
   window.PANTALLAS['consulta-de-recibos'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Consulta de Recibos', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta vrc-consulta', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
-    const [anio] = fmt.hoy().split('-');
-    const f = { cliente: '', vendedor: '', forma: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
+    // Fecha inicial por omisión: el primer día del mes en curso (cada vez que se abre la pantalla).
+    const primeroDelMes = () => `${fmt.hoy().slice(0, 7)}-01`;
+    const f = { cliente: '', vendedor: '', forma: '', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
     let recibos = [], aplicado = new Map(), vendedores = [], sel = null, consulta = 0, rango = null, pagos = [];
 
     const nombre = (x) => [x.serie, x.recibo_fisico].filter((v) => v != null && v !== '').join('-') || `Interno ${x.numero}`;
@@ -45,13 +46,9 @@
     }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc || 0;
-      const [v, pr] = await Promise.all([
-        sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo'),
-        sb.from('recibos_venta').select('fecha').eq('localidad_id', loc).not('fecha', 'is', null).order('fecha').limit(1)
-      ]);
+      const v = await sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo');
       vendedores = v.data || [];
-      f.desde = pr.data?.[0]?.fecha ? String(pr.data[0].fecha).slice(0, 10) : `${anio}-01-01`;
-      if (f.hasta < f.desde) f.hasta = fmt.hoy();
+      f.desde = primeroDelMes(); f.hasta = fmt.hoy();
       f.vendedor = '';
       pintarFiltros();
       await consultar();

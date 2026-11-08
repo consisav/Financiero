@@ -24,6 +24,7 @@
     let clientes = [], vendedores = [], precios = [], bodegas = [], productos = [], preciosProd = [], contables = [], centros = [];
     let actual = null, modificando = false, pestana = 'DETALLE', lineaSel = 0;
     let lineas = [], conta = [], pagos = [], inventario = [], transacciones = [];
+    let conRecibos = false; // la base ya tiene recibos (script 132): los pagos de un recibo se manejan en Recibos
     // Listado de facturas del cliente: null = sin consultar; vista FACTURAS o PRODUCTOS (productos vendidos).
     let listado = null, listaTexto = '', listaVista = 'FACTURAS', vendidos = null;
     let poliza = null, guiaTamano = 'COMPLETA';
@@ -100,7 +101,13 @@
         lineas = (l.data || []).map((x) => ({ ...x, fecha_compromiso: x.fecha_compromiso || '', fecha_vencimiento: x.fecha_vencimiento || '', fecha_fabricacion: x.fecha_fabricacion || '' }));
         // La cuenta puede ser de otro catálogo (p. ej. la versión 1 de las facturas migradas): su código y nombre vienen con la línea.
         conta = (c.data || []).map((x) => ({ cuenta_id: x.cuenta_id, codigo: x.cuentas?.codigo || '', nombre: x.cuentas?.nombre || '', centro_id: x.centro_id, concepto: x.concepto || '', debe: Number(x.debe), haber: Number(x.haber), debe_mi: x.debe_mi == null ? null : Number(x.debe_mi), haber_mi: x.haber_mi == null ? null : Number(x.haber_mi) }));
-        pagos = (p.data || []).map((x) => ({ fecha: x.fecha, forma: x.forma, documento: x.documento || '', banco: x.banco || '', valor: Number(x.valor) }));
+        let pd = p.data || [];
+        if (!p.error) {
+          const pr = await sb.from('factura_venta_pagos').select('id, recibos_venta(id, numero, serie, recibo_fisico, fecha, estado, situacion)').eq('factura_id', f.id);
+          conRecibos = !pr.error;
+          if (conRecibos) { const rec = new Map((pr.data || []).map((x) => [x.id, x.recibos_venta])); pd = pd.map((x) => ({ ...x, recibo: rec.get(x.id) || null })); }
+        }
+        pagos = pd.map((x) => ({ fecha: x.fecha, forma: x.forma, documento: x.documento || '', banco: x.banco || '', valor: Number(x.valor), recibo_id: x.recibo_id || null, recibo: x.recibo || null }));
         poliza = null;
         if (f.partida_id) { const { data: pz } = await sb.from('partidas').select('anio, mes, numero').eq('id', f.partida_id).maybeSingle(); poliza = pz || null; }
         const ids = lineas.map((x) => x.id);
@@ -244,7 +251,7 @@
           <section class="bm-pestanas">
             <div class="bm-tabs-barra">
               <div class="rp-pestanas" role="tablist">${PESTANAS.map(([k, t, i]) => `<button type="button" role="tab" data-pestana="${k}" class="${pestana === k ? 'activa' : ''}" aria-selected="${pestana === k}"><i class="ti ${i}" aria-hidden="true"></i> ${t}${k === 'DETALLE' ? ` <b>${lineas.length}</b>` : k === 'PAGOS' && pagos.length ? ` <b>${pagos.length}</b>` : ''}</button>`).join('')}</div>
-              <span class="vf-tab-acc">${pestana === 'CONTABLE' ? (() => { const t = v.transaccion_anterior != null ? transacciones.find((x) => Number(x.numero) === Number(v.transaccion_anterior)) : null; return `<span class="vf-transaccion" title="Transacción contable"><span class="vf-tr-rotulo">Transacción</span><b class="vf-tr-num">${v.transaccion_anterior != null ? esc(String(v.transaccion_anterior)) : '—'}</b><span class="vf-tr-desc">${esc(t?.descripcion || (v.transaccion_anterior != null ? 'Transacción del sistema anterior' : 'Sin transacción contable'))}</span><span class="vf-tr-cuadre" data-cuadre></span></span>`; })() : ''}${ed && pestana === 'DETALLE' ? '<button type="button" class="boton secundario-sm" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Producto</button>' : ''}${ed && pestana === 'CONTABLE' ? '<button type="button" class="boton secundario-sm" data-accion="conta"><i class="ti ti-plus" aria-hidden="true"></i> Línea contable</button>' : ''}${ctx.admin && pestana === 'PAGOS' && (ed || puede) ? '<button type="button" class="boton secundario-sm" data-accion="pago"><i class="ti ti-plus" aria-hidden="true"></i> Pago</button>' : ''}</span>
+              <span class="vf-tab-acc">${pestana === 'CONTABLE' ? (() => { const t = v.transaccion_anterior != null ? transacciones.find((x) => Number(x.numero) === Number(v.transaccion_anterior)) : null; return `<span class="vf-transaccion" title="Transacción contable"><span class="vf-tr-rotulo">Transacción</span><b class="vf-tr-num">${v.transaccion_anterior != null ? esc(String(v.transaccion_anterior)) : '—'}</b><span class="vf-tr-desc">${esc(t?.descripcion || (v.transaccion_anterior != null ? 'Transacción del sistema anterior' : 'Sin transacción contable'))}</span><span class="vf-tr-cuadre" data-cuadre></span></span>`; })() : ''}${ed && pestana === 'DETALLE' ? '<button type="button" class="boton secundario-sm" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Producto</button>' : ''}${ed && pestana === 'CONTABLE' ? '<button type="button" class="boton secundario-sm" data-accion="conta"><i class="ti ti-plus" aria-hidden="true"></i> Línea contable</button>' : ''}${pestana === 'PAGOS' && f && conRecibos && f.estado === 'FACTURADA' && Number(f.saldo) > 0 ? `<a class="boton secundario-sm" href="#/facturacion/recibos/factura-${f.id}" title="Nuevo recibo con esta factura"><i class="ti ti-receipt-2" aria-hidden="true"></i> Registrar recibo</a>` : ''}${ctx.admin && pestana === 'PAGOS' && (ed || puede) ? '<button type="button" class="boton secundario-sm" data-accion="pago"><i class="ti ti-plus" aria-hidden="true"></i> Pago manual</button>' : ''}</span>
             </div>
             <div class="bm-panel" data-panel="DETALLE" ${pestana === 'DETALLE' ? '' : 'hidden'}>
               <div class="vf-detalle">
@@ -274,9 +281,9 @@
                   || `<tr><td colspan="7" class="tk-vacio">${f ? (f.bodega_id ? 'La factura no descargó productos del inventario (revisa la casilla «Inv.» de las líneas).' : 'La factura no tiene bodega: no descarga inventario.') : 'Al registrar la factura, sus productos con «Inv.» salen del inventario de la bodega.'}</td></tr>`}</tbody></table></div>
             </div>
             <div class="bm-panel" data-panel="PAGOS" ${pestana === 'PAGOS' ? '' : 'hidden'}>
-              <div class="pc-lineas"><table><thead><tr><th>Fecha</th><th>Forma</th><th>Documento</th><th>Banco</th><th class="num">Valor</th><th class="pq-x"></th></tr></thead>
-                <tbody>${pagos.map((x, i) => { const dp = ctx.admin && (ed || puede) ? '' : 'disabled'; return `<tr data-pago="${i}"><td><input type="date" data-p="fecha" value="${esc(x.fecha || '')}" ${dp}></td><td><select data-p="forma" ${dp}>${FORMAS_PAGO.map((y) => `<option ${x.forma === y ? 'selected' : ''}>${y}</option>`).join('')}</select></td><td><input data-p="documento" value="${esc(x.documento || '')}" maxlength="40" ${dp}></td><td><input data-p="banco" value="${esc(x.banco || '')}" maxlength="60" ${dp}></td><td class="num"><input type="number" step="0.01" min="0" data-p="valor" value="${x.valor || ''}" ${dp}></td><td class="pq-x">${!dp ? `<button type="button" class="icono-boton" data-quitar-pago="${i}" aria-label="Quitar el pago"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="6" class="tk-vacio">Sin pagos.</td></tr>'}</tbody>
-                <tfoot><tr><td colspan="4">Total pagado · saldo ${fmt.monto(saldo)}</td><td class="num">${fmt.monto(pagado)}</td><td></td></tr></tfoot></table></div>
+              <div class="pc-lineas"><table class="vf-pagos"><thead><tr><th class="vf-p-rec">Recibo</th><th>Fecha</th><th>Forma</th><th>Documento</th><th>Banco</th><th class="num">Valor</th><th class="pq-x"></th></tr></thead>
+                <tbody>${pagos.map((x, i) => filaPago(x, i, ctx.admin && (ed || puede))).join('') || '<tr><td colspan="7" class="tk-vacio">Sin pagos.</td></tr>'}</tbody>
+                <tfoot><tr><td colspan="5">Total pagado · saldo ${fmt.monto(saldo)}${pagos.some((x) => x.recibo_id) ? ' · los pagos de un recibo se cambian en Recibos' : ''}</td><td class="num">${fmt.monto(pagado)}</td><td></td></tr></tfoot></table></div>
               ${puede && !modificando ? '<div class="vf-pie"><button type="button" class="boton primario-sm" data-accion="guardar-pagos"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar pagos</button></div>' : ''}
             </div>
             <div class="bm-panel vf-listado" data-panel="LISTADO" ${pestana === 'LISTADO' ? '' : 'hidden'}>
@@ -455,6 +462,15 @@
           <div class="p"><span>Factura ${esc(nombreFactura(f))}</span><span>Interno ${f.numero}</span><span>${esc(f.modo_entrega || '')}${f.no_guia_anterior ? ` · guía ${esc(String(f.no_guia_anterior))}` : ''}</span></div></div>`, { sinEncabezado: true });
     }
 
+    // Pago de la factura: el de un recibo se muestra con su recibo (se cambia en Recibos); el manual, editable.
+    function filaPago(x, i, editar) {
+      const rec = x.recibo;
+      const nrec = rec ? [rec.serie, rec.recibo_fisico].filter((y) => y != null && y !== '').join('-') || `Interno ${rec.numero}` : '';
+      if (x.recibo_id) return `<tr data-pago="${i}" class="vf-p-recibo"><td><a class="vf-p-link" href="#/facturacion/recibos/${x.recibo_id}" title="Abrir el recibo en Recibos"><i class="ti ti-receipt-2" aria-hidden="true"></i> ${esc(nrec || 'Recibo')}</a>${rec?.estado === 'ANULADO' ? ' <span class="pc-marca anulada">Anulado</span>' : ''}</td><td>${esc(fmt.fechaDia(x.fecha))}</td><td>${esc(x.forma || '')}</td><td>${esc(x.documento || '')}</td><td>${esc(x.banco || '')}</td><td class="num fuerte">${fmt.monto(x.valor)}</td><td></td></tr>`;
+      const dp = editar ? '' : 'disabled';
+      return `<tr data-pago="${i}"><td class="tk-tenue">Manual</td><td><input type="date" data-p="fecha" value="${esc(x.fecha || '')}" ${dp}></td><td><select data-p="forma" ${dp}>${FORMAS_PAGO.map((y) => `<option ${x.forma === y ? 'selected' : ''}>${y}</option>`).join('')}</select></td><td><input data-p="documento" value="${esc(x.documento || '')}" maxlength="40" ${dp}></td><td><input data-p="banco" value="${esc(x.banco || '')}" maxlength="60" ${dp}></td><td class="num"><input type="number" step="0.01" min="0" data-p="valor" value="${x.valor || ''}" ${dp}></td><td class="pq-x">${!dp ? `<button type="button" class="icono-boton" data-quitar-pago="${i}" aria-label="Quitar el pago"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`;
+    }
+
     function filaLinea(x, i, ed, tc) {
       const dis = ed ? '' : 'disabled';
       const tq = Number(x.cantidad || 0) * Number(x.precio || 0);
@@ -516,7 +532,7 @@
         if (x.debe !== d0 || x.haber !== h0) x.editada = true;
       });
       ctx.pDet.querySelectorAll('tr[data-pago]').forEach((tr) => {
-        const x = pagos[Number(tr.dataset.pago)]; if (!x) return;
+        const x = pagos[Number(tr.dataset.pago)]; if (!x || x.recibo_id || !tr.querySelector('[data-p=valor]')) return;
         const v = (k) => tr.querySelector(`[data-p=${k}]`).value;
         x.fecha = v('fecha'); x.forma = v('forma'); x.documento = v('documento'); x.banco = v('banco'); x.valor = Number(v('valor')) || 0;
       });
@@ -560,7 +576,7 @@
       if (mala >= 0) { ir('DETALLE'); error.textContent = `Revisa la línea ${lineas.indexOf(ls[mala]) + 1}: necesita descripción y cantidad mayor que cero.`; return; }
       const cs = conta.filter((x) => x.codigo || x.debe || x.haber);
       if (cs.some((x) => !x.cuenta_id)) { ir('CONTABLE'); error.textContent = 'Hay líneas del detalle contable sin una cuenta de movimiento válida.'; return; }
-      const ps = pagos.filter((x) => x.valor > 0);
+      const ps = pagos.filter((x) => !x.recibo_id && x.valor > 0);
       error.textContent = '';
       const boton = form.querySelector('[type=submit]');
       boton.disabled = true;
@@ -568,7 +584,9 @@
         let id = actual?.id;
         if (actual) {
           const r = await sb.from('facturas_venta').update(h).eq('id', id); if (r.error) throw r.error;
-          for (const t of ['factura_venta_lineas', 'factura_venta_contable', 'factura_venta_pagos']) { const d = await sb.from(t).delete().eq('factura_id', id); if (d.error) throw d.error; }
+          for (const t of ['factura_venta_lineas', 'factura_venta_contable']) { const d = await sb.from(t).delete().eq('factura_id', id); if (d.error) throw d.error; }
+          // Pagos: solo los manuales; los de un recibo se quedan ligados a su recibo.
+          { let q = sb.from('factura_venta_pagos').delete().eq('factura_id', id); if (conRecibos) q = q.is('recibo_id', null); const d = await q; if (d.error) throw d.error; }
         } else {
           const r = await sb.from('facturas_venta').insert({ ...h, numero: 0, organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc }).select('id').single(); if (r.error) throw r.error;
           id = r.data.id;
@@ -588,9 +606,11 @@
     }
     async function guardarPagos() {
       leerTablas();
-      const d = await sb.from('factura_venta_pagos').delete().eq('factura_id', actual.id);
+      let q = sb.from('factura_venta_pagos').delete().eq('factura_id', actual.id);
+      if (conRecibos) q = q.is('recibo_id', null); // los de un recibo se manejan en Recibos
+      const d = await q;
       if (d.error) return window.FIN.aviso(window.UI.traducirError(d.error));
-      const ps = pagos.filter((x) => x.valor > 0);
+      const ps = pagos.filter((x) => !x.recibo_id && x.valor > 0);
       if (ps.length) { const r = await sb.from('factura_venta_pagos').insert(ps.map((x) => ({ factura_id: actual.id, fecha: x.fecha || fmt.hoy(), forma: x.forma, documento: x.documento || null, banco: x.banco || null, valor: x.valor, usuario: (ctx.yo.usuario || '').toUpperCase() }))); if (r.error) return window.FIN.aviso(window.UI.traducirError(r.error)); }
       window.FIN.aviso('Pagos guardados');
       const { data } = await sb.from('facturas_venta').select('*').eq('id', actual.id).single();

@@ -1,6 +1,6 @@
 // Facturación/Ventas · Registros · Consulta de Facturas: el mismo diseño de Consultar Compras y la Consulta de Cheques.
-//   Arriba los parámetros (empresa, cliente, vendedor, forma de pago, fechas —la inicial, por omisión, la de la primera
-//   factura de la empresa—, orden y estado) y la lista con sus totales; abajo la factura elegida con sus productos, su
+//   Arriba los parámetros (empresa, cliente, vendedor, forma de pago, fechas —la inicial, por omisión, el primer día
+//   del mes en curso—, orden y estado) y la lista con sus totales; abajo la factura elegida con sus productos, su
 //   detalle contable y sus pagos. «Consultar» abre la factura en Facturas Ventas. Reportes en PDF y Excel, resumidos o
 //   detallados.
 (function () {
@@ -14,8 +14,8 @@
   window.PANTALLAS['consulta-de-facturas'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Consulta de Facturas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
-    const [anio] = fmt.hoy().split('-');
-    const f = { cliente: '', vendedor: '', pago: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
+    const primeroDelMes = () => `${fmt.hoy().slice(0, 7)}-01`;
+    const f = { cliente: '', vendedor: '', pago: '', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
     let facturas = [], vendedores = [], sel = null, consulta = 0, rango = null;
     let detalle = { lineas: [], conta: [], pagos: [] };
 
@@ -44,13 +44,10 @@
     }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc || 0;
-      const [v, pr] = await Promise.all([
-        sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo'),
-        sb.from('facturas_venta').select('fecha_emision').eq('localidad_id', loc).order('fecha_emision').limit(1)
-      ]);
+      const v = await sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo');
       vendedores = v.data || [];
-      f.desde = pr.data?.[0]?.fecha_emision ? String(pr.data[0].fecha_emision).slice(0, 10) : `${anio}-01-01`;
-      if (f.hasta < f.desde) f.hasta = fmt.hoy();
+      // Fecha inicial por omisión: el primer día del mes en curso (cada vez que se abre la pantalla o se cambia de empresa).
+      f.desde = primeroDelMes(); f.hasta = fmt.hoy();
       f.vendedor = '';
       pintarFiltros();
       await consultar();
@@ -109,7 +106,10 @@
           sb.from('factura_venta_pagos').select('*').eq('factura_id', x.id).order('fecha')
         ]);
         if (sel !== x) return;
-        detalle = { lineas: l.data || [], conta: c.data || [], pagos: p.data || [] };
+        let pg = p.data || [];
+        if (pg.length) { const pr = await sb.from('factura_venta_pagos').select('id, recibos_venta(id, numero, serie, recibo_fisico, estado)').eq('factura_id', x.id); if (!pr.error) { const rec = new Map((pr.data || []).map((y) => [y.id, y.recibos_venta])); pg = pg.map((y) => ({ ...y, recibo: rec.get(y.id) || null })); } }
+        if (sel !== x) return;
+        detalle = { lineas: l.data || [], conta: c.data || [], pagos: pg };
       }
       pintarDetalle();
       ctx.pMae.querySelectorAll('tr[data-factura]').forEach((tr) => tr.classList.toggle('actual', !!x && tr.dataset.factura === String(x.id)));
@@ -181,9 +181,9 @@
               <div class="pc-lineas"><table><thead><tr><th>Cuenta</th><th>Nombre</th><th class="num">Debe</th><th class="num">Haber</th></tr></thead>
                 <tbody>${conta.map((l) => `<tr><td class="fuerte">${esc(l.cuentas?.codigo || '')}</td><td class="cc-nombre">${esc(l.cuentas?.nombre || '')}</td><td class="num">${Number(l.debe) ? fmt.monto(l.debe) : ''}</td><td class="num">${Number(l.haber) ? fmt.monto(l.haber) : ''}</td></tr>`).join('') || '<tr><td colspan="4" class="tk-vacio">Sin detalle contable.</td></tr>'}</tbody></table></div>
               <h3 class="ta-col-titulo vfc-pagos"><i class="ti ti-cash" aria-hidden="true"></i> Pagos <small>${pagos.length}</small></h3>
-              <div class="pc-lineas"><table><thead><tr><th>Fecha</th><th>Forma</th><th>Documento</th><th class="num">Valor</th></tr></thead>
-                <tbody>${pagos.map((p) => `<tr><td>${esc(fmt.fechaDia(p.fecha))}</td><td>${esc(p.forma)}</td><td>${esc(p.documento || '')}</td><td class="num">${fmt.monto(p.valor)}</td></tr>`).join('') || '<tr><td colspan="4" class="tk-vacio">Sin pagos.</td></tr>'}</tbody>
-                <tfoot><tr><td colspan="3">Pagado · saldo ${fmt.monto(x.saldo)}</td><td class="num">${fmt.monto(x.pagado)}</td></tr></tfoot></table></div>
+              <div class="pc-lineas"><table><thead><tr><th>Recibo</th><th>Fecha</th><th>Forma</th><th>Documento</th><th class="num">Valor</th></tr></thead>
+                <tbody>${pagos.map((p) => `<tr><td>${p.recibo ? `<a class="vf-p-link" href="#/facturacion/recibos/${p.recibo.id}" title="Abrir el recibo en Recibos">${esc([p.recibo.serie, p.recibo.recibo_fisico].filter((y) => y != null && y !== '').join('-') || p.recibo.numero)}</a>${p.recibo.estado === 'ANULADO' ? ' <span class="pc-marca anulada">Anulado</span>' : ''}` : '<span class="tk-tenue">Manual</span>'}</td><td>${esc(fmt.fechaDia(p.fecha))}</td><td>${esc(p.forma)}</td><td>${esc(p.documento || '')}</td><td class="num">${fmt.monto(p.valor)}</td></tr>`).join('') || '<tr><td colspan="5" class="tk-vacio">Sin pagos.</td></tr>'}</tbody>
+                <tfoot><tr><td colspan="4">Pagado · saldo ${fmt.monto(x.saldo)}</td><td class="num">${fmt.monto(x.pagado)}</td></tr></tfoot></table></div>
             </section>
           </div>
         </div>`;

@@ -18,8 +18,8 @@
   window.PANTALLAS['consulta-de-partidas'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Consulta de Partidas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques pz-consulta', grupo: 'Registros' });
     const { sb } = ctx;
-    const [anio] = fmt.hoy().split('-');
-    const f = { tipo: '', clasif: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
+    const primeroDelMes = () => `${fmt.hoy().slice(0, 7)}-01`;
+    const f = { tipo: '', clasif: '', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
     let tipos = [];
     let partidas = [];
     let sel = null;
@@ -53,11 +53,8 @@
       await cargarLocalidad();
     }
     async function cargarLocalidad() {
-      // Fecha inicial por omisión: el primer día del período de la primera partida de la empresa.
-      const pr = ctx.sel.loc ? await sb.from('partidas').select('anio, mes').eq('localidad_id', ctx.sel.loc).order('anio').order('mes').limit(1) : { data: [] };
-      const p0 = pr.data?.[0];
-      f.desde = p0 ? `${p0.anio}-${String(p0.mes).padStart(2, '0')}-01` : `${anio}-01-01`;
-      if (f.hasta < f.desde) f.hasta = fmt.hoy();
+      // Fecha inicial por omisión: el primer día del mes en curso (cada vez que se abre la pantalla o se cambia de empresa).
+      f.desde = primeroDelMes(); f.hasta = fmt.hoy();
       pintarFiltros();
       await consultar();
     }
