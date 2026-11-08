@@ -5183,3 +5183,10 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 }
 .rm-kpi.sat-alerta { background: var(--ambar-f); }
 .rm-kpi.sat-alerta b, .rm-kpi.sat-alerta span { color: var(--ambar-t); }
+
+/* ---------- Cuentas x Cobrar (Facturación/Ventas · Procesos) ---------- */
+.cxc-kpis { gap: 8px; margin: 0 0 8px; }
+.cxc-kpis .rm-kpi { flex-direction: row; align-items: baseline; justify-content: space-between; padding: 6px 12px; }
+.cxc-kpis .rm-kpi b { font-size: 15px; }
+.rm-kpi.cxc-alerta { background: var(--ambar-f); }
+.rm-kpi.cxc-alerta b, .rm-kpi.cxc-alerta span { color: var(--ambar-t); }

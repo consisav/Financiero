@@ -254,6 +254,15 @@ window.MODULOS = [
           pantallas: [
             { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' }
           ]
+        },
+        {
+          subgrupo: 'Cuentas x Cobrar',
+          icono: 'ti-report-money',
+          pantallas: [
+            { id: 'cxc-mensual', nombre: 'Consolidado CXC mensual', icono: 'ti-calendar-month', descripcion: 'Cuentas por cobrar de un mes de todas las ventas: cliente, tipo de fecha, saldo, tipo de cliente y días de mora.' },
+            { id: 'cxc-general', nombre: 'Consolidado general', icono: 'ti-report-money', descripcion: 'Cuentas por cobrar de todas las ventas en un rango de fechas, con su valor y saldo en quetzales.' },
+            { id: 'cxc-periodo', nombre: 'CXC por periodo', icono: 'ti-calendar-dollar', descripcion: 'Saldo de las ventas a una fecha, con resumen por cliente y estado de cuenta.' }
+          ]
         }
       ],
       catalogos: [
@@ -347,6 +356,15 @@ window.MODULOS = [
           pantallas: [
             { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' }
           ]
+        },
+        {
+          subgrupo: 'Cuentas x Pagar',
+          icono: 'ti-report-money',
+          pantallas: [
+            { id: 'cxp-mensual', nombre: 'Consolidado CXP mensual', icono: 'ti-calendar-month', descripcion: 'Cuentas por pagar de un mes: proveedor, tipo de fecha, saldo, tipo de proveedor y días de mora.' },
+            { id: 'cxp-general', nombre: 'Consolidado general', icono: 'ti-report-money', descripcion: 'Cuentas por pagar en un rango de fechas, con su valor y saldo en quetzales.' },
+            { id: 'cxp-periodo', nombre: 'CXP por periodo', icono: 'ti-calendar-dollar', descripcion: 'Saldo de las compras a una fecha, con resumen por proveedor y estado de cuenta.' }
+          ]
         }
       ],
       catalogos: [
@@ -401,15 +419,6 @@ window.MODULOS = [
                 { id: 'notas-credito-compras', nombre: 'Notas crédito compras', icono: 'ti-receipt-refund', descripcion: 'Notas de crédito y débito de los proveedores: factura de referencia, devolución al inventario, detalle contable y póliza.', separador: true },
                 { id: 'productos-consignacion', nombre: 'Productos en consignación', icono: 'ti-packages', descripcion: 'Partes de depósito de los proveedores: envío o devolución de mercadería en consignación y su carga al inventario.' },
                 { id: 'contrasenas-pago', nombre: 'Contraseñas de pago', icono: 'ti-key', descripcion: 'Recepción de facturas del proveedor: documentos recibidos, fecha estimada de pago, autorización, impresión y liquidación.' }
-              ]
-            },
-            {
-              subgrupo: 'Cuentas x Pagar',
-              icono: 'ti-report-money',
-              pantallas: [
-                { id: 'cxp-mensual', nombre: 'Consolidado CXP mensual', icono: 'ti-calendar-month', descripcion: 'Cuentas por pagar de un mes: proveedor, tipo de fecha, saldo, tipo de proveedor y días de mora.' },
-                { id: 'cxp-general', nombre: 'Consolidado general', icono: 'ti-report-money', descripcion: 'Cuentas por pagar en un rango de fechas, con su valor y saldo en quetzales.' },
-                { id: 'cxp-periodo', nombre: 'CXP por periodo', icono: 'ti-calendar-dollar', descripcion: 'Saldo de las compras a una fecha, con resumen por proveedor y estado de cuenta.' }
               ]
             }
           ]

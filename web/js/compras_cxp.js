@@ -2,7 +2,7 @@
 //   Regularización anticipos: los anticipos a proveedores (cheques o notas de débito cargados a la
 //   cuenta de anticipo) se liquidan contra compras por pagar; al procesar se genera la póliza con la
 //   fecha final (debe cuenta a operar, haber cuenta de anticipo). Reversar anula la póliza.
-//   Cuentas x Pagar: Consolidado CXP mensual, Consolidado general y CXP por periodo (saldo a una
+//   Cuentas x Pagar (grupo Procesos): Consolidado CXP mensual, Consolidado general y CXP por periodo (saldo a una
 //   fecha), con resumen por proveedor, estado de cuenta e impresión en PDF o Excel.
 (function () {
   const { esc } = window.UI;
@@ -301,7 +301,7 @@
   // modo: MENSUAL (mes y año), GENERAL (rango de fechas) o PERIODO (saldo a una fecha).
   function reporteCxp(cont, modo) {
     const TITULOS = { MENSUAL: ['Consolidado CXP mensual', 'ti-calendar-month'], GENERAL: ['Consolidado general', 'ti-report-money'], PERIODO: ['CXP por periodo', 'ti-calendar-dollar'] };
-    const ctx = montar(cont, { titulo: TITULOS[modo][0], icono: TITULOS[modo][1], clase: `bk-movimientos cx-rep cx-${modo.toLowerCase()}`, grupo: 'Compras · Cuentas x Pagar' });
+    const ctx = montar(cont, { titulo: TITULOS[modo][0], icono: TITULOS[modo][1], clase: `bk-movimientos cx-rep cx-${modo.toLowerCase()}`, grupo: 'Compras · Procesos' });
     const { sb } = ctx;
     const hoy = fmt.hoy();
     const [y, m] = hoy.split('-').map(Number);
