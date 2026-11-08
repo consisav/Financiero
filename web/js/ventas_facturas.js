@@ -382,6 +382,7 @@
           <button type="button" class="boton secundario-sm" data-accion="pdf" ${nf}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir factura</button>
           <button type="button" class="boton secundario-sm rp-peligro" data-accion="anular" ${puede ? '' : 'disabled'}><i class="ti ti-ban" aria-hidden="true"></i> Anular factura</button>
           <button type="button" class="boton secundario-sm" data-accion="validar" ${nf}><i class="ti ti-checklist" aria-hidden="true"></i> Validar factura</button>
+          ${f && f.estado === 'FACTURADA' ? `<div class="vf-pr-notas"><span>Emitir nota</span>${[['notas-de-credito-electronicas', 'Crédito', 'ti-file-minus'], ['notas-de-debito-electronicas', 'Débito', 'ti-file-plus'], ['notas-de-abono-electronicas', 'Abono', 'ti-file-dollar']].map(([r, t, i]) => `<a class="boton secundario-sm" href="#/facturacion/${r}/factura-${f.id}" title="Nota de ${t.toLowerCase()} con esta factura de referencia"><i class="ti ${i}" aria-hidden="true"></i> ${t}</a>`).join('')}</div>` : ''}
           ${f?.estado === 'ANULADA' && f.motivo_anulacion ? `<p class="cc-ingreso">Anulada: ${esc(f.motivo_anulacion)}</p>` : ''}
         </section>
         <section class="vf-pr-col">
@@ -616,16 +617,12 @@
       const { data } = await sb.from('facturas_venta').select('*').eq('id', actual.id).single();
       pestana = 'PAGOS'; await abrir(data);
     }
+    // La anulación se registra en Anulación de documentos DTE (quién, cuándo, motivo y, si se quiere, la factura nueva).
     async function anular() {
-      const motivo = prompt(`Motivo de la anulación de la factura ${actual.serie ? `${actual.serie}-${actual.numero_dte}` : actual.numero}:`);
-      if (motivo === null) return;
-      if (!motivo.trim()) return window.FIN.aviso('Escribe el motivo de la anulación');
-      const { error } = await sb.from('facturas_venta').update({ estado: 'ANULADA', motivo_anulacion: motivo.trim(), anulada_por: (ctx.yo.usuario || '').toUpperCase(), anulada_en: new Date().toISOString() }).eq('id', actual.id);
-      if (error) return window.FIN.aviso(window.UI.traducirError(error));
-      window.FIN.aviso('Factura anulada');
-      const { data } = await sb.from('facturas_venta').select('*').eq('id', actual.id).single();
-      await abrir(data);
+      if (!actual) return;
+      location.hash = `#/facturacion/anulacion-de-documentos-dte/factura-${actual.id}`;
     }
+
 
     // ---------- Impresión y Excel de la factura ----------
     function datosImpresion() {

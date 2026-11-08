@@ -5029,3 +5029,49 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .vf-p-link:hover { text-decoration: underline; }
 .vf-pagos .vf-p-rec { width: 170px; }
 .vf-pagos tr.vf-p-recibo td { height: 30px; font-variant-numeric: tabular-nums; }
+
+/* Notas electrónicas */
+.vn-cli { gap: 4px !important; }
+.vn-g { display: grid; gap: 3px 8px; align-items: end; }
+.vn-g1 { grid-template-columns: minmax(150px, 1.2fr) 120px 110px 90px minmax(220px, 2.4fr); }
+.vn-g1 .vn-c2 { grid-column: auto; }
+.vn-g2 { grid-template-columns: minmax(140px, 1.1fr) 110px minmax(160px, 1.3fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr); }
+.vn-g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.vn-resumen label.campo { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px; }
+.vn-resumen label.campo > span { font-size: 11px; color: var(--tenue); font-weight: 600; }
+.vn-resumen label.campo select, .vn-resumen label.campo input { height: 24px; padding: 1px 6px; font-size: 12px; }
+.vf-form .vn-cards { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, .8fr); }
+.vn-ref { background: color-mix(in srgb, var(--fondo) 70%, var(--panel)); }
+.vn-ref .vfb-g { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+.vn-ref .vn-saldo { font-weight: 800; color: #b23a32; text-align: right; }
+.vn-ref .vn-copiar { align-self: end; height: 26px; padding-top: 2px; padding-bottom: 2px; }
+.vn-motivo { display: flex; flex-direction: column; }
+.vn-motivo textarea { flex: 1; min-height: 60px; width: 100%; padding: 4px 8px; font: inherit; font-size: 12.5px; border: 1px solid var(--borde); border-radius: 8px; background: var(--panel); color: var(--texto); resize: vertical; }
+.vn-motivo textarea:disabled { background: var(--fondo); }
+.vn-pr-grid { grid-template-columns: minmax(180px, .8fr) minmax(220px, 1fr) minmax(260px, 1.2fr) !important; }
+.boton.deshabilitado { opacity: .5; pointer-events: none; }
+.vf-pr-notas { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 4px; padding-top: 6px; border-top: 1px dashed var(--borde); font-size: 11.5px; color: var(--tenue); }
+.vf-pr-notas > span { width: 100%; font-weight: 700; }
+.vf-pr-notas .boton { padding: 2px 8px !important; font-size: 12px; }
+@media (max-width: 1700px) { .vn-ref .vfb-g { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } .vf-form .vn-cards { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); } .vn-motivo { grid-column: 1 / -1; } }
+
+/* Anulación de documentos DTE */
+.va-form { gap: 8px !important; }
+.va-cuerpo { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) 320px; gap: 8px; align-items: stretch; }
+.va-cuerpo .vfb-card { padding: 8px 12px 10px; gap: 6px; }
+.va-g { display: grid; gap: 4px 8px; align-items: end; }
+.va-g1 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.va-g2 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.va-g .va-c2 { grid-column: span 2; } .va-g .va-c3 { grid-column: 1 / -1; }
+.va-form .campo { gap: 1px; font-size: 10.5px; min-width: 0; }
+.va-form .campo input, .va-form .campo select { height: 28px; padding: 2px 8px; font-size: 12.5px; width: 100%; }
+.va-form .campo textarea { width: 100%; padding: 4px 8px; font: inherit; font-size: 12.5px; border: 1px solid var(--borde); border-radius: 8px; background: var(--panel); color: var(--texto); }
+.va-form .va-num { text-align: right; font-weight: 700; }
+.va-ctl { display: flex; flex-direction: column; }
+.va-ctl .va-nueva b { background: #fff6c2; }
+.va-acciones { margin-top: auto; display: flex; flex-direction: column; gap: 5px; padding-top: 8px; }
+.va-acciones .boton { justify-content: center; }
+.va-lista { flex: 1; min-height: 160px; display: flex; flex-direction: column; }
+.va-lista .bm-panel { flex: 1; min-height: 0; overflow: auto; }
+.va-lista tbody tr[data-anulacion] { cursor: pointer; }
+@media (max-width: 1400px) { .va-cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .va-ctl { grid-column: 1 / -1; } }
