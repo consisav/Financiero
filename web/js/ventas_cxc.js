@@ -32,8 +32,8 @@
     const { sb } = ctx;
     const hoy = fmt.hoy();
     const [y, m] = hoy.split('-').map(Number);
-    const f = { anio: y, mes: m, desde: `${y}-${String(m).padStart(2, '0')}-01`, hasta: hoy, fecha: modo === 'MENSUAL' ? 'ESTIMADA' : 'EMISION', saldo: modo === 'MENSUAL' ? 'CON SALDO' : 'TODAS', tipo: '', cliente: '', formato: 'PDF' };
-    let clientes = [], tipos = [], facturas = [], movs = new Map(), filas = [], resumen = false, sel = null, turno = 0;
+    const f = { anio: y, mes: m, desde: `${y}-01-01`, hasta: hoy, fecha: modo === 'MENSUAL' ? 'ESTIMADA' : 'EMISION', saldo: modo === 'MENSUAL' ? 'CON SALDO' : 'TODAS', tipo: '', cliente: '', formato: 'PDF' };
+    let clientes = [], tipos = [], facturas = [], movs = new Map(), filas = [], resumen = false, sel = null, turno = 0, primera = true, saltoTxt = '';
     const cli = (id) => clientes.find((c) => c.id === id);
     const cliDe = (t) => { const s = String(t || '').trim().toUpperCase(); if (!s) return null; const cod = s.includes(' — ') ? s.slice(s.lastIndexOf(' — ') + 3).trim() : s; return clientes.find((c) => String(c.codigo) === cod || (c.documento && c.documento.toUpperCase() === cod) || c.nombre.toUpperCase() === s) || null; };
     const estimada = (x) => x.fecha_cobro || sumar(diaLocal(x.fecha_emision), x.dias_credito || 0);
@@ -64,9 +64,9 @@
     }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc;
-      const { data } = loc ? await sb.from('clientes').select('id, codigo, documento, nombre, tipo_cliente, dias_credito').eq('localidad_id', loc).order('nombre').limit(20000) : { data: [] };
-      clientes = data || [];
+      clientes = loc ? await leerTodo(() => sb.from('clientes').select('id, codigo, documento, nombre, tipo_cliente, dias_credito').eq('localidad_id', loc).order('nombre')) : [];
       tipos = [...new Set(clientes.map((c) => c.tipo_cliente).filter(Boolean))].sort();
+      primera = true;
       pintarFiltros();
       await consultar();
     }
@@ -98,11 +98,44 @@
         if (t !== turno) return;
         facturas = lista; movs = m2;
       } catch (e) { if (t === turno) ctx.pDet.innerHTML = `<p class="vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
+      // Primera vista: si el periodo propuesto no tiene facturas, se salta al más cercano que sí tiene.
+      if (primera && modo === 'PERIODO' && !facturas.length) {
+        const { data: u } = await sb.from('facturas_venta').select('fecha_emision').eq('localidad_id', loc).neq('estado', 'ANULADA').order('fecha_emision', { ascending: false }).limit(1);
+        const anio = u?.[0] ? Number(diaLocal(u[0].fecha_emision).slice(0, 4)) : null;
+        if (anio && anio !== f.anio) { primera = false; f.anio = anio; f.hasta = `${anio}-12-31` < hoy ? `${anio}-12-31` : hoy; saltoTxt = `No hay ventas en el año propuesto: se muestra ${anio}, el último con ventas.`; pintarFiltros(); return consultar(); }
+      }
+      if (primera && modo !== 'PERIODO') { const s = sugerencia(); if (s && !calcular().length) { s.aplicar(); saltoTxt = `${s.vacio}: se muestra ${s.txt}, el periodo más cercano con facturas.`; pintarFiltros(); } }
+      primera = false;
       pintar();
     }
     // Neto de la factura: total + notas de débito − retenciones − notas de crédito.
     const neto = (x, nd = Number(x.notas_debito || 0), nc = Number(x.notas_credito || 0)) => fmt.redondear(Number(x.total) + nd - Number(x.monto_retencion_iva || 0) - Number(x.monto_retencion_isr || 0) - nc);
-    function calcular() {
+    // Periodo más cercano con facturas (con los demás filtros), para cuando el elegido sale vacío.
+    function sugerencia() {
+      const fechas = calcular(false).map(fechaDe).filter(Boolean).sort();
+      if (!fechas.length) return null;
+      if (modo === 'MENSUAL') {
+        const actual = `${f.anio}-${String(f.mes).padStart(2, '0')}`;
+        const meses = [...new Set(fechas.map((d) => d.slice(0, 7)))];
+        const mm = meses.filter((x) => x <= actual).pop() || meses[0];
+        if (mm === actual) return null;
+        const [a, b] = mm.split('-').map(Number);
+        return { vacio: `No hay facturas en ${MESES[f.mes - 1]} ${f.anio}`, txt: `${MESES[b - 1]} ${a}`, n: fechas.filter((d) => d.startsWith(mm)).length, aplicar: () => { f.anio = a; f.mes = b; } };
+      }
+      const antes = fechas.filter((d) => d <= f.hasta);
+      if (!antes.length) return null;
+      const desde = `${antes[antes.length - 1].slice(0, 4)}-01-01`;
+      if (desde >= f.desde) return null;
+      return { vacio: `No hay facturas del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, txt: `del ${fmt.fechaDia(desde)} al ${fmt.fechaDia(f.hasta)}`, n: antes.filter((d) => d >= desde).length, aplicar: () => { f.desde = desde; } };
+    }
+    function avisoVacio() {
+      if (saltoTxt) { const t = saltoTxt; saltoTxt = ''; return `<div class="cx-vacio-sug"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(t)}</div>`; }
+      if (!facturas.length) return `<div class="cx-vacio-sug"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(empresaTxt(ctx))} no tiene facturas de venta registradas${modo === 'PERIODO' ? ` en ${f.anio}` : ''}. Elige otra empresa en «Empresa».</div>`;
+      if (filas.length || modo === 'PERIODO') return '';
+      const s = sugerencia();
+      return s ? `<div class="cx-vacio-sug"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(s.vacio)} con esos filtros. <button type="button" class="boton secundario-sm" data-accion="sugerencia">Ver ${esc(s.txt)} (${s.n})</button></div>` : '';
+    }
+    function calcular(conFecha = true) {
       const c = cliDe(f.cliente);
       const ini = modo === 'MENSUAL' ? `${f.anio}-${String(f.mes).padStart(2, '0')}-01` : f.desde;
       const fin = modo === 'MENSUAL' ? new Date(f.anio, f.mes, 0).toLocaleDateString('en-CA') : f.hasta;
@@ -120,7 +153,7 @@
         if (f.tipo && x.tipoCli !== f.tipo) return false;
         if (f.saldo === 'CON SALDO' && !(x.saldo > 0.004)) return false;
         if (f.saldo === 'SIN SALDO' && x.saldo > 0.004) return false;
-        if (modo !== 'PERIODO') { const d = fechaDe(x); if (!d || d < ini || d > fin) return false; }
+        if (modo !== 'PERIODO' && conFecha) { const d = fechaDe(x); if (!d || d < ini || d > fin) return false; }
         return true;
       }).sort((a, b) => (fechaDe(a) || '').localeCompare(fechaDe(b) || '') || a.numero - b.numero);
     }
@@ -158,6 +191,7 @@
         <div class="bm-form cx-form cl-clasico">
           <div class="cl-banda">${esc(TITULOS[modo][0])} · todas las ventas${modo === 'PERIODO' ? ` · saldo al ${esc(fmt.fechaDia(f.hasta))}` : modo === 'GENERAL' ? ` · ${esc(fmt.fechaDia(f.desde))} al ${esc(fmt.fechaDia(f.hasta))}` : ` · ${MESES[f.mes - 1]} ${f.anio}`}</div>
           ${meses}
+          ${avisoVacio()}
           ${kpis}
           <div class="pc-lineas cx-tabla"><table>${cuerpo}</table></div>
         </div>`;
@@ -239,6 +273,7 @@
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (a === 'imprimir') return imprimirRep();
       if (a === 'resumen') { resumen = !resumen; pintarFiltros(); return pintar(); }
+      if (a === 'sugerencia') { const s = sugerencia(); if (s) { s.aplicar(); pintarFiltros(); } return pintar(); }
       if (a === 'estado-cuenta') return estadoCuenta();
       if (a === 'regresar') return history.length > 1 ? history.back() : (location.hash = '#/facturacion');
     });

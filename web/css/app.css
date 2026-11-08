@@ -2826,7 +2826,11 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cx-mes { min-width: 92px; padding: 5px 8px; border: 1px solid var(--cl-azul-borde); border-radius: 6px; background: var(--panel); font-size: 12px; font-weight: 700; cursor: pointer; }
 .cx-mes:hover { border-color: var(--acento); }
 .cx-mes.activo { background: var(--acento); border-color: var(--acento); color: #fff; }
-.cx-tabla { flex: 1; }
+.cx-tabla { flex: 1 0 auto; min-height: 340px; max-height: calc(100vh - 220px); }
+.cx-rep .bk-detalle { overflow-y: auto !important; }
+.cx-rep .cx-form { overflow: visible !important; flex: 0 0 auto !important; min-height: 100%; }
+.cx-rep .cx-form > * { flex-shrink: 0; }
+.cx-vacio-sug { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; border-radius: var(--radio); background: var(--ambar-f); color: var(--ambar-t); font-size: 13px; }
 .cx-tabla td { padding: 5px 8px; font-variant-numeric: tabular-nums; }
 .cx-tabla .cx-nombre { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cx-tabla tbody tr { cursor: pointer; }

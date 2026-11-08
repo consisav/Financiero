@@ -307,7 +307,9 @@
     const [y, m] = hoy.split('-').map(Number);
     const f = { anio: y, mes: m, desde: `${y}-01-01`, hasta: hoy, fecha: modo === 'MENSUAL' ? 'ESTIMADA' : 'DOCUMENTO', saldo: modo === 'MENSUAL' ? 'CON SALDO' : 'TODAS', tipo: '', proveedor: '', formato: 'PDF' };
     let proveedores = [], tipos = [], compras = [], abonos = new Map();
-    let filas = [], resumen = false, sel = null;
+    let filas = [], resumen = false, sel = null, primera = true, saltoTxt = '';
+    // Supabase entrega 1000 filas por consulta: se lee todo de mil en mil.
+    const leerTodo = async (hacer) => { const out = []; for (let i = 0; ; i += 1000) { const { data, error } = await hacer().range(i, i + 999); if (error) throw error; out.push(...(data || [])); if (!data || data.length < 1000) break; } return out; };
     const prov = (id) => proveedores.find((p) => p.id === id);
     const provDe = (t) => { const s = String(t || '').trim().toUpperCase(); return s ? proveedores.find((p) => `${p.codigo} · ${p.nombre_comercial}`.toUpperCase() === s || String(p.codigo) === s || (p.nit && p.nit.toUpperCase() === s)) || null : null; };
     const aBase = (c) => (ctx.moneda(c.moneda_id)?.iso === 'GTQ' ? 1 : Number(c.tipo_cambio) || 1);
@@ -340,33 +342,64 @@
     async function cargarLocalidad() {
       const loc = ctx.sel.loc;
       const [p, t] = await Promise.all([
-        loc ? sb.from('proveedores').select('id, codigo, nit, nombre_comercial, nombre_fiscal, tipo_proveedor_id, dias_credito').eq('localidad_id', loc).order('nombre_comercial') : { data: [] },
+        loc ? leerTodo(() => sb.from('proveedores').select('id, codigo, nit, nombre_comercial, nombre_fiscal, tipo_proveedor_id, dias_credito').eq('localidad_id', loc).order('nombre_comercial')) : [],
         sb.from('tipos_proveedor').select('id, codigo, nombre').eq('activo', true).order('codigo')
       ]);
-      proveedores = p.data || []; tipos = t.data || [];
+      proveedores = p || []; tipos = t.data || [];
+      primera = true;
       pintarFiltros();
       await consultar();
     }
     async function consultar() {
       const loc = ctx.sel.loc;
       if (!loc) { compras = []; return pintar(); }
-      let q = sb.from('compras_saldo').select('id, numero, serie, documento, fecha_documento, fecha_ingreso, fecha_vencimiento, proveedor_id, proveedor_codigo, proveedor_nombre, nit, moneda_id, tipo_cambio, neto, pendiente').eq('localidad_id', loc).eq('estado', 'ACTIVA');
-      if (modo === 'PERIODO') q = q.gte('fecha_documento', `${f.anio}-01-01`).lte('fecha_documento', f.hasta < `${f.anio}-12-31` ? f.hasta : `${f.anio}-12-31`);
-      const { data, error } = await q.order('fecha_documento').order('numero').limit(10000);
-      if (error) { ctx.pDet.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
-      compras = data || [];
-      abonos = new Map();
-      if (modo === 'PERIODO' && compras.length) {
-        const ids = compras.map((c) => c.id);
-        for (let i = 0; i < ids.length; i += 300) {
-          const { data: ab } = await sb.from('compra_abonos').select('compra_id, fecha, valor').in('compra_id', ids.slice(i, i + 300)).lte('fecha', f.hasta);
-          (ab || []).forEach((a) => abonos.set(a.compra_id, (abonos.get(a.compra_id) || 0) + Number(a.valor)));
+      ctx.pDet.innerHTML = '<p class="vacio">Consultando las compras…</p>';
+      try {
+        compras = await leerTodo(() => {
+          let q = sb.from('compras_saldo').select('id, numero, serie, documento, fecha_documento, fecha_ingreso, fecha_vencimiento, proveedor_id, proveedor_codigo, proveedor_nombre, nit, moneda_id, tipo_cambio, neto, pendiente').eq('localidad_id', loc).eq('estado', 'ACTIVA');
+          if (modo === 'PERIODO') q = q.gte('fecha_documento', `${f.anio}-01-01`).lte('fecha_documento', f.hasta < `${f.anio}-12-31` ? f.hasta : `${f.anio}-12-31`);
+          return q.order('fecha_documento').order('numero');
+        });
+        abonos = new Map();
+        if (modo === 'PERIODO' && compras.length) {
+          const ids = compras.map((c) => c.id);
+          for (let i = 0; i < ids.length; i += 300) {
+            const ab = await leerTodo(() => sb.from('compra_abonos').select('compra_id, fecha, valor').in('compra_id', ids.slice(i, i + 300)).lte('fecha', f.hasta));
+            ab.forEach((a) => abonos.set(a.compra_id, (abonos.get(a.compra_id) || 0) + Number(a.valor)));
+          }
         }
+      } catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
+      // Primera vista: si el periodo propuesto no tiene documentos, se salta al más cercano que sí tiene.
+      if (primera && modo === 'PERIODO' && !compras.length) {
+        const { data: u } = await sb.from('compras_saldo').select('fecha_documento').eq('localidad_id', loc).eq('estado', 'ACTIVA').order('fecha_documento', { ascending: false }).limit(1);
+        const anio = u?.[0] ? Number(u[0].fecha_documento.slice(0, 4)) : null;
+        if (anio && anio !== f.anio) { primera = false; f.anio = anio; f.hasta = `${anio}-12-31` < hoy ? `${anio}-12-31` : hoy; saltoTxt = `No hay compras en el año propuesto: se muestra ${anio}, el último con compras.`; pintarFiltros(); return consultar(); }
       }
+      if (primera && modo !== 'PERIODO') { const s = sugerencia(); if (s && !calcular().length) { s.aplicar(); saltoTxt = `${s.vacio}: se muestra ${s.txt}, el periodo más cercano con documentos.`; pintarFiltros(); } }
+      primera = false;
       pintar();
     }
     // Filas del reporte con los filtros aplicados.
-    function calcular() {
+    // Periodo más cercano con documentos (con los demás filtros), para cuando el elegido sale vacío.
+    function sugerencia() {
+      const fechas = calcular(false).map(fechaDe).filter(Boolean).sort();
+      if (!fechas.length) return null;
+      if (modo === 'MENSUAL') {
+        const actual = `${f.anio}-${String(f.mes).padStart(2, '0')}`;
+        const meses = [...new Set(fechas.map((d) => d.slice(0, 7)))];
+        const mm = meses.filter((x) => x <= actual).pop() || meses[0];
+        if (mm === actual) return null;
+        const [a, b] = mm.split('-').map(Number);
+        return { vacio: `No hay documentos en ${MESES[f.mes - 1]} ${f.anio}`, txt: `${MESES[b - 1]} ${a}`, n: fechas.filter((d) => d.startsWith(mm)).length, aplicar: () => { f.anio = a; f.mes = b; } };
+      }
+      const antes = fechas.filter((d) => d <= f.hasta);
+      if (!antes.length) return null;
+      const ultimo = antes[antes.length - 1];
+      const desde = `${ultimo.slice(0, 4)}-01-01`;
+      if (desde >= f.desde) return null;
+      return { vacio: `No hay documentos del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, txt: `del ${fmt.fechaDia(desde)} al ${fmt.fechaDia(f.hasta)}`, n: antes.filter((d) => d >= desde).length, aplicar: () => { f.desde = desde; } };
+    }
+    function calcular(conFecha = true) {
       const p = provDe(f.proveedor);
       const ini = modo === 'MENSUAL' ? `${f.anio}-${String(f.mes).padStart(2, '0')}-01` : f.desde;
       const fin = modo === 'MENSUAL' ? new Date(f.anio, f.mes, 0).toLocaleDateString('en-CA') : f.hasta;
@@ -383,7 +416,7 @@
         if (f.tipo && String(c.tipoProv) !== String(f.tipo)) return false;
         if (f.saldo === 'CON SALDO' && !(c.saldo > 0.004)) return false;
         if (f.saldo === 'SIN SALDO' && c.saldo > 0.004) return false;
-        if (modo !== 'PERIODO') { const d = fechaDe(c); if (!d || d < ini || d > fin) return false; }
+        if (modo !== 'PERIODO' && conFecha) { const d = fechaDe(c); if (!d || d < ini || d > fin) return false; }
         return true;
       }).sort((a, b) => (fechaDe(a) || '').localeCompare(fechaDe(b) || '') || a.numero - b.numero);
     }
@@ -417,10 +450,19 @@
         <div class="bm-form cx-form cl-clasico">
           <div class="cl-banda">${esc(TITULOS[modo][0])}${modo === 'PERIODO' ? ` · saldo al ${esc(fmt.fechaDia(f.hasta))}` : modo === 'GENERAL' ? ` · ${esc(fmt.fechaDia(f.desde))} al ${esc(fmt.fechaDia(f.hasta))}` : ` · ${MESES[f.mes - 1]} ${f.anio}`}</div>
           ${meses}
+          ${avisoVacio()}
           <div class="pc-lineas cx-tabla"><table>${cuerpo}</table></div>
         </div>`;
     }
 
+    // Aviso del salto automático o, si el periodo elegido sale vacío, botón para ir al más cercano con documentos.
+    function avisoVacio() {
+      if (saltoTxt) { const t = saltoTxt; saltoTxt = ''; return `<div class="cx-vacio-sug"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(t)}</div>`; }
+      if (!compras.length) return `<div class="cx-vacio-sug"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(empresaTxt(ctx))} no tiene compras registradas${modo === 'PERIODO' ? ` en ${f.anio}` : ''}. Elige otra empresa en «Empresa».</div>`;
+      if (filas.length || modo === 'PERIODO') return '';
+      const s = sugerencia();
+      return s ? `<div class="cx-vacio-sug"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(s.vacio)} con esos filtros. <button type="button" class="boton secundario-sm" data-accion="sugerencia">Ver ${esc(s.txt)} (${s.n})</button></div>` : '';
+    }
     function titulo() { return `${TITULOS[modo][0]} · ${modo === 'MENSUAL' ? `${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `saldo al ${fmt.fechaDia(f.hasta)}`}`; }
     function imprimirRep() {
       if (!filas.length) return window.FIN.aviso('No hay documentos con esos filtros');
@@ -480,6 +522,7 @@
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (a === 'imprimir') return imprimirRep();
       if (a === 'resumen') { resumen = !resumen; pintarFiltros(); return pintar(); }
+      if (a === 'sugerencia') { const s = sugerencia(); if (s) { s.aplicar(); pintarFiltros(); } return pintar(); }
       if (a === 'estado-cuenta') return estadoCuenta();
       if (a === 'regresar') return history.length > 1 ? history.back() : (location.hash = '#/compras');
     });
