@@ -4904,3 +4904,40 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .vfd-lado .campo { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 6px; }
 .vfd-lado .campo span { text-align: right; line-height: 1.15; }
 .vfd-lado input { padding: 2px 7px; }
+/* Facturas Ventas compacta: encabezado y bloques al mínimo de alto para dar el espacio a los detalles */
+.vf-form { gap: 6px !important; }
+.vf-form .bm-titulo { padding-bottom: 0; margin-bottom: 0; min-height: 0; }
+.vf-form .bm-titulo h2 { font-size: 17px; line-height: 1.2; }
+.vf-form .bm-titulo small { font-size: 10.5px; }
+.vf-form .tk-titulo-acciones .boton { padding-top: 5px; padding-bottom: 5px; }
+.vf-form .dpb-control { padding: 3px 12px; gap: 6px 20px; font-size: 12.5px; }
+.vf-form .vfa { gap: 6px; }
+.vf-form .vfa-arriba { gap: 6px; grid-template-columns: minmax(0, 1fr) 270px; }
+.vf-form .vfa-arriba > .bm-bloque { padding: 5px 12px 7px; gap: 4px; }
+.vf-form .ta-col-titulo { font-size: 11px; margin: 0; line-height: 1.3; }
+.vf-form .vfa .campo { gap: 1px; font-size: 10.5px; }
+.vf-form .vfa .campo input, .vf-form .vfa .campo select { height: 26px; padding: 2px 7px; font-size: 12.5px; }
+.vf-form .dpb-g { gap: 3px 8px; }
+.vf-form .vf-chk { padding-bottom: 5px; font-size: 12.5px; }
+.vf-form .vfb-g2 { grid-template-columns: minmax(200px, 2fr) minmax(160px, 1.5fr) minmax(140px, 1.2fr) minmax(100px, .8fr) minmax(120px, 1fr) auto; }
+.vf-form .vfa-resumen { padding: 6px 12px !important; }
+.vf-form .vfa-resumen .vfb-total b { font-size: 20px !important; }
+.vf-form .vfa-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.vf-form .vfa-cards .vfb-card { padding: 5px 10px 7px; gap: 3px; }
+.vf-form .vfa-cards .vfb-g { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px 6px; }
+.vf-form .vfa-cards .vfb-card:has(> .vf-checks) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 14px; }
+.vf-form .vfa-cards .vfb-card:has(> .vf-checks) > .vfb-g { grid-column: 1 / -1; }
+.vf-form .vfa-cards .vf-checks { justify-content: flex-end; gap: 2px 12px; font-size: 12px; }
+.vf-form .bm-pestanas { min-height: 240px; }
+.vf-form .bm-tabs-barra { margin-bottom: 4px; }
+.vf-form .rp-pestanas button { padding-top: 4px; padding-bottom: 4px; }
+/* Procedimientos compactos */
+.vf-form .vf-pr-col { gap: 4px; padding: 6px 12px; }
+.vf-form .vf-pr-col > .boton, .vf-form .vf-pr-guia .boton { padding-top: 3px; padding-bottom: 3px; font-size: 12.5px; }
+.vf-form .vf-pr-tamanos { gap: 10px; font-size: 12px; flex-wrap: nowrap; }
+@media (max-width: 1500px) { .vf-form .vfa-cards .vfb-g { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.vf-form .vfa-cards .vfb-card:has(> .vf-checks) .vfb-g .vfb-c2 { grid-column: span 1; }
+.vf-form .vfa-cards .vfb-card:has(> .vf-checks) .vf-checks { flex-wrap: nowrap; white-space: nowrap; gap: 10px; font-size: 11.5px; }
+@media (max-width: 1500px) { .vf-form .vfa-cards .vfb-card:has(> .vf-checks) .vfb-g { grid-template-columns: repeat(3, minmax(0, 1fr)); } .vf-form .vfa-cards .vfb-card:has(> .vf-checks) .vf-checks { flex-wrap: wrap; } }
+.vf-form .vfa-cards .vfb-card:has(> .vf-checks) > .ta-col-titulo { white-space: nowrap; }
+.vf-form .vfa-cards .vfb-card:has(> .vf-checks) { grid-template-columns: max-content minmax(0, 1fr); }

@@ -52,12 +52,14 @@
       await cargarLocalidad();
       if (extra && /^\d+$/.test(String(extra))) {
         const { data } = await sb.from('facturas_venta').select('*').eq('id', Number(extra)).maybeSingle();
-        if (data) { if (data.localidad_id !== ctx.sel.loc) { ctx.sel.loc = data.localidad_id; ctx.sel.org = data.organizacion_id; pintarFiltros(); await cargarLocalidad(); } return abrir(data); }
+        if (data) return abrir(data);
       }
       abrir(null);
     }
+    let locCargada = null; // empresa cuyos clientes, vendedores, bodegas y catálogos están cargados
     async function cargarLocalidad() {
       const loc = ctx.sel.loc || 0;
+      locCargada = loc;
       const [c, v, p, b, pr, pp] = await Promise.all([
         sb.from('clientes').select('*').eq('localidad_id', loc).order('nombre'),
         sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
@@ -81,6 +83,9 @@
     }
 
     async function abrir(f) {
+      // La factura se muestra con los catálogos de su propia empresa (aunque la pantalla se haya iniciado con otra).
+      if (f && f.localidad_id !== locCargada) { ctx.sel.loc = f.localidad_id; ctx.sel.org = f.organizacion_id; pintarFiltros(); await cargarLocalidad(); }
+      else if (f && ctx.pFil.querySelector('[name=loc]')?.value !== String(f.localidad_id)) pintarFiltros();
       actual = f; modificando = false; lineaSel = 0;
       lineas = []; conta = []; pagos = []; inventario = [];
       // Abierta desde el listado: el listado se conserva y se refresca; si no, se vuelve a consultar con el cliente de la factura.
@@ -133,7 +138,7 @@
       ctx.pDet.innerHTML = `
         <form class="tk-form ta-form bm-form vf-form" novalidate>
           <header class="tk-titulo bm-titulo">
-            <div class="tk-titulo-texto"><small>Facturas Ventas · ${esc(ctx.localidad(ctx.sel.loc)?.codigo || '')} ${esc(ctx.localidad(ctx.sel.loc)?.nombre_comercial || '')}</small><h2>${f ? `Factura ${esc(f.serie ? `${f.serie}-${f.numero_dte || f.numero}` : `interna ${f.numero}`)}` : 'Nueva factura'}</h2></div>
+            <div class="tk-titulo-texto"><small>Facturas Ventas · ${esc(ctx.localidad(f?.localidad_id || ctx.sel.loc)?.codigo || '')} ${esc(ctx.localidad(f?.localidad_id || ctx.sel.loc)?.nombre_comercial || '')}</small><h2>${f ? `Factura ${esc(f.serie ? `${f.serie}-${f.numero_dte || f.numero}` : `interna ${f.numero}`)}` : 'Nueva factura'}</h2></div>
             <div class="tk-marcas">${marca}${modificando ? '<span class="pc-marca pendiente"><i class="ti ti-pencil" aria-hidden="true"></i> Modificando</span>' : ''}</div>
             <div class="tk-titulo-acciones">
               <a class="boton secundario-sm" href="#/facturacion/consulta-de-facturas"><i class="ti ti-file-search" aria-hidden="true"></i> Consulta</a>
@@ -175,6 +180,8 @@
                   <label class="campo"><span>Dirección de envío</span><input name="direccion_envio" value="${esc(v.direccion_envio || '')}" maxlength="300" ${dis}></label>
                   <label class="campo"><span>Correo</span><input name="correo" value="${esc(v.correo || '')}" maxlength="120" ${dis}></label>
                   <label class="campo"><span>NIT externo</span><input name="nit_externo" value="${esc(v.nit_externo || '')}" maxlength="40" ${dis}></label>
+                  <label class="campo"><span>Lab. fab.</span><input name="lab_fab" value="${esc(v.lab_fab || '')}" maxlength="120" ${dis}></label>
+                  <label class="pc-check vf-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> Genérico</label>
                 </div>
                 <datalist id="vf-clientes">${clientes.filter((c) => c.estado === 'ACTIVO').map((c) => `<option value="${c.codigo}">${esc(c.nombre)}${c.tipo_documento !== 'CF' ? ` · ${esc(c.documento)}` : ''}</option>`).join('')}</datalist>
               </section>
@@ -231,13 +238,6 @@
                   <label class="campo"><span>Clasif.</span><select name="clasificacion" ${dis}>${CLASIFICACIONES.map((x) => `<option ${v.clasificacion === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
                   <label class="campo vfb-c2"><span>Cuenta x cobrar</span><select name="cuenta_por_cobrar" ${dis}>${['C X C', 'CONTADO'].map((x) => `<option ${v.cuenta_por_cobrar === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
                   <label class="campo vfb-c2"><span>Incoterm</span><select name="incoterm" ${dis}><option value="">—</option>${INCOTERMS.map((x) => `<option ${v.incoterm === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-                </div>
-              </section>
-              <section class="vfb-card">
-                <h3 class="ta-col-titulo"><i class="ti ti-pill" aria-hidden="true"></i> Producto</h3>
-                <div class="vfb-g">
-                  <label class="campo vfb-c2"><span>Lab. fab.</span><input name="lab_fab" value="${esc(v.lab_fab || '')}" maxlength="120" ${dis}></label>
-                  <label class="pc-check vf-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> Genérico</label>
                 </div>
               </section>
             </div>
