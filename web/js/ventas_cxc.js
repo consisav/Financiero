@@ -60,7 +60,7 @@
         <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
         <datalist id="cx-clientes">${clientes.map((x) => `<option value="${esc(x.nombre)} — ${x.codigo}"></option>`).join('')}</datalist>
         ${c || !f.cliente ? '' : '<small class="cx-aviso pc-rojo">Cliente no encontrado</small>'}`,
-        `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato === 'PDF' ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
+        `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato.startsWith('PDF') ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
          ${modo === 'PERIODO' ? `<button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>` : ''}
          <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del cliente elegido o, si está en TODOS, de todos los clientes (en PDF o Excel según el formato)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
@@ -209,7 +209,7 @@
         archivo: `cxc_${modo.toLowerCase()}_${modo === 'MENSUAL' ? `${f.anio}_${String(f.mes).padStart(2, '0')}` : f.hasta}`,
         parametros: [`Empresa: ${empresaTxt(ctx)}`, periodo, `Cliente: ${cliDe(f.cliente)?.nombre || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo cliente: ${f.tipo || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha === 'ESTIMADA' ? 'ESTIMADA COBRO' : 'EMISIÓN'}`] : []), X.textoOrden(ord(), 'FECHA COBRO')],
         filas: filas.map((x) => ({ tercero_id: x.cliente_id, codigo: x.codigo, nombre: x.nombreCli, nit: x.nit, numero: x.no_interno || x.numero, serie: x.serie, documento: x.numero_dte, fecha: modo === 'PERIODO' ? x.emision : fechaDe(x), fecha_doc: x.emision, estimada: x.fc, mora: x.mora, valor: x.valor, saldo: x.saldoQ }))
-      }).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
+      }).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el reporte'));
     }
     function imprimirRep() {
       if (!filas.length) return window.FIN.aviso('No hay facturas con esos filtros');
@@ -239,7 +239,7 @@
       const ini = modo === 'MENSUAL' ? `${f.anio}-${String(f.mes).padStart(2, '0')}-01` : modo === 'PERIODO' ? `${f.anio}-01-01` : f.desde;
       const fin = modo === 'MENSUAL' ? new Date(f.anio, f.mes, 0).toLocaleDateString('en-CA') : f.hasta;
       // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
-      const op = await window.ESTADO_CUENTA.elegir({ tipo: 'Cliente', todos: !t, periodo: `Del ${fmt.fechaDia(ini)} al ${fmt.fechaDia(fin)}`, tercero: t ? t.nombre : 'Todos los clientes', contenido: f.formato === 'RESUMIDO' ? 'RESUMIDO' : 'DETALLADO', formato: f.formato === 'PDF' ? 'PDF' : 'EXCEL' });
+      const op = await window.ESTADO_CUENTA.elegir({ tipo: 'Cliente', todos: !t, periodo: `Del ${fmt.fechaDia(ini)} al ${fmt.fechaDia(fin)}`, tercero: t ? t.nombre : 'Todos los clientes', contenido: f.formato.includes('RESUMIDO') ? 'RESUMIDO' : 'DETALLADO', formato: f.formato.startsWith('PDF') ? 'PDF' : 'EXCEL' });
       if (!op) return;
       return window.ESTADO_CUENTA.generar('CXC', ctx, { desde: ini, hasta: fin, terceroKey: t ? `C${t.id}` : '', tipo: f.tipo || '', mostrar: f.saldo === 'CON SALDO' ? 'CON SALDO' : 'CON MOVIMIENTO', contenido: op.contenido }, op.formato);
     }

@@ -334,7 +334,7 @@
         <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
         <datalist id="cx-proveedores">${proveedores.map((x) => `<option value="${esc(`${x.nombre_comercial} — ${x.codigo}`)}"></option>`).join('')}</datalist>
         ${p || !f.proveedor ? '' : '<small class="cx-aviso pc-rojo">Proveedor no encontrado</small>'}`,
-        `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato === 'PDF' ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
+        `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato.startsWith('PDF') ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
          ${modo === 'PERIODO' ? `<button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>` : ''}
          <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del proveedor elegido o, si está en TODOS, de todos los proveedores (en PDF o Excel según el formato)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
@@ -481,7 +481,7 @@
         archivo: `cxp_${modo.toLowerCase()}_${modo === 'MENSUAL' ? `${f.anio}_${String(f.mes).padStart(2, '0')}` : f.hasta}`,
         parametros: [`Empresa: ${empresaTxt(ctx)}`, periodo, `Proveedor: ${provDe(f.proveedor)?.nombre_comercial || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo proveedor: ${tipos.find((t) => String(t.id) === String(f.tipo))?.nombre || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha}`] : []), X.textoOrden(ord(), 'FECHA PAGO')],
         filas: filas.map((c) => ({ tercero_id: c.proveedor_id, codigo: c.codigo, nombre: c.nombre, nit: c.nit, numero: c.numero, serie: c.serie, documento: c.documento, fecha: modo === 'PERIODO' ? c.fecha_documento : fechaDe(c), fecha_doc: c.fecha_documento, estimada: c.fp, mora: c.mora, valor: c.valorQ, saldo: c.saldoQ }))
-      }).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
+      }).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el reporte'));
     }
     function imprimirRep() {
       if (!filas.length) return window.FIN.aviso('No hay documentos con esos filtros');
@@ -510,7 +510,7 @@
       const ini = modo === 'MENSUAL' ? `${f.anio}-${String(f.mes).padStart(2, '0')}-01` : modo === 'PERIODO' ? `${f.anio}-01-01` : f.desde;
       const fin = modo === 'MENSUAL' ? new Date(f.anio, f.mes, 0).toLocaleDateString('en-CA') : f.hasta;
       // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
-      const op = await window.ESTADO_CUENTA.elegir({ tipo: 'Proveedor', todos: !t, periodo: `Del ${fmt.fechaDia(ini)} al ${fmt.fechaDia(fin)}`, tercero: t ? t.nombre_comercial : 'Todos los proveedores', contenido: f.formato === 'RESUMIDO' ? 'RESUMIDO' : 'DETALLADO', formato: f.formato === 'PDF' ? 'PDF' : 'EXCEL' });
+      const op = await window.ESTADO_CUENTA.elegir({ tipo: 'Proveedor', todos: !t, periodo: `Del ${fmt.fechaDia(ini)} al ${fmt.fechaDia(fin)}`, tercero: t ? t.nombre_comercial : 'Todos los proveedores', contenido: f.formato.includes('RESUMIDO') ? 'RESUMIDO' : 'DETALLADO', formato: f.formato.startsWith('PDF') ? 'PDF' : 'EXCEL' });
       if (!op) return;
       return window.ESTADO_CUENTA.generar('CXP', ctx, { desde: ini, hasta: fin, terceroKey: t ? `P${t.id}` : '', tipo: tipos.find((x) => String(x.id) === String(f.tipo))?.nombre || '', mostrar: f.saldo === 'CON SALDO' ? 'CON SALDO' : 'CON MOVIMIENTO', contenido: op.contenido }, op.formato);
     }

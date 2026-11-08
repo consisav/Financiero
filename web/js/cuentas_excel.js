@@ -55,7 +55,32 @@
   const opcionesOrden = (pago) => [['', 'PREDETERMINADO'], ['fdoc', 'FECHA DOCTO.'], ['fpago', pago], ['mora', 'DÍAS MORA'], ['valor', 'VALOR'], ['saldo', 'SALDO']];
   const textoOrden = (o, pago) => (o.campo ? `Orden: ${opcionesOrden(pago).find(([k]) => k === o.campo)[1]} ${o.dir === 'DESC' ? 'descendente' : 'ascendente'}` : 'Orden: predeterminado');
 
+  // PDF con la misma estructura del Excel (grupos, subtotales, total y notas) y el encabezado común de los reportes.
+  function aPdf({ titulo, parametros, columnas, filas, orgId, locId }) {
+    const { esc } = window.UI;
+    const { fmt, imprimir } = window.BANCOS;
+    const n = columnas.length;
+    const celda = (v, c) => {
+      if (v === '' || v == null) return '<td></td>';
+      if (c.tipo === 'monto' && typeof v === 'number') return `<td class="n">${fmt.monto(v)}</td>`;
+      if (c.tipo === 'entero' && typeof v === 'number') return `<td class="n">${v.toLocaleString('es-GT')}</td>`;
+      return `<td class="${c.tipo === 'texto' ? '' : 'n'}">${esc(String(v))}</td>`;
+    };
+    const cuerpo = filas.map((f) => (f.tipo === 'grupo' ? `<tr class="g"><td colspan="${n}">${esc(String(f.valores[0] ?? ''))}</td></tr>`
+      : f.tipo === 'nota' ? `<tr class="nt"><td colspan="${n}">${esc(String(f.valores[0] ?? ''))}</td></tr>`
+        : `<tr class="${f.tipo === 'subtotal' ? 's' : f.tipo === 'total' ? 't' : ''}">${columnas.map((c, i) => celda(f.valores[i], c)).join('')}</tr>`)).join('');
+    const est = `<style>table.cx td,table.cx th{font-size:10.5px;padding:3px 5px}tr.g td{background:#dfe7f2;color:#1f3a5f;font-weight:bold;font-size:11px}
+      tr.s td{font-weight:bold;background:#f1f4f9;border-top:1px solid #9fb0c8}tr.t td{font-weight:bold;background:#eaf0f7;border-top:2px solid #1f3a5f}
+      tr.nt td{font-style:italic;color:#555;font-size:10px;border:0}tr.g,tr.s{break-inside:avoid}tr.g{break-after:avoid}</style>`;
+    imprimir(titulo, `${est}<h1>${esc(titulo)}</h1><h2>${esc((parametros || []).join(' · '))}</h2>
+      <table class="cx"><thead><tr>${columnas.map((c) => `<th class="${c.tipo === 'texto' ? '' : 'n'}">${esc(c.titulo)}</th>`).join('')}</tr></thead><tbody>${cuerpo}</tbody></table>`, { orgId, locId, horizontal: n > 7 });
+    return Promise.resolve(true);
+  }
+
+  // o.tipo: RESUMIDO | DETALLADO | PERIODO (Excel) o PDF_RESUMIDO | PDF_DETALLADO | PDF_PERIODO (PDF).
   function generar(o) {
+    const enPdf = String(o.tipo || '').startsWith('PDF_');
+    o = { ...o, tipo: enPdf ? o.tipo.slice(4) : o.tipo };
     const filas = o.filas || [];
     const tot = { v: r2(filas.reduce((t, x) => t + Number(x.valor || 0), 0)), s: r2(filas.reduce((t, x) => t + Number(x.saldo || 0), 0)) };
     let columnas, salida = [], sufijo;
@@ -100,11 +125,12 @@
       salida.push({ valores: [`Total · ${lista.length} documento(s)`, ...relleno(n - 3), tv, ts], tipo: 'total' });
       if (o.modo === 'PERIODO' && filas.length !== lista.length) salida.push({ valores: [`Por antigüedad solo se incluyen los documentos con saldo al ${dd(o.corte)}.`, ...relleno(n - 1)], tipo: 'nota' });
     }
+    if (enPdf) return aPdf({ titulo: `${o.titulo} · ${sufijo}`, parametros: o.parametros, columnas, filas: salida, orgId: o.orgId, locId: o.locId });
     return window.REPORTE_XLSX.generar({
       titulo: `${o.titulo} · ${sufijo}`, parametros: o.parametros, orgId: o.orgId, locId: o.locId,
       hoja: sufijo.slice(0, 30), archivo: `${o.archivo}_${sufijo.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`, columnas, filas: salida
     });
   }
 
-  window.CUENTAS_XLSX = { generar, ajustarAlto, ordenar, th, alternar, opcionesOrden, textoOrden,OPCIONES: [['PDF', 'PDF'], ['RESUMIDO', 'EXCEL · RESUMIDO'], ['DETALLADO', 'EXCEL · DETALLADO'], ['PERIODO', 'EXCEL · POR PERIODO']] };
+  window.CUENTAS_XLSX = { generar, ajustarAlto, ordenar, th, alternar, opcionesOrden, textoOrden,OPCIONES: [['PDF', 'PDF · LISTADO'], ['PDF_RESUMIDO', 'PDF · RESUMIDO'], ['PDF_DETALLADO', 'PDF · DETALLADO'], ['PDF_PERIODO', 'PDF · POR PERIODO'], ['RESUMIDO', 'EXCEL · RESUMIDO'], ['DETALLADO', 'EXCEL · DETALLADO'], ['PERIODO', 'EXCEL · POR PERIODO']] };
 })();
