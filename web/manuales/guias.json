@@ -1528,23 +1528,6 @@
  "activos-fijos|Inventario de activos": "listado de activos con valor en libros.",
  "activos-fijos|Depreciación acumulada": "depreciación acumulada por activo y cuenta.",
  "activos-fijos|Activos por ubicación": "activos agrupados por ubicación y responsable.",
- "sat|Certificadores FEL": "certificadores autorizados por la SAT (la empresa usa COFIDI).",
- "sat|Tipos de DTE": "tipos de documento tributario electrónico (FACT, FCAM, NCRE, NDEB, NABN…).",
- "sat|Frases y escenarios": "frases y escenarios requeridos en el DTE.",
- "sat|Establecimientos": "establecimientos registrados en la SAT.",
- "sat|Documentos FEL emitidos": "hoy se consultan en Facturación › Consulta de Facturas y de Notas.",
- "sat|Documentos recibidos": "hoy se cargan en Procesos › Carga Facturas SAT.",
- "sat|Retenciones de IVA e ISR": "hoy en Facturación › Mantenimientos › Retenciones.",
- "sat|Credenciales del certificador": "credenciales de COFIDI (se configuran fuera de la aplicación por seguridad).",
- "sat|Datos del emisor": "datos del emisor (NIT, nombre, establecimiento).",
- "sat|Certificar DTE": "hoy desde cada factura o nota con «Certificar».",
- "sat|Anular DTE": "hoy en Notas electrónicas › Anulación de Documentos DTE.",
- "sat|Consultar NIT": "consulta del nombre de un NIT en la SAT.",
- "sat|Declaración de IVA": "preparación de la declaración mensual de IVA.",
- "sat|Libro de compras": "libro de compras y servicios del mes.",
- "sat|Libro de ventas": "libro de ventas y servicios del mes.",
- "sat|DTE por estado": "documentos por estado de certificación.",
- "sat|Gráfica de IVA": "IVA débito contra crédito por mes.",
  "nominas|Empleados": "ficha del empleado.",
  "nominas|Puestos": "puestos y salario base.",
  "nominas|Departamentos": "departamentos de la empresa.",
@@ -1726,6 +1709,165 @@
    "Elige {empresa} y la fecha de corte (por ejemplo, el último día del mes cerrado).",
    "Revisa cada indicador contra su referencia; el semáforo marca en rojo lo que requiere acción.",
    "Imprime el PDF (con firmas) o el Excel para el informe a gerencia."
+  ]
+ },
+ "sat-emisor": {
+  "puntos": [
+   "Datos de la empresa ante la SAT: NIT, nombre del RTU, régimen de IVA e ISR, agente retenedor y certificador FEL."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Catálogos › Emisor › Datos del emisor y elige {empresa}.",
+   "Si no está registrado, el sistema propone el NIT y el nombre de la empresa: confírmalos contra el RTU.",
+   "Elige el régimen de IVA (general 12 % o pequeño contribuyente 5 %) y el de ISR (sobre utilidades 25 % trimestral u opcional simplificado 5 %/7 % mensual).",
+   "Marca si la empresa es agente de retención del IVA o del ISR y si es contribuyente especial.",
+   "Escribe el certificador (COFIDI), su NIT y el usuario de referencia; la clave no se guarda aquí.",
+   "Presiona «Guardar»: la liquidación y el calendario fiscal usan estos datos."
+  ]
+ },
+ "sat-establecimientos": {
+  "puntos": [
+   "Establecimientos del RTU con su código SAT."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Catálogos › Emisor › Establecimientos y elige {empresa}.",
+   "Presiona «Nuevo» y escribe el código del establecimiento según el RTU, el nombre y la dirección.",
+   "Edita en la misma tabla; marca inactivo el que se cierre."
+  ]
+ },
+ "sat-tipos-dte": {
+  "puntos": [
+   "Tipos de documento tributario electrónico de la FEL con su efecto en el IVA."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Catálogos › FEL › Tipos de DTE.",
+   "Consulta cada tipo: FACT y FCAM generan débito; NCRE y NABN lo restan; NDEB lo suma; FPEQ, RECI y RDON no tienen IVA.",
+   "Desmarca «Activo» en los que la empresa no usa."
+  ]
+ },
+ "sat-frases": {
+  "puntos": [
+   "Frases y escenarios FEL exigidos por la SAT."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Catálogos › FEL › Frases y escenarios y elige {empresa}.",
+   "Marca en «Aplica a» las frases de la empresa: por ejemplo «Sujeto a pagos trimestrales ISR» (régimen sobre utilidades) o «Agente de retención del IVA».",
+   "Las frases marcadas son las que debe llevar cada DTE certificado."
+  ]
+ },
+ "dte-emitidos": {
+  "puntos": [
+   "Bandeja de facturas y notas del período con su estado de certificación FEL.",
+   "Ejemplo: {factura}."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Registros › Documentos › DTE emitidos y elige {empresa}.",
+   "Elige el período (un mes o un rango) y el estado: certificado, pendiente o anulado.",
+   "Revisa los indicadores: los pendientes de certificar aparecen en rojo.",
+   "Certifica los pendientes en Facturación/Ventas › Facturas Ventas (o Notas) con «Certificar».",
+   "Imprime la bandeja en PDF o Excel."
+  ]
+ },
+ "dte-recibidos": {
+  "puntos": [
+   "Facturas recibidas según el archivo de la SAT y si ya están en compras."
+  ],
+  "pasos": [
+   "Primero carga el archivo del portal de la SAT en Compras › Procesos › Carga Facturas SAT.",
+   "Abre Integraciones SAT › Registros › Documentos › DTE recibidos y elige {empresa}.",
+   "Elige el período y revisa: registrados, sin registrar y anulados.",
+   "Registra los «sin registrar» en Compras › Ingreso de compras para no perder el crédito fiscal."
+  ]
+ },
+ "constancias-retencion": {
+  "puntos": [
+   "Retenciones de IVA e ISR recibidas de clientes (recibos y constancias) y emitidas a proveedores (compras)."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Registros › Documentos › Constancias de retención y elige {empresa}.",
+   "Elige el período, «Recibidas de clientes» o «Emitidas a proveedores» y el tipo (IVA, ISR o todas).",
+   "Revisa el total: las de IVA recibidas se restan en la liquidación del mes.",
+   "Imprime en PDF o Excel para el archivo de constancias."
+  ]
+ },
+ "conciliacion-fiscal": {
+  "puntos": [
+   "Cruza los DTE de la SAT con las compras registradas y revisa las ventas sin certificar."
+  ],
+  "pasos": [
+   "Carga el archivo del mes en Compras › Procesos › Carga Facturas SAT.",
+   "Abre Integraciones SAT › Procesos › Impuestos › Conciliación fiscal y elige {empresa}.",
+   "Elige el mes y revisa cada sección: en la SAT y no registradas; registradas y no en la SAT; montos distintos; ventas sin certificar.",
+   "Corrige cada caso según la columna «Acción» antes de liquidar el mes.",
+   "Imprime la conciliación como respaldo del cierre."
+  ]
+ },
+ "liquidacion-impuestos": {
+  "puntos": [
+   "Liquidación del IVA del mes (como el SAT-2237), ISR e ISO de referencia, y cierre del período fiscal."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Procesos › Impuestos › Liquidación de impuestos y elige {empresa}.",
+   "Elige el año y el mes (o toca el mes en la franja de meses).",
+   "Revisa los débitos (ventas), los créditos (compras por período de presentación), las retenciones de IVA y el remanente del mes anterior.",
+   "Usa el «IVA a pagar» y el remanente para llenar la declaración en Declaraguate.",
+   "Presiona «Cerrar período»: se guarda la liquidación y se bloquean las facturas, notas y compras del mes.",
+   "Si hay que rectificar, el Super Administrador usa «Reabrir» con motivo (los meses posteriores deben estar abiertos).",
+   "Imprime la liquidación en PDF (con firmas) o Excel."
+  ]
+ },
+ "calendario-fiscal": {
+  "puntos": [
+   "Obligaciones del año según el régimen: IVA, libros, ISR, ISO y retenciones, con vencimiento y presentación."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Procesos › Impuestos › Calendario fiscal y elige {empresa}.",
+   "Elige el año y el filtro (todas, pendientes, vencidas o presentadas).",
+   "Revisa los indicadores: próximas a vencer (10 días) y vencidas en rojo.",
+   "Al presentar en Declaraguate, toca la fila y registra el número de acceso y el monto pagado.",
+   "Verifica los asuetos en el calendario oficial de la SAT (el cálculo usa días hábiles de lunes a viernes)."
+  ]
+ },
+ "libro-ventas": {
+  "puntos": [
+   "Libro de ventas y servicios del período: gravado, exento, IVA débito y total; las anuladas en cero."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Reportes y gráficas › Libros › Libro de ventas y elige {empresa}.",
+   "Elige el mes (o un rango).",
+   "Revisa los totales: el IVA débito debe coincidir con la liquidación.",
+   "Genera el PDF con firmas para el libro autorizado o el Excel para Asiste Libros."
+  ]
+ },
+ "libro-compras": {
+  "puntos": [
+   "Libro de compras y servicios por período de presentación: bienes, servicios, combustibles, exento, IVA crédito y total."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Reportes y gráficas › Libros › Libro de compras y elige {empresa}.",
+   "Elige el mes de presentación.",
+   "Revisa los totales: el IVA crédito debe coincidir con la liquidación.",
+   "Genera el PDF con firmas o el Excel para Asiste Libros."
+  ]
+ },
+ "resumen-iva": {
+  "puntos": [
+   "IVA de cada mes del año: débito, crédito, retenciones, remanente y a pagar; cerrado o calculado."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Reportes y gráficas › Análisis › Resumen de IVA y elige {empresa}.",
+   "Elige el año.",
+   "Compara mes a mes el débito y el crédito; los meses cerrados muestran lo guardado en la liquidación.",
+   "Imprime con las gráficas."
+  ]
+ },
+ "dte-por-estado": {
+  "puntos": [
+   "Documentos emitidos por tipo y estado de certificación con su valor e IVA."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Reportes y gráficas › Análisis › DTE por estado y elige {empresa}.",
+   "Elige el período.",
+   "Revisa los pendientes de certificar por tipo e imprime en PDF o Excel."
   ]
  }
 }

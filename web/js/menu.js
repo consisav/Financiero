@@ -612,13 +612,44 @@ window.MODULOS = [
     nombre: 'Integraciones SAT',
     icono: 'ti-building-bank',
     descripcion: 'Factura electrónica FEL y obligaciones con la SAT Guatemala.',
+    subgrupos: {
+      catalogos: [
+        { subgrupo: 'Emisor', icono: 'ti-id-badge-2', pantallas: [
+          { id: 'sat-emisor', nombre: 'Datos del emisor', icono: 'ti-id-badge-2', descripcion: 'NIT, nombre del emisor, régimen de IVA e ISR, agente retenedor y certificador FEL (sin claves).' },
+          { id: 'sat-establecimientos', nombre: 'Establecimientos', icono: 'ti-building-store', descripcion: 'Establecimientos registrados en el RTU con su código SAT.' }
+        ] },
+        { subgrupo: 'FEL', icono: 'ti-file-certificate', pantallas: [
+          { id: 'sat-tipos-dte', nombre: 'Tipos de DTE', icono: 'ti-file-certificate', descripcion: 'Documentos tributarios electrónicos (FACT, FCAM, FPEQ, FESP, NCRE, NDEB, NABN, RECI) y su efecto en el IVA.' },
+          { id: 'sat-frases', nombre: 'Frases y escenarios', icono: 'ti-quote', descripcion: 'Frases que exige la SAT en los DTE según el régimen; se marcan las que aplican a la empresa.' }
+        ] }
+      ],
+      registros: [
+        { subgrupo: 'Documentos', icono: 'ti-files', pantallas: [
+          { id: 'dte-emitidos', nombre: 'DTE emitidos', icono: 'ti-file-certificate', descripcion: 'Bandeja de facturas y notas del período: certificadas, pendientes de certificar y anuladas.' },
+          { id: 'dte-recibidos', nombre: 'DTE recibidos', icono: 'ti-file-download', descripcion: 'Facturas recibidas según el archivo de la SAT y si ya están registradas en compras.' },
+          { id: 'constancias-retencion', nombre: 'Constancias de retención', icono: 'ti-receipt-tax', descripcion: 'Retenciones de IVA e ISR recibidas de clientes y emitidas a proveedores.' }
+        ] }
+      ],
+      procesos: [
+        { subgrupo: 'Impuestos', icono: 'ti-calculator', pantallas: [
+          { id: 'conciliacion-fiscal', nombre: 'Conciliación fiscal', icono: 'ti-arrows-diff', descripcion: 'DTE de la SAT contra compras registradas, montos distintos y ventas sin certificar.' },
+          { id: 'liquidacion-impuestos', nombre: 'Liquidación de impuestos', icono: 'ti-calculator', descripcion: 'IVA del mes (débito, crédito, retenciones, remanente), ISR e ISO; cierre del período fiscal.' },
+          { id: 'calendario-fiscal', nombre: 'Calendario fiscal', icono: 'ti-calendar-due', descripcion: 'Obligaciones del año según el régimen, con vencimientos y registro de su presentación.' }
+        ] }
+      ],
+      reportes: [
+        { subgrupo: 'Libros', icono: 'ti-books', pantallas: [
+          { id: 'libro-ventas', nombre: 'Libro de ventas', icono: 'ti-book', descripcion: 'Libro de ventas y servicios del período con gravado, exento e IVA débito. PDF y Excel.' },
+          { id: 'libro-compras', nombre: 'Libro de compras', icono: 'ti-book-2', descripcion: 'Libro de compras y servicios por período de presentación: bienes, servicios, combustibles, exento e IVA crédito. PDF y Excel.' }
+        ] },
+        { subgrupo: 'Análisis', icono: 'ti-chart-histogram', pantallas: [
+          { id: 'resumen-iva', nombre: 'Resumen de IVA', icono: 'ti-chart-histogram', descripcion: 'IVA débito, crédito, retenciones, remanente y a pagar de cada mes del año, con gráficas.' },
+          { id: 'dte-por-estado', nombre: 'DTE por estado', icono: 'ti-chart-pie', descripcion: 'Documentos emitidos por tipo y estado de certificación, con valores e IVA.' }
+        ] }
+      ]
+    },
     opciones: {
-      catalogos: ['Certificadores FEL', 'Tipos de DTE', 'Frases y escenarios', 'Establecimientos'],
-      registros: ['Documentos FEL emitidos', 'Documentos recibidos', 'Retenciones de IVA e ISR'],
-      mantenimientos: ['Credenciales del certificador', 'Datos del emisor'],
-      procesos: ['Certificar DTE', 'Anular DTE', 'Consultar NIT', 'Declaración de IVA'],
-      reportes: ['Libro de compras', 'Libro de ventas', 'DTE por estado', 'Gráfica de IVA'],
-      ayuda: ['Manual del módulo', 'Guía FEL SAT']
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },
   {

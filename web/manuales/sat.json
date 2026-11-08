@@ -1,0 +1,42 @@
+{
+ "version": "2026.11d",
+ "titulo": "Manual del módulo Integraciones SAT",
+ "resumen": "FEL, documentos recibidos, conciliación, liquidación de impuestos, calendario fiscal y libros.",
+ "nombresTablas": {},
+ "diapositivas": [
+  {
+   "tipo": "portada",
+   "titulo": "Módulo de Integraciones SAT",
+   "subtitulo": "Factura electrónica, impuestos y libros fiscales de Guatemala"
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "El ciclo fiscal del mes",
+   "subtitulo": "Emitir › Recibir › Conciliar › Liquidar › Cerrar",
+   "pasos": [
+    "Emitir y certificar en FEL todas las facturas y notas del mes (DTE emitidos sin pendientes).",
+    "Cargar el archivo de facturas recibidas del portal de la SAT (Carga Facturas SAT).",
+    "Conciliar: lo que está en la SAT contra lo registrado en compras; corregir diferencias.",
+    "Liquidar el IVA (débito − crédito − retenciones − remanente), el ISR y el ISO.",
+    "Presentar en Declaraguate y registrar la presentación en el Calendario fiscal.",
+    "Cerrar el período fiscal: el mes queda bloqueado."
+   ]
+  },
+  {
+   "tipo": "consejos",
+   "titulo": "Buenas prácticas",
+   "puntos": [
+    "Registra primero los Datos del emisor con su régimen correcto.",
+    "Concilia antes de liquidar: una factura de compra sin registrar es crédito fiscal perdido.",
+    "Archiva las constancias de retención recibidas: se restan del IVA a pagar.",
+    "Revisa el Calendario fiscal cada semana.",
+    "Cierra cada período después de presentar la declaración."
+   ]
+  },
+  {
+   "tipo": "cierre",
+   "titulo": "¡Listo para cumplir con la SAT!",
+   "subtitulo": "Consulta este manual en Integraciones SAT › Ayuda › Manual del módulo"
+  }
+ ]
+}
