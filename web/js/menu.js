@@ -289,11 +289,11 @@ window.MODULOS = [
           subgrupo: 'Notas electrónicas',
           icono: 'ti-file-certificate',
           pantallas: [
-            { id: 'facturacion-electronica', nombre: 'Facturación electrónica', icono: 'ti-file-invoice', descripcion: 'La factura electrónica (FEL): la misma pantalla de Facturas Ventas.' },
-            { id: 'notas-de-credito-electronicas', nombre: 'Notas de crédito electrónicas', icono: 'ti-file-minus', descripcion: 'Descuentos y devoluciones sobre una factura: bajan su saldo; la devolución regresa los productos a la bodega destino.' },
-            { id: 'notas-de-debito-electronicas', nombre: 'Notas de débito electrónicas', icono: 'ti-file-plus', descripcion: 'Cargos adicionales sobre una factura (intereses, correcciones): suben su saldo.' },
-            { id: 'notas-de-abono-electronicas', nombre: 'Notas de abono electrónicas', icono: 'ti-file-dollar', descripcion: 'Abonos sobre una factura (devoluciones o ajustes a favor del cliente): bajan su saldo.' },
-            { id: 'anulacion-de-documentos-dte', nombre: 'Anulación de documentos DTE', icono: 'ti-file-x', descripcion: 'Anula una factura o una nota con su motivo, deja el registro de quién y cuándo, y puede duplicar la factura anulada.', separador: true }
+            { id: 'notas-de-credito-electronicas', nombre: 'Notas de Crédito', icono: 'ti-file-minus', descripcion: 'Descuentos y devoluciones sobre una factura: bajan su saldo; la devolución regresa los productos a la bodega destino.' },
+            { id: 'notas-de-debito-electronicas', nombre: 'Notas de Débito', icono: 'ti-file-plus', descripcion: 'Cargos adicionales sobre una factura (intereses, correcciones): suben su saldo.' },
+            { id: 'notas-de-abono-electronicas', nombre: 'Notas de Abono', icono: 'ti-file-dollar', descripcion: 'Abonos sobre una factura (devoluciones o ajustes a favor del cliente): bajan su saldo.' },
+            { id: 'consulta-de-notas', nombre: 'Consulta de Notas', icono: 'ti-file-search', descripcion: 'Resumen de las notas de crédito, débito o abono (según el tipo elegido) por cliente, vendedor, tipo de ajuste, fechas y estado, con sus productos, su detalle contable y su factura de referencia.', separador: true },
+            { id: 'anulacion-de-documentos-dte', nombre: 'Anulación de Documentos DTE', icono: 'ti-file-x', descripcion: 'Anula una factura o una nota con su motivo, deja el registro de quién y cuándo, y puede duplicar la factura anulada.', separador: true }
           ]
         }
       ]

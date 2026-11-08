@@ -13,9 +13,9 @@
   window.PANTALLAS = window.PANTALLAS || {};
 
   const TIPOS = {
-    'notas-de-credito-electronicas': { tipo: 'CRÉDITO', titulo: 'Notas de crédito electrónicas', nombre: 'Nota de crédito', icono: 'ti-file-minus', ajuste: 'DESCUENTO', doc: 'NOTA DE CRÉDITO' },
-    'notas-de-debito-electronicas': { tipo: 'DÉBITO', titulo: 'Notas de débito electrónicas', nombre: 'Nota de débito', icono: 'ti-file-plus', ajuste: 'INTERESES', doc: 'NOTA DE DÉBITO' },
-    'notas-de-abono-electronicas': { tipo: 'ABONO', titulo: 'Notas de abono electrónicas', nombre: 'Nota de abono', icono: 'ti-file-dollar', ajuste: 'DEVOLUCIÓN', doc: 'NOTA DE ABONO' }
+    'notas-de-credito-electronicas': { tipo: 'CRÉDITO', titulo: 'Notas de Crédito', nombre: 'Nota de crédito', icono: 'ti-file-minus', ajuste: 'DESCUENTO', doc: 'NOTA DE CRÉDITO' },
+    'notas-de-debito-electronicas': { tipo: 'DÉBITO', titulo: 'Notas de Débito', nombre: 'Nota de débito', icono: 'ti-file-plus', ajuste: 'INTERESES', doc: 'NOTA DE DÉBITO' },
+    'notas-de-abono-electronicas': { tipo: 'ABONO', titulo: 'Notas de Abono', nombre: 'Nota de abono', icono: 'ti-file-dollar', ajuste: 'DEVOLUCIÓN', doc: 'NOTA DE ABONO' }
   };
   const AJUSTES = ['DESCUENTO', 'DEVOLUCIÓN', 'BONIFICACIÓN', 'CORRECCIÓN DE PRECIO', 'INTERESES', 'OTRO'];
   const CLASIFICACIONES = ['BIENES', 'SERVICIOS', 'BIENES Y SERVICIOS'];

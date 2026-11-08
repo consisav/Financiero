@@ -7,6 +7,8 @@
   const { esc } = window.UI;
   const { montar, fmt } = window.BANCOS;
   window.PANTALLAS = window.PANTALLAS || {};
+  // Fecha (día) en la hora de Guatemala de un instante guardado en UTC.
+  const diaLocal = (t) => t ? new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }) : '';
 
   const ORDENES = [['fecha:desc', 'Fecha ↓'], ['fecha:asc', 'Fecha ↑'], ['numero:desc', 'Número ↓'], ['numero:asc', 'Número ↑'], ['valor:desc', 'Valor ↓'], ['valor:asc', 'Valor ↑']];
   const ESTADOS = ['TODAS', 'FACTURADAS', 'ANULADAS', 'CON SALDO', 'PAGADAS', 'SIN CERTIFICAR', 'CERTIFICADAS'];
@@ -58,7 +60,7 @@
       const yo = ++consulta;
       const lista = [];
       for (let p = 0; p < 20000; p += 1000) {
-        let q = sb.from('facturas_venta').select('*').eq('localidad_id', loc).gte('fecha_emision', `${f.desde}T00:00:00`).lte('fecha_emision', `${f.hasta}T23:59:59.999`)
+        let q = sb.from('facturas_venta').select('*').eq('localidad_id', loc).gte('fecha_emision', `${f.desde}T00:00:00-06:00`).lte('fecha_emision', `${f.hasta}T23:59:59.999-06:00`)
           .order('fecha_emision', { ascending: false }).order('numero', { ascending: false }).range(p, p + 999);
         if (f.vendedor) q = q.eq('vendedor_id', Number(f.vendedor));
         if (f.pago) q = q.eq('forma_pago', f.pago);
@@ -72,7 +74,7 @@
       rango = null;
       if (!lista.length) {
         const a = await sb.from('facturas_venta').select('fecha_emision', { count: 'exact' }).eq('localidad_id', loc).order('fecha_emision').limit(1);
-        if (a.count) rango = { n: a.count, desde: String(a.data[0].fecha_emision).slice(0, 10) };
+        if (a.count) rango = { n: a.count, desde: diaLocal(a.data[0].fecha_emision) };
       }
       sel = facturas.find((x) => x.id === id) || null;
       pintar();
@@ -136,7 +138,7 @@
             <thead><tr>${ordenTh('numero', 'Factura', 'num')}${ordenTh('fecha', 'Fecha')}<th>Cliente · NIT</th><th>Vendedor</th><th>Pago</th>${ordenTh('valor', 'Valor', 'num')}<th class="num">Saldo</th><th>Estado</th><th aria-label="Consultar"></th></tr></thead>
             <tbody>${filas.map((x) => { const [cls, txt] = estadoDe(x); const v = vendedor(x.vendedor_id); return `<tr data-factura="${x.id}" class="${sel && sel.id === x.id ? 'actual' : ''} ${x.estado === 'ANULADA' ? 'pc-anulada' : ''}" tabindex="0">
               <td class="num fuerte">${esc(nombre(x))}<small class="cq-ant">interno ${x.numero}</small></td>
-              <td>${esc(fmt.fechaDia(String(x.fecha_emision).slice(0, 10)))}</td>
+              <td>${esc(fmt.fechaDia(diaLocal(x.fecha_emision)))}</td>
               <td class="cqc-quien" title="${esc(x.nombre)}"><b>${esc(x.nombre)}</b><small>${esc(x.cliente_codigo ? `${x.cliente_codigo} · ` : '')}${esc(x.nit || '')}</small></td>
               <td class="cc-nombre">${esc(v ? v.nombre : '')}</td>
               <td>${esc(x.forma_pago === 'CRÉDITO' ? `Crédito ${x.dias_credito}` : 'Contado')}</td>
@@ -160,7 +162,7 @@
             <span class="tk-icono"><i class="ti ti-file-invoice" aria-hidden="true"></i></span>
             <div class="tk-titulo-texto"><small>Factura ${esc(nombre(x))} · interno ${x.numero} · ${esc(x.tipo_factura.toLowerCase())}${x.autorizacion ? ` · autorización ${esc(x.autorizacion)}` : ' · sin certificar'}</small><h2>${esc(x.nombre)}</h2></div>
             <dl class="cq-datos">
-              <div><dt>Fecha</dt><dd>${esc(fmt.fechaDia(String(x.fecha_emision).slice(0, 10)))}</dd></div>
+              <div><dt>Fecha</dt><dd>${esc(fmt.fechaDia(diaLocal(x.fecha_emision)))}</dd></div>
               <div><dt>Valor</dt><dd>Q ${fmt.monto(x.total)}</dd></div>
               <div><dt>Saldo</dt><dd>Q ${fmt.monto(x.saldo)}</dd></div>
               <div><dt>Estado</dt><dd><span class="pc-marca ${cls}">${txt}</span></dd></div>
@@ -229,7 +231,7 @@
       if (formato === 'PDF') {
         window.BANCOS.imprimir('Consulta de Facturas', `<h1>Consulta de Facturas · ${modo === 'DETALLADO' ? 'detallado' : 'resumido'}</h1><h2>${esc(parametros().join(' · '))}</h2>
           <table><thead><tr><th>Factura</th><th>Interno</th><th>Fecha</th><th>Cliente</th><th>NIT</th><th>Pago</th><th class="n">Valor</th><th class="n">Saldo</th><th>Estado</th></tr></thead><tbody>
-          ${filas.map((x) => `<tr class="${modo === 'DETALLADO' ? 's' : ''}"><td>${esc(nombre(x))}</td><td>${x.numero}</td><td>${esc(fmt.fechaDia(String(x.fecha_emision).slice(0, 10)))}</td><td>${esc(x.nombre)}</td><td>${esc(x.nit || '')}</td><td>${esc(x.forma_pago)}</td><td class="n">${fmt.monto(x.total)}</td><td class="n">${fmt.monto(x.saldo)}</td><td>${estadoDe(x)[1]}</td></tr>
+          ${filas.map((x) => `<tr class="${modo === 'DETALLADO' ? 's' : ''}"><td>${esc(nombre(x))}</td><td>${x.numero}</td><td>${esc(fmt.fechaDia(diaLocal(x.fecha_emision)))}</td><td>${esc(x.nombre)}</td><td>${esc(x.nit || '')}</td><td>${esc(x.forma_pago)}</td><td class="n">${fmt.monto(x.total)}</td><td class="n">${fmt.monto(x.saldo)}</td><td>${estadoDe(x)[1]}</td></tr>
             ${modo === 'DETALLADO' ? (lineasDe.get(x.id) || []).map((l) => `<tr><td></td><td>${l.linea}</td><td>${esc(String(l.producto_codigo ?? ''))}</td><td colspan="2">${esc(l.descripcion)}${l.lote ? ` · lote ${esc(l.lote)}` : ''}</td><td class="n">${fmt.monto(l.cantidad)}</td><td class="n">${fmt.monto(l.total)}</td><td colspan="2"></td></tr>`).join('') : ''}`).join('')}
           </tbody><tfoot><tr><td colspan="6">Total de ${vivas.length} facturas vigentes (de ${filas.length})</td><td class="n">${fmt.monto(total)}</td><td class="n">${fmt.monto(saldo)}</td><td></td></tr></tfoot></table>`, { locId: ctx.sel.loc, horizontal: true });
         return;
@@ -237,7 +239,7 @@
       if (!window.REPORTE_XLSX) return;
       const datos = [];
       filas.forEach((x) => {
-        datos.push({ resaltar: modo === 'DETALLADO' ? 1 : 0, tenue: x.estado === 'ANULADA', valores: [nombre(x), x.numero, fmt.fechaDia(String(x.fecha_emision).slice(0, 10)), x.nombre, x.nit || '', x.forma_pago, Number(x.total || 0), Number(x.saldo || 0), estadoDe(x)[1]] });
+        datos.push({ resaltar: modo === 'DETALLADO' ? 1 : 0, tenue: x.estado === 'ANULADA', valores: [nombre(x), x.numero, fmt.fechaDia(diaLocal(x.fecha_emision)), x.nombre, x.nit || '', x.forma_pago, Number(x.total || 0), Number(x.saldo || 0), estadoDe(x)[1]] });
         if (modo === 'DETALLADO') (lineasDe.get(x.id) || []).forEach((l) => datos.push({ tipo: 'nota', valores: ['', l.linea, l.producto_codigo ?? '', l.descripcion, l.lote || '', Number(l.cantidad), Number(l.total), null, ''] }));
       });
       datos.push({ tipo: 'total', valores: ['', '', '', `Total de ${vivas.length} facturas vigentes (de ${filas.length})`, '', '', total, saldo, ''] });

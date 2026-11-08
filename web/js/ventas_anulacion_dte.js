@@ -17,7 +17,7 @@
   const NOTAS = { 'CRÉDITO': 'notas-de-credito-electronicas', 'DÉBITO': 'notas-de-debito-electronicas', 'ABONO': 'notas-de-abono-electronicas' };
 
   window.PANTALLAS['anulacion-de-documentos-dte'] = function (cont, m, extra) {
-    const ctx = montar(cont, { titulo: 'Anulación de documentos DTE', icono: 'ti-file-x', clase: 'bk-movimientos bm-solo vf-facturas va-anulacion', grupo: 'Ventas · Registros' });
+    const ctx = montar(cont, { titulo: 'Anulación de Documentos DTE', icono: 'ti-file-x', clase: 'bk-movimientos bm-solo vf-facturas va-anulacion', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
     let actual = null, doc = null, tipoDoc = 'FACTURA', lista = [], nueva = null, ocupado = false;
 
@@ -74,7 +74,7 @@
       ctx.pDet.innerHTML = `
         <form class="tk-form ta-form bm-form vf-form va-form" novalidate>
           <header class="tk-titulo bm-titulo">
-            <div class="tk-titulo-texto"><small>Anulación de documentos DTE · ${esc(ctx.localidad(ctx.sel.loc)?.codigo || '')} ${esc(ctx.localidad(ctx.sel.loc)?.nombre_comercial || '')}</small><h2>${a ? `Anulación ${a.numero}` : 'Nueva anulación'}</h2></div>
+            <div class="tk-titulo-texto"><small>Anulación de Documentos DTE · ${esc(ctx.localidad(ctx.sel.loc)?.codigo || '')} ${esc(ctx.localidad(ctx.sel.loc)?.nombre_comercial || '')}</small><h2>${a ? `Anulación ${a.numero}` : 'Nueva anulación'}</h2></div>
             <div class="tk-marcas">${a || anulado ? '<span class="pc-marca anulada">Anulada</span>' : d ? '<span class="pc-marca aprobada">Vigente</span>' : ''}</div>
             <div class="tk-titulo-acciones">
               <button type="button" class="boton secundario-sm" data-accion="limpiar"><i class="ti ti-plus" aria-hidden="true"></i> Nueva anulación</button>
@@ -214,8 +214,4 @@
     iniciar();
   };
 
-  // «Facturación electrónica» del grupo Notas electrónicas: la misma pantalla de Facturas Ventas.
-  const alias = () => { if (window.PANTALLAS['facturas-ventas'] && !window.PANTALLAS['facturacion-electronica']) window.PANTALLAS['facturacion-electronica'] = (cont, m, extra) => window.PANTALLAS['facturas-ventas'](cont, m, extra); };
-  alias();
-  window.addEventListener('DOMContentLoaded', alias);
 })();
