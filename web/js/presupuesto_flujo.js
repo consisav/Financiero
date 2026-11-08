@@ -55,8 +55,11 @@
   const botonesExp = '<button type="button" class="boton secundario-sm" data-exp="PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-exp="EXCEL"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>';
 
   // Contabilidad: saldos por código de cuenta (con su jerarquía) para el flujo NIC 7, el real y los indicadores.
+  // Fecha contable de la partida: el día en que se registró si cae en su período (año y mes); si se registró después
+  // (partidas migradas o atrasadas) cuenta el último día de su período.
+  const fechaContable = (p) => { const d = new Date(p.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }); const per = `${p.anio}-${String(p.mes).padStart(2, '0')}`; if (d.slice(0, 7) === per) return d; return d < `${per}-01` ? `${per}-01` : new Date(Date.UTC(p.anio, p.mes, 0)).toISOString().slice(0, 10); };
   async function leerConta(sb, loc, hasta) {
-    const lineas = await leerTodo(() => sb.from('partida_lineas').select('cuenta_id, debe, haber, partidas!inner(localidad_id, fecha, estado, catalogo_id)').eq('partidas.localidad_id', loc).eq('partidas.estado', 'VIGENTE').lte('partidas.fecha', hasta).order('id'));
+    const lineas = await leerTodo(() => sb.from('partida_lineas').select('cuenta_id, debe, haber, partidas!inner(localidad_id, fecha, anio, mes, estado, catalogo_id, cierre_ejercicio)').eq('partidas.localidad_id', loc).eq('partidas.estado', 'VIGENTE').lte('partidas.anio', Number(hasta.slice(0, 4))).order('id')).then((ls) => ls.map((l) => ({ ...l, partidas: { ...l.partidas, fecha: fechaContable(l.partidas) } })).filter((l) => l.partidas.fecha <= hasta && !['PCE', 'PA'].includes(l.partidas.cierre_ejercicio)));
     const cats = [...new Set(lineas.map((l) => l.partidas.catalogo_id).filter(Boolean))];
     const [cuentas, tipos] = await Promise.all([
       cats.length ? leerTodo(() => sb.from('cuentas').select('id, codigo, nombre, cuenta_mayor_id, tipo_cuenta_id, nivel').in('catalogo_id', cats).order('id')) : [],

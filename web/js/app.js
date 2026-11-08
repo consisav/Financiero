@@ -237,7 +237,7 @@
 
   function pintarLateral() {
     $('nav-modulos').innerHTML = visibles().map((m) =>
-      `<a href="#/${m.id}" data-ruta="${m.id}"><i class="ti ${m.icono}" aria-hidden="true"></i> ${esc(m.corto)}</a>`).join('');
+      `<a ${m.enlace ? `href="${esc(m.enlace)}" target="_blank" rel="noopener"` : `href="#/${m.id}"`} data-ruta="${m.id}"><i class="ti ${m.icono}" aria-hidden="true"></i> ${esc(m.corto)}${m.enlace ? ' <i class="ti ti-external-link" aria-hidden="true"></i>' : ''}</a>`).join('');
     $('nav-admin').hidden = !window.FIN.esAdmin();
     const nombre = perfil.nombre || perfil.correo;
     $('quien-nombre').textContent = nombre;
@@ -468,13 +468,13 @@
       ${lista.length ? '' : '<p>Tu rol no tiene módulos asignados. Pide acceso a un administrador.</p>'}
       <div class="tarjetas">
         ${lista.map((m) => `
-          <a class="tarjeta" href="#/${m.id}" data-color="${m.color}">
+          <a class="tarjeta" ${m.enlace ? `href="${esc(m.enlace)}" target="_blank" rel="noopener"` : `href="#/${m.id}"`} data-color="${m.color}">
             <span class="ficha-icono"><i class="ti ${m.icono}" aria-hidden="true"></i></span>
             <h2>${esc(m.nombre)}</h2>
             <p>${esc(m.descripcion)}</p>
-            <div class="chips">${gruposDe(m).slice(0, 5).map((g) => `<span class="chip">${esc(g.nombre)}</span>`).join('')}</div>
+            ${m.enlace ? `<div class="chips"><span class="chip">${esc(m.sistema || m.corto)}</span></div>` : `<div class="chips">${gruposDe(m).slice(0, 5).map((g) => `<span class="chip">${esc(g.nombre)}</span>`).join('')}</div>`}
             <div class="tarjeta-pie">
-              <span>${cuenta(m)} opciones · ${permisos[m.id].puede_editar ? 'Edición' : 'Solo lectura'}</span>
+              <span>${m.enlace ? 'Sistema externo · se abre en otra pestaña' : `${cuenta(m)} opciones · ${permisos[m.id].puede_editar ? 'Edición' : 'Solo lectura'}`}</span>
               <i class="ti ti-arrow-right" aria-hidden="true"></i>
             </div>
           </a>`).join('')}
@@ -530,6 +530,13 @@
   }
 
   function modulo(m) {
+    // Módulo que es otro sistema (p. ej. Odontología → Plus Dental): página con el acceso.
+    if (m.enlace) {
+      migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>${esc(m.nombre)}</span>`;
+      vista.innerHTML = `<div class="titulo" data-color="${m.color}"><span class="ficha-icono"><i class="ti ${m.icono}" aria-hidden="true"></i></span><div><h1>${esc(m.nombre)}</h1><p>${esc(m.descripcion)}</p></div></div>
+        <p><a class="boton" href="${esc(m.enlace)}" target="_blank" rel="noopener"><i class="ti ti-external-link" aria-hidden="true"></i> Abrir ${esc(m.sistema || m.corto)}</a></p>`;
+      return;
+    }
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>${esc(m.nombre)}</span>`;
     const accesos = gruposDe(m).flatMap((g) => subgruposDe(m, g.id).flatMap((s) => hojas(s).map(({ p, ruta }) => ({ g, ruta, p }))));
     vista.innerHTML = `

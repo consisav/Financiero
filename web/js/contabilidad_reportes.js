@@ -21,12 +21,15 @@
   const REPORTES = {
     'libro-diario': { titulo: 'Libro diario', icono: 'ti-notebook', periodo: true, contenido: true },
     'libro-mayor': { titulo: 'Libro mayor', icono: 'ti-book-2', periodo: true, contenido: true, cuenta: true },
-    'balanza-de-comprobacion': { titulo: 'Balanza de comprobación', icono: 'ti-scale', periodo: true, nivel: true },
+    'balanza-de-comprobacion': { titulo: 'Balanza de comprobación', icono: 'ti-scale', periodo: true, nivel: true, cierre: true },
     'balance-general': { titulo: 'Balance general', icono: 'ti-building-bank', periodo: false, nivel: true },
     'estado-de-resultados': { titulo: 'Estado de resultados', icono: 'ti-chart-line', periodo: true, nivel: true, mensual: true },
     'presupuesto-vs-ejecutado': { titulo: 'Presupuesto vs. ejecutado', icono: 'ti-target-arrow', presupuesto: true }
   };
 
+  // Fecha contable de la partida: el día en que se registró si cae en su período (año y mes); si se registró después
+  // (partidas migradas o atrasadas) cuenta el último día de su período.
+  const fechaContable = (p) => { const d = new Date(p.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }); const per = `${p.anio}-${String(p.mes).padStart(2, '0')}`; if (d.slice(0, 7) === per) return d; return d < `${per}-01` ? `${per}-01` : new Date(Date.UTC(p.anio, p.mes, 0)).toISOString().slice(0, 10); };
   async function leerTodo(hacer) {
     const out = [];
     for (let i = 0; ; i += 1000) { const { data, error } = await hacer().range(i, i + 999); if (error) throw error; out.push(...(data || [])); if (!data || data.length < 1000) break; }
@@ -38,7 +41,7 @@
     const ctx = montar(cont, { titulo: R.titulo, icono: R.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep cr-conta', grupo: 'Contabilidad · Reportes' });
     const { sb } = ctx;
     const hoy = fmt.hoy();
-    const f = { alcance: 'EMPRESA', desde: `${hoy.slice(0, 4)}-01-01`, fecha: hoy, nivel: R.nivel ? 3 : 5, contenido: 'DETALLADO', aprobadas: false, cuenta: '', vista: 'PERIODO', anio: Number(hoy.slice(0, 4)), presupuesto: '', graficas: true };
+    const f = { alcance: 'EMPRESA', desde: `${hoy.slice(0, 4)}-01-01`, fecha: hoy, nivel: R.nivel ? 3 : 5, contenido: 'DETALLADO', aprobadas: false, cuenta: '', cierre: false, vista: 'PERIODO', anio: Number(hoy.slice(0, 4)), presupuesto: '', graficas: true };
     let base = null, cargado = '', cfg = null, presupuestos = [];
     const empresa = () => { const e = ctx.localidad(ctx.sel.loc); return e ? `${e.codigo} · ${e.nombre_comercial}` : ''; };
     const organizacion = () => ctx.organizaciones.find((o) => o.id === ctx.sel.org);
@@ -57,6 +60,7 @@
         ${R.contenido ? `<label class="campo"><span>Contenido</span><select name="contenido">${[['DETALLADO', 'Detallado'], ['RESUMIDO', 'Resumido']].map(([x, t]) => `<option value="${x}" ${f.contenido === x ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
         ${R.mensual ? `<label class="campo"><span>Columnas</span><select name="vista"><option value="PERIODO" ${f.vista === 'PERIODO' ? 'selected' : ''}>Período</option><option value="MENSUAL" ${f.vista === 'MENSUAL' ? 'selected' : ''}>Por mes</option></select></label>` : ''}
         ${R.presupuesto ? '' : `<label class="pc-check"><input type="checkbox" name="aprobadas" ${f.aprobadas ? 'checked' : ''}> Solo aprobadas</label>`}
+        ${R.cierre ? `<label class="pc-check"><input type="checkbox" name="cierre" ${f.cierre ? 'checked' : ''}> Incluir partidas de cierre</label>` : ''}
         <label class="pc-check"><input type="checkbox" name="graficas" ${f.graficas ? 'checked' : ''}> Gráficas</label>`,
         `<button type="button" class="boton secundario-sm" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button>
          <button type="button" class="boton secundario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>`);
@@ -78,9 +82,9 @@
     async function leerContable() {
       const ls = locs();
       const lineas = await leerTodo(() => {
-        let q = sb.from('partida_lineas').select('id, linea, cuenta_id, centro_id, concepto, debe, haber, partidas!inner(id, localidad_id, fecha, anio, mes, numero, numero_anual, tipo_partida_id, descripcion, catalogo_id, estado, aprobada)')
-          .in('partidas.localidad_id', ls).eq('partidas.estado', 'VIGENTE').lte('partidas.fecha', f.fecha);
-        if (R.id === 'libro-diario') q = q.gte('partidas.fecha', f.desde);
+        let q = sb.from('partida_lineas').select('id, linea, cuenta_id, centro_id, concepto, debe, haber, partidas!inner(id, localidad_id, fecha, anio, mes, numero, numero_anual, tipo_partida_id, descripcion, catalogo_id, estado, aprobada, cierre_ejercicio)')
+          .in('partidas.localidad_id', ls).eq('partidas.estado', 'VIGENTE').lte('partidas.anio', Number(f.fecha.slice(0, 4)));
+        if (R.id === 'libro-diario') q = q.gte('partidas.anio', Number(f.desde.slice(0, 4)));
         if (f.aprobadas) q = q.eq('partidas.aprobada', true);
         return q.order('id');
       });
@@ -99,7 +103,10 @@
         const mayor = porId.get(c.cuenta_mayor_id);
         if (!porCodigo.has(c.codigo)) porCodigo.set(c.codigo, { codigo: c.codigo, nombre: c.nombre, nivel: c.nivel || 1, integra: c.integra, mayor: mayor?.codigo || null, tipoCod: t?.codigo, tipoDesc: t?.descripcion || '', nat: t?.tipo_operacion === 'HABER-DEBE' ? -1 : 1, reporte: t?.reporte_financiero || '', resultado: t?.operacion_resultado || '' });
       });
-      return { lineas: lineas.map((l) => ({ ...l, p: l.partidas, c: porId.get(l.cuenta_id) })), porCodigo, tiposPart: new Map(tiposPart.map((t) => [t.id, t])), locs: new Map(ctx.localidades.map((x) => [x.id, x])) };
+      // Fecha local de cada partida (se guarda en UTC) y sin las partidas de registro del cierre anual (PCE y PA), que
+      // solo se muestran en el libro diario.
+      const dias = new Map(); const dia = (p) => { let d = dias.get(p.id); if (!d) { d = fechaContable(p); dias.set(p.id, d); } return d; };
+      return { lineas: lineas.filter((l) => dia(l.partidas) <= f.fecha && (R.id === 'libro-diario' ? dia(l.partidas) >= f.desde : !['PCE', 'PA'].includes(l.partidas.cierre_ejercicio))).map((l) => ({ ...l, p: { ...l.partidas, fecha: dia(l.partidas) }, c: porId.get(l.cuenta_id) })), porCodigo, tiposPart: new Map(tiposPart.map((t) => [t.id, t])), locs: new Map(ctx.localidades.map((x) => [x.id, x])) };
     }
     async function consultar() {
       const clave = `${id}|${locs().join(',')}|${f.desde}|${f.fecha}|${f.aprobadas}|${f.anio}|${f.presupuesto}`;
@@ -143,6 +150,9 @@
       const b0 = { titulo: R.titulo, orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: R.titulo.slice(0, 30), archivo: `${id}_${f.fecha}` };
       if (R.presupuesto) return construirPresupuesto(b0);
       const enPeriodo = (l) => l.p.fecha >= f.desde && l.p.fecha <= f.fecha;
+      // Partida de cierre de resultados (PCR) y la de reserva y traslado: fuera del estado de resultados y, salvo que se
+      // pida, de la balanza del período (balanza antes del cierre).
+      const esCierre = (l) => base.tiposPart.get(l.p.tipo_partida_id)?.siglas === 'PCR' || l.p.cierre_ejercicio === 'DIST';
 
       if (id === 'libro-diario') {
         const ps = new Map();
@@ -199,7 +209,7 @@
       }
 
       if (id === 'balanza-de-comprobacion') {
-        const ant = saldos((l) => l.p.fecha < f.desde), per = saldos(enPeriodo);
+        const ant = saldos((l) => l.p.fecha < f.desde), per = saldos((l) => enPeriodo(l) && (f.cierre || !esCierre(l)));
         const cods = new Set([...ant.keys(), ...per.keys()]);
         const mapa = new Map([...cods].map((k) => [k, true]));
         const cs = visibles(mapa, () => true);
@@ -256,11 +266,12 @@
       }
 
       // Estado de resultados: secciones por tipo de cuenta (ingresos suman; costos y gastos restan) con utilidades intermedias.
-      const per = base.lineas.filter(enPeriodo);
+      const enPerER = (l) => enPeriodo(l) && base.tiposPart.get(l.p.tipo_partida_id)?.siglas !== 'PCR';
+      const per = base.lineas.filter(enPerER);
       const meses = []; for (let d = f.desde.slice(0, 7); d <= f.fecha.slice(0, 7) && meses.length < 24;) { meses.push(d); const [y, m] = d.split('-').map(Number); d = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`; }
       const mensual = f.vista === 'MENSUAL';
-      const sPer = saldos(enPeriodo);
-      const sMes = mensual ? meses.map((m) => saldos((l) => enPeriodo(l) && l.p.fecha.startsWith(m))) : [];
+      const sPer = saldos(enPerER);
+      const sMes = mensual ? meses.map((m) => saldos((l) => enPerER(l) && l.p.fecha.startsWith(m))) : [];
       const val = (cod, mapa) => { const x = mapa.get(cod); return x ? x.h - x.d : 0; }; // positivo = ingreso / utilidad
       const secciones = [...sPer.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.nivel === 1 && c.reporte === 'E').sort((a, b) => (a.tipoCod || 0) - (b.tipoCod || 0) || a.codigo.localeCompare(b.codigo));
       const columnas = [col('Cuenta', 'texto', 14), col('Nombre de la cuenta', 'texto', mensual ? 34 : 52), ...(mensual ? meses.map((m) => col(MES[Number(m.slice(5, 7)) - 1].slice(0, 3), 'monto', 13)) : []), col('Total período', 'monto', 16), col('% de ventas', 'porcentaje', 11)];
@@ -279,7 +290,7 @@
         if (sec.nat === 1 || i === secciones.length - 1) filas.push({ valores: [etiqueta(sec, i === secciones.length - 1), '', ...(mensual ? acumMes.map(r2) : []), r2(acum), ventas ? acum / ventas : 0], tipo: 'total' });
       });
       const kpis = [['Ingresos', `Q ${fmt.monto(ingresos)}`], ['Costos y gastos', `Q ${fmt.monto(ingresos - acum)}`], ['Resultado neto', `Q ${fmt.monto(acum)}`, acum >= 0 ? 'ec-fin' : 'ec-alerta'], ['Margen neto', ingresos ? `${((acum / ingresos) * 100).toFixed(1)} %` : '—']];
-      const porMes = meses.map((m) => saldos((l) => enPeriodo(l) && l.p.fecha.startsWith(m)));
+      const porMes = meses.map((m) => saldos((l) => enPerER(l) && l.p.fecha.startsWith(m)));
       const ing = porMes.map((mp) => secciones.filter((c) => c.nat === -1).reduce((s, c) => s + val(c.codigo, mp), 0));
       const gas = porMes.map((mp) => secciones.filter((c) => c.nat === 1).reduce((s, c) => s - val(c.codigo, mp), 0));
       const graficas = [G().columnas('Ingresos y gastos por mes (Q)', meses.map((m) => MES[Number(m.slice(5, 7)) - 1].slice(0, 3)), [{ nombre: 'Ingresos', color: G().COLORES.VERDE, valores: ing }, { nombre: 'Costos y gastos', color: G().COLORES.NARANJA, valores: gas }]),
@@ -346,6 +357,7 @@
       if (['desde', 'fecha'].includes(n)) { f[n] = e.target.value || (n === 'fecha' ? hoy : f.desde); if (f.desde > f.fecha) f.desde = `${f.fecha.slice(0, 4)}-01-01`; return consultar(); }
       if (n === 'alcance') { f.alcance = e.target.value; return consultar(); }
       if (n === 'aprobadas') { f.aprobadas = e.target.checked; return consultar(); }
+      if (n === 'cierre') { f.cierre = e.target.checked; cfg = construir(); return pintar(); }
       if (n === 'anio') { f.anio = Number(e.target.value) || f.anio; await leerPresupuestos(); pintarFiltros(); return consultar(); }
       if (n === 'presupuesto') { f.presupuesto = e.target.value; return consultar(); }
       if (n === 'nivel') { f.nivel = Number(e.target.value); cfg = construir(); return pintar(); }

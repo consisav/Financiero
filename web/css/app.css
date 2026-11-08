@@ -5715,3 +5715,9 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .sat-con { display: flex; gap: 10px; align-items: center; border: 1px solid color-mix(in srgb, var(--acento) 35%, var(--borde)); background: color-mix(in srgb, var(--acento) 5%, var(--panel)); border-radius: 10px; padding: 8px 12px; font-size: 13px; }
 .sat-con > i { font-size: 22px; color: var(--acento); }
 .sat-con > div { flex: 1; }
+
+/* Contabilidad · cierre contable (script 158) */
+.cr-meses { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.cr-meses .pc-marca { min-width: 46px; text-align: center; }
+h3.pr-sub { font-size: 15px; margin: 18px 0 8px; display: flex; gap: 6px; align-items: center; }
+form.cr-rec { margin-top: 14px; }

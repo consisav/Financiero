@@ -52,6 +52,8 @@
 
   // ---------- Datos fiscales del período ----------
   async function emisorDe(sb, loc) { const { data } = await sb.from('sat_emisores').select('*').eq('localidad_id', loc).maybeSingle(); return data; }
+  // También lo usan las integraciones contables (IVA débito y crédito del mes).
+  window.SAT_DATOS = (...a) => datosFiscales(...a);
   async function datosFiscales(ctx, desde, hasta, op = {}) {
     const { sb } = ctx, loc = ctx.sel.loc;
     const em = await emisorDe(sb, loc);
@@ -501,8 +503,11 @@
   };
   // ===================== Cálculo de impuestos del régimen =====================
   // Contabilidad del período para ISR y la base del ISO: ingresos, costos y gastos (estado de resultados) y activo.
+  // Fecha contable de la partida: el día en que se registró si cae en su período (año y mes); si se registró después
+  // (partidas migradas o atrasadas) cuenta el último día de su período.
+  const fechaContable = (p) => { const d = new Date(p.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }); const per = `${p.anio}-${String(p.mes).padStart(2, '0')}`; if (d.slice(0, 7) === per) return d; return d < `${per}-01` ? `${per}-01` : new Date(Date.UTC(p.anio, p.mes, 0)).toISOString().slice(0, 10); };
   async function contaPeriodo(sb, loc, desde, hasta) {
-    const ls = await leerTodo(() => sb.from('partida_lineas').select('cuenta_id, debe, haber, partidas!inner(localidad_id, fecha, estado)').eq('partidas.localidad_id', loc).eq('partidas.estado', 'VIGENTE').lte('partidas.fecha', hasta).order('id'));
+    const ls = await leerTodo(() => sb.from('partida_lineas').select('cuenta_id, debe, haber, partidas!inner(localidad_id, fecha, anio, mes, estado, cierre_ejercicio)').eq('partidas.localidad_id', loc).eq('partidas.estado', 'VIGENTE').lte('partidas.anio', Number(hasta.slice(0, 4))).order('id')).then((ls) => ls.map((l) => ({ ...l, partidas: { ...l.partidas, fecha: fechaContable(l.partidas) } })).filter((l) => l.partidas.fecha <= hasta && !['PCE', 'PA'].includes(l.partidas.cierre_ejercicio)));
     const ids = [...new Set(ls.map((l) => l.cuenta_id))];
     const cs = []; for (let i = 0; i < ids.length; i += 300) cs.push(...((await sb.from('cuentas').select('id, tipo_cuenta_id').in('id', ids.slice(i, i + 300))).data || []));
     const ts = (await sb.from('tipos_cuenta').select('id, tipo_operacion, reporte_financiero, descripcion').eq('localidad_id', loc)).data || [];

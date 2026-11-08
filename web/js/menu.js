@@ -104,10 +104,30 @@ window.MODULOS = [
     subgrupos: {
       procesos: [
         {
-          subgrupo: 'Cierres',
+          subgrupo: 'Cierre mensual',
           icono: 'ti-calendar-check',
           pantallas: [
+            { id: 'con-revision-cierre', nombre: 'Revisión previa al cierre', icono: 'ti-checklist', descripcion: 'Semáforo del mes: partidas descuadradas o sin aprobar, cuentas que agrupan con movimiento, documentos sin contabilizar, automáticas y reversiones pendientes. PDF y Excel.' },
+            { id: 'con-mayorizacion', nombre: 'Mayorización y validación', icono: 'ti-scale', descripcion: 'Valida mes por mes el cuadre, los totales contra sus líneas y las cuentas usadas; recalcula los totales de los meses abiertos.' },
+            { id: 'con-automaticas', nombre: 'Recurrentes y amortizaciones', icono: 'ti-repeat', descripcion: 'Genera aprobadas las partidas recurrentes y la cuota del mes de provisiones y diferidos, una sola vez por mes.' },
+            { id: 'con-diferencial', nombre: 'Diferencial cambiario', icono: 'ti-currency-dollar', descripcion: 'Revalúa las cuentas bancarias en moneda extranjera al tipo de cambio de cierre y registra la partida PDC.' },
+            { id: 'con-reversion', nombre: 'Reversión de provisiones', icono: 'ti-arrow-back-up', descripcion: 'Revierte el primer día del mes siguiente las provisiones y estimaciones (PPR y PEV) con una partida PRV.' },
             { id: 'cierre-de-mes', nombre: 'Cierre de mes', icono: 'ti-calendar-check', descripcion: 'Cierra o reabre cada mes de la empresa; con el mes cerrado sus partidas ya no se modifican.' }
+          ]
+        },
+        {
+          subgrupo: 'Cierre anual',
+          icono: 'ti-lock-check',
+          pantallas: [
+            { id: 'con-cierre-anual', nombre: 'Cierre del ejercicio', icono: 'ti-lock-check', descripcion: 'Revisión del ejercicio, partida de cierre de resultados, reserva legal 5 % y traslado a utilidades, cierre (PCE) y apertura del año siguiente (PA); reapertura con motivo.' }
+          ]
+        },
+        {
+          subgrupo: 'Integraciones contables',
+          icono: 'ti-arrows-join',
+          pantallas: [
+            { id: 'con-integraciones', nombre: 'Integraciones contables', icono: 'ti-arrows-join', descripcion: 'Saldo contable de cada cuenta de control contra su auxiliar (bancos, CxC, CxP, inventario, IVA, sueldos), resumido o detallado por cuenta. PDF y Excel.' },
+            { id: 'con-analisis-cuenta', nombre: 'Análisis de cuenta', icono: 'ti-zoom-money', descripcion: 'Integración analítica de una cuenta: saldo inicial, movimientos por mes, centro de costo, tipo, subcuenta o concepto y saldo final.' }
           ]
         }
       ],
@@ -125,6 +145,15 @@ window.MODULOS = [
           icono: 'ti-report-money',
           pantallas: [
             { id: 'presupuesto', nombre: 'Presupuesto', icono: 'ti-chart-bar', descripcion: 'Presupuestos por organización y localidad: tipo, frecuencia, período, estado y rubros con lo presupuestado y lo ejecutado.' }
+          ]
+        },
+        {
+          subgrupo: 'Automáticas',
+          icono: 'ti-repeat',
+          pantallas: [
+            { id: 'con-recurrentes', nombre: 'Partidas recurrentes', icono: 'ti-repeat', descripcion: 'Plantillas de partidas que se repiten cada mes (alquileres, cuotas, servicios) con su vigencia y sus líneas.' },
+            { id: 'con-diferidos', nombre: 'Provisiones y diferidos', icono: 'ti-hourglass', descripcion: 'Gastos pagados por anticipado, provisiones, ingresos diferidos y amortizaciones con su monto, cuotas y saldo por aplicar.' },
+            { id: 'con-intercompania', nombre: 'Cuentas intercompañía', icono: 'ti-arrows-left-right', descripcion: 'Pares de cuentas recíprocas entre localidades de la organización con su conciliación a una fecha.' }
           ]
         }
       ],
@@ -149,6 +178,16 @@ window.MODULOS = [
           ]
         },
         {
+          subgrupo: 'Cierre contable',
+          icono: 'ti-lock-square',
+          pantallas: [
+            { id: 'con-ejercicios', nombre: 'Ejercicios y períodos contables', icono: 'ti-calendar-stats', descripcion: 'Cada ejercicio con el estado de sus doce meses, partidas, resultado y quién lo cerró.' },
+            { id: 'con-cuentas-integracion', nombre: 'Cuentas de integración', icono: 'ti-plug-connected', descripcion: 'Cuenta de control de cada auxiliar (CxC, CxP, inventario, IVA, retenciones, nómina, activos, diferencial cambiario).' },
+            { id: 'con-cuentas-cierre', nombre: 'Cuentas de cierre', icono: 'ti-lock-square', descripcion: 'Resultado del ejercicio, utilidades y pérdidas acumuladas y reserva legal que usa el cierre anual.' },
+            { id: 'con-libros-sat', nombre: 'Libros autorizados SAT', icono: 'ti-books', descripcion: 'Libros habilitados por la SAT con su resolución, forma y folios autorizados, usados y disponibles.' }
+          ]
+        },
+        {
           subgrupo: 'Objetos contables',
           icono: 'ti-box',
           pantallas: [
@@ -169,8 +208,8 @@ window.MODULOS = [
     },
     opciones: {
       registros: [],
-      mantenimientos: ['Períodos contables', 'Empresas', 'Parámetros contables'],
-      procesos: ['Mayorización', 'Cierre de año'],
+      mantenimientos: ['Empresas', 'Parámetros contables'],
+      procesos: [],
       reportes: [],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
@@ -798,6 +837,19 @@ window.MODULOS = [
     opciones: {
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
+  },
+  {
+    id: 'odontologia',
+    corto: 'Odontología',
+    color: 'azul',
+    hereda: 'hospital',
+    nombre: 'Odontología',
+    icono: 'ti-dental',
+    sistema: 'Plus Dental',
+    enlace: 'https://consisav.github.io/PlusDental/',
+    descripcion: 'Clínica dental: abre el sistema Plus Dental (pacientes, citas, odontograma, tratamientos y cobros).',
+    subgrupos: {},
+    opciones: {}
   }
 ];
 
@@ -840,12 +892,20 @@ window.MODULOS = [
     { subgrupo: 'Libros contables', icono: 'ti-books', pantallas: [
       { id: 'libro-diario', nombre: 'Libro diario', icono: 'ti-notebook', descripcion: 'Partidas del período en orden cronológico con su detalle de cuentas (detallado) o una línea por partida (resumido); empresa o consolidado. PDF y Excel.' },
       { id: 'libro-mayor', nombre: 'Libro mayor', icono: 'ti-book-2', descripcion: 'Movimientos de cada cuenta con saldo inicial, debe, haber y saldo acumulado; una cuenta o todas; detallado o resumido. PDF y Excel.' },
-      { id: 'balanza-de-comprobacion', nombre: 'Balanza de comprobación', icono: 'ti-scale', descripcion: 'Saldos iniciales, movimientos y saldos finales deudores y acreedores por cuenta y nivel, con la comprobación de cuadre. PDF y Excel.' }
+      { id: 'balanza-de-comprobacion', nombre: 'Balanza de comprobación', icono: 'ti-scale', descripcion: 'Saldos iniciales, movimientos y saldos finales deudores y acreedores por cuenta y nivel, con la comprobación de cuadre. PDF y Excel.' },
+      { id: 'libro-inventarios-balances', nombre: 'Libro de inventarios y balances', icono: 'ti-book', descripcion: 'Inventario de las cuentas de balance al cierre y resumen de resultados del ejercicio, con el folio del libro autorizado. PDF y Excel.' }
     ] },
     { subgrupo: 'Estados financieros', icono: 'ti-report-money', pantallas: [
       { id: 'balance-general', nombre: 'Balance general', icono: 'ti-building-bank', descripcion: 'Activo, pasivo y patrimonio a una fecha por nivel de cuenta, con el resultado del ejercicio, cuadre, gráficas y firmas. PDF y Excel.' },
       { id: 'estado-de-resultados', nombre: 'Estado de resultados', icono: 'ti-chart-line', descripcion: 'Ingresos, costos y gastos del período con utilidad bruta, de operación y neta, % sobre ingresos y columnas por mes. PDF y Excel.' },
+      { id: 'estado-cambios-patrimonio', nombre: 'Estado de cambios en el patrimonio', icono: 'ti-building-bank', descripcion: 'Saldo inicial, resultado, cierre, reserva legal, traslados y otros movimientos de cada cuenta del patrimonio. PDF y Excel.' },
+      { id: 'estados-comparativos', nombre: 'Estados financieros comparativos', icono: 'ti-arrows-diff', descripcion: 'Balance general o estado de resultados de dos fechas con variación absoluta y porcentual; empresa o consolidado. PDF y Excel.' },
+      { id: 'resultados-centro-costo', nombre: 'Resultados por centro de costo', icono: 'ti-hierarchy-2', descripcion: 'Estado de resultados con una columna por centro de costo principal y su gráfica. PDF y Excel.' },
       { id: 'presupuesto-vs-ejecutado', nombre: 'Presupuesto vs. ejecutado', icono: 'ti-target-arrow', descripcion: 'Rubros del presupuesto del año con lo presupuestado, ejecutado, variación y % de ejecución por grupo. PDF y Excel.' }
+    ] },
+    { subgrupo: 'Cierre y análisis', icono: 'ti-report-search', pantallas: [
+      { id: 'rep-integraciones', nombre: 'Integraciones contables', icono: 'ti-arrows-join', descripcion: 'Saldos contables contra auxiliares, resumido o detallado por cuenta, con diferencias y gráfica. PDF y Excel.' },
+      { id: 'bitacora-cierres', nombre: 'Bitácora de cierres', icono: 'ti-history', descripcion: 'Cierres y reaperturas de meses y ejercicios con usuario, fecha y motivo, y las partidas de los procesos automáticos. PDF y Excel.' }
     ] }
   ];
 })();

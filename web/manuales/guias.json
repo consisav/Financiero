@@ -2400,5 +2400,257 @@
    "Registra lo faltante en Ingreso de compras y presiona «Actualizar».",
    "Imprime en PDF (con firmas) o Excel."
   ]
+ },
+ "con-ejercicios": {
+  "puntos": [
+   "Cada ejercicio con sus doce meses: ✓ cerrado y el número de partidas vigentes.",
+   "Resultado del ejercicio y quién lo cerró."
+  ],
+  "pasos": [
+   "Abre Contabilidad › Catálogos › Cierre contable › Ejercicios y períodos contables y elige {empresa}.",
+   "Revisa qué meses de cada año siguen abiertos.",
+   "Con «Abrir ejercicio» registras el año siguiente antes de empezarlo.",
+   "Imprime el resumen en PDF o Excel para el expediente de cierre."
+  ]
+ },
+ "con-cuentas-integracion": {
+  "puntos": [
+   "Cuenta de control de cada auxiliar: CxC, CxP, inventario, IVA, retenciones, nómina, activos y diferencial cambiario.",
+   "Puede ser una cuenta mayor: la integración suma sus subcuentas."
+  ],
+  "pasos": [
+   "Abre Catálogos › Cierre contable › Cuentas de integración con {empresa}.",
+   "Presiona «Sugerir cuentas»: el sistema busca por nombre en el catálogo las que falten.",
+   "Revisa cada sugerencia y corrige el código si hace falta; el estado OK confirma que la cuenta existe.",
+   "Anota en «Nota» cualquier criterio (por ejemplo, la cuenta de clientes locales y la del exterior)."
+  ]
+ },
+ "con-cuentas-cierre": {
+  "puntos": [
+   "Resultado del ejercicio, utilidades y pérdidas acumuladas y reserva legal.",
+   "Si no se configuran se usan las de Parámetros generales."
+  ],
+  "pasos": [
+   "Abre Catálogos › Cierre contable › Cuentas de cierre con {empresa}.",
+   "Verifica la cuenta del resultado del ejercicio (por ejemplo 3040101001).",
+   "Configura la reserva legal con una cuenta de movimiento (por ejemplo 3020101001 Reserva legal 5 %).",
+   "Todas deben quedar en OK antes del cierre anual."
+  ]
+ },
+ "con-libros-sat": {
+  "puntos": [
+   "Libros habilitados por la SAT con su resolución, forma y folios.",
+   "Aviso cuando quedan menos del 10 % de folios."
+  ],
+  "pasos": [
+   "Abre Catálogos › Cierre contable › Libros autorizados SAT y presiona «Nuevo».",
+   "Elige el libro (diario, mayor, inventarios y balances…), escribe la resolución y la fecha de autorización.",
+   "Registra el folio inicial y final autorizados y el último usado.",
+   "El Libro de inventarios y balances toma de aquí su folio inicial."
+  ]
+ },
+ "con-recurrentes": {
+  "puntos": [
+   "Plantillas de partidas que se repiten cada mes con su vigencia.",
+   "Se generan aprobadas una sola vez por mes."
+  ],
+  "pasos": [
+   "Abre Registros › Automáticas › Partidas recurrentes y presiona «Nueva plantilla».",
+   "Escribe la descripción (por ejemplo ALQUILER MENSUAL DE OFICINAS), el tipo de partida y la vigencia.",
+   "Captura las líneas con la cuenta, el concepto y el debe o haber hasta que diga CUADRA.",
+   "Genera la partida del mes en Procesos › Recurrentes y amortizaciones."
+  ]
+ },
+ "con-diferidos": {
+  "puntos": [
+   "Gastos pagados por anticipado, provisiones, ingresos diferidos y amortizaciones.",
+   "Cuota mensual, cuotas aplicadas y saldo por aplicar."
+  ],
+  "pasos": [
+   "Abre Registros › Automáticas › Provisiones y diferidos y presiona «Nuevo».",
+   "Describe el registro (por ejemplo SEGURO PAGADO POR ANTICIPADO) y elige el tipo.",
+   "Indica la cuenta al debe (gasto) y al haber (activo diferido o provisión), el monto, las cuotas y el mes de inicio.",
+   "Cada mes la cuota se genera en Procesos › Recurrentes y amortizaciones; la última ajusta el redondeo."
+  ]
+ },
+ "con-intercompania": {
+  "puntos": [
+   "Pares de cuentas recíprocas entre localidades de la organización.",
+   "Conciliación de sus saldos a una fecha."
+  ],
+  "pasos": [
+   "Abre Registros › Automáticas › Cuentas intercompañía y presiona «Nuevo».",
+   "Elige la localidad A con su cuenta por cobrar y la localidad B con su cuenta por pagar.",
+   "Elige la fecha en «Conciliar al»: la tabla de abajo muestra ambos saldos y la diferencia.",
+   "Una diferencia indica una partida registrada en una sola de las empresas."
+  ]
+ },
+ "con-revision-cierre": {
+  "puntos": [
+   "Semáforo del mes antes de cerrarlo.",
+   "Partidas, módulos sin contabilizar, automáticas y reversiones pendientes."
+  ],
+  "pasos": [
+   "Abre Procesos › Cierre mensual › Revisión previa al cierre, elige {empresa}, el año y el mes.",
+   "Las alertas (rojo) impiden el cierre: descuadradas, sin aprobar o movimiento en cuentas que agrupan.",
+   "Toca un renglón para abrir la pantalla que lo resuelve.",
+   "Cuando «Listo para cerrar» diga Sí, usa «Ir a Cierre de mes».",
+   "Imprime la revisión en PDF con firmas para el expediente."
+  ]
+ },
+ "con-mayorizacion": {
+  "puntos": [
+   "Validación mes por mes del año.",
+   "Recalcula los totales de los meses abiertos."
+  ],
+  "pasos": [
+   "Abre Procesos › Cierre mensual › Mayorización y validación y elige el año.",
+   "Revisa por mes: descuadradas, totales distintos a sus líneas, líneas en cuentas mayores y en otro catálogo.",
+   "Presiona «Mayorizar» para recalcular los totales de las partidas de los meses abiertos.",
+   "Corrige en Partidas contables lo que siga marcado."
+  ]
+ },
+ "con-automaticas": {
+  "puntos": [
+   "Partidas recurrentes vigentes y cuotas de provisiones y diferidos del mes.",
+   "Cada una se genera aprobada y una sola vez."
+  ],
+  "pasos": [
+   "Abre Procesos › Cierre mensual › Recurrentes y amortizaciones con el año y el mes.",
+   "Revisa la lista: las pendientes vienen marcadas.",
+   "Presiona «Generar seleccionadas»: se crean aprobadas con su número de partida.",
+   "Para regenerar una, anula primero la partida generada."
+  ]
+ },
+ "con-diferencial": {
+  "puntos": [
+   "Revaluación de cuentas bancarias en moneda extranjera.",
+   "Partida PDC contra ganancia o pérdida cambiaria."
+  ],
+  "pasos": [
+   "Abre Procesos › Cierre mensual › Diferencial cambiario con el año y el mes.",
+   "Revisa el tipo de cambio de cierre que propone el sistema (Tipos de cambio) y ajústalo si hace falta.",
+   "Compara el saldo revaluado con el saldo contable de cada cuenta.",
+   "Presiona «Generar partida PDC»; necesita las cuentas de diferencial en Cuentas de integración."
+  ]
+ },
+ "con-reversion": {
+  "puntos": [
+   "Provisiones y estimaciones del mes (PPR y PEV).",
+   "Se revierten el mes siguiente con una partida PRV."
+  ],
+  "pasos": [
+   "Abre Procesos › Cierre mensual › Reversión de provisiones y elige el mes de las provisiones.",
+   "Marca las pendientes y presiona «Revertir seleccionadas».",
+   "Cada reversión queda en el mes siguiente con las cuentas invertidas.",
+   "Así el gasto real se registra después sin duplicarse."
+  ]
+ },
+ "con-cierre-anual": {
+  "puntos": [
+   "Requisitos, partida de cierre de resultados (PCR), reserva legal 5 %, traslado y partidas de cierre (PCE) y apertura (PA).",
+   "Reapertura solo del Super Administrador, con motivo."
+  ],
+  "pasos": [
+   "Cierra antes los meses de enero a noviembre y deja diciembre aprobado y cuadrado.",
+   "Abre Procesos › Cierre anual › Cierre del ejercicio con {empresa} y el año.",
+   "Revisa los requisitos: todos deben quedar en OK (las cuentas de cierre se configuran en Catálogos).",
+   "Revisa la vista previa de la PCR, la reserva legal y el traslado; marca o desmarca la reserva y la PCE/PA.",
+   "Presiona «Cerrar el ejercicio»: se registran las partidas y los doce meses quedan cerrados.",
+   "Imprime el acta de cierre en PDF con firmas."
+  ]
+ },
+ "con-integraciones": {
+  "puntos": [
+   "Saldo contable de cada cuenta de control contra su auxiliar.",
+   "Resumido o detallado por cuenta, con diferencias y gráfica."
+  ],
+  "pasos": [
+   "Configura primero las Cuentas de integración.",
+   "Abre Procesos › Integraciones contables, elige {empresa} y la fecha.",
+   "En resumido ves por integración el saldo contable, el auxiliar y la diferencia.",
+   "En detallado ves cada subcuenta contable y cada cliente, proveedor, cuenta bancaria o producto del auxiliar.",
+   "Investiga las DIFERENCIAS antes de cerrar el mes; imprime en PDF o Excel."
+  ]
+ },
+ "con-analisis-cuenta": {
+  "puntos": [
+   "Integración analítica de una cuenta o de una cuenta mayor.",
+   "Agrupa por mes, centro de costo, tipo de partida, subcuenta o concepto."
+  ],
+  "pasos": [
+   "Abre Procesos › Integraciones contables › Análisis de cuenta.",
+   "Escribe el código de la cuenta (por ejemplo {cuenta}) y el rango de fechas.",
+   "Elige cómo agrupar y si lo quieres resumido o detallado.",
+   "El reporte muestra saldo inicial, movimientos y saldo final; imprímelo en PDF o Excel."
+  ]
+ },
+ "rep-integraciones": {
+  "puntos": [
+   "Reporte de integraciones contables resumido o detallado por cuenta."
+  ],
+  "pasos": [
+   "Abre Reportes › Cierre y análisis › Integraciones contables.",
+   "Elige la fecha, la integración y el contenido.",
+   "Imprime en PDF con firmas o exporta a Excel con la gráfica."
+  ]
+ },
+ "estado-cambios-patrimonio": {
+  "puntos": [
+   "Movimiento de cada cuenta del patrimonio en el período.",
+   "Resultado, cierre, reserva legal, traslados y otros movimientos."
+  ],
+  "pasos": [
+   "Abre Reportes › Estados financieros › Estado de cambios en el patrimonio.",
+   "Elige las fechas (por defecto el año en curso).",
+   "Revisa que el saldo final coincida con el patrimonio del balance general.",
+   "Imprime en PDF con firmas o en Excel."
+  ]
+ },
+ "estados-comparativos": {
+  "puntos": [
+   "Balance general o estado de resultados de dos fechas.",
+   "Variación absoluta y porcentual; empresa o consolidado."
+  ],
+  "pasos": [
+   "Abre Reportes › Estados financieros › Estados financieros comparativos.",
+   "Elige el estado, el alcance y las dos fechas (por defecto hoy y la misma fecha del año anterior).",
+   "Elige el nivel de cuentas.",
+   "Imprime en PDF o Excel con la gráfica de totales."
+  ]
+ },
+ "resultados-centro-costo": {
+  "puntos": [
+   "Estado de resultados con una columna por centro de costo principal."
+  ],
+  "pasos": [
+   "Abre Reportes › Estados financieros › Resultados por centro de costo.",
+   "Elige las fechas y el nivel de cuentas.",
+   "Las líneas sin centro de costo van en su propia columna.",
+   "Imprime en PDF o Excel con la gráfica por centro."
+  ]
+ },
+ "libro-inventarios-balances": {
+  "puntos": [
+   "Inventario de las cuentas de balance al cierre y resumen de resultados.",
+   "Folio inicial del libro autorizado por la SAT."
+  ],
+  "pasos": [
+   "Registra el libro en Catálogos › Libros autorizados SAT.",
+   "Abre Reportes › Libros contables › Libro de inventarios y balances y elige el ejercicio.",
+   "Confirma el folio inicial que propone el sistema.",
+   "Imprime en PDF en las hojas autorizadas y actualiza el último folio usado."
+  ]
+ },
+ "bitacora-cierres": {
+  "puntos": [
+   "Cierres y reaperturas de meses y ejercicios con usuario, fecha y motivo.",
+   "Partidas de los procesos automáticos."
+  ],
+  "pasos": [
+   "Abre Reportes › Cierre y análisis › Bitácora de cierres y elige el año.",
+   "Las reaperturas aparecen resaltadas.",
+   "Imprime en PDF para auditoría."
+  ]
  }
 }

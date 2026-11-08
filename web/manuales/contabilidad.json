@@ -1,70 +1,144 @@
 {
   "version": "2026.11",
   "titulo": "Manual del módulo Contabilidad y presupuesto",
-  "resumen": "Plan de cuentas, centros de costo, objetos contables y transacciones, partidas contables, presupuesto, cierre de mes y replicación entre empresas.",
-  "nombresTablas": { "cuentas": "Cuentas contables", "partidas": "Partidas contables", "centros_costo": "Centros de costo", "tipos_partida": "Tipos de partida", "transacciones_contables": "Transacciones contables" },
+  "resumen": "Plan de cuentas, centros de costo, objetos contables y transacciones, partidas contables y automáticas, presupuesto, cierre mensual y anual, integraciones contables, estados financieros y replicación entre empresas.",
+  "nombresTablas": {
+    "cuentas": "Cuentas contables",
+    "partidas": "Partidas contables",
+    "centros_costo": "Centros de costo",
+    "tipos_partida": "Tipos de partida",
+    "transacciones_contables": "Transacciones contables"
+  },
   "diapositivas": [
-    { "tipo": "portada", "titulo": "Módulo de Contabilidad y presupuesto", "subtitulo": "La contabilidad de cada empresa: catálogo, pólizas, presupuesto y cierres", "nota": "CONSISAV Financiero · manual de operación" },
-    { "tipo": "indice", "titulo": "Contenido", "puntos": [
-      "Catálogos › Parámetros: parámetros generales y tipos de cambio de cada localidad",
-      "Catálogos › Cuentas y CC: tipos de cuenta, cuentas contables, centros de costo, tipos de partida y rubros",
-      "Catálogos › Objetos contables: definición de objetos y transacciones (plantillas de partida)",
-      "Catálogos › Replicación: empresa y parámetros, nomenclatura y centros de costo",
-      "Registros: partidas contables y presupuesto",
-      "Procesos: cierre de mes" ] },
-    { "tipo": "concepto", "titulo": "Cómo se arma la contabilidad", "subtitulo": "Los demás módulos contabilizan con las mismas cuentas y transacciones", "pasos": [
-      "Se define el catálogo de cuentas de la empresa (organización › localidad › versión).",
-      "Se crean los centros de costo y los tipos de partida.",
-      "Las transacciones (plantillas) dicen qué cuentas van al debe y al haber de cada operación.",
-      "Bancos, Compras y Cajas generan sus pólizas con esas transacciones; las demás se registran a mano.",
-      "Las partidas se aprueban, se hacen definitivas y el mes se cierra.",
-      "El presupuesto compara lo presupuestado con lo ejecutado por rubro." ] },
-    { "tipo": "pantalla", "titulo": "Parámetros de la empresa", "subtitulo": "Catálogos › Parámetros", "puntos": [
-      "Parámetros generales: todo en una sola vista, por organización y localidad, y se guarda con «Guardar cambios».",
-      "Tiempo, impuestos e IDP, uso de pantallas, datos generales y porcentajes de nómina.",
-      "Cuentas de estados financieros, retenciones, personas que firman y otros datos del sistema anterior.",
-      "Tipos de cambio: las monedas y su tasa de compra y venta por fecha («Tasa cambio actual»)." ] },
-    { "tipo": "pantalla", "titulo": "Catálogo de cuentas", "subtitulo": "Catálogos › Cuentas y CC › Cuentas contables", "puntos": [
-      "Se elige la organización, la localidad y la versión del catálogo.",
-      "Árbol de tres bloques: cuenta principal, subcuentas y sus niveles, con una ficha única por cuenta.",
-      "Solo las cuentas de último nivel (de movimiento) reciben partidas.",
-      "Tipos de cuentas: naturaleza debe-haber o haber-debe y su efecto en el resultado.",
-      "Centros de costo: la misma estructura por niveles; «Imprimir» saca el catálogo." ] },
-    { "tipo": "pantalla", "titulo": "Objetos contables y transacciones", "subtitulo": "Catálogos › Objetos contables", "puntos": [
-      "Definición de objetos: cada objeto con sus cuentas y sus transacciones (con la cuenta bancaria).",
-      "Transacciones: plantillas de partida con su estado, si aplica póliza y el tipo de operación.",
-      "Cada línea de la plantilla: cuenta, debe o haber, orden, operación y centro de costo.",
-      "«Nueva transacción», «Agregar cuenta» y «Agregar línea» para armarlas; «Imprimir plantillas».",
-      "Las usan los depósitos, notas, cheques y compras con el botón «Contabilizar»." ] },
-    { "tipo": "pasos", "titulo": "Registrar una partida contable", "subtitulo": "Registros › Partidas › Partidas contables", "pasos": [
-      "Elige la empresa, el año, el mes, el tipo y el estado; revisa que el mes esté abierto.",
-      "Presiona «Nueva»: escribe el tipo de partida, la descripción, la clasificación y la moneda.",
-      "En el detalle presiona «Agregar línea»: cuenta de movimiento, concepto, debe o haber y centro de costo.",
-      "«Transacciones» carga las cuentas de una plantilla; verifica que el debe y el haber cuadren.",
-      "Presiona «Registrar partida»; agrega la justificación en la pestaña Soporte.",
-      "Apruébala y hazla definitiva; «Anular» pide el motivo e «Imprimir» saca la póliza." ] },
-    { "tipo": "pasos", "titulo": "Elaborar un presupuesto", "subtitulo": "Registros › Presupuestos › Presupuesto", "pasos": [
-      "Elige la organización, la localidad, el año, el tipo y el estado.",
-      "Presiona «Nuevo presupuesto»: tipo, frecuencia, período con sus fechas y descripción.",
-      "«Agregar todos» trae los rubros de presupuesto; escribe lo presupuestado de cada uno.",
-      "El sistema muestra lo ejecutado del período, la variación y el porcentaje de ejecución.",
-      "«Imprimir» saca el presupuesto por grupo con sus totales." ] },
-    { "tipo": "pasos", "titulo": "Cerrar el mes", "subtitulo": "Procesos › Cierres › Cierre de mes", "pasos": [
-      "Elige la empresa y el año: aparecen los 12 meses con sus partidas vigentes, por aprobar, descuadradas y anuladas.",
-      "Aprueba y cuadra todas las partidas vigentes del mes antes de cerrarlo.",
-      "Presiona «Cerrar mes»: sus partidas ya no se registran ni modifican.",
-      "Solo el Super Administrador puede «Reabrir» un mes, con su motivo." ] },
-    { "tipo": "pantalla", "titulo": "Replicación entre empresas", "subtitulo": "Catálogos › Replicación", "puntos": [
-      "Empresa y parámetros: copia los parámetros generales de una empresa origen a una destino.",
-      "Nomenclatura: replica el catálogo de cuentas contables en otra organización o localidad.",
-      "Centros de costos: replica su estructura.",
-      "Antes de aplicar muestra el resumen y la comparación de parámetros; «Aplicar» guarda un respaldo del destino y «Desaplicar» lo devuelve." ] },
-    { "tipo": "consejos", "titulo": "Buenas prácticas y validaciones", "puntos": [
-      "Solo se contabiliza en cuentas de movimiento (último nivel) del catálogo vigente.",
-      "Una partida descuadrada no se aprueba; una definitiva ya no cambia.",
-      "Con el mes cerrado nada se registra ni modifica en él: ciérralo después de conciliar bancos.",
-      "Mantén las transacciones al día: de ellas dependen las pólizas automáticas de los demás módulos.",
-      "Antes de replicar, revisa la comparación de parámetros de la empresa destino." ] },
-    { "tipo": "cierre", "titulo": "¡Listo para contabilizar!", "subtitulo": "Consulta este manual en Contabilidad › Ayuda › Manual del módulo" }
+    {
+      "tipo": "portada",
+      "titulo": "Módulo de Contabilidad y presupuesto",
+      "subtitulo": "La contabilidad de cada empresa: catálogo, pólizas, presupuesto y cierres",
+      "nota": "CONSISAV Financiero · manual de operación"
+    },
+    {
+      "tipo": "indice",
+      "titulo": "Contenido",
+      "puntos": [
+        "Catálogos › Parámetros: parámetros generales y tipos de cambio de cada localidad",
+        "Catálogos › Cuentas y CC: tipos de cuenta, cuentas contables, centros de costo, tipos de partida y rubros",
+        "Catálogos › Cierre contable: ejercicios, cuentas de integración y de cierre, libros autorizados SAT",
+        "Catálogos › Objetos contables y Replicación",
+        "Registros: partidas contables, presupuesto, partidas recurrentes, provisiones y diferidos, intercompañía",
+        "Procesos: cierre mensual (revisión, mayorización, automáticas, diferencial, reversiones, cierre de mes), cierre anual e integraciones contables",
+        "Reportes: libros, estados financieros, comparativos, patrimonio, centros de costo, integraciones y bitácora"
+      ]
+    },
+    {
+      "tipo": "concepto",
+      "titulo": "Cómo se arma la contabilidad",
+      "subtitulo": "Los demás módulos contabilizan con las mismas cuentas y transacciones",
+      "pasos": [
+        "Se define el catálogo de cuentas de la empresa (organización › localidad › versión).",
+        "Se crean los centros de costo y los tipos de partida.",
+        "Las transacciones (plantillas) dicen qué cuentas van al debe y al haber de cada operación.",
+        "Bancos, Compras y Cajas generan sus pólizas con esas transacciones; las demás se registran a mano.",
+        "Las partidas se aprueban, se hacen definitivas y el mes se cierra.",
+        "El presupuesto compara lo presupuestado con lo ejecutado por rubro."
+      ]
+    },
+    {
+      "tipo": "pantalla",
+      "titulo": "Parámetros de la empresa",
+      "subtitulo": "Catálogos › Parámetros",
+      "puntos": [
+        "Parámetros generales: todo en una sola vista, por organización y localidad, y se guarda con «Guardar cambios».",
+        "Tiempo, impuestos e IDP, uso de pantallas, datos generales y porcentajes de nómina.",
+        "Cuentas de estados financieros, retenciones, personas que firman y otros datos del sistema anterior.",
+        "Tipos de cambio: las monedas y su tasa de compra y venta por fecha («Tasa cambio actual»)."
+      ]
+    },
+    {
+      "tipo": "pantalla",
+      "titulo": "Catálogo de cuentas",
+      "subtitulo": "Catálogos › Cuentas y CC › Cuentas contables",
+      "puntos": [
+        "Se elige la organización, la localidad y la versión del catálogo.",
+        "Árbol de tres bloques: cuenta principal, subcuentas y sus niveles, con una ficha única por cuenta.",
+        "Solo las cuentas de último nivel (de movimiento) reciben partidas.",
+        "Tipos de cuentas: naturaleza debe-haber o haber-debe y su efecto en el resultado.",
+        "Centros de costo: la misma estructura por niveles; «Imprimir» saca el catálogo."
+      ]
+    },
+    {
+      "tipo": "pantalla",
+      "titulo": "Objetos contables y transacciones",
+      "subtitulo": "Catálogos › Objetos contables",
+      "puntos": [
+        "Definición de objetos: cada objeto con sus cuentas y sus transacciones (con la cuenta bancaria).",
+        "Transacciones: plantillas de partida con su estado, si aplica póliza y el tipo de operación.",
+        "Cada línea de la plantilla: cuenta, debe o haber, orden, operación y centro de costo.",
+        "«Nueva transacción», «Agregar cuenta» y «Agregar línea» para armarlas; «Imprimir plantillas».",
+        "Las usan los depósitos, notas, cheques y compras con el botón «Contabilizar»."
+      ]
+    },
+    {
+      "tipo": "pasos",
+      "titulo": "Registrar una partida contable",
+      "subtitulo": "Registros › Partidas › Partidas contables",
+      "pasos": [
+        "Elige la empresa, el año, el mes, el tipo y el estado; revisa que el mes esté abierto.",
+        "Presiona «Nueva»: escribe el tipo de partida, la descripción, la clasificación y la moneda.",
+        "En el detalle presiona «Agregar línea»: cuenta de movimiento, concepto, debe o haber y centro de costo.",
+        "«Transacciones» carga las cuentas de una plantilla; verifica que el debe y el haber cuadren.",
+        "Presiona «Registrar partida»; agrega la justificación en la pestaña Soporte.",
+        "Apruébala y hazla definitiva; «Anular» pide el motivo e «Imprimir» saca la póliza."
+      ]
+    },
+    {
+      "tipo": "pasos",
+      "titulo": "Elaborar un presupuesto",
+      "subtitulo": "Registros › Presupuestos › Presupuesto",
+      "pasos": [
+        "Elige la organización, la localidad, el año, el tipo y el estado.",
+        "Presiona «Nuevo presupuesto»: tipo, frecuencia, período con sus fechas y descripción.",
+        "«Agregar todos» trae los rubros de presupuesto; escribe lo presupuestado de cada uno.",
+        "El sistema muestra lo ejecutado del período, la variación y el porcentaje de ejecución.",
+        "«Imprimir» saca el presupuesto por grupo con sus totales."
+      ]
+    },
+    {
+      "tipo": "pasos",
+      "titulo": "Cerrar el mes",
+      "subtitulo": "Procesos › Cierres › Cierre de mes",
+      "pasos": [
+        "Elige la empresa y el año: aparecen los 12 meses con sus partidas vigentes, por aprobar, descuadradas y anuladas.",
+        "Aprueba y cuadra todas las partidas vigentes del mes antes de cerrarlo.",
+        "Presiona «Cerrar mes»: sus partidas ya no se registran ni modifican.",
+        "Solo el Super Administrador puede «Reabrir» un mes, con su motivo."
+      ]
+    },
+    {
+      "tipo": "pantalla",
+      "titulo": "Replicación entre empresas",
+      "subtitulo": "Catálogos › Replicación",
+      "puntos": [
+        "Empresa y parámetros: copia los parámetros generales de una empresa origen a una destino.",
+        "Nomenclatura: replica el catálogo de cuentas contables en otra organización o localidad.",
+        "Centros de costos: replica su estructura.",
+        "Antes de aplicar muestra el resumen y la comparación de parámetros; «Aplicar» guarda un respaldo del destino y «Desaplicar» lo devuelve."
+      ]
+    },
+    {
+      "tipo": "consejos",
+      "titulo": "Buenas prácticas y validaciones",
+      "puntos": [
+        "Solo se contabiliza en cuentas de movimiento (último nivel) del catálogo vigente.",
+        "Una partida descuadrada no se aprueba; una definitiva ya no cambia.",
+        "Con el mes cerrado nada se registra ni modifica en él: ciérralo después de conciliar bancos.",
+        "Mantén las transacciones al día: de ellas dependen las pólizas automáticas de los demás módulos.",
+        "Antes de replicar, revisa la comparación de parámetros de la empresa destino."
+      ]
+    },
+    {
+      "tipo": "cierre",
+      "titulo": "¡Listo para contabilizar!",
+      "subtitulo": "Consulta este manual en Contabilidad › Ayuda › Manual del módulo"
+    }
   ]
 }
