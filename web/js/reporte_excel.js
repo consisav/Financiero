@@ -115,6 +115,8 @@
       if (f.tipo === 'nota') r.font = { italic: true, size: 9.5, color: { argb: 'FF555555' } };
       if (f.resaltar) { r.font = { ...(r.font || {}), bold: true }; r.eachCell({ includeEmpty: true }, (x) => { x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: f.resaltar === 2 ? 'FFD6E2F3' : 'FFEAF0F7' } }; }); }
       if (f.tenue) r.font = { ...(r.font || {}), color: { argb: 'FF8A94A6' } };
+      // combinar: el texto de la primera celda ocupa todo el ancho del renglón (títulos de grupo y notas largas).
+      if (f.combinar) { ws.mergeCells(fila, 1, fila, n); r.getCell(1).alignment = { vertical: 'middle', wrapText: f.tipo === 'nota' }; if (f.tipo === 'nota') r.height = 26; }
       fila += 1;
     }
     if (cfg.autofiltro) ws.autoFilter = { from: { row: 7, column: 1 }, to: { row: 7, column: cfg.columnas.length } };

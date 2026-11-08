@@ -261,7 +261,8 @@ window.MODULOS = [
           pantallas: [
             { id: 'cxc-mensual', nombre: 'Consolidado CXC mensual', icono: 'ti-calendar-month', descripcion: 'Cuentas por cobrar de un mes de todas las ventas: cliente, tipo de fecha, saldo, tipo de cliente y días de mora.' },
             { id: 'cxc-general', nombre: 'Consolidado general', icono: 'ti-report-money', descripcion: 'Cuentas por cobrar de todas las ventas en un rango de fechas, con su valor y saldo en quetzales.' },
-            { id: 'cxc-periodo', nombre: 'CXC por periodo', icono: 'ti-calendar-dollar', descripcion: 'Saldo de las ventas a una fecha, con resumen por cliente y estado de cuenta.' }
+            { id: 'cxc-periodo', nombre: 'CXC por periodo', icono: 'ti-calendar-dollar', descripcion: 'Saldo de las ventas a una fecha, con resumen por cliente y estado de cuenta.' },
+            { id: 'cxc-estado', nombre: 'Estado de cuenta clientes', icono: 'ti-file-invoice', descripcion: 'Estado de cuenta de uno o todos los clientes en un rango de fechas: saldo anterior, facturas, notas, retenciones, cobros, saldo final y antigüedad, en PDF o Excel.' }
           ]
         }
       ],
@@ -363,7 +364,8 @@ window.MODULOS = [
           pantallas: [
             { id: 'cxp-mensual', nombre: 'Consolidado CXP mensual', icono: 'ti-calendar-month', descripcion: 'Cuentas por pagar de un mes: proveedor, tipo de fecha, saldo, tipo de proveedor y días de mora.' },
             { id: 'cxp-general', nombre: 'Consolidado general', icono: 'ti-report-money', descripcion: 'Cuentas por pagar en un rango de fechas, con su valor y saldo en quetzales.' },
-            { id: 'cxp-periodo', nombre: 'CXP por periodo', icono: 'ti-calendar-dollar', descripcion: 'Saldo de las compras a una fecha, con resumen por proveedor y estado de cuenta.' }
+            { id: 'cxp-periodo', nombre: 'CXP por periodo', icono: 'ti-calendar-dollar', descripcion: 'Saldo de las compras a una fecha, con resumen por proveedor y estado de cuenta.' },
+            { id: 'cxp-estado', nombre: 'Estado de cuenta proveedores', icono: 'ti-file-invoice', descripcion: 'Estado de cuenta de uno o todos los proveedores en un rango de fechas: saldo anterior, compras, pagos, saldo final y antigüedad, en PDF o Excel.' }
           ]
         }
       ],

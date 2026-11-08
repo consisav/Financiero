@@ -11,7 +11,8 @@
   const TITULOS = { MENSUAL: ['Consolidado CXC mensual', 'ti-calendar-month'], GENERAL: ['Consolidado general', 'ti-report-money'], PERIODO: ['CXC por periodo', 'ti-calendar-dollar'] };
   const empresaTxt = (ctx) => { const e = ctx.localidad(ctx.sel.loc); return e ? `${e.codigo} · ${e.nombre_comercial}` : ''; };
   const diasEntre = (a, b) => Math.round((new Date(`${b}T12:00:00`) - new Date(`${a}T12:00:00`)) / 86400000);
-  const diaLocal = (v) => v ? new Date(v).toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }) : '';
+  // Las columnas «date» (p. ej. la fecha del cobro) se usan tal cual; las de fecha y hora, en la hora de Guatemala.
+  const diaLocal = (v) => (!v ? '' : /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? String(v) : new Date(v).toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }));
   const sumar = (d, n) => { const x = new Date(`${d}T12:00:00`); x.setDate(x.getDate() + Number(n || 0)); return x.toLocaleDateString('en-CA'); };
   const docTxt = (x) => x.no_interno || (x.serie ? `${x.serie}-${x.numero_dte || ''}` : `Interna ${x.numero}`);
   const CAMPOS = 'id, numero, no_interno, serie, numero_dte, fecha_emision, fecha_cobro, dias_credito, cliente_id, cliente_codigo, nombre, nit, moneda_id, tipo_cambio, total, notas_debito, notas_credito, monto_retencion_iva, monto_retencion_isr, pagado, saldo, contrasena, estado';

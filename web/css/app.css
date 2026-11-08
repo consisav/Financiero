@@ -5245,3 +5245,40 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cx-rep .cx-tabla td { padding: 2px 6px; line-height: 1.3; }
 .cx-rep .cx-tabla tfoot td { padding: 4px 8px; z-index: 2; }
 .cx-rep .cx-vacio-sug { padding: 4px 10px; }
+
+/* Estado de cuenta de clientes y proveedores */
+.cx-estado .cl-banda { display: flex; align-items: center; justify-content: center; position: relative; }
+.cx-estado .ec-acc { position: absolute; right: 6px; }
+.cx-estado .ec-acc .boton { height: 22px; padding: 1px 10px; font-size: 11.5px; }
+.ec-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.ec-kpi { border: 1px solid var(--borde); border-radius: 8px; padding: 4px 10px; background: var(--superficie, #fff); min-width: 0; }
+.ec-kpi small { display: block; font-size: 10.5px; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ec-kpi b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ec-kpi.ec-fin b { color: var(--acento); }
+.ec-kpi.ec-alerta { border-color: color-mix(in srgb, #d92d20 45%, var(--borde)); background: color-mix(in srgb, #d92d20 6%, transparent); }
+.ec-kpi.ec-alerta b { color: #b42318; }
+.ec-kpi.ec-quien b { font-size: 13px; }
+.ec-ant-bar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--borde); border-radius: 8px; overflow: hidden; }
+.ec-ant-bar > div { position: relative; padding: 3px 10px 5px; border-right: 1px solid var(--borde); }
+.ec-ant-bar > div:last-child { border-right: 0; }
+.ec-ant-bar small { display: block; font-size: 10.5px; color: var(--texto-suave); text-transform: uppercase; }
+.ec-ant-bar b { font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.ec-ant-bar i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--acento); }
+.ec-ant-bar .ec-venc b { color: #b42318; }
+.ec-ant-bar .ec-venc i { background: #d92d20; }
+.ec-ficha { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 12.5px; padding: 2px 4px; }
+.ec-ficha b { color: var(--texto-suave); font-weight: 600; margin-right: 4px; }
+.ec-ficha em { font-style: normal; }
+.ec-res .ec-chev { width: 22px; text-align: center; color: var(--texto-suave); }
+.ec-res tr.ec-fila.abierto td { background: color-mix(in srgb, var(--acento) 9%, transparent); font-weight: 600; }
+.ec-res tr.ec-detalle > td { padding: 4px 6px 10px !important; background: color-mix(in srgb, var(--acento) 3%, transparent); white-space: normal; }
+.ec-movs { width: 100%; }
+.ec-res .ec-movs thead th { position: static; }
+.ec-movs tr.ec-ant td { font-style: italic; color: var(--texto-suave); }
+.ec-movs .ec-det { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.ec-movs .ec-sin { text-align: center; color: var(--texto-suave); }
+.ec-movs tfoot td { position: static !important; }
+.ec-tabla .ec-movs + .ec-ant-bar { margin-top: 6px; }
+.ec-tipo { display: inline-block; padding: 0 7px; border-radius: 9px; font-size: 11px; font-weight: 600; background: color-mix(in srgb, var(--acento) 12%, transparent); }
+.ec-tipo.ec-a { background: color-mix(in srgb, #12b76a 14%, transparent); color: #067647; }
+@media (max-width: 1100px) { .ec-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
