@@ -5513,3 +5513,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .mc-masivo select { height: 30px; }
 .kx-imp { display: inline-flex; gap: 6px; align-items: center; }
 .kx-imp select { height: 30px; }
+
+/* Mensajes vacíos y diagnóstico: en varios renglones */
+.kx-form td.tk-vacio, .iv-tabla td.tk-vacio, .cx-tabla td.tk-vacio { white-space: normal !important; text-align: left; }
+.kx-form td.tk-vacio small, .iv-tabla td.tk-vacio small { display: block; font-size: 12.5px; line-height: 1.45; color: var(--texto); word-break: break-word; }

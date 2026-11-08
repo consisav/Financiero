@@ -16,8 +16,8 @@
     // Otras tablas con la misma regla de lectura (para saber si el bloqueo es solo de los movimientos).
     const otra = (t) => cuenta(sb.from(t).select('*', { count: 'exact', head: true }));
     const [act, prods, tipos, docs, exis] = await Promise.all([sb.rpc('usuario_activo').then((r) => (r.error ? `error: ${r.error.message}` : String(r.data))), otra('productos'), otra('tipos_movimiento_inventario'), otra('documentos_inventario'), otra('existencias')]);
-    const dg = await sb.rpc('diagnostico_inventario'); const diag = dg.error ? ` · diagnóstico no instalado (${dg.error.message})` : ` · sesión: ${JSON.stringify(dg.data)}`;
-    return `Lectura de la base de datos: ${total} movimiento(s) visibles en total · ${empresa} de esta empresa · ${migr} migrados${productoId ? ` · ${prod} de este producto (todas las bodegas)` : ''}. Usuario activo: ${act} · productos ${prods} · tipos de movimiento ${tipos} · documentos de inventario ${docs} · existencias ${exis}${diag}.`;
+    const dg = await sb.rpc('diagnostico_inventario'); const d0 = dg.data || {}; const diag = dg.error ? ` · diagnóstico no instalado (${dg.error.message})` : ` · SESIÓN: rol ${d0.rol} · VE ${d0.movimientos_que_ve} DE ${d0.movimientos_total} MOVIMIENTOS EN LA BASE · documentos ${d0.documentos_que_ve} · tabla ${d0.tablas} · reglas ${d0.reglas}`;
+    return `${diag.replace(/^ · /, "")} — Lectura: ${total} movimiento(s) visibles en total · ${empresa} de esta empresa · ${migr} migrados${productoId ? ` · ${prod} de este producto (todas las bodegas)` : ''}. Usuario activo: ${act} · productos ${prods} · tipos de movimiento ${tipos} · documentos de inventario ${docs} · existencias ${exis}${diag}.`;
   }
 
   const cant = (n) => Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
