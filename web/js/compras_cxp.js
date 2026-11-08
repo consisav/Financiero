@@ -301,7 +301,7 @@
   // modo: MENSUAL (mes y año), GENERAL (rango de fechas) o PERIODO (saldo a una fecha).
   function reporteCxp(cont, modo) {
     const TITULOS = { MENSUAL: ['Consolidado CXP mensual', 'ti-calendar-month'], GENERAL: ['Consolidado general', 'ti-report-money'], PERIODO: ['CXP por periodo', 'ti-calendar-dollar'] };
-    const ctx = montar(cont, { titulo: TITULOS[modo][0], icono: TITULOS[modo][1], clase: `bk-movimientos cx-rep cx-${modo.toLowerCase()}`, grupo: 'Compras · Procesos' });
+    const ctx = montar(cont, { titulo: TITULOS[modo][0], icono: TITULOS[modo][1], clase: `bk-movimientos bm-solo cx-rep cx-${modo.toLowerCase()}`, grupo: 'Compras · Procesos' });
     const { sb } = ctx;
     const hoy = fmt.hoy();
     const [y, m] = hoy.split('-').map(Number);
@@ -325,10 +325,10 @@
         ${modo !== 'PERIODO' ? `<label class="campo"><span>Tipo fecha</span>${sl('fecha', [['ESTIMADA', 'ESTIMADA PAGO'], ['DOCUMENTO', 'DOCUMENTO'], ['INGRESO', 'INGRESO']], f.fecha)}</label>` : ''}
         <label class="campo"><span>Saldo?</span>${sl('saldo', [['CON SALDO', 'CON SALDO'], ['SIN SALDO', 'SIN SALDO'], ['TODAS', 'TODAS']], f.saldo)}</label>
         <label class="campo"><span>Tipo proveedor</span>${sl('tipo', [['', 'TODOS'], ...tipos.map((t) => [t.id, t.nombre])], f.tipo)}</label>
-        <label class="campo cx-formato"><span>Formato</span>${sl('formato', [['PDF', 'PDF'], ['EXCEL', 'EXCEL']], f.formato)}</label>
+        <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
         <datalist id="cx-proveedores">${proveedores.map((x) => `<option value="${esc(`${x.codigo} · ${x.nombre_comercial}`)}"></option>`).join('')}</datalist>
         ${p || !f.proveedor ? '' : '<small class="cx-aviso pc-rojo">Proveedor no encontrado</small>'}`,
-        `<button type="button" class="boton primario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
+        `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato === 'PDF' ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
          ${modo === 'PERIODO' ? `<button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>` : ''}
          <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del proveedor elegido (o de la fila seleccionada)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
@@ -436,12 +436,12 @@
       const fechaCol = modo === 'MENSUAL' ? 'Se estima pago' : 'Fecha pago';
       const cuerpo = resumen ? (() => { const g = agrupar(filas); return `
           <thead><tr><th class="num">Prov.</th><th>Nombre proveedor</th><th>NIT</th><th class="num">Documentos</th><th class="num">Mayor mora</th><th class="num">Valor total Q</th><th class="num">Saldo Q</th></tr></thead>
-          <tbody>${g.map((x) => `<tr><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre">${esc(x.nombre)}</td><td>${esc(x.nit || '')}</td><td class="num">${x.docs}</td><td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td class="num">${fmt.monto(x.valorQ)}</td><td class="num fuerte">${fmt.monto(x.saldoQ)}</td></tr>`).join('') || '<tr><td colspan="7" class="tk-vacio">Sin documentos con esos filtros.</td></tr>'}</tbody>
+          <tbody>${g.map((x) => `<tr><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre"><div>${esc(x.nombre)}</div></td><td>${esc(x.nit || '')}</td><td class="num">${x.docs}</td><td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td class="num">${fmt.monto(x.valorQ)}</td><td class="num fuerte">${fmt.monto(x.saldoQ)}</td></tr>`).join('') || '<tr><td colspan="7" class="tk-vacio">Sin documentos con esos filtros.</td></tr>'}</tbody>
           <tfoot><tr><td colspan="3">${g.length} proveedor(es)</td><td class="num">${filas.length}</td><td></td><td class="num">${fmt.monto(tot.v)}</td><td class="num">${fmt.monto(tot.s)}</td></tr></tfoot>`; })() : `
           <thead><tr><th class="num">${modo === 'PERIODO' ? 'Compra' : 'ID'}</th><th>Serie</th><th>Documento</th><th>Fecha docto.</th><th>${fechaCol}</th>${modo !== 'PERIODO' ? '<th class="num">Días mora</th>' : ''}<th class="num">${modo === 'MENSUAL' ? '#' : 'Prov.'}</th><th>Nombre proveedor</th><th class="num">Valor total${modo === 'MENSUAL' ? '' : ' Q'}</th><th class="num">Saldo${modo === 'MENSUAL' ? '' : ' Q'}</th>${modo === 'PERIODO' ? '<th class="num">Valor total MI</th><th class="num">Saldo MI</th>' : ''}</tr></thead>
           <tbody>${filas.map((c) => `<tr data-fila="${c.id}" class="${sel === c.id ? 'actual' : ''}" tabindex="0">
             <td class="num fuerte">${c.numero}</td><td>${esc(c.serie || '')}</td><td>${esc(c.documento || '')}</td><td>${esc(fmt.fechaDia(c.fecha_documento))}</td><td>${esc(fmt.fechaDia(c.fp))}</td>
-            ${modo !== 'PERIODO' ? `<td class="num ${c.mora ? 'pc-rojo' : ''}">${c.mora}</td>` : ''}<td class="num">${c.codigo ?? ''}</td><td class="cx-nombre" title="${esc(c.nombre)}">${esc(c.nombre)}</td>
+            ${modo !== 'PERIODO' ? `<td class="num ${c.mora ? 'pc-rojo' : ''}">${c.mora}</td>` : ''}<td class="num">${c.codigo ?? ''}</td><td class="cx-nombre" title="${esc(c.nombre)}"><div>${esc(c.nombre)}</div></td>
             <td class="num">${fmt.monto(c.valorQ)}</td><td class="num fuerte">${fmt.monto(c.saldoQ)}</td>
             ${modo === 'PERIODO' ? `<td class="num">${c.mi ? fmt.monto(c.neto) : ''}</td><td class="num">${c.mi ? fmt.monto(c.saldo) : fmt.monto(0)}</td>` : ''}</tr>`).join('')
             || `<tr><td colspan="12" class="tk-vacio"><i class="ti ti-report-money" aria-hidden="true"></i>Sin documentos con esos filtros.</td></tr>`}</tbody>
@@ -464,8 +464,19 @@
       return s ? `<div class="cx-vacio-sug"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(s.vacio)} con esos filtros. <button type="button" class="boton secundario-sm" data-accion="sugerencia">Ver ${esc(s.txt)} (${s.n})</button></div>` : '';
     }
     function titulo() { return `${TITULOS[modo][0]} · ${modo === 'MENSUAL' ? `${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `saldo al ${fmt.fechaDia(f.hasta)}`}`; }
+    // Excel: resumido, detallado o por periodo (según el parámetro del encabezado).
+    function excelRep() {
+      const periodo = modo === 'MENSUAL' ? `Mes: ${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `Saldo al ${fmt.fechaDia(f.hasta)}`;
+      return window.CUENTAS_XLSX.generar({
+        tipo: f.formato, modo, titulo: TITULOS[modo][0], tercero: 'Proveedor', orgId: ctx.sel.org, locId: ctx.sel.loc, corte: modo === 'PERIODO' ? f.hasta : hoy,
+        archivo: `cxp_${modo.toLowerCase()}_${modo === 'MENSUAL' ? `${f.anio}_${String(f.mes).padStart(2, '0')}` : f.hasta}`,
+        parametros: [`Empresa: ${empresaTxt(ctx)}`, periodo, `Proveedor: ${provDe(f.proveedor)?.nombre_comercial || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo proveedor: ${tipos.find((t) => String(t.id) === String(f.tipo))?.nombre || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha}`] : [])],
+        filas: filas.map((c) => ({ tercero_id: c.proveedor_id, codigo: c.codigo, nombre: c.nombre, nit: c.nit, numero: c.numero, serie: c.serie, documento: c.documento, fecha: modo === 'PERIODO' ? c.fecha_documento : fechaDe(c), fecha_doc: c.fecha_documento, estimada: c.fp, mora: c.mora, valor: c.valorQ, saldo: c.saldoQ }))
+      }).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
+    }
     function imprimirRep() {
       if (!filas.length) return window.FIN.aviso('No hay documentos con esos filtros');
+      if (f.formato !== 'PDF') return excelRep();
       const filtros = `Proveedor: ${provDe(f.proveedor)?.nombre_comercial || 'TODOS'} · Saldo: ${f.saldo} · Tipo proveedor: ${tipos.find((t) => String(t.id) === String(f.tipo))?.nombre || 'TODOS'}${modo !== 'PERIODO' ? ` · Tipo fecha: ${f.fecha}` : ''}`;
       if (resumen) {
         const g = agrupar(filas);

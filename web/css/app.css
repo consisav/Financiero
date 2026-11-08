@@ -5194,3 +5194,28 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cxc-kpis .rm-kpi b { font-size: 15px; }
 .rm-kpi.cxc-alerta { background: var(--ambar-f); }
 .rm-kpi.cxc-alerta b, .rm-kpi.cxc-alerta span { color: var(--ambar-t); }
+
+/* ---------- Cuentas x Pagar / x Cobrar: vista compacta ---------- */
+.cx-rep .bk-filtros { padding: 10px 14px !important; gap: 6px 10px !important; align-items: end; }
+.cx-rep .bk-filtros .campo span { font-size: 11.5px; }
+.cx-rep .bk-filtros .campo :is(input, select) { height: 32px; padding: 4px 10px; font-size: 13px; }
+.cx-rep .bk-filtros .oc-extra .boton { height: 32px; padding: 4px 12px; }
+.cx-rep .bk-filtros .cx-formato select { min-width: 190px; }
+.cx-rep .cl-banda { padding: 5px 12px; font-size: 14.5px; }
+.cx-meses { flex-wrap: nowrap; overflow-x: auto; gap: 3px; justify-content: flex-start; padding-bottom: 2px; }
+.cx-meses .boton { height: 28px; padding: 2px 10px; flex: none; }
+.cx-anio-n { min-width: 56px; padding: 3px 6px; }
+.cx-mes { flex: 1 1 0; min-width: 58px; padding: 4px 2px; font-size: 11px; }
+.cx-tabla .cx-nombre { max-width: 260px; }
+.cx-tabla th { padding: 5px 6px; letter-spacing: .02em; }
+.cx-tabla td { padding: 3px 6px; font-size: 12.5px; white-space: nowrap; }
+.cx-tabla tfoot td { padding: 5px 8px; }
+.cx-vacio-sug { padding: 5px 12px; font-size: 12.5px; }
+.cx-vacio-sug .boton { height: 26px; padding: 2px 10px; }
+.cx-rep.bk-movimientos .bk-maestro { display: none !important; }
+.cx-rep .ta-cuerpo { grid-template-rows: minmax(0, 1fr) !important; }
+.cx-tabla .cx-nombre > div { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-tabla th { white-space: normal; line-height: 1.15; vertical-align: bottom; max-width: 92px; }
+.cx-tabla th:has(+ th), .cx-tabla th { overflow-wrap: normal; }
+.cx-periodo .cx-tabla .cx-nombre > div { max-width: 190px; }
+.cx-periodo .cx-tabla td { font-size: 12px; }

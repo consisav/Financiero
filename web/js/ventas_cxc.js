@@ -28,7 +28,7 @@
   }
 
   function reporteCxc(cont, modo) {
-    const ctx = montar(cont, { titulo: TITULOS[modo][0], icono: TITULOS[modo][1], clase: `bk-movimientos cx-rep cx-${modo.toLowerCase()}`, grupo: 'Ventas · Procesos' });
+    const ctx = montar(cont, { titulo: TITULOS[modo][0], icono: TITULOS[modo][1], clase: `bk-movimientos bm-solo cx-rep cx-${modo.toLowerCase()}`, grupo: 'Ventas · Procesos' });
     const { sb } = ctx;
     const hoy = fmt.hoy();
     const [y, m] = hoy.split('-').map(Number);
@@ -50,11 +50,11 @@
         ${modo !== 'PERIODO' ? `<label class="campo"><span>Tipo fecha</span>${sl('fecha', [['ESTIMADA', 'ESTIMADA COBRO'], ['EMISION', 'EMISIÓN']], f.fecha)}</label>` : ''}
         <label class="campo"><span>Saldo?</span>${sl('saldo', [['CON SALDO', 'CON SALDO'], ['SIN SALDO', 'SIN SALDO'], ['TODAS', 'TODAS']], f.saldo)}</label>
         <label class="campo"><span>Tipo cliente</span>${sl('tipo', [['', 'TODOS'], ...tipos.map((t) => [t, t])], f.tipo)}</label>
-        <label class="campo cx-formato"><span>Formato</span>${sl('formato', [['PDF', 'PDF'], ['EXCEL', 'EXCEL']], f.formato)}</label>
+        <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
         <datalist id="cx-clientes">${clientes.map((x) => `<option value="${esc(x.nombre)} — ${x.codigo}"></option>`).join('')}</datalist>
         ${c || !f.cliente ? '' : '<small class="cx-aviso pc-rojo">Cliente no encontrado</small>'}`,
-        `<button type="button" class="boton primario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>
-         <button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>
+        `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato === 'PDF' ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
+         ${modo === 'PERIODO' ? `<button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>` : ''}
          <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del cliente elegido (o de la fila seleccionada)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
     }
@@ -170,36 +170,40 @@
       const meses = modo === 'MENSUAL' ? `<div class="cx-meses">
           <button type="button" class="boton secundario-sm" data-anio="-1" aria-label="Año anterior">−</button><b class="cx-anio-n">${f.anio}</b><button type="button" class="boton secundario-sm" data-anio="1" aria-label="Año siguiente">+</button>
           ${MESES.map((n, i) => `<button type="button" class="cx-mes ${f.mes === i + 1 ? 'activo' : ''}" data-mes="${i + 1}">${n}</button>`).join('')}</div>` : '';
-      const kpis = `<div class="rm-kpis cxc-kpis">
-          <div class="rm-kpi"><span>Facturas</span><b>${filas.length}</b></div>
-          <div class="rm-kpi"><span>Valor total</span><b>Q ${fmt.monto(tot.v)}</b></div>
-          <div class="rm-kpi"><span>Saldo por cobrar</span><b>Q ${fmt.monto(tot.s)}</b></div>
-          <div class="rm-kpi ${tot.m > 0 ? 'cxc-alerta' : ''}"><span>Saldo vencido</span><b>Q ${fmt.monto(tot.m)}</b></div>
-        </div>`;
       const cuerpo = resumen ? (() => { const g = agrupar(filas); return `
           <thead><tr><th class="num">Cliente</th><th>Nombre cliente</th><th>NIT</th><th class="num">Facturas</th><th class="num">Mayor mora</th><th class="num">Valor total Q</th><th class="num">Saldo Q</th></tr></thead>
-          <tbody>${g.map((x) => `<tr data-cliente="${x.id || ''}"><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre">${esc(x.nombre)}</td><td>${esc(x.nit || '')}</td><td class="num">${x.docs}</td><td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td class="num">${fmt.monto(x.valor)}</td><td class="num fuerte">${fmt.monto(x.saldo)}</td></tr>`).join('') || '<tr><td colspan="7" class="tk-vacio">Sin facturas con esos filtros.</td></tr>'}</tbody>
+          <tbody>${g.map((x) => `<tr data-cliente="${x.id || ''}"><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre"><div>${esc(x.nombre)}</div></td><td>${esc(x.nit || '')}</td><td class="num">${x.docs}</td><td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td class="num">${fmt.monto(x.valor)}</td><td class="num fuerte">${fmt.monto(x.saldo)}</td></tr>`).join('') || '<tr><td colspan="7" class="tk-vacio">Sin facturas con esos filtros.</td></tr>'}</tbody>
           <tfoot><tr><td colspan="3">${g.length} cliente(s)</td><td class="num">${filas.length}</td><td></td><td class="num">${fmt.monto(tot.v)}</td><td class="num">${fmt.monto(tot.s)}</td></tr></tfoot>`; })() : `
-          <thead><tr><th class="num">Factura</th><th>Serie</th><th>Número DTE</th><th>Emisión</th><th>Se estima cobro</th><th class="num">Días mora</th><th>Contraseña</th><th class="num">Cliente</th><th>Nombre cliente</th><th class="num">Valor total</th><th class="num">Cobrado</th><th class="num">Saldo</th></tr></thead>
+          <thead><tr><th class="num">Factura</th><th>Serie</th><th>Número DTE</th><th>Emisión</th><th>Se estima cobro</th><th class="num">Días mora</th><th class="num">Cliente</th><th>Nombre cliente</th><th class="num">Valor total</th><th class="num">Saldo</th></tr></thead>
           <tbody>${filas.map((x) => `<tr data-fila="${x.id}" class="${sel === x.id ? 'actual' : ''}" tabindex="0">
             <td class="num fuerte"><a href="#/facturacion/facturas-ventas/${x.id}" title="Abrir la factura">${esc(x.no_interno || String(x.numero))}</a></td><td>${esc(x.serie || '')}</td><td>${esc(x.numero_dte || '')}</td><td>${esc(fmt.fechaDia(x.emision))}</td><td>${esc(fmt.fechaDia(x.fc))}</td>
-            <td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td>${esc(x.contrasena || '')}</td><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre" title="${esc(x.nombreCli)}">${esc(x.nombreCli)}</td>
-            <td class="num">${fmt.monto(x.valor)}</td><td class="num">${fmt.monto(Math.max(fmt.redondear(x.valor - x.saldo), 0))}</td><td class="num fuerte">${fmt.monto(x.saldoQ)}</td></tr>`).join('')
-            || '<tr><td colspan="12" class="tk-vacio"><i class="ti ti-report-money" aria-hidden="true"></i>Sin facturas con esos filtros.</td></tr>'}</tbody>
-          <tfoot><tr><td colspan="9">${filas.length} factura(s) · Total</td><td class="num">${fmt.monto(tot.v)}</td><td class="num">${fmt.monto(Math.max(tot.v - tot.s, 0))}</td><td class="num">${fmt.monto(tot.s)}</td></tr></tfoot>`;
+            <td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre" title="${esc(x.nombreCli)}${x.contrasena ? ` · Contraseña ${esc(x.contrasena)}` : ''}"><div>${esc(x.nombreCli)}</div></td>
+            <td class="num">${fmt.monto(x.valor)}</td><td class="num fuerte">${fmt.monto(x.saldoQ)}</td></tr>`).join('')
+            || '<tr><td colspan="10" class="tk-vacio"><i class="ti ti-report-money" aria-hidden="true"></i>Sin facturas con esos filtros.</td></tr>'}</tbody>
+          <tfoot><tr><td colspan="8">${filas.length} factura(s) · Total</td><td class="num">${fmt.monto(tot.v)}</td><td class="num">${fmt.monto(tot.s)}</td></tr></tfoot>`;
       ctx.pDet.innerHTML = `
         <div class="bm-form cx-form cl-clasico">
           <div class="cl-banda">${esc(TITULOS[modo][0])} · todas las ventas${modo === 'PERIODO' ? ` · saldo al ${esc(fmt.fechaDia(f.hasta))}` : modo === 'GENERAL' ? ` · ${esc(fmt.fechaDia(f.desde))} al ${esc(fmt.fechaDia(f.hasta))}` : ` · ${MESES[f.mes - 1]} ${f.anio}`}</div>
           ${meses}
           ${avisoVacio()}
-          ${kpis}
           <div class="pc-lineas cx-tabla"><table>${cuerpo}</table></div>
         </div>`;
     }
 
     function titulo() { return `${TITULOS[modo][0]} · ${modo === 'MENSUAL' ? `${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `saldo al ${fmt.fechaDia(f.hasta)}`}`; }
+    // Excel: resumido, detallado o por periodo (según el parámetro del encabezado).
+    function excelRep() {
+      const periodo = modo === 'MENSUAL' ? `Mes: ${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `Saldo al ${fmt.fechaDia(f.hasta)}`;
+      return window.CUENTAS_XLSX.generar({
+        tipo: f.formato, modo, titulo: TITULOS[modo][0], tercero: 'Cliente', orgId: ctx.sel.org, locId: ctx.sel.loc, corte: modo === 'PERIODO' ? f.hasta : hoy,
+        archivo: `cxc_${modo.toLowerCase()}_${modo === 'MENSUAL' ? `${f.anio}_${String(f.mes).padStart(2, '0')}` : f.hasta}`,
+        parametros: [`Empresa: ${empresaTxt(ctx)}`, periodo, `Cliente: ${cliDe(f.cliente)?.nombre || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo cliente: ${f.tipo || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha === 'ESTIMADA' ? 'ESTIMADA COBRO' : 'EMISIÓN'}`] : [])],
+        filas: filas.map((x) => ({ tercero_id: x.cliente_id, codigo: x.codigo, nombre: x.nombreCli, nit: x.nit, numero: x.no_interno || x.numero, serie: x.serie, documento: x.numero_dte, fecha: modo === 'PERIODO' ? x.emision : fechaDe(x), fecha_doc: x.emision, estimada: x.fc, mora: x.mora, valor: x.valor, saldo: x.saldoQ }))
+      }).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
+    }
     function imprimirRep() {
       if (!filas.length) return window.FIN.aviso('No hay facturas con esos filtros');
+      if (f.formato !== 'PDF') return excelRep();
       const filtros = `Cliente: ${cliDe(f.cliente)?.nombre || 'TODOS'} · Saldo: ${f.saldo} · Tipo cliente: ${f.tipo || 'TODOS'}${modo !== 'PERIODO' ? ` · Tipo fecha: ${f.fecha === 'ESTIMADA' ? 'ESTIMADA COBRO' : 'EMISIÓN'}` : ''}`;
       const csv = (n, filasCsv) => (window.COMPRAS_CAT?.descargarCsv ? window.COMPRAS_CAT.descargarCsv(n, filasCsv) : window.FIN.aviso('No se pudo generar el Excel'));
       if (resumen) {
