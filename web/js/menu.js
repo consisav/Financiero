@@ -708,12 +708,40 @@ window.MODULOS = [
     nombre: 'Importaciones y exportaciones',
     icono: 'ti-world',
     descripcion: 'Pólizas, DUCA, costos de importación y embarques.',
+    subgrupos: {
+      catalogos: [
+        { subgrupo: 'Aduanas', icono: 'ti-building-community', pantallas: [
+          { id: 'com-agentes', nombre: 'Agentes aduanales', icono: 'ti-id', descripcion: 'Agentes aduanales con su licencia, contacto y honorario.' },
+          { id: 'com-aduanas', nombre: 'Aduanas', icono: 'ti-building-community', descripcion: 'Aduanas marítimas, terrestres, aérea, express e internas de Guatemala.' },
+          { id: 'com-incoterms', nombre: 'Incoterms', icono: 'ti-world-share', descripcion: 'Incoterms 2020 con quién paga el flete y el seguro.' }
+        ] },
+        { subgrupo: 'Aranceles y transporte', icono: 'ti-barcode', pantallas: [
+          { id: 'com-partidas', nombre: 'Partidas arancelarias', icono: 'ti-barcode', descripcion: 'Partidas del SAC con su DAI e IVA.' },
+          { id: 'com-transportistas', nombre: 'Navieras y transportistas', icono: 'ti-ship', descripcion: 'Navieras, aerolíneas, transportistas terrestres y couriers.' }
+        ] }
+      ],
+      registros: [
+        { subgrupo: 'Comercio exterior', icono: 'ti-world', pantallas: [
+          { id: 'com-polizas', nombre: 'Pólizas de importación', icono: 'ti-file-import', descripcion: 'DUCA con productos, FOB, flete, seguro, partidas y gastos locales; costeo, liquidación e ingreso a bodega.' },
+          { id: 'com-exportaciones', nombre: 'Exportaciones', icono: 'ti-file-export', descripcion: 'Exportaciones con cliente, destino, Incoterm, productos y valor en quetzales.' },
+          { id: 'com-embarques', nombre: 'Embarques', icono: 'ti-ship', descripcion: 'Seguimiento de embarques con estado, ETA y bitácora de eventos.' }
+        ] }
+      ],
+      procesos: [
+        { subgrupo: 'Importaciones', icono: 'ti-calculator', pantallas: [
+          { id: 'com-liquidacion', nombre: 'Liquidación de pólizas', icono: 'ti-calculator', descripcion: 'Bandeja de pólizas por liquidar: costo CIF, DAI, IVA y gastos prorrateados; ingreso a la bodega.' }
+        ] }
+      ],
+      reportes: [
+        { subgrupo: 'Reportes', icono: 'ti-report', pantallas: [
+          { id: 'com-importaciones-periodo', nombre: 'Importaciones por período', icono: 'ti-calendar-stats', descripcion: 'Pólizas liquidadas por mes con CIF, DAI, IVA, gastos y costo. PDF y Excel.' },
+          { id: 'com-costo-poliza', nombre: 'Costo por póliza', icono: 'ti-receipt', descripcion: 'Costo de cada producto por póliza: FOB, flete y seguro, DAI, gastos, unitario y recargo. PDF y Excel.' },
+          { id: 'com-exportaciones-destino', nombre: 'Exportaciones por destino', icono: 'ti-world', descripcion: 'Exportaciones por país con su participación. PDF y Excel.' },
+          { id: 'com-tributos-aduana', nombre: 'Tributos de aduana', icono: 'ti-receipt-tax', descripcion: 'DAI e IVA de importación por mes y aduana (crédito fiscal). PDF y Excel.' }
+        ] }
+      ]
+    },
     opciones: {
-      catalogos: ['Agentes aduanales', 'Aduanas', 'Incoterms', 'Partidas arancelarias'],
-      registros: ['Pólizas de importación', 'Exportaciones', 'Gastos de importación', 'Embarques'],
-      mantenimientos: ['Tasas de DAI', 'Navieras y transportistas'],
-      procesos: ['Liquidación de póliza', 'Prorrateo de costos', 'Ingreso a inventario'],
-      reportes: ['Importaciones por período', 'Costo por póliza', 'Exportaciones por destino'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   }

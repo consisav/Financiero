@@ -5692,3 +5692,8 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .sat-obl-c p { margin: 0; font-size: 12px; }
 .sat-pres { color: #067647; }
 .sat-rep tr[data-o], .pr-rep tr[data-o] { cursor: pointer; }
+
+/* Importaciones y exportaciones */
+.com-det { border: 1px solid var(--borde); border-radius: 10px; padding: 4px 8px; }
+.com-det summary { cursor: pointer; font-weight: 600; padding: 4px; }
+.com-pol tr[data-l], .com-pol tr[data-g], .pr-rep tr[data-e] { cursor: pointer; }

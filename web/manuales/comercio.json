@@ -1,0 +1,42 @@
+{
+ "version": "2026.11f",
+ "titulo": "Manual del módulo Importaciones y exportaciones",
+ "resumen": "Pólizas DUCA con costeo, liquidación e ingreso a bodega, exportaciones y embarques.",
+ "nombresTablas": {},
+ "diapositivas": [
+  {
+   "tipo": "portada",
+   "titulo": "Módulo de Importaciones y exportaciones",
+   "subtitulo": "Del embarque al costo real de cada producto"
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "Cómo se costea una importación",
+   "subtitulo": "Valor en aduana, tributos y gastos",
+   "pasos": [
+    "FOB: valor de la mercadería en la factura del exterior.",
+    "CIF = FOB + flete + seguro internacionales (según el Incoterm) × tipo de cambio: es el valor en aduana.",
+    "DAI = CIF × porcentaje de la partida arancelaria SAC.",
+    "IVA de importación = (CIF + DAI) × 12 %: es crédito fiscal, no costo.",
+    "Gastos locales (agente aduanal, almacenaje, transporte) sin IVA se prorratean por valor, peso o cantidad.",
+    "Costo = CIF + DAI + gastos; costo unitario = costo ÷ cantidad; entra así a la bodega."
+   ]
+  },
+  {
+   "tipo": "consejos",
+   "titulo": "Buenas prácticas",
+   "puntos": [
+    "Confirma el Incoterm antes de registrar flete y seguro.",
+    "Verifica el DAI vigente de cada partida.",
+    "Registra todos los gastos locales antes de liquidar.",
+    "Usa el tipo de cambio de la DUCA.",
+    "Da seguimiento diario a los embarques con ETA vencida."
+   ]
+  },
+  {
+   "tipo": "cierre",
+   "titulo": "¡Listo para importar y exportar!",
+   "subtitulo": "Consulta este manual en Import. y export. › Ayuda › Manual del módulo"
+  }
+ ]
+}

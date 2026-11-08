@@ -1528,22 +1528,6 @@
  "activos-fijos|Inventario de activos": "listado de activos con valor en libros.",
  "activos-fijos|Depreciación acumulada": "depreciación acumulada por activo y cuenta.",
  "activos-fijos|Activos por ubicación": "activos agrupados por ubicación y responsable.",
- "comercio|Agentes aduanales": "agentes aduanales.",
- "comercio|Aduanas": "aduanas de Guatemala.",
- "comercio|Incoterms": "términos de comercio internacional.",
- "comercio|Partidas arancelarias": "partidas arancelarias con su DAI.",
- "comercio|Pólizas de importación": "póliza (DUCA) con valores y gastos.",
- "comercio|Exportaciones": "exportaciones.",
- "comercio|Gastos de importación": "fletes, seguros y gastos.",
- "comercio|Embarques": "seguimiento de embarques.",
- "comercio|Tasas de DAI": "tasas de derechos arancelarios.",
- "comercio|Navieras y transportistas": "navieras y transportistas.",
- "comercio|Liquidación de póliza": "liquidación de la póliza de importación.",
- "comercio|Prorrateo de costos": "hoy en Inventarios › Análisis costo importación.",
- "comercio|Ingreso a inventario": "ingreso de la importación a la bodega.",
- "comercio|Importaciones por período": "importaciones del período.",
- "comercio|Costo por póliza": "costo total por póliza.",
- "comercio|Exportaciones por destino": "exportaciones por país.",
  "rubros-cuentas": {
   "puntos": [
    "Cada rubro de presupuesto con las cuentas contables de donde sale su ejecución (una cuenta mayor incluye sus subcuentas)."
@@ -2051,6 +2035,135 @@
    "ISO: 1 % sobre la mayor base entre 1/4 del activo neto y 1/4 de los ingresos del año anterior, en cuotas trimestrales.",
    "Retenciones: el ISR y el IVA retenidos a proveedores en el mes. ISR anual (diciembre): 25 % de la utilidad menos los pagos trimestrales y el ISO registrados.",
    "Presenta en Declaraguate y presiona «Registrar presentación» con el número de acceso y el monto: el calendario la marca como presentada."
+  ]
+ },
+ "com-agentes": {
+  "puntos": [
+   "Agentes aduanales autorizados."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Catálogos › Aduanas › Agentes aduanales y elige {empresa}.",
+   "Presiona «Nuevo» y escribe nombre, NIT, licencia, contacto y honorario de referencia."
+  ]
+ },
+ "com-aduanas": {
+  "puntos": [
+   "Aduanas de Guatemala."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Catálogos › Aduanas.",
+   "Revisa las aduanas (Puerto Quetzal, Santo Tomás, Tecún Umán, Pedro de Alvarado, Express Aéreo…) y marca inactivas las que no uses."
+  ]
+ },
+ "com-incoterms": {
+  "puntos": [
+   "Incoterms 2020 y quién paga flete y seguro."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Catálogos › Aduanas › Incoterms.",
+   "Consulta el término de cada compra: en FOB, EXW y FCA el flete y el seguro se suman al FOB para el CIF; en CIF y CIP ya vienen incluidos."
+  ]
+ },
+ "com-partidas": {
+  "puntos": [
+   "Partidas arancelarias SAC con su DAI."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Catálogos › Aranceles y transporte › Partidas arancelarias y elige {empresa}.",
+   "Presiona «Cargar partidas frecuentes» o «Nuevo» y escribe la partida SAC, la descripción y el DAI %.",
+   "Verifica el DAI vigente en el arancel de la SAT: el costo de la importación depende de él."
+  ]
+ },
+ "com-transportistas": {
+  "puntos": [
+   "Navieras y transportistas."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Catálogos › Aranceles y transporte › Navieras y transportistas y elige {empresa}.",
+   "Presiona «Nuevo»: nombre, tipo (naviera, aérea, terrestre, courier) y contacto."
+  ]
+ },
+ "com-polizas": {
+  "puntos": [
+   "Póliza de importación (DUCA) con su costeo: FOB + flete + seguro = CIF; DAI; IVA de importación; gastos locales prorrateados."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Registros › Comercio exterior › Pólizas de importación y elige {empresa}.",
+   "Presiona «Nueva póliza»: tipo de DUCA, número, fecha, proveedor del exterior (ejemplo: {proveedor}), factura, país de origen, Incoterm, moneda y tipo de cambio.",
+   "Elige la aduana, el agente aduanal, el transportista, el BL o guía, el flete y el seguro internacionales, el método de prorrateo y la bodega de ingreso ({bodega}); presiona «Crear póliza».",
+   "Agrega cada producto: producto del catálogo ({producto}), partida arancelaria, cantidad, peso, valor FOB, lote y vencimiento.",
+   "Agrega los gastos locales (agente aduanal, almacenaje, transporte interno…) con su IVA y si van al costo.",
+   "Revisa el costeo de cada línea: FOB, flete, seguro, CIF, DAI, IVA, gastos, costo total y unitario; y los indicadores de la póliza.",
+   "Presiona «Liquidar» y luego «Ingresar a bodega»: los productos entran al inventario con su costo unitario de importación.",
+   "Imprime la liquidación en PDF (con firmas) o Excel."
+  ]
+ },
+ "com-liquidacion": {
+  "puntos": [
+   "Bandeja de pólizas por liquidar o ingresar."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Procesos › Importaciones › Liquidación de pólizas y elige {empresa}.",
+   "El filtro muestra las pólizas REGISTRADAS; elige una y revisa su costeo.",
+   "Presiona «Liquidar»; cambia el filtro a LIQUIDADA y presiona «Ingresar a bodega»."
+  ]
+ },
+ "com-exportaciones": {
+  "puntos": [
+   "Exportaciones con su valor en moneda y en quetzales."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Registros › Comercio exterior › Exportaciones y elige {empresa}.",
+   "Presiona «Nueva exportación»: DUCA, fecha, cliente del exterior, país de destino, Incoterm, moneda, tipo de cambio y factura de exportación.",
+   "Agrega los productos con su partida, cantidad, peso y valor.",
+   "Presiona «Marcar despachada» cuando salga del país; imprime en PDF o Excel."
+  ]
+ },
+ "com-embarques": {
+  "puntos": [
+   "Seguimiento de embarques de importación y exportación."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Registros › Comercio exterior › Embarques y elige {empresa}.",
+   "Registra el embarque: tipo, póliza o exportación, transportista, BL, contenedor, origen, destino, fecha de embarque y ETA.",
+   "Toca el embarque para avanzar su estado (en tránsito, en puerto, en aduana, liberado, entregado) y anotar el evento.",
+   "Revisa en los indicadores los embarques con ETA vencida."
+  ]
+ },
+ "com-importaciones-periodo": {
+  "puntos": [
+   "Pólizas liquidadas por mes."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Reportes y gráficas › Importaciones por período y elige {empresa}.",
+   "Elige el período; revisa CIF, DAI, IVA, gastos y costo por mes e imprime con la gráfica."
+  ]
+ },
+ "com-costo-poliza": {
+  "puntos": [
+   "Costo de cada producto por póliza."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Reportes y gráficas › Costo por póliza y elige {empresa}.",
+   "Elige el período; revisa el costo unitario y el recargo sobre el FOB de cada producto."
+  ]
+ },
+ "com-exportaciones-destino": {
+  "puntos": [
+   "Exportaciones por país."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Reportes y gráficas › Exportaciones por destino y elige {empresa}.",
+   "Elige el período e imprime con la gráfica."
+  ]
+ },
+ "com-tributos-aduana": {
+  "puntos": [
+   "DAI e IVA de importación por mes y aduana."
+  ],
+  "pasos": [
+   "Abre Import. y export. › Reportes y gráficas › Tributos de aduana y elige {empresa}.",
+   "Elige el período; el IVA de importación es crédito fiscal en la liquidación del mes (Integraciones SAT)."
   ]
  }
 }
