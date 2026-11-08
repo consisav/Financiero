@@ -5343,3 +5343,60 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ec-res-k .ec-fin { border-left-color: var(--acento); color: var(--acento); }
 .ec-res-k .ec-venc { border-left-color: #d92d20; color: #b42318; }
 @media (max-width: 1100px) { .ec-res-k { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ===== Inventarios · Entradas y Salidas ===== */
+.iv-mov .bk-filtros .iv-prods { flex: 1 1 100%; }
+.iv-mov .bk-filtros .iv-prods small { font-weight: 400; color: var(--texto-suave); text-transform: none; }
+.iv-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; min-height: 32px; padding: 3px 6px; border: 1px solid var(--borde); border-radius: 8px; background: var(--panel); }
+.iv-chips input { flex: 1 1 220px; border: 0 !important; height: 24px !important; padding: 0 4px !important; background: transparent; min-width: 160px; outline: none; }
+.iv-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 4px 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: color-mix(in srgb, var(--acento) 12%, transparent); color: var(--acento); }
+.iv-chip button { border: 0; background: none; color: inherit; cursor: pointer; padding: 0 2px; display: grid; place-items: center; }
+.iv-limpiar { border: 0; background: none; color: var(--texto-suave); font-size: 12px; cursor: pointer; text-decoration: underline; }
+.iv-mov .ec-kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.iv-tabla td { white-space: nowrap; }
+
+/* ===== Inventarios · Traslados, ajustes y devoluciones ===== */
+.iv-cab { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "id acc" "datos acc"; gap: 10px 16px; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 12px; background: color-mix(in srgb, var(--acento) 4%, var(--panel)); }
+.iv-id { grid-area: id; display: grid; grid-template-columns: 110px 210px 150px minmax(0, 1fr); gap: 10px; align-items: end; padding-bottom: 10px; border-bottom: 1px dashed var(--borde); }
+.iv-num { display: block; font-size: 22px; line-height: 1.1; color: var(--acento); }
+.iv-usr b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-datos { grid-area: datos; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; align-items: end; }
+.iv-datos .iv-desc { grid-column: 1 / -1; }
+.iv-acc { grid-area: acc; display: flex; flex-direction: column; gap: 6px; min-width: 190px; }
+.iv-acc .boton { justify-content: flex-start; }
+.iv-seg { display: inline-flex; border: 1px solid var(--borde); border-radius: 9px; overflow: hidden; height: 32px; }
+.iv-seg label { display: inline-flex; align-items: center; gap: 5px; padding: 0 14px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--texto-suave); }
+.iv-seg label + label { border-left: 1px solid var(--borde); }
+.iv-seg input { position: absolute; opacity: 0; pointer-events: none; }
+.iv-seg label.activo { background: var(--acento); color: #fff; }
+.iv-lineas td input { width: 100%; min-width: 0; }
+.iv-lineas td input[type=number] { text-align: right; max-width: 120px; }
+.iv-lineas td input[type=date] { max-width: 140px; }
+.iv-lineas td.iv-nuevo, .iv-lineas th.iv-nuevo-th { background: color-mix(in srgb, #f5c400 13%, transparent); }
+.iv-ok { color: #079455; font-size: 17px; }
+.iv-doc .cc-det .ti-square { color: var(--borde); font-size: 17px; }
+@media (max-width: 1100px) { .iv-cab { grid-template-columns: 1fr; grid-template-areas: "id" "datos" "acc"; } .iv-id { grid-template-columns: repeat(2, minmax(0, 1fr)); } .iv-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); } .iv-acc { flex-direction: row; flex-wrap: wrap; } }
+
+/* ===== Precios de venta ===== */
+.pv-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 12px; min-height: 0; }
+.pv-tabla { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pv-tabla td input[type=number] { width: 120px; text-align: right; font-weight: 700; }
+.pv-tipo { font-weight: 400; }
+.pv-sug { border: 1px dashed color-mix(in srgb, var(--acento) 55%, var(--borde)); background: color-mix(in srgb, var(--acento) 6%, transparent); color: var(--acento); border-radius: 7px; padding: 1px 8px; cursor: pointer; font-variant-numeric: tabular-nums; font-weight: 600; }
+.pv-sug:hover { background: color-mix(in srgb, var(--acento) 14%, transparent); }
+.pv-lado { display: flex; flex-direction: column; gap: 8px; }
+.pv-aud { margin-top: auto; display: grid; gap: 4px; font-size: 12px; padding-top: 8px; border-top: 1px solid var(--borde); }
+.pv-aud span { display: block; color: var(--texto-suave); font-size: 11px; text-transform: uppercase; }
+@media (max-width: 1000px) { .pv-cuerpo { grid-template-columns: 1fr; } }
+
+/* ===== Inventarios · Vencimiento de productos ===== */
+.ivv-bodegas { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.ivv-bodegas button { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 12px; border: 1px solid var(--borde); border-radius: 999px; background: var(--panel); cursor: pointer; font-size: 12.5px; }
+.ivv-bodegas button small { min-width: 22px; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--acento) 12%, transparent); color: var(--acento); font-weight: 700; }
+.ivv-bodegas button.vacia { opacity: .6; }
+.ivv-bodegas button.activo { background: var(--acento); border-color: var(--acento); color: #fff; }
+.ivv-bodegas button.activo small { background: rgba(255,255,255,.25); color: #fff; }
+.ivv-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.ivv-tabs .ivv-rojo.activa { color: #b42318; border-color: #b42318; }
+.ivv-pronto { color: #b54708; font-weight: 700; }
+.iv-ceros { align-self: end; height: 32px; display: inline-flex; align-items: center; gap: 6px; }

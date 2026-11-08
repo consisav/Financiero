@@ -132,5 +132,5 @@
     });
   }
 
-  window.CUENTAS_XLSX = { generar, ajustarAlto, ordenar, th, alternar, opcionesOrden, textoOrden,OPCIONES: [['PDF', 'PDF · LISTADO'], ['PDF_RESUMIDO', 'PDF · RESUMIDO'], ['PDF_DETALLADO', 'PDF · DETALLADO'], ['PDF_PERIODO', 'PDF · POR PERIODO'], ['RESUMIDO', 'EXCEL · RESUMIDO'], ['DETALLADO', 'EXCEL · DETALLADO'], ['PERIODO', 'EXCEL · POR PERIODO']] };
+  window.CUENTAS_XLSX = { generar, pdf: aPdf, ajustarAlto, ordenar, th, alternar, opcionesOrden, textoOrden,OPCIONES: [['PDF', 'PDF · LISTADO'], ['PDF_RESUMIDO', 'PDF · RESUMIDO'], ['PDF_DETALLADO', 'PDF · DETALLADO'], ['PDF_PERIODO', 'PDF · POR PERIODO'], ['RESUMIDO', 'EXCEL · RESUMIDO'], ['DETALLADO', 'EXCEL · DETALLADO'], ['PERIODO', 'EXCEL · POR PERIODO']] };
 })();

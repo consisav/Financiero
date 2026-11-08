@@ -285,7 +285,8 @@ window.MODULOS = [
             { id: 'tipos-de-medida', nombre: 'Tipos de medida', icono: 'ti-ruler-measure', descripcion: 'Unidades de medida de los productos.' },
             { id: 'tipos-de-precio', nombre: 'Tipos de precio', icono: 'ti-currency-dollar', descripcion: 'Listas de precio: % de utilidad, % de descuento, factor y estado.' },
             { id: 'presentaciones-productos', nombre: 'Presentación productos', icono: 'ti-box', descripcion: 'Presentaciones en que vienen los productos.', separador: true },
-            { id: 'productos-y-servicios', nombre: 'Productos y servicios', icono: 'ti-package', descripcion: 'Definición de artículos: clasificación y tipo, proveedor, presentación, medida, punto mínimo, costo, ubicación, bodega, precios e imagen.' }
+            { id: 'productos-y-servicios', nombre: 'Productos y servicios', icono: 'ti-package', descripcion: 'Definición de artículos: clasificación y tipo, proveedor, presentación, medida, punto mínimo, costo, ubicación, bodega, precios e imagen.' },
+            { id: 'precios-de-venta', nombre: 'Precios de venta', icono: 'ti-tags', descripcion: 'Precio de cada producto en cada tipo de precio: fecha, margen sobre el costo, precio sugerido, vigencia y lista de precios en PDF o Excel.' }
           ]
         }
       ],
@@ -470,10 +471,43 @@ window.MODULOS = [
     descripcion: 'Productos, bodegas, existencias y kardex.',
     // Catálogos (script 143): los grupos Generales y Proveedores de Compras y el grupo Productos de
     // Facturación/Ventas, con las mismas pantallas y tablas (se llenan al final de este archivo).
-    subgrupos: { catalogos: [] },
+    subgrupos: {
+      catalogos: [],
+      registros: [
+        {
+          subgrupo: 'Movimientos',
+          icono: 'ti-arrows-up-down',
+          pantallas: [
+            { id: 'entradas', nombre: 'Entradas', icono: 'ti-package-import', descripcion: 'Ingresos por compras y ajustes de compras (notas de proveedores) por fechas, proveedor, productos, bodega y tipo; por línea, producto, proveedor o documento, en PDF o Excel.' },
+            { id: 'salidas', nombre: 'Salidas', icono: 'ti-package-export', descripcion: 'Salidas por ventas y ajustes de ventas (notas de clientes) por fechas, cliente, productos, bodega y tipo; por línea, producto, cliente o documento, en PDF o Excel.' },
+            { id: 'vencimiento-productos', nombre: 'Vencimiento de productos', icono: 'ti-calendar-exclamation', descripcion: 'Productos vencidos y por vencer (3, 6, 12 o 18 meses) por bodega, con lote, vencimiento, fabricación, existencia, costo y valor; en PDF o Excel.' }
+          ]
+        },
+        {
+          subgrupo: 'Traslados y ajustes',
+          icono: 'ti-arrows-exchange',
+          pantallas: [
+            { id: 'traslados-entre-bodegas', nombre: 'Traslados entre bodegas', icono: 'ti-arrows-exchange', descripcion: 'Traslado de productos de una bodega a otra con su lote y vencimiento: registrar, operar, revertir, anular e imprimir.' },
+            { id: 'ajustes-por-lotes', nombre: 'Ajustes al inventario por lotes', icono: 'ti-barcode', descripcion: 'Cambio de lote, fabricación y vencimiento de una cantidad de producto en la bodega, con su motivo y costo.' },
+            { id: 'ajustes-por-producto', nombre: 'Ajustes al inventario por producto', icono: 'ti-adjustments-horizontal', descripcion: 'Añadir o disminuir existencias de una bodega con su motivo, justificación, lote y costo.', separador: true },
+            { id: 'devoluciones-reingresos', nombre: 'Devoluciones y reingresos', icono: 'ti-arrow-back-up-double', descripcion: 'Notas por devolución o reingreso de productos: tipo de nota, justificación, compra de ingreso y referencias, aplicar a inventario o revertir.' }
+          ]
+        }
+      ],
+      mantenimientos: [
+        {
+          subgrupo: 'Kardex',
+          icono: 'ti-list-numbers',
+          pantallas: [
+            { id: 'kardex-sin-costos', nombre: 'Kardex sin costos', icono: 'ti-list-numbers', descripcion: 'Movimientos de cada producto en bodega con lote, fabricación, vencimiento y existencias por lote y producto.' },
+            { id: 'kardex-con-costos', nombre: 'Kardex con costos', icono: 'ti-report-money', descripcion: 'Movimientos de cada producto en bodega con existencias, costo unitario, costo del movimiento, costo promedio y costo total.' }
+          ]
+        }
+      ]
+    },
     opciones: {
       catalogos: [],
-      registros: ['Entradas', 'Salidas', 'Traslados entre bodegas', 'Ajustes'],
+      registros: [],
       mantenimientos: ['Mínimos y máximos', 'Costos', 'Ubicaciones'],
       procesos: ['Toma física', 'Recalcular costo promedio', 'Cierre de inventario'],
       reportes: ['Existencias', 'Kardex por producto', 'Valuación de inventario', 'Rotación'],

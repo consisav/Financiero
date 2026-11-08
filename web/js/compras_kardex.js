@@ -18,15 +18,21 @@
   function tipoMov(m) {
     if (m.origen === 'INGRESO') return [1, 'INGRESO - ORDEN DE COMPRA'];
     if (m.origen === 'COMPRA') return [2, 'INGRESO - COMPRA'];
+    if (m.origen === 'NOTA' && m.nota_venta_lineas) return [10, 'INGRESO - DEVOLUCIÓN CLIENTE'];
     if (m.origen === 'NOTA') return m.c < 0 ? [3, 'SALIDA - NOTA DE CRÉDITO'] : [4, 'INGRESO - NOTA DE DÉBITO'];
+    if (m.origen === 'VENTA') return [8, 'SALIDA - FACTURA'];
     if (m.origen === 'CONSIGNACIÓN') return m.c > 0 ? [5, 'INGRESO - CONSIGNACIÓN'] : [6, 'SALIDA - DEVOLUCIÓN CONSIGNACIÓN'];
     if (m.origen === 'DESPACHO') return [8, 'SALIDA - FACTURA'];
     if (m.origen === 'TRASLADO') return [9, m.c > 0 ? 'INGRESO - TRASLADO' : 'SALIDA - TRASLADO'];
+    if (m.doc?.tipo === 'DEVOLUCIÓN') return [12, m.c > 0 ? 'INGRESO - REINGRESO' : 'SALIDA - DEVOLUCIÓN'];
+    if (m.doc?.tipo === 'AJUSTE LOTE') return [11, m.c > 0 ? 'INGRESO - AJUSTE DE LOTE' : 'SALIDA - AJUSTE DE LOTE'];
     return [7, m.c > 0 ? 'INGRESO - AJUSTE' : 'SALIDA - AJUSTE'];
   }
 
-  window.PANTALLAS['kardex-productos'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Kardex de Productos', icono: 'ti-list-numbers', clase: 'bk-movimientos kx-kardex', grupo: 'Compras · Mantenimientos' });
+  // op: { titulo, grupo, costos } · costos false: Kardex sin costos (solo cantidades por lote y existencias).
+  function kardex(cont, op = {}) {
+    const conCostos = op.costos !== false;
+    const ctx = montar(cont, { titulo: op.titulo || 'Kardex de Productos', icono: 'ti-list-numbers', clase: `bk-movimientos kx-kardex ${conCostos ? 'kx-costos' : 'kx-sin-costos'}`, grupo: op.grupo || 'Compras · Mantenimientos' });
     const { sb } = ctx;
     const f = { bodega: '', todas: false, desde: '', hasta: fmt.hoy(), formato: 'PDF', inactivos: false, buscar: '' };
     let tipoVenta = null, productos = [], bodegas = [], existencias = new Map();
@@ -74,7 +80,9 @@
       if (!sel) return pintarMovs();
       let q = sb.from('inventario_movimientos').select(`id, fecha, creado_en, cantidad, costo_unitario, origen, lote, fecha_vencimiento, usuario, bodega_id,
           ingreso_lineas(fecha_fabricacion, ingresos_compra(numero, serie, documento, ordenes_compra(numero))), compra_articulos(compras(numero, serie, documento, proveedor_nombre)),
-          nota_compra_lineas(fecha_fabricacion, notas_compra(numero, tipo, serie, documento, proveedor_nombre)), consignacion_lineas(consignaciones(numero, tipo_documento, serie, documento, proveedor_nombre))`)
+          nota_compra_lineas(fecha_fabricacion, notas_compra(numero, tipo, serie, documento, proveedor_nombre)), consignacion_lineas(consignaciones(numero, tipo_documento, serie, documento, proveedor_nombre)),
+          factura_venta_lineas(fecha_fabricacion, facturas_venta(numero, serie, numero_dte, nombre)), nota_venta_lineas(fecha_fabricacion, notas_venta(numero, serie, numero_dte, nombre)),
+          documento_inventario_lineas(fecha_fabricacion, nueva_fabricacion, documentos_inventario(numero, tipo, descripcion))`)
         .eq('localidad_id', ctx.sel.loc).eq('producto_id', sel).order('fecha').order('id');
       if (!f.todas && f.bodega) q = q.eq('bodega_id', Number(f.bodega));
       if (!noPerecedero() && f.hasta) q = q.lte('fecha', f.hasta);
@@ -90,10 +98,13 @@
         const lote = x.lote || '';
         lotes.set(lote, (lotes.get(lote) || 0) + c);
         const ing = x.ingreso_lineas?.ingresos_compra, com = x.compra_articulos?.compras, nota = x.nota_compra_lineas?.notas_compra, con = x.consignacion_lineas?.consignaciones;
-        const d = ing || com || nota || con || {};
+        const fv = x.factura_venta_lineas?.facturas_venta, nv = x.nota_venta_lineas?.notas_venta, di = x.documento_inventario_lineas?.documentos_inventario;
+        const venta = fv || nv ? { numero: (fv || nv).numero, serie: (fv || nv).serie, documento: (fv || nv).numero_dte } : null;
+        const d = ing || com || nota || con || venta || (di ? { numero: di.numero, serie: di.tipo === 'TRASLADO' ? 'TRASLADO' : 'AJUSTE' } : null) || {};
         const m = { ...x, c, costo, total, exLote: lotes.get(lote), prom, valorTotal: total * prom, lote,
-          interno: d.numero ?? '', fisico: [d.serie, d.documento].filter(Boolean).join('-'), tercero: com?.proveedor_nombre || nota?.proveedor_nombre || con?.proveedor_nombre || '',
-          fabricacion: x.ingreso_lineas?.fecha_fabricacion || x.nota_compra_lineas?.fecha_fabricacion || null, orden: ing?.ordenes_compra?.numero || '' };
+          interno: d.numero ?? '', fisico: [d.serie, d.documento].filter(Boolean).join('-'), tercero: com?.proveedor_nombre || nota?.proveedor_nombre || con?.proveedor_nombre || fv?.nombre || nv?.nombre || '', doc: di || null,
+          fabricacion: x.ingreso_lineas?.fecha_fabricacion || x.nota_compra_lineas?.fecha_fabricacion || x.factura_venta_lineas?.fecha_fabricacion || x.nota_venta_lineas?.fecha_fabricacion
+            || (di?.tipo === 'AJUSTE LOTE' && c > 0 ? x.documento_inventario_lineas?.nueva_fabricacion : x.documento_inventario_lineas?.fecha_fabricacion) || null, orden: ing?.ordenes_compra?.numero || '' };
         [m.tipo, m.nombre] = tipoMov(m);
         return m;
       });
@@ -109,7 +120,7 @@
       const p = prod(sel);
       ctx.pDet.innerHTML = `
         <div class="bm-form kx-form cl-clasico ${np ? 'kx-np' : 'kx-pe'}">
-          <div class="cl-banda kx-banda"><span>${np ? 'Productos en bodega (Kardex)' : 'Movimientos de productos en bodega (Kardex)'}</span>
+          <div class="cl-banda kx-banda"><span>${np ? 'Productos en bodega (Kardex)' : `Movimientos de productos en bodega (Kardex${conCostos ? ' con costos' : ''})`}</span>
             <small>${esc({ MEDICAMENTOS: 'Medicamentos', PERECEDEROS: 'Productos perecederos', 'NO PERECEDEROS': 'Productos no perecederos' }[tipoVenta] || 'Venta de productos sin definir en la empresa')}</small></div>
           ${np ? '' : barraES()}
           <section class="kx-cat">
@@ -162,7 +173,7 @@
       caja.innerHTML = `
         <div class="kx-resumen">${p ? `<b>${esc(p.codigo_producto || String(p.codigo))} · ${esc(p.nombre)}</b>
           <span>Entradas <b class="kx-ent">${cant(ent)}</b></span><span>Salidas <b class="kx-sal">${cant(sal)}</b></span><span>Existencia <b>${cant(ult ? ult.total : inicial)}</b></span>
-          ${np ? '' : `<span>Costo promedio <b>Q ${fmt.monto(ult?.prom || 0)}</b></span><span>Costo total <b>Q ${fmt.monto(ult?.valorTotal || 0)}</b></span>`}
+          ${np || !conCostos ? '' : `<span>Costo promedio <b>Q ${fmt.monto(ult?.prom || 0)}</b></span><span>Costo total <b>Q ${fmt.monto(ult?.valorTotal || 0)}</b></span>`}
           <span class="tk-tenue">${todas ? 'Todas las bodegas' : esc(bodega(Number(f.bodega))?.nombre || '')}</span>` : '<span class="tk-tenue">Elige un producto.</span>'}</div>
         <div class="pc-lineas kx-tabla"><table>
           ${np ? `<thead><tr><th class="pc-n">#</th><th class="num">Mov.</th><th>Movimiento</th><th class="num"># Interno dcto.</th><th>Docto. físico</th><th>Fecha movto.</th>${todas ? '<th>Bodega</th>' : ''}<th>Serie</th><th class="num">Cantidad</th><th class="num">Existencia serie</th><th class="num">Exist. total</th></tr></thead>
@@ -170,14 +181,14 @@
               ${todas ? `<td>${esc(bodega(m.bodega_id)?.nombre || '')}</td>` : ''}<td>${esc(m.lote)}</td><td class="num ${m.c < 0 ? 'pc-rojo' : ''}">${cant(m.c)}</td><td class="num kx-col-lote">${cant(m.exLote)}</td><td class="num kx-col-total">${cant(m.total)}</td></tr>`).join('')
               || `<tr><td colspan="11" class="tk-vacio">${p ? 'El producto no tiene entradas ni salidas.' : ''}</td></tr>`}</tbody>
             <tfoot><tr><td colspan="${todas ? 8 : 7}">${n} movimiento(s)</td><td class="num">${cant(ent - sal)}</td><td></td><td class="num">${cant(ult ? ult.total : 0)}</td></tr></tfoot>`
-          : `<thead><tr><th class="pc-n">#</th><th class="num">Mov.</th><th>Movimiento</th><th class="num">Docto. interno</th><th>Fecha movto.</th><th>Docto. físico</th>${todas ? '<th>Bodega</th>' : ''}<th>Fabricación</th><th>Vencimiento</th><th>Lote</th><th class="num">Cant. ingreso</th><th class="num">Cant. salida</th><th class="num">Exist. lote</th><th class="num">Exist. producto</th><th class="num">Costo unitario</th><th class="num">Costo movimiento</th><th class="num">Costo promedio</th><th class="num">Costo total</th></tr></thead>
+          : `<thead><tr><th class="pc-n">#</th><th class="num">Mov.</th><th>Movimiento</th><th class="num">Docto. interno</th><th>Fecha movto.</th><th>Docto. físico</th>${todas ? '<th>Bodega</th>' : ''}<th>Fabricación</th><th>Vencimiento</th><th>Lote</th><th class="num">Cant. ingreso</th><th class="num">Cant. salida</th><th class="num">Exist. lote</th><th class="num">Exist. producto</th>${conCostos ? '<th class="num">Costo unitario</th><th class="num">Costo movimiento</th><th class="num">Costo promedio</th><th class="num">Costo total</th>' : ''}</tr></thead>
             <tbody>${movs.map((m, i) => `<tr><td class="pc-n">${n - i}</td><td class="num tk-tenue">${m.tipo}</td><td><span class="kx-origen kx-${m.c > 0 ? 'e' : 's'}">${esc(m.nombre)}</span></td><td class="num">${m.interno}</td><td>${esc(fechaHora(m.fecha, m.creado_en))}</td><td class="kx-fis" title="${esc(m.fisico)}">${esc(m.fisico)}</td>
               ${todas ? `<td>${esc(bodega(m.bodega_id)?.nombre || '')}</td>` : ''}<td>${esc(fmt.fechaDia(m.fabricacion))}</td><td class="${m.fecha_vencimiento && m.fecha_vencimiento < fmt.hoy() ? 'pc-rojo' : ''}">${esc(fmt.fechaDia(m.fecha_vencimiento))}</td><td>${esc(m.lote)}</td>
               <td class="num kx-col-ent">${m.c > 0 ? cant(m.c) : ''}</td><td class="num kx-col-ent pc-rojo">${m.c < 0 ? cant(m.c) : ''}</td><td class="num">${cant(m.exLote)}</td><td class="num kx-col-total">${cant(m.total)}</td>
-              <td class="num kx-col-costo">${fmt.monto(m.costo)}</td><td class="num kx-col-costo">${fmt.monto(m.c * m.costo)}</td><td class="num kx-col-costo">${fmt.monto(m.prom)}</td><td class="num kx-col-costo">${fmt.monto(m.valorTotal)}</td></tr>`).join('')}
-              ${f.desde && p ? `<tr class="kx-ini"><td colspan="${todas ? 13 : 12}">Saldo al ${esc(fmt.fechaDia(f.desde))} (antes de la fecha inicial)</td><td class="num">${cant(inicial)}</td><td colspan="4"></td></tr>` : ''}
+              ${conCostos ? `<td class="num kx-col-costo">${fmt.monto(m.costo)}</td><td class="num kx-col-costo">${fmt.monto(m.c * m.costo)}</td><td class="num kx-col-costo">${fmt.monto(m.prom)}</td><td class="num kx-col-costo">${fmt.monto(m.valorTotal)}</td>` : ''}</tr>`).join('')}
+              ${f.desde && p ? `<tr class="kx-ini"><td colspan="${todas ? 13 : 12}">Saldo al ${esc(fmt.fechaDia(f.desde))} (antes de la fecha inicial)</td><td class="num">${cant(inicial)}</td>${conCostos ? '<td colspan="4"></td>' : ''}</tr>` : ''}
               ${!movs.length ? `<tr><td colspan="18" class="tk-vacio">${p ? 'Sin entradas ni salidas en el periodo.' : ''}</td></tr>` : ''}</tbody>
-            <tfoot><tr><td colspan="${todas ? 10 : 9}">${n} movimiento(s)</td><td class="num">${cant(ent)}</td><td class="num">${cant(-sal)}</td><td></td><td class="num">${cant(ult ? ult.total : inicial)}</td><td colspan="2"></td><td class="num">${fmt.monto(ult?.prom || 0)}</td><td class="num">${fmt.monto(ult?.valorTotal || 0)}</td></tr></tfoot>`}
+            <tfoot><tr><td colspan="${todas ? 10 : 9}">${n} movimiento(s)</td><td class="num">${cant(ent)}</td><td class="num">${cant(-sal)}</td><td></td><td class="num">${cant(ult ? ult.total : inicial)}</td>${conCostos ? `<td colspan="2"></td><td class="num">${fmt.monto(ult?.prom || 0)}</td><td class="num">${fmt.monto(ult?.valorTotal || 0)}</td>` : ''}</tr></tfoot>`}
         </table></div>`;
     }
 
@@ -192,13 +203,16 @@
       const cab = np ? ['#', 'Movimiento', '# Interno', 'Docto. físico', 'Fecha', 'Serie', 'Cantidad', 'Exist. serie', 'Exist. total']
         : ['#', 'Movimiento', 'Docto. interno', 'Fecha', 'Docto. físico', 'Fabricación', 'Vencimiento', 'Lote', 'Ingreso', 'Salida', 'Exist. lote', 'Exist. producto', 'Costo unitario', 'Costo movimiento', 'Costo promedio', 'Costo total'];
       const n = movs.length;
-      const filas = movs.map((m, i) => np ? [n - i, m.nombre, m.interno, m.fisico, fechaHora(m.fecha, m.creado_en), m.lote, cant(m.c), cant(m.exLote), cant(m.total)]
+      const sinC = !np && !conCostos;
+      if (sinC) cab.splice(-4, 4);
+      const filas0 = movs.map((m, i) => np ? [n - i, m.nombre, m.interno, m.fisico, fechaHora(m.fecha, m.creado_en), m.lote, cant(m.c), cant(m.exLote), cant(m.total)]
         : [n - i, m.nombre, m.interno, fechaHora(m.fecha, m.creado_en), m.fisico, fmt.fechaDia(m.fabricacion), fmt.fechaDia(m.fecha_vencimiento), m.lote, m.c > 0 ? cant(m.c) : '', m.c < 0 ? cant(m.c) : '', cant(m.exLote), cant(m.total), fmt.monto(m.costo), fmt.monto(m.c * m.costo), fmt.monto(m.prom), fmt.monto(m.valorTotal)]);
+      const filas = sinC ? filas0.map((r) => r.slice(0, -4)) : filas0;
       if (!np && f.formato === 'EXCEL') return window.COMPRAS_CAT.descargarCsv(`kardex_${p.codigo_producto || p.codigo}_${f.hasta}.csv`, [cab, ...filas]);
-      const num = np ? [6, 7, 8] : [8, 9, 10, 11, 12, 13, 14, 15];
-      imprimir(`Kardex ${p.nombre}`, `<h1>${np ? 'Productos en bodega' : 'Movimientos de productos en bodega'} (Kardex)</h1><h2>${esc(e ? `${e.codigo} · ${e.nombre_comercial}` : '')} · ${esc(bod)}${esc(per)}</h2>
+      const num = np ? [6, 7, 8] : sinC ? [8, 9, 10, 11] : [8, 9, 10, 11, 12, 13, 14, 15];
+      imprimir(`Kardex ${p.nombre}`, `<h1>${np ? 'Productos en bodega' : 'Movimientos de productos en bodega'} (Kardex${!np && conCostos ? ' con costos' : ''})</h1><h2>${esc(e ? `${e.codigo} · ${e.nombre_comercial}` : '')} · ${esc(bod)}${esc(per)}</h2>
         <div class="cab"><div><b>Código</b>${p.codigo}</div><div><b>Código producto</b>${esc(p.codigo_producto || '')}</div><div style="grid-column:span 2"><b>Nombre</b>${esc(p.nombre)}</div>
-          <div style="grid-column:span 2"><b>${np ? 'Línea / principio activo' : 'Principio activo'}</b>${esc(p.principio_activo || p.tipos_producto?.nombre || '')}</div><div><b>Existencia</b>${cant(movs[0]?.total ?? inicial)}</div><div><b>${np ? 'Clasificación' : 'Costo promedio'}</b>${np ? esc(p.clasificaciones_producto?.nombre || '') : `Q ${fmt.monto(movs[0]?.prom || 0)}`}</div></div>
+          <div style="grid-column:span 2"><b>${np ? 'Línea / principio activo' : 'Principio activo'}</b>${esc(p.principio_activo || p.tipos_producto?.nombre || '')}</div><div><b>Existencia</b>${cant(movs[0]?.total ?? inicial)}</div><div><b>${np || sinC ? 'Clasificación' : 'Costo promedio'}</b>${np || sinC ? esc(p.clasificaciones_producto?.nombre || '') : `Q ${fmt.monto(movs[0]?.prom || 0)}`}</div></div>
         <table><thead><tr>${cab.map((c, i) => `<th class="${num.includes(i) ? 'n' : ''}">${c}</th>`).join('')}</tr></thead>
         <tbody>${filas.map((r) => `<tr>${r.map((c, i) => `<td class="${num.includes(i) ? 'n' : ''}">${esc(String(c ?? ''))}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cab.length}">Sin movimientos.</td></tr>`}</tbody></table>`);
     }
@@ -240,7 +254,10 @@
       else if (fila && e.key === 'Enter') elegir(Number(fila.dataset.prod));
     });
     iniciar();
-  };
+  }
+  window.PANTALLAS['kardex-productos'] = (cont) => kardex(cont);
+  window.PANTALLAS['kardex-sin-costos'] = (cont) => kardex(cont, { titulo: 'Movimiento de productos (Kardex)', grupo: 'Inventarios · Mantenimientos', costos: false });
+  window.PANTALLAS['kardex-con-costos'] = (cont) => kardex(cont, { titulo: 'Movimiento de productos (Kardex con costos)', grupo: 'Inventarios · Mantenimientos', costos: true });
   // ===================== Análisis de Costos =====================
   // Por producto: sus compras (artículos de compras vigentes) con el costo unitario de cada una, los
   // descuentos de línea, las bonificaciones de la compra prorrateadas y las notas de crédito
