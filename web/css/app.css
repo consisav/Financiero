@@ -4836,7 +4836,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .vf-tr-cuadre:empty { display: none; }
 .vf-tab-acc { align-items: center; min-width: 0; }
 .vf-conta { table-layout: fixed; }
-.vf-conta .pc-n { width: 34px; } .vf-conta .vf-k-cta { width: 120px; } .vf-conta .vf-k-cc { width: 150px; } .vf-conta .vf-k-con { width: 18%; }
+.vf-conta .pc-n { width: 34px; } .vf-conta .vf-k-cta { width: 120px; } .vf-conta .vf-k-cc { width: 130px; } .vf-conta .vf-k-con { width: 18%; }
 .vf-conta .vf-k-m { width: 112px; } .vf-conta .pq-x { width: 34px; }
 .vf-conta td { height: 30px; font-variant-numeric: tabular-nums; }
 .vf-conta .vf-k-codigo { font-weight: 600; }

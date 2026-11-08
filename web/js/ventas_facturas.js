@@ -262,7 +262,7 @@
               <datalist id="vf-productos">${productos.filter((p) => p.estado !== 'INACTIVO').map((p) => `<option value="${p.codigo}">${esc(p.nombre)}</option>`).join('')}</datalist>
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
-              <div class="pc-lineas"><table class="vf-conta"><thead><tr><th class="pc-n">#</th><th class="vf-k-cta">Cuenta</th><th>Nombre de la cuenta</th><th class="vf-k-cc">Centro de costo</th><th class="vf-k-con">Concepto</th><th class="num vf-k-m">Débito</th><th class="num vf-k-m">Débito MI</th><th class="num vf-k-m">Crédito</th><th class="num vf-k-m">Crédito MI</th><th class="pq-x"></th></tr></thead>
+              <div class="pc-lineas"><table class="vf-conta"><thead><tr><th class="pc-n">#</th><th class="vf-k-cta">Cuenta</th><th>Nombre de la cuenta</th><th class="vf-k-cc">Centro de costo</th><th class="vf-k-con">Nombre del centro de costo</th><th class="num vf-k-m">Débito</th><th class="num vf-k-m">Débito MI</th><th class="num vf-k-m">Crédito</th><th class="num vf-k-m">Crédito MI</th><th class="pq-x"></th></tr></thead>
                 <tbody>${conta.map((x, i) => filaConta(x, i, ed, tc)).join('') || '<tr><td colspan="10" class="tk-vacio">Sin detalle contable.</td></tr>'}</tbody>
                 <tfoot><tr><td colspan="5">Totales</td><td class="num" data-calc="debe">${fmt.monto(conta.reduce((t, x) => t + Number(x.debe || 0), 0))}</td><td class="num" data-calc="dmi">${fmt.monto(conta.reduce((t, x) => t + miConta(x, 'debe', tc), 0))}</td><td class="num" data-calc="haber">${fmt.monto(conta.reduce((t, x) => t + Number(x.haber || 0), 0))}</td><td class="num" data-calc="hmi">${fmt.monto(conta.reduce((t, x) => t + miConta(x, 'haber', tc), 0))}</td><td></td></tr></tfoot></table></div>
               <datalist id="vf-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
@@ -305,8 +305,8 @@
       return `<tr data-conta="${i}"><td class="pc-n">${i + 1}</td>
         <td>${ed ? `<input list="vf-cuentas" data-c="cuenta" value="${esc(k?.codigo || x.codigo || '')}">` : `<span class="vf-k-codigo">${esc(k?.codigo || x.codigo || '')}</span>`}</td>
         <td class="cc-nombre">${esc(k?.nombre || x.nombre || '')}</td>
-        <td>${ed ? `<input list="vf-centros" data-c="centro" value="${esc(c?.codigo || '')}">` : esc(c ? `${c.codigo} · ${c.nombre}` : '')}</td>
-        <td>${ed ? `<input data-c="concepto" value="${esc(x.concepto || '')}" maxlength="200">` : esc(x.concepto || '')}</td>
+        <td>${ed ? `<input list="vf-centros" data-c="centro" value="${esc(c?.codigo || '')}">` : `<span class="vf-k-codigo">${esc(c?.codigo || '')}</span>`}</td>
+        <td class="cc-nombre">${esc(c?.nombre || '')}</td>
         <td class="num">${num('debe')}</td><td class="num tk-tenue" data-mi="debe">${mi('debe')}</td>
         <td class="num">${num('haber')}</td><td class="num tk-tenue" data-mi="haber">${mi('haber')}</td>
         <td class="pq-x">${ed ? `<button type="button" class="icono-boton" data-quitar-conta="${i}" aria-label="Quitar la línea ${i + 1}" ${dis}><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`;
@@ -512,7 +512,7 @@
         if (!(x.cuenta_id && v('cuenta') === x.codigo && !cuenta(x.cuenta_id))) { const k = cuentaPorCodigo(v('cuenta')); x.cuenta_id = k ? k.id : null; x.nombre = k?.nombre || ''; x.codigo = v('cuenta'); }
         const c = centros.find((y) => y.codigo === v('centro') && y.movimiento); x.centro_id = c ? c.id : null; x.centro_codigo = v('centro');
         const d0 = x.debe, h0 = x.haber;
-        x.concepto = v('concepto'); x.debe = Number(v('debe')) || 0; x.haber = Number(v('haber')) || 0;
+        x.debe = Number(v('debe')) || 0; x.haber = Number(v('haber')) || 0;
         if (x.debe !== d0 || x.haber !== h0) x.editada = true;
       });
       ctx.pDet.querySelectorAll('tr[data-pago]').forEach((tr) => {
