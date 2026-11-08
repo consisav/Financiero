@@ -5614,3 +5614,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .pr-tabla tr.pr-t td { font-weight: 700; background: color-mix(in srgb, var(--acento) 8%, var(--panel)); border-top: 2px solid var(--acento); position: sticky; bottom: 0; }
 .pr-tabla tr.pr-n td { font-style: italic; color: var(--texto-suave); }
 .pr-tabla tr.pr-alerta td { color: #b42318; }
+
+.pr-graficas { padding: 10px 8px 4px; display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 10px; border-top: 1px solid var(--borde); }
+.pr-graficas h3 { grid-column: 1 / -1; margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; color: var(--acento); }
+.pr-graficas svg { width: 100%; height: auto; border: 1px solid var(--borde); border-radius: 8px; }

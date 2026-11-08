@@ -15,6 +15,9 @@
   const col = (titulo, tipo, ancho) => ({ titulo, tipo, ancho });
   const kpi = (t, v, cls = '') => `<div class="ec-kpi ${cls}"><small>${t}</small><b>${v}</b></div>`;
   const MAX_VISTA = 1500;
+  const G = () => window.GRAFICAS;
+  const MES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const top = (xs, n = 10) => [...xs].sort((a, b) => b.valor - a.valor).slice(0, n);
 
   function tipoDe(m) {
     if (m.tipos_movimiento_inventario?.descripcion) return m.tipos_movimiento_inventario.descripcion;
@@ -51,7 +54,7 @@
     const R = REPORTES[id];
     const ctx = montar(cont, { titulo: R.titulo, icono: R.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep', grupo: 'Inventarios · Reportes' });
     const { sb } = ctx;
-    const f = { fecha: fmt.hoy(), producto: '', ceros: false };
+    const f = { fecha: fmt.hoy(), producto: '', ceros: false, graficas: true };
     let productos = [], bodegas = new Map(), movs = [], cargado = '', cfg = null;
     const prod = (pid) => productos.find((p) => p.id === pid);
     const etiqueta = (p) => `${p.nombre} — ${p.codigo_producto || p.codigo}`;
@@ -64,6 +67,7 @@
       ctx.filtros(`<label class="campo"><span>A la fecha</span><input type="date" name="fecha" value="${f.fecha}" max="${fmt.hoy()}"></label>
         <label class="campo cx-prov pr-prod"><span>Producto</span><input name="producto" list="rp-prods" value="${esc(p ? etiqueta(p) : '')}" placeholder="Todos los productos" autocomplete="off"></label>
         ${id === 'existencias-inventario' ? `<label class="pc-check"><input type="checkbox" name="ceros" ${f.ceros ? 'checked' : ''}> Incluir en cero</label>` : ''}
+        <label class="pc-check"><input type="checkbox" name="graficas" ${f.graficas ? 'checked' : ''}> Gráficas</label>
         <datalist id="rp-prods">${productos.map((x) => `<option value="${esc(etiqueta(x))}"></option>`).join('')}</datalist>`,
         `<button type="button" class="boton secundario-sm" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button>
          <button type="button" class="boton secundario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>`);
@@ -138,7 +142,10 @@
           filas.push({ valores: [`Subtotal bodega (${xs.length})`, '', '', '', r4(s)], tipo: 'subtotal' });
         });
         filas.push({ valores: [`Total general (${n})`, '', '', '', r4(tot)], tipo: 'total' });
-        return { ...base, parametros: parametros([f.ceros ? 'Incluye existencias en cero' : 'Solo con existencia']), filas, n,
+        const porProd = new Map(); [...g.values()].flat().forEach((x) => porProd.set(x.pid, (porProd.get(x.pid) || 0) + x.q));
+        const graficas = [G().barras('Existencia por bodega', [...g.entries()].map(([bid, xs]) => ({ etiqueta: bodegas.get(bid) ? `${bodegas.get(bid).codigo} · ${bodegas.get(bid).nombre}` : String(bid), valor: xs.reduce((t, x) => t + x.q, 0) })).sort((a, b) => b.valor - a.valor)),
+          ...(f.producto ? [] : [G().barras('Productos con mayor existencia (10)', top([...porProd].map(([pid, q]) => ({ etiqueta: nombreProd(pid), valor: q }))))])];
+        return { ...base, parametros: parametros([f.ceros ? 'Incluye existencias en cero' : 'Solo con existencia']), filas, n, graficas,
           columnas: [col('Código', 'texto', 13), col('Producto', 'texto', 48), col('Lote', 'texto', 14), col('Vence', 'texto', 11), col('Existencia', 'numero', 13)],
           kpis: [['Productos', new Set([...g.values()].flat().map((x) => x.pid)).size], ['Bodegas', g.size], ['Líneas (producto · lote)', n], ['Existencia total', cant(tot)]] };
       }
@@ -155,7 +162,12 @@
             filas.push({ valores: [fmt.fechaDia(x.m.fecha), tipoDe(x.m), documentoDe(x.m), bodegas.get(x.m.bodega_id)?.codigo ?? '', x.m.lote || '', x.c > 0 ? r4(x.c) : '', x.c < 0 ? r4(-x.c) : '', r4(x.q), r4(x.c > 0 ? x.costo : x.prom), r2(x.v)] }); });
           filas.push({ valores: [`Totales (${xs.length} movimiento(s))`, '', '', '', '', r4(e), r4(s), r4(a.q), r4(a.prom), r2(a.v)], tipo: 'subtotal' });
         });
-        return { ...base, parametros: parametros(['Costo: promedio ponderado']), filas, n,
+        const me = Array(12).fill(0), ms = Array(12).fill(0); const hasta = Number(f.fecha.slice(5, 7));
+        lin.forEach((xs) => xs.forEach((x) => { const k = Number(x.m.fecha.slice(5, 7)) - 1; if (x.c > 0) me[k] += x.c; else ms[k] -= x.c; }));
+        const graficas = [G().columnas('Entradas y salidas por mes (unidades)', MES.slice(0, hasta), [{ nombre: 'Entradas', color: G().COLORES.VERDE, valores: me.slice(0, hasta) }, { nombre: 'Salidas', color: G().COLORES.NARANJA, valores: ms.slice(0, hasta) }])];
+        if (f.producto) { const xs = lin.get(Number(f.producto)) || []; const a = est.get(Number(f.producto));
+          if (a) graficas.push(G().linea('Saldo del producto (unidades)', [{ x: fmt.fechaDia(inicio()), y: a.ini.q }, ...xs.map((x) => ({ x: fmt.fechaDia(x.m.fecha), y: x.q }))])); }
+        return { ...base, parametros: parametros(['Costo: promedio ponderado']), filas, n, graficas,
           columnas: [col('Fecha', 'texto', 11), col('Tipo de movimiento', 'texto', 30), col('Documento', 'texto', 18), col('Bodega', 'texto', 8), col('Lote', 'texto', 13), col('Entrada', 'numero', 11), col('Salida', 'numero', 11), col('Saldo', 'numero', 12), col('Costo unitario', 'monto', 13), col('Valor saldo', 'monto', 15)],
           kpis: [['Productos', [...lin.keys()].length], ['Movimientos del período', n]] };
       }
@@ -166,7 +178,12 @@
         const filas = xs.map(([pid, a]) => { const p = prod(pid); return { valores: [p?.codigo_producto || String(p?.codigo ?? ''), nombreProd(pid), r4(a.q), r4(a.prom), r2(a.q * a.prom), tot ? (a.q * a.prom) / tot : 0] }; });
         filas.push({ valores: [`Total del inventario (${xs.length} producto(s))`, '', r4(xs.reduce((t, [, a]) => t + a.q, 0)), '', r2(tot), tot ? 1 : 0], tipo: 'total' });
         const neg = [...est.values()].filter((a) => a.q < -0.00005).length;
-        return { ...base, parametros: parametros(['Método: costo promedio ponderado (Decreto 10-2012, art. 55)']), filas, n: xs.length,
+        // Clasificación ABC: A hasta el 80 % del valor, B hasta el 95 %, C el resto.
+        const abc = { A: [0, 0], B: [0, 0], C: [0, 0] }; let acum = 0;
+        [...xs].sort((a, b) => b[1].q * b[1].prom - a[1].q * a[1].prom).forEach(([, a]) => { const v = a.q * a.prom; const k = acum / (tot || 1) < 0.8 ? 'A' : acum / (tot || 1) < 0.95 ? 'B' : 'C'; acum += v; abc[k][0]++; abc[k][1] += v; });
+        const graficas = [G().barras('Productos de mayor valor (10)', top(xs.map(([pid, a]) => ({ etiqueta: nombreProd(pid), valor: a.q * a.prom }))).map((i) => ({ ...i, texto: `Q ${fmt.monto(i.valor)} · ${tot ? ((i.valor / tot) * 100).toFixed(1) : 0} %` }))),
+          G().barras('Clasificación ABC del valor del inventario', Object.entries(abc).map(([k, [n2, v]]) => ({ etiqueta: `${k} · ${n2} producto(s)`, valor: v, texto: `Q ${fmt.monto(v)} · ${tot ? ((v / tot) * 100).toFixed(1) : 0} %` })))];
+        return { ...base, parametros: parametros(['Método: costo promedio ponderado (Decreto 10-2012, art. 55)']), filas, n: xs.length, graficas,
           columnas: [col('Código', 'texto', 13), col('Producto', 'texto', 48), col('Existencia', 'numero', 13), col('Costo promedio', 'monto', 14), col('Valor Q', 'monto', 16), col('% del total', 'porcentaje', 10)],
           kpis: [['Productos con existencia', xs.length], ['Valor del inventario', `Q ${fmt.monto(tot)}`, 'ec-fin'], ...(neg ? [['Con existencia negativa (no valuados)', neg, 'ec-alerta']] : [])] };
       }
@@ -184,7 +201,10 @@
       const cs = xs.reduce((t, x) => t + x.a.costoSal, 0), vp = xs.reduce((t, x) => t + x.vp, 0), rg = vp ? cs / vp : 0;
       filas.push({ valores: [`Total (${xs.length} producto(s))`, '', '', '', '', '', r2(cs), r2(vp), r2(rg), rg ? Math.round(dias / rg) : '', '', ''], tipo: 'total' });
       const cuenta = (c) => xs.filter((x) => x.clase === c).length;
-      return { ...base, parametros: parametros([`Período: ${dias} día(s)`, 'Rotación = costo de salidas / inventario promedio', 'Alta ≤ 30 días · Media ≤ 90 · Baja > 90']), filas, n: xs.length,
+      const graficas = [G().barras('Productos por clasificación de rotación', ['ALTA', 'MEDIA', 'BAJA', 'SIN MOVIMIENTO'].map((c) => ({ etiqueta: c, valor: cuenta(c) }))),
+        G().barras('Productos de mayor rotación (10)', top(xs.filter((x) => x.rot).map((x) => ({ etiqueta: nombreProd(x.pid), valor: x.rot, texto: `${r2(x.rot)} veces · ${Math.round(x.d)} días` })))),
+        G().barras('Valor inmovilizado: sin movimiento o rotación baja (10)', top(xs.filter((x) => x.clase === 'SIN MOVIMIENTO' || x.clase === 'BAJA').map((x) => ({ etiqueta: nombreProd(x.pid), valor: x.vf, texto: `Q ${fmt.monto(x.vf)}` }))), G().COLORES.NARANJA)];
+      return { ...base, graficas, parametros: parametros([`Período: ${dias} día(s)`, 'Rotación = costo de salidas / inventario promedio', 'Alta ≤ 30 días · Media ≤ 90 · Baja > 90']), filas, n: xs.length,
         columnas: [col('Código', 'texto', 12), col('Producto', 'texto', 40), col('Inv. inicial', 'numero', 11), col('Entradas', 'numero', 11), col('Salidas', 'numero', 11), col('Inv. final', 'numero', 11), col('Costo salidas', 'monto', 14), col('Inv. promedio', 'monto', 14), col('Rotación', 'numero', 9), col('Días inv.', 'entero', 9), col('Clasificación', 'texto', 15), col('Última salida', 'texto', 12)],
         kpis: [['Rotación general', `${r2(rg)} veces`, 'ec-fin'], ['Días de inventario', rg ? Math.round(dias / rg) : '—'], ['Alta', cuenta('ALTA')], ['Media', cuenta('MEDIA')], ['Baja', cuenta('BAJA'), cuenta('BAJA') ? 'ec-alerta' : ''], ['Sin movimiento', cuenta('SIN MOVIMIENTO'), cuenta('SIN MOVIMIENTO') ? 'ec-alerta' : '']] };
     }
@@ -194,6 +214,7 @@
       if (typeof v === 'number') return `<td class="num">${c.tipo === 'monto' ? fmt.monto(v) : c.tipo === 'porcentaje' ? `${(v * 100).toFixed(1)} %` : c.tipo === 'entero' ? v.toLocaleString('es-GT') : cant(v)}</td>`;
       return `<td>${esc(String(v))}</td>`;
     }
+    const graficasDe = (c) => (c.graficas || []).filter(Boolean);
     function pintar() {
       const c = cfg, n = c.columnas.length;
       const vista = c.filas.slice(0, MAX_VISTA);
@@ -207,21 +228,24 @@
               : `<tr class="${r.tipo === 'subtotal' ? 'pr-s' : r.tipo === 'total' ? 'pr-t' : r.tipo === 'nota' ? 'pr-n' : ''}${r.resaltar ? ' pr-alerta' : ''}">${c.columnas.map((x, i) => celda(r.valores[i], x)).join('')}</tr>`)).join('')
               || `<tr><td colspan="${n}" class="tk-vacio">No hay información con esos parámetros.</td></tr>`}
               ${c.filas.length > MAX_VISTA ? `<tr><td colspan="${n}" class="tk-vacio">Vista previa de ${MAX_VISTA} de ${c.filas.length} renglones: el PDF y el Excel llevan el reporte completo.</td></tr>` : ''}</tbody>
-          </table></div>
+          </table>${f.graficas && graficasDe(c).length ? `<section class="pr-graficas"><h3><i class="ti ti-chart-bar" aria-hidden="true"></i> Gráficas</h3>${graficasDe(c).join('')}</section>` : ''}</div>
         </div>`;
       window.CUENTAS_XLSX.ajustarAlto(cont);
     }
     function exportar(formato) {
       if (!cfg || cfg.n === 0) return window.FIN.aviso('No hay información con esos parámetros');
       const salida = { ...cfg, filas: cfg.filas.map((r) => (r.tipo === 'nota' ? { ...r, tipo: undefined, tenue: true } : r)) };
-      if (formato === 'PDF') return window.CUENTAS_XLSX.pdf(salida);
-      window.REPORTE_XLSX.generar(salida).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
+      const gs = f.graficas ? graficasDe(cfg) : [];
+      if (formato === 'PDF') return window.CUENTAS_XLSX.pdf({ ...salida, graficas: gs.join('') });
+      Promise.all(gs.map((g) => G().png(g))).then((imagenes) => window.REPORTE_XLSX.generar({ ...salida, imagenes }))
+        .catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
     }
     cont.addEventListener('change', (e) => {
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') return cargarLocalidad();
       const n = e.target.name;
       if (n === 'fecha') { f.fecha = e.target.value || fmt.hoy(); return consultar(); }
+      if (n === 'graficas') { f.graficas = e.target.checked; return pintar(); }
       if (n === 'ceros') { f.ceros = e.target.checked; cfg = construir(); return pintar(); }
       if (n === 'producto') {
         const t = e.target.value.trim().toUpperCase();

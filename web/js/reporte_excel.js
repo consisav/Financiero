@@ -121,6 +121,13 @@
       if (f.combinar) { ws.mergeCells(fila, 1, fila, n); r.getCell(1).alignment = { vertical: 'middle', wrapText: f.tipo === 'nota' }; if (f.tipo === 'nota') r.height = 26; }
       fila += 1;
     }
+    // Gráficas al final (imágenes PNG: { base64, width, height }), una debajo de otra.
+    for (const g of cfg.imagenes || []) {
+      fila += 1;
+      const idImg = wb.addImage({ base64: g.base64, extension: 'png' });
+      ws.addImage(idImg, { tl: { col: 0.1, row: fila - 1 }, ext: { width: g.width, height: g.height } });
+      fila += Math.ceil(g.height / 20) + 1;
+    }
     if (cfg.autofiltro) ws.autoFilter = { from: { row: 7, column: 1 }, to: { row: 7, column: cfg.columnas.length } };
 
     const buf = await wb.xlsx.writeBuffer();
