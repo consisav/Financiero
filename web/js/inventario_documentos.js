@@ -189,7 +189,7 @@
             ${ed && tab === 'DETALLE' ? '<div class="ck-docs-acc"><input list="iv-productos" data-agregar placeholder="Agregar producto (código, código de barras o nombre)…" aria-label="Agregar producto" autocomplete="off"></div>' : ''}
             ${d && !ed ? `<div class="iv-acc">
               ${boton('OPERAR', C.operar[1], C.operar[0], consulta && ctx.admin && d.estado === 'REGISTRADO', 'primario-sm')}
-              ${boton('REVERTIR', 'ti-arrow-back-up', C.revertir, consulta && ctx.admin && d.estado === 'OPERADO')}
+              ${d.origen_anterior === 'MIGRADO' ? `<span class="tk-tenue iv-migrado" title="Documento del sistema anterior: su movimiento está en el kardex histórico"><i class="ti ti-history" aria-hidden="true"></i> Sistema anterior</span>` : boton('REVERTIR', 'ti-arrow-back-up', C.revertir, consulta && ctx.admin && d.estado === 'OPERADO')}
               ${boton('ANULAR', 'ti-ban', C.anular, consulta && ctx.admin && d.estado === 'REGISTRADO')}
               <span class="iv-imp">${boton('imprimir', 'ti-printer', 'Imprimir', true)}<select name="formato" aria-label="Formato"><option ${f.formato === 'PDF' ? 'selected' : ''}>PDF</option><option ${f.formato === 'EXCEL' ? 'selected' : ''}>EXCEL</option></select></span>
             </div>` : ''}</div>

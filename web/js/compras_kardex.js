@@ -16,6 +16,7 @@
   const fechaHora = (d, t) => `${fmt.fechaDia(d)}${t ? ` ${new Date(t).toLocaleTimeString('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit', hour12: false })}` : ''}`;
   // Tipo de movimiento: código y nombre, según su origen y documento.
   function tipoMov(m) {
+    if (m.tipos_movimiento_inventario) return [m.tipo_movimiento, m.tipos_movimiento_inventario.descripcion];
     if (m.origen === 'INGRESO') return [1, 'INGRESO - ORDEN DE COMPRA'];
     if (m.origen === 'COMPRA') return [2, 'INGRESO - COMPRA'];
     if (m.origen === 'NOTA' && m.nota_venta_lineas) return [10, 'INGRESO - DEVOLUCIÓN CLIENTE'];
@@ -82,7 +83,8 @@
           ingreso_lineas(fecha_fabricacion, ingresos_compra(numero, serie, documento, ordenes_compra(numero))), compra_articulos(compras(numero, serie, documento, proveedor_nombre)),
           nota_compra_lineas(fecha_fabricacion, notas_compra(numero, tipo, serie, documento, proveedor_nombre)), consignacion_lineas(consignaciones(numero, tipo_documento, serie, documento, proveedor_nombre)),
           factura_venta_lineas(fecha_fabricacion, facturas_venta(numero, serie, numero_dte, nombre)), nota_venta_lineas(fecha_fabricacion, notas_venta(numero, serie, numero_dte, nombre)),
-          documento_inventario_lineas(fecha_fabricacion, nueva_fabricacion, documentos_inventario(numero, tipo, descripcion))`)
+          documento_inventario_lineas(fecha_fabricacion, nueva_fabricacion, documentos_inventario(numero, tipo, descripcion)),
+          tipo_movimiento, no_doc_anterior, documento_fisico, fecha_fabricacion, fecha_movimiento, observaciones, tipos_movimiento_inventario(descripcion)`)
         .eq('localidad_id', ctx.sel.loc).eq('producto_id', sel).order('fecha').order('id');
       if (!f.todas && f.bodega) q = q.eq('bodega_id', Number(f.bodega));
       if (!noPerecedero() && f.hasta) q = q.lte('fecha', f.hasta);
@@ -101,10 +103,10 @@
         const fv = x.factura_venta_lineas?.facturas_venta, nv = x.nota_venta_lineas?.notas_venta, di = x.documento_inventario_lineas?.documentos_inventario;
         const venta = fv || nv ? { numero: (fv || nv).numero, serie: (fv || nv).serie, documento: (fv || nv).numero_dte } : null;
         const d = ing || com || nota || con || venta || (di ? { numero: di.numero, serie: di.tipo === 'TRASLADO' ? 'TRASLADO' : 'AJUSTE' } : null) || {};
-        const m = { ...x, c, costo, total, exLote: lotes.get(lote), prom, valorTotal: total * prom, lote,
-          interno: d.numero ?? '', fisico: [d.serie, d.documento].filter(Boolean).join('-'), tercero: com?.proveedor_nombre || nota?.proveedor_nombre || con?.proveedor_nombre || fv?.nombre || nv?.nombre || '', doc: di || null,
+        const m = { ...x, c, costo, total, exLote: lotes.get(lote), prom, valorTotal: total * prom, lote, creado_en: x.fecha_movimiento || x.creado_en,
+          interno: d.numero ?? x.no_doc_anterior ?? '', fisico: [d.serie, d.documento].filter(Boolean).join('-') || (x.documento_fisico || ''), tercero: com?.proveedor_nombre || nota?.proveedor_nombre || con?.proveedor_nombre || fv?.nombre || nv?.nombre || '', doc: di || null,
           fabricacion: x.ingreso_lineas?.fecha_fabricacion || x.nota_compra_lineas?.fecha_fabricacion || x.factura_venta_lineas?.fecha_fabricacion || x.nota_venta_lineas?.fecha_fabricacion
-            || (di?.tipo === 'AJUSTE LOTE' && c > 0 ? x.documento_inventario_lineas?.nueva_fabricacion : x.documento_inventario_lineas?.fecha_fabricacion) || null, orden: ing?.ordenes_compra?.numero || '' };
+            || (di?.tipo === 'AJUSTE LOTE' && c > 0 ? x.documento_inventario_lineas?.nueva_fabricacion : x.documento_inventario_lineas?.fecha_fabricacion) || x.fecha_fabricacion || null, orden: ing?.ordenes_compra?.numero || '' };
         [m.tipo, m.nombre] = tipoMov(m);
         return m;
       });

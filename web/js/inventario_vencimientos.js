@@ -51,7 +51,7 @@
         const [b, p, mv] = await Promise.all([
           sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo'),
           leerTodo(() => sb.from('productos').select('id, codigo, codigo_producto, nombre, precio_costo').eq('localidad_id', loc).order('id')),
-          leerTodo(() => sb.from('inventario_movimientos').select('producto_id, bodega_id, lote, fecha_vencimiento, cantidad, costo_unitario, ingreso_lineas(fecha_fabricacion), compra_articulos(fecha_fabricacion), nota_compra_lineas(fecha_fabricacion), factura_venta_lineas(fecha_fabricacion), documento_inventario_lineas(fecha_fabricacion, nueva_fabricacion)').eq('localidad_id', loc).order('id'))
+          leerTodo(() => sb.from('inventario_movimientos').select('producto_id, bodega_id, lote, fecha_vencimiento, cantidad, costo_unitario, ingreso_lineas(fecha_fabricacion), compra_articulos(fecha_fabricacion), nota_compra_lineas(fecha_fabricacion), factura_venta_lineas(fecha_fabricacion), documento_inventario_lineas(fecha_fabricacion, nueva_fabricacion), fecha_fabricacion').eq('localidad_id', loc).order('id'))
         ]);
         bodegas = (b.data || []).filter((x) => x.estado === 'ACTIVO'); productos = new Map(p.map((x) => [x.id, x]));
         const g = new Map();
@@ -61,7 +61,7 @@
           a.ex += Number(x.cantidad);
           // El vencimiento del lote es el de sus entradas (una salida puede traer otra fecha).
           if (x.fecha_vencimiento && (Number(x.cantidad) > 0 || !a.vence)) a.vence = x.fecha_vencimiento;
-          const fab = x.ingreso_lineas?.fecha_fabricacion || x.compra_articulos?.fecha_fabricacion || x.nota_compra_lineas?.fecha_fabricacion || x.factura_venta_lineas?.fecha_fabricacion || x.documento_inventario_lineas?.nueva_fabricacion || x.documento_inventario_lineas?.fecha_fabricacion;
+          const fab = x.ingreso_lineas?.fecha_fabricacion || x.compra_articulos?.fecha_fabricacion || x.nota_compra_lineas?.fecha_fabricacion || x.factura_venta_lineas?.fecha_fabricacion || x.documento_inventario_lineas?.nueva_fabricacion || x.documento_inventario_lineas?.fecha_fabricacion || x.fecha_fabricacion;
           if (fab) a.fab = fab;
           if (Number(x.cantidad) > 0 && Number(x.costo_unitario)) a.costo = Number(x.costo_unitario);
           g.set(k, a);
