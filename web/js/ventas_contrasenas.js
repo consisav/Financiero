@@ -1,4 +1,4 @@
-// Facturación/Ventas · Mantenimientos · Administración de Contraseñas Cobros: «Recepción de facturas clientes».
+// Facturación/Ventas · Mantenimientos · Contraseñas de Cobro: «Recepción de facturas clientes».
 //   Encabezado: número, fecha, usuario, estado (EMITIDA, AUTORIZADA, ANULADA), cliente, días de crédito y fecha
 //   estimada de cobro. Detalle de documentos emitidos: factura (FE-n), fecha, valor y observaciones, con el total.
 //   «Asignar facturas» trae las facturas con saldo del cliente que aún no tienen contraseña. Al guardar, cada factura
@@ -10,7 +10,7 @@
   const DIAS = [0, 8, 15, 30, 45, 60, 90, 120];
 
   window.PANTALLAS['contrasenas-cobros'] = function (cont, m, extra) {
-    const ctx = montar(cont, { titulo: 'Administración de Contraseñas Cobros', icono: 'ti-key', clase: 'bk-movimientos bm-solo vf-facturas vk-contrasenas', grupo: 'Ventas · Mantenimientos' });
+    const ctx = montar(cont, { titulo: 'Contraseñas de Cobro', icono: 'ti-key', clase: 'bk-movimientos bm-solo vf-facturas vk-contrasenas', grupo: 'Ventas · Mantenimientos' });
     const { sb } = ctx;
     let clientes = [], actual = null, modificando = false, pestana = 'DETALLE', lineas = [], listado = null;
     const cliente = (id) => clientes.find((c) => c.id === id);

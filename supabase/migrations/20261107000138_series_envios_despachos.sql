@@ -1,5 +1,5 @@
--- Facturación/Ventas: catálogos «Series Recibos» y «Correlativo - DTE»; mantenimientos «Envíos», «Administración de
--- Contraseñas Cobros», «Despachos», «Retenciones» y «Exenciones». Se ejecuta después de los scripts 133 y 134.
+-- Facturación/Ventas: catálogos «Series Recibos» y «Correlativo - DTE»; mantenimientos «Envíos», «Contraseñas de
+-- Cobro», «Despachos», «Retenciones» y «Exenciones». Se ejecuta después de los scripts 133 y 134.
 --   series_recibo: series de los recibos (recibo inicial, principal, tipo RECIBO / RETENCIÓN / EXENCIÓN, si se muestra
 --   en la lista). Se llenan con las series que ya tienen los recibos de cada empresa.
 --   correlativos_dte: correlativo interno de las facturas (FE) y de las notas de crédito (NC) de cada empresa. Una
@@ -321,7 +321,7 @@ begin
   delete from public.rol_accesos where opcion_id in (select id from public.opciones_sistema where modulo_id = v_mod and clave = 'series-de-documentos');
   delete from public.opciones_sistema where modulo_id = v_mod and clave = 'series-de-documentos';
   select coalesce(min(orden), (select max(orden) from public.opciones_sistema where modulo_id = v_mod)) - 1 into v_orden from public.opciones_sistema where modulo_id = v_mod and grupo = 'mantenimientos';
-  for o in select * from (values (1, 'envios', 'Envíos'), (2, 'contrasenas-cobros', 'Administración de Contraseñas Cobros'), (3, 'despachos', 'Despachos'),
+  for o in select * from (values (1, 'envios', 'Envíos'), (2, 'contrasenas-cobros', 'Contraseñas de Cobro'), (3, 'despachos', 'Despachos'),
       (4, 'retenciones', 'Retenciones'), (5, 'exenciones', 'Exenciones')) as x(n, clave, nombre) loop
     if not exists (select 1 from public.opciones_sistema where modulo_id = v_mod and clave = o.clave) then
       update public.opciones_sistema set orden = orden + 1 where modulo_id = v_mod and orden > v_orden + o.n - 1;

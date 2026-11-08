@@ -276,7 +276,7 @@ window.MODULOS = [
           icono: 'ti-truck-delivery',
           pantallas: [
             { id: 'envios', nombre: 'Envíos', icono: 'ti-truck', descripcion: 'Envíos de productos a un cliente: bodega, cliente, forma de pago, precios y productos con lote y vencimiento; impresión tipo factura o tipo envío.' },
-            { id: 'contrasenas-cobros', nombre: 'Administración de Contraseñas Cobros', icono: 'ti-key', descripcion: 'Recepción de facturas por el cliente: contraseña de cobro, días de crédito y fecha estimada de cobro de cada factura.' },
+            { id: 'contrasenas-cobros', nombre: 'Contraseñas de Cobro', icono: 'ti-key', descripcion: 'Recepción de facturas por el cliente: contraseña de cobro, días de crédito y fecha estimada de cobro de cada factura.' },
             { id: 'despachos', nombre: 'Despachos', icono: 'ti-package-export', descripcion: 'Facturas por despachar por fechas, cliente y estado; despacho de productos con guías, reportes de salida y envío, mensajero y entrega.' },
             { id: 'retenciones', nombre: 'Retenciones', icono: 'ti-receipt-tax', descripcion: 'Constancias de retención (IVA o ISR) recibidas del cliente y aplicadas a sus facturas.' },
             { id: 'exenciones', nombre: 'Exenciones', icono: 'ti-shield-check', descripcion: 'Constancias de exención del cliente aplicadas a sus facturas.' }
