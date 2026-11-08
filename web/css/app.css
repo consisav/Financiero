@@ -5721,3 +5721,9 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cr-meses .pc-marca { min-width: 46px; text-align: center; }
 h3.pr-sub { font-size: 15px; margin: 18px 0 8px; display: flex; gap: 6px; align-items: center; }
 form.cr-rec { margin-top: 14px; }
+
+/* Separador del menú principal de módulos */
+#nav-modulos hr.nav-separador { border: 0; border-top: 1px solid rgba(255, 255, 255, 0.16); margin: 6px 12px; }
+/* Clínicas médicas */
+.cli-acc { white-space: nowrap; }
+form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 100%; }

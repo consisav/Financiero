@@ -2652,5 +2652,243 @@
    "Las reaperturas aparecen resaltadas.",
    "Imprime en PDF para auditoría."
   ]
+ },
+ "cli-medicos": {
+  "puntos": [
+   "Médicos compartidos con Hospital, especialidades y horarios de atención."
+  ],
+  "pasos": [
+   "Abre Clínicas médicas › Catálogos › Médicos, especialidades y horarios con {empresa}.",
+   "Registra cada médico con colegiado, especialidad, % de la clínica y % de retención de ISR.",
+   "En «Horarios de atención» agrega sus bloques por día, consultorio y minutos por cita.",
+   "La agenda muestra como espacios libres los bloques sin cita."
+  ]
+ },
+ "cli-consultorios": {
+  "puntos": [
+   "Consultorios por sede."
+  ],
+  "pasos": [
+   "Abre Catálogos › Clínicas y consultorios.",
+   "Presiona «Nuevo» y escribe el nombre, la sede, la especialidad y el equipo.",
+   "Asigna el consultorio en los horarios de los médicos."
+  ]
+ },
+ "cli-servicios": {
+  "puntos": [
+   "Servicios con precio particular, tarifas por aseguradora, aseguradoras y paquetes."
+  ],
+  "pasos": [
+   "Abre Catálogos › Servicios, tarifas y paquetes.",
+   "Revisa los servicios iniciales (consulta general, especialidad, reconsulta, procedimientos, laboratorio, imagen) y sus precios.",
+   "En «Tarifas por aseguradora» registra el precio pactado y el copago fijo.",
+   "En «Paquetes y membresías» crea paquetes con sesiones, precio y vigencia."
+  ]
+ },
+ "cli-diagnosticos": {
+  "puntos": [
+   "Catálogo CIE-10 para la consulta y la morbilidad."
+  ],
+  "pasos": [
+   "Abre Catálogos › Diagnósticos CIE-10 y busca por código o nombre.",
+   "Con «Nuevo» agrega un código que no esté (por ejemplo K35.8)."
+  ]
+ },
+ "cli-vademecum": {
+  "puntos": [
+   "Medicamentos para recetar y plantillas clínicas."
+  ],
+  "pasos": [
+   "Abre Catálogos › Medicamentos y plantillas.",
+   "Registra los medicamentos con presentación, concentración, vía y dosis habitual.",
+   "Crea plantillas por especialidad con la historia, el examen físico y el plan."
+  ]
+ },
+ "cli-expediente": {
+  "puntos": [
+   "Datos, antecedentes, alergias e historial del paciente."
+  ],
+  "pasos": [
+   "Abre Registros › Pacientes y expediente clínico y busca al paciente por expediente, nombre o DPI.",
+   "Con «Nuevo paciente» lo registras; el expediente se numera solo.",
+   "Completa los antecedentes y las alergias (se muestran en rojo en la consulta).",
+   "Imprime la historia clínica con «Historia clínica»."
+  ]
+ },
+ "cli-agenda": {
+  "puntos": [
+   "Citas del día por médico y espacios libres."
+  ],
+  "pasos": [
+   "Abre Registros › Agenda de citas, elige la fecha y el médico.",
+   "Toca un espacio libre o «Nueva cita», elige al paciente, el servicio y la cobertura y presiona «Agendar».",
+   "Toca una cita para confirmarla, cancelarla o marcarla como no asistió.",
+   "Imprime la agenda del día en PDF."
+  ]
+ },
+ "cli-recepcion": {
+  "puntos": [
+   "Llegada, sala de espera, signos vitales y paso a consulta."
+  ],
+  "pasos": [
+   "Abre Registros › Recepción y signos vitales.",
+   "Presiona «Llegó» cuando el paciente se presenta: empieza a contar su espera.",
+   "Presiona «Signos», registra peso, talla, presión, temperatura y saturación y guarda.",
+   "Presiona «Pasar» para enviarlo al médico."
+  ]
+ },
+ "cli-consulta": {
+  "puntos": [
+   "Consulta SOAP con CIE-10, receta, órdenes e impresión."
+  ],
+  "pasos": [
+   "Abre Registros › Consulta médica y elige la consulta del día.",
+   "Carga una plantilla y escribe motivo, historia, examen físico y plan.",
+   "Agrega los diagnósticos CIE-10 (el primero es el principal), la receta y las órdenes.",
+   "Imprime la receta y las órdenes; presiona «Cerrar consulta».",
+   "Si requiere internamiento usa «Trasladar a hospitalización»."
+  ]
+ },
+ "cli-ordenes": {
+  "puntos": [
+   "Órdenes con su estado y resultado."
+  ],
+  "pasos": [
+   "Abre Registros › Órdenes y resultados.",
+   "Marca «Realizada» al tomar la muestra o el estudio.",
+   "Registra el resultado con «Resultado»."
+  ]
+ },
+ "cli-documentos": {
+  "puntos": [
+   "Certificados, incapacidades, constancias y referencias."
+  ],
+  "pasos": [
+   "Abre Registros › Constancias y referencias y presiona «Nuevo documento».",
+   "Elige el tipo, el paciente y el médico; para incapacidad indica días y fechas.",
+   "Presiona «Proponer texto», ajústalo y presiona «Emitir»: se imprime numerado."
+  ]
+ },
+ "cli-cobro": {
+  "puntos": [
+   "Cobro particular, con aseguradora o con paquete; recibo."
+  ],
+  "pasos": [
+   "Abre Registros › Cobro de consulta: arriba aparecen los atendidos sin cobrar.",
+   "Toca al paciente: se cargan su cobertura y el servicio de la cita.",
+   "Agrega servicios; elige el paquete si usa una sesión y la bodega si lleva insumos.",
+   "Revisa la parte del paciente y de la aseguradora, elige la forma de pago y presiona «Cobrar»: se imprime el recibo."
+  ]
+ },
+ "cli-confirmacion": {
+  "puntos": [
+   "Confirmación de citas, lista de espera y ausentismo."
+  ],
+  "pasos": [
+   "Abre Procesos › Confirmación de citas y lista de espera (por defecto las de mañana).",
+   "Llama a cada paciente y marca «Confirmó» o «Canceló».",
+   "Ofrece los espacios cancelados a la lista de espera y agéndalos.",
+   "Usa «Marcar no asistió» para las citas pasadas sin atender."
+  ]
+ },
+ "cli-paquetes": {
+  "puntos": [
+   "Venta de paquetes e ingreso diferido."
+  ],
+  "pasos": [
+   "Abre Procesos › Paquetes y membresías.",
+   "Elige al paciente, el paquete y la forma de pago y presiona «Vender».",
+   "Cada sesión se usa en Cobro de consulta eligiendo el paquete."
+  ]
+ },
+ "cli-caja": {
+  "puntos": [
+   "Cierre de caja por cajero."
+  ],
+  "pasos": [
+   "Abre Procesos › Cierre de caja diario con la fecha.",
+   "Cuenta el efectivo y escríbelo en «Efectivo contado».",
+   "Presiona «Cerrar mi caja»: queda la diferencia y los cobros ya no se anulan."
+  ]
+ },
+ "cli-honorarios": {
+  "puntos": [
+   "Honorarios por médico con participación y retención."
+  ],
+  "pasos": [
+   "Abre Procesos › Liquidación de honorarios con el período.",
+   "Revisa el bruto, la participación de la clínica, la retención de ISR y el líquido.",
+   "Presiona «Liquidar» y, al pagar, «Pagada» con la referencia."
+  ]
+ },
+ "cli-reclamos": {
+  "puntos": [
+   "Reclamos a aseguradoras, aprobado, glosa y pago."
+  ],
+  "pasos": [
+   "Abre Procesos › Reclamos a aseguradoras con el período.",
+   "Presiona «Generar reclamo» en cada aseguradora.",
+   "Registra lo aprobado, la glosa, lo pagado y el estado según la respuesta."
+  ]
+ },
+ "cli-contabilidad": {
+  "puntos": [
+   "Partida de ingresos del día y auxiliares contra contabilidad."
+  ],
+  "pasos": [
+   "Configura las cuentas CLI_* , ASEGURADORAS_CXC, HONORARIOS_POR_PAGAR e IVA_DEBITO en Contabilidad › Cuentas de integración.",
+   "Abre Procesos › Integración contable y elige el día.",
+   "Revisa la vista previa: debe cuadrar.",
+   "Presiona «Generar partida del día»: queda aprobada y los cobros enlazados.",
+   "Compara los auxiliares (aseguradoras, honorarios, paquetes) con sus cuentas."
+  ]
+ },
+ "cli-rep-productividad": {
+  "puntos": [
+   "Productividad por médico."
+  ],
+  "pasos": [
+   "Abre Reportes › Agenda y productividad por médico, elige las fechas e imprime."
+  ]
+ },
+ "cli-rep-morbilidad": {
+  "puntos": [
+   "Diagnósticos más frecuentes por sexo y edad."
+  ],
+  "pasos": [
+   "Abre Reportes › Morbilidad CIE-10, elige las fechas y cuántos diagnósticos ver."
+  ]
+ },
+ "cli-rep-ingresos": {
+  "puntos": [
+   "Ingresos agrupados a elección."
+  ],
+  "pasos": [
+   "Abre Reportes › Ingresos por servicio, médico y forma de pago y elige cómo agrupar."
+  ]
+ },
+ "cli-rep-ocupacion": {
+  "puntos": [
+   "Ocupación de consultorios."
+  ],
+  "pasos": [
+   "Abre Reportes › Ocupación de consultorios: horas disponibles según horarios contra horas citadas."
+  ]
+ },
+ "cli-rep-cartera": {
+  "puntos": [
+   "Cartera de aseguradoras por antigüedad y honorarios por pagar."
+  ],
+  "pasos": [
+   "Abre Reportes › Cartera de aseguradoras y honorarios con la fecha de corte."
+  ]
+ },
+ "cli-rep-indicadores": {
+  "puntos": [
+   "Indicadores de gestión de la clínica."
+  ],
+  "pasos": [
+   "Abre Reportes › Indicadores de la clínica con el período y compáralo mes a mes."
+  ]
  }
 }

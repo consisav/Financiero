@@ -237,7 +237,7 @@
 
   function pintarLateral() {
     $('nav-modulos').innerHTML = visibles().map((m) =>
-      `<a ${m.enlace ? `href="${esc(m.enlace)}" target="_blank" rel="noopener"` : `href="#/${m.id}"`} data-ruta="${m.id}"><i class="ti ${m.icono}" aria-hidden="true"></i> ${esc(m.corto)}${m.enlace ? ' <i class="ti ti-external-link" aria-hidden="true"></i>' : ''}</a>`).join('');
+      `<a ${m.enlace ? `href="${esc(m.enlace)}" target="_blank" rel="noopener"` : `href="#/${m.id}"`} data-ruta="${m.id}"><i class="ti ${m.icono}" aria-hidden="true"></i> ${esc(m.corto)}${m.enlace ? ' <i class="ti ti-external-link" aria-hidden="true"></i>' : ''}</a>${m.separador ? '<hr class="nav-separador" aria-hidden="true">' : ''}`).join('');
     $('nav-admin').hidden = !window.FIN.esAdmin();
     const nombre = perfil.nombre || perfil.correo;
     $('quien-nombre').textContent = nombre;

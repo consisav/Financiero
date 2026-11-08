@@ -839,6 +839,68 @@ window.MODULOS = [
     }
   },
   {
+    id: 'clinicas',
+    corto: 'Clínicas Médicas',
+    color: 'verde',
+    hereda: 'hospital',
+    nombre: 'Clínicas médicas',
+    icono: 'ti-stethoscope',
+    descripcion: 'Consulta externa: agenda, recepción, consulta médica con CIE-10, recetas, órdenes, cobros, paquetes, honorarios, aseguradoras e integración contable.',
+    subgrupos: {
+      catalogos: [
+        { subgrupo: 'Personal y pacientes', icono: 'ti-stethoscope', pantallas: [
+          { id: 'cli-medicos', nombre: 'Médicos, especialidades y horarios', icono: 'ti-stethoscope', descripcion: 'Médicos (compartidos con Hospital) con su participación y retención, especialidades y horarios de atención por consultorio.' }
+        ] },
+        { subgrupo: 'Clínica', icono: 'ti-building-community', pantallas: [
+          { id: 'cli-consultorios', nombre: 'Clínicas y consultorios', icono: 'ti-door', descripcion: 'Consultorios por sede con su especialidad y equipo.' },
+          { id: 'cli-servicios', nombre: 'Servicios, tarifas y paquetes', icono: 'ti-list-check', descripcion: 'Servicios con precio particular, tarifas y copagos por aseguradora, aseguradoras y paquetes de sesiones.' }
+        ] },
+        { subgrupo: 'Clínico', icono: 'ti-vaccine', pantallas: [
+          { id: 'cli-diagnosticos', nombre: 'Diagnósticos CIE-10', icono: 'ti-vaccine', descripcion: 'Catálogo CIE-10 con los diagnósticos más frecuentes de consulta externa.' },
+          { id: 'cli-vademecum', nombre: 'Medicamentos y plantillas', icono: 'ti-pill', descripcion: 'Vademécum para recetas y plantillas de historia y examen físico por especialidad.' }
+        ] }
+      ],
+      registros: [
+        { subgrupo: 'Atención', icono: 'ti-heartbeat', pantallas: [
+          { id: 'cli-expediente', nombre: 'Pacientes y expediente clínico', icono: 'ti-user-heart', descripcion: 'Datos del paciente, antecedentes, alergias, historial de consultas e impresión de la historia clínica.' },
+          { id: 'cli-agenda', nombre: 'Agenda de citas', icono: 'ti-calendar-event', descripcion: 'Citas por día y médico con los espacios libres según los horarios; confirmar, cancelar o marcar no asistió.' },
+          { id: 'cli-recepcion', nombre: 'Recepción y signos vitales', icono: 'ti-heartbeat', descripcion: 'Llegada del paciente, sala de espera con su tiempo, signos vitales e IMC y paso a consulta.' },
+          { id: 'cli-consulta', nombre: 'Consulta médica', icono: 'ti-clipboard-heart', descripcion: 'Consulta SOAP con plantillas, diagnósticos CIE-10, receta, órdenes, impresión y traslado a hospitalización.' },
+          { id: 'cli-ordenes', nombre: 'Órdenes y resultados', icono: 'ti-microscope', descripcion: 'Órdenes de laboratorio, imagen y procedimientos con su estado y resultado.' },
+          { id: 'cli-documentos', nombre: 'Constancias y referencias', icono: 'ti-certificate', descripcion: 'Certificados médicos, incapacidades, constancias de asistencia y referencias impresas.' }
+        ] },
+        { subgrupo: 'Caja', icono: 'ti-cash-register', pantallas: [
+          { id: 'cli-cobro', nombre: 'Cobro de consulta', icono: 'ti-cash-register', descripcion: 'Cobro particular, con aseguradora (copago o coaseguro) o con sesión de paquete; insumos con salida de inventario y recibo.' }
+        ] }
+      ],
+      procesos: [
+        { subgrupo: 'Clínica', icono: 'ti-settings-automation', pantallas: [
+          { id: 'cli-confirmacion', nombre: 'Confirmación de citas y lista de espera', icono: 'ti-phone-check', descripcion: 'Confirmación de las citas del día siguiente, lista de espera y citas pasadas como no asistió.' },
+          { id: 'cli-paquetes', nombre: 'Paquetes y membresías', icono: 'ti-ticket', descripcion: 'Venta de paquetes con su ingreso diferido, sesiones usadas, saldo y vencimiento.' },
+          { id: 'cli-caja', nombre: 'Cierre de caja diario', icono: 'ti-cash-banknote', descripcion: 'Cierre de cada cajero por forma de pago con el efectivo contado y su diferencia.' },
+          { id: 'cli-honorarios', nombre: 'Liquidación de honorarios', icono: 'ti-receipt-tax', descripcion: 'Honorarios por médico menos la participación de la clínica y la retención de ISR; pago.' },
+          { id: 'cli-reclamos', nombre: 'Reclamos a aseguradoras', icono: 'ti-shield-heart', descripcion: 'Lotes de cobros por aseguradora con lo aprobado, glosas y pagos.' }
+        ] },
+        { subgrupo: 'Integración contable', icono: 'ti-arrows-join', pantallas: [
+          { id: 'cli-contabilidad', nombre: 'Integración contable', icono: 'ti-arrows-join', descripcion: 'Partida de ingresos del día (caja, bancos, aseguradoras, ingresos, diferido e IVA) y auxiliares contra contabilidad.' }
+        ] }
+      ],
+      reportes: [
+        { subgrupo: 'Reportes', icono: 'ti-report-analytics', pantallas: [
+          { id: 'cli-rep-productividad', nombre: 'Agenda y productividad por médico', icono: 'ti-user-check', descripcion: 'Citas, atendidas, ausentismo, espera, duración e ingresos por médico. PDF y Excel.' },
+          { id: 'cli-rep-morbilidad', nombre: 'Morbilidad CIE-10', icono: 'ti-virus', descripcion: 'Diagnósticos más frecuentes con casos nuevos, sexo y grupos de edad. PDF y Excel.' },
+          { id: 'cli-rep-ingresos', nombre: 'Ingresos por servicio, médico y forma de pago', icono: 'ti-report-money', descripcion: 'Ingresos de pacientes, aseguradoras y paquetes agrupados a elección. PDF y Excel.' },
+          { id: 'cli-rep-ocupacion', nombre: 'Ocupación de consultorios', icono: 'ti-door', descripcion: 'Horas disponibles según horarios contra horas citadas por consultorio. PDF y Excel.' },
+          { id: 'cli-rep-cartera', nombre: 'Cartera de aseguradoras y honorarios', icono: 'ti-shield-heart', descripcion: 'Saldos por aseguradora por antigüedad y honorarios liquidados por pagar. PDF y Excel.' },
+          { id: 'cli-rep-indicadores', nombre: 'Indicadores de la clínica', icono: 'ti-gauge', descripcion: 'Pacientes nuevos y recurrentes, consultas por día, ticket promedio, ausentismo y espera. PDF y Excel.' }
+        ] }
+      ]
+    },
+    opciones: {
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
+    }
+  },
+  {
     id: 'odontologia',
     corto: 'Odontología',
     color: 'azul',
@@ -908,4 +970,13 @@ window.MODULOS = [
       { id: 'bitacora-cierres', nombre: 'Bitácora de cierres', icono: 'ti-history', descripcion: 'Cierres y reaperturas de meses y ejercicios con usuario, fecha y motivo, y las partidas de los procesos automáticos. PDF y Excel.' }
     ] }
   ];
+})();
+
+// Orden del menú principal de módulos y separadores (debajo de Presupuesto y Flujo, Importaciones y exportaciones,
+// Activos Fijos y Nóminas).
+(function () {
+  const orden = ['administracion', 'contabilidad', 'caja-bancos', 'facturacion', 'compras', 'sat', 'presupuesto-flujo', 'comercio', 'inventarios', 'activos-fijos', 'nominas', 'hospital', 'clinicas', 'odontologia'];
+  const pos = (m) => { const i = orden.indexOf(m.id); return i < 0 ? 999 : i; };
+  window.MODULOS.sort((a, b) => pos(a) - pos(b));
+  window.MODULOS.forEach((m) => { m.separador = ['presupuesto-flujo', 'comercio', 'activos-fijos', 'nominas'].includes(m.id); });
 })();

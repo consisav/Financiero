@@ -117,7 +117,16 @@
     ['ANTICIPOS_PROVEEDORES', 'Anticipos a proveedores', 'Anticipos pendientes de liquidar', /ANTICIPOS? A PROVEEDORES/],
     ['ANTICIPOS_CLIENTES', 'Anticipos de clientes', 'Anticipos recibidos', /ANTICIPOS? DE CLIENTES/],
     ['DIF_CAMBIARIO_INGRESO', 'Diferencial cambiario (ganancia)', 'Revaluación de moneda extranjera', /DIFERENCIAL CAMBIARIO|GANANCIA CAMBIARIA/],
-    ['DIF_CAMBIARIO_GASTO', 'Diferencial cambiario (pérdida)', 'Revaluación de moneda extranjera', /DIFERENCIAL CAMBIARIO|P[EÉ]RDIDA CAMBIARIA/]
+    ['DIF_CAMBIARIO_GASTO', 'Diferencial cambiario (pérdida)', 'Revaluación de moneda extranjera', /DIFERENCIAL CAMBIARIO|P[EÉ]RDIDA CAMBIARIA/],
+    ['ASEGURADORAS_CXC', 'Cuentas por cobrar aseguradoras', 'Clínicas y hospital: parte de aseguradoras', /ASEGURADORAS/],
+    ['HONORARIOS_POR_PAGAR', 'Honorarios médicos por pagar', 'Liquidaciones de honorarios', /HONORARIOS.*POR PAGAR/],
+    ['CLI_CAJA', 'Clínica: caja', 'Cobros en efectivo', /CAJA GENERAL|^CAJA/],
+    ['CLI_BANCOS', 'Clínica: bancos', 'Cobros con tarjeta, transferencia y cheque', /BANCOS?|DEP[OÓ]SITOS/],
+    ['CLI_INGRESO_CONSULTAS', 'Clínica: ingresos por consultas', 'Consultas, reconsultas y sesiones de paquetes', /CONSULTA/],
+    ['CLI_INGRESO_PROCEDIMIENTOS', 'Clínica: ingresos por procedimientos', 'Procedimientos', /PROCEDIMIENTO/],
+    ['CLI_INGRESO_LAB_IMAGEN', 'Clínica: ingresos de laboratorio e imagen', 'Laboratorio e imagen', /LABORATORIO|IM[AÁ]GENES/],
+    ['CLI_INGRESO_OTROS', 'Clínica: otros ingresos', 'Certificados, insumos y otros', /OTROS INGRESOS/],
+    ['CLI_INGRESO_DIFERIDO', 'Clínica: ingreso diferido de paquetes', 'Paquetes vendidos por usar', /DIFERIDO|ANTICIPOS DE CLIENTES/]
   ];
   const CLAVES_CIERRE = [
     ['RESULTADO_EJERCICIO', 'Resultado del ejercicio', 'Recibe el cierre de ingresos, costos y gastos (PCR)', /RESULTADO DEL (EJERCICIO|PERIODO)/],

@@ -1,0 +1,42 @@
+{
+  "version": "2026.11",
+  "titulo": "Manual del módulo Clínicas médicas",
+  "resumen": "Consulta externa: médicos y horarios, consultorios, servicios y tarifas, CIE-10, expediente, agenda, recepción, consulta, recetas, órdenes, constancias, cobros, paquetes, caja, honorarios, reclamos e integración contable.",
+  "nombresTablas": {
+    "cli_citas": "Citas",
+    "cli_consultas": "Consultas",
+    "cli_cobros": "Cobros",
+    "cli_servicios": "Servicios",
+    "hos_pacientes": "Pacientes"
+  },
+  "diapositivas": [
+    {
+      "tipo": "portada",
+      "titulo": "Módulo de Clínicas médicas",
+      "subtitulo": "De la cita al cobro y a la contabilidad"
+    },
+    {
+      "tipo": "concepto",
+      "titulo": "El flujo del paciente",
+      "subtitulo": "Cita › Recepción › Consulta › Cobro › Contabilidad",
+      "pasos": [
+        "Agenda: la cita se da en un espacio libre del horario del médico (sin traslapes).",
+        "Recepción: se marca la llegada, se toman los signos vitales y el paciente pasa al médico.",
+        "Consulta: historia, examen, diagnósticos CIE-10, receta y órdenes; al cerrarla la cita queda atendida.",
+        "Cobro: particular, con aseguradora (copago o coaseguro) o con una sesión de paquete; los insumos salen de inventario.",
+        "Procesos: cierre de caja diario, liquidación de honorarios, reclamos a aseguradoras y la partida contable del día."
+      ]
+    },
+    {
+      "tipo": "consejos",
+      "titulo": "Buenas prácticas",
+      "puntos": [
+        "Registra los horarios de cada médico: la agenda y la ocupación dependen de ellos.",
+        "Confirma un día antes las citas y usa la lista de espera para los espacios cancelados.",
+        "Cierra cada consulta el mismo día con su diagnóstico principal.",
+        "Cierra la caja de cada cajero con el arqueo del efectivo.",
+        "Genera la partida de ingresos del día y revisa los auxiliares contra la contabilidad."
+      ]
+    }
+  ]
+}
