@@ -1,0 +1,178 @@
+{
+ "version": "2026.11b",
+ "titulo": "Manual del módulo Facturación y ventas",
+ "resumen": "Clientes, facturas FEL, recibos, notas electrónicas, cuentas por cobrar y reportes con PDF, Excel y gráficas.",
+ "nombresTablas": {
+  "clientes": "Clientes",
+  "productos": "Productos",
+  "vendedores": "Vendedores",
+  "tipos_precio": "Tipos de precio"
+ },
+ "sinEjemplos": [
+  "clientes"
+ ],
+ "diapositivas": [
+  {
+   "tipo": "portada",
+   "titulo": "Módulo de Facturación y ventas",
+   "subtitulo": "De la factura electrónica al cobro y el análisis de ventas",
+   "nota": "CONSISAV Financiero · manual de operación paso a paso"
+  },
+  {
+   "tipo": "indice",
+   "titulo": "Contenido",
+   "puntos": [
+    "El ciclo de una venta",
+    "Catálogos: Clientes, Vendedores, Series de recibos, Correlativo DTE y Productos",
+    "Registros: Facturas Ventas, Recibos y Notas electrónicas",
+    "Mantenimientos: Envíos, Contraseñas de cobro, Despachos, Retenciones y Exenciones",
+    "Procesos: Cuentas x Cobrar y Estado de cuenta",
+    "Reportes: Ventas por período, por cliente, Cuentas por cobrar y Gráfica de ventas"
+   ]
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "El ciclo de una venta",
+   "subtitulo": "Cada documento actualiza inventario, saldo y contabilidad",
+   "pasos": [
+    "Factura: se registra con el cliente y los productos (lote y vencimiento), se valida y se certifica en FEL; la mercadería sale de la bodega.",
+    "Crédito: el saldo queda en la factura con su fecha estimada de cobro (fecha de cobro o emisión + días de crédito).",
+    "Nota de crédito o abono: baja el saldo de la factura; nota de débito: lo sube.",
+    "Recibo: el cobro del cliente se asigna a sus facturas y baja su saldo.",
+    "Control: Cuentas x Cobrar, Estado de cuenta y los reportes del módulo."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Registrar y certificar una factura",
+   "subtitulo": "Facturación/Ventas › Registros › Facturas › Facturas Ventas",
+   "pasos": [
+    "Presiona «Nueva». Elige el tipo de factura (normal, cambiaria, especial, exportación o pequeño contribuyente), la serie y la moneda.",
+    "En la banda del cliente escribe el NIT o el nombre y elige el cliente; revisa la dirección, el vendedor, la bodega y el tipo de precio.",
+    "En «Venta y crédito» indica la forma de pago y los días de crédito; para facturas cambiarias la fecha de cobro.",
+    "En la pestaña «Detalle factura» agrega cada producto con «Producto»: cantidad, precio, lote, registro sanitario y fechas de fabricación y vencimiento.",
+    "Revisa los totales, el IVA y las retenciones (IVA e ISR) que calcula el sistema.",
+    "Presiona «Validar factura» y luego «Certificar factura» (FEL con COFIDI): se asignan autorización, serie y número DTE.",
+    "«Imprimir factura» genera la representación gráfica; «Imprimir guía» y «Imprimir rep. envío/salida» los documentos de despacho.",
+    "Para anular una factura certificada usa «Anular factura» con el motivo (se anula también ante SAT)."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Cobrar con un recibo",
+   "subtitulo": "Facturación/Ventas › Registros › Recibos › Recibos",
+   "pasos": [
+    "Presiona «Nuevo», elige la serie, la fecha, la moneda y el cliente.",
+    "Indica la forma y el tipo de pago (efectivo, cheque, transferencia), la cuenta, el banco, el documento y su valor.",
+    "En la pestaña «Facturas» presiona «Asignar facturas»: aparecen las facturas con saldo del cliente; escribe el abono de cada una y la retención si aplica.",
+    "«Liquidar facturas» aplica el pago completo de las facturas marcadas.",
+    "Guarda: cada factura baja su saldo. «Imprimir» genera el recibo original o copia con firma y sello digital.",
+    "«Ver saldos» muestra el saldo disponible del cliente; «Anular» revierte el recibo con su motivo."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Notas de crédito, débito y abono",
+   "subtitulo": "Facturación/Ventas › Registros › Notas electrónicas",
+   "pasos": [
+    "Abre la nota que corresponde y presiona «Nueva».",
+    "Elige el cliente y la factura de referencia; el sistema trae su autorización, serie, DTE y saldo.",
+    "Indica el tipo de ajuste, el motivo y, si hay devolución de mercadería, la bodega destino.",
+    "Agrega los productos con «Producto» (o «Copiar productos» de la factura) con sus lotes y valores.",
+    "«Validar nota» y «Certificar nota» en FEL; luego «Imprimir nota».",
+    "Efecto: la de crédito y la de abono bajan el saldo de la factura; la de débito lo sube."
+   ]
+  },
+  {
+   "tipo": "pantalla",
+   "titulo": "Cuentas x Cobrar",
+   "subtitulo": "Facturación/Ventas › Procesos › Cuentas x Cobrar",
+   "puntos": [
+    "Consolidado CXC mensual: facturas con saldo del mes, por fecha estimada de cobro.",
+    "Consolidado general: facturas de un rango de fechas con su saldo y mora.",
+    "CXC por periodo: saldo de las facturas a una fecha (cobros y notas hasta ese día).",
+    "Estado de cuenta clientes: de un cliente o de todos, resumido, detallado o por período, en PDF o Excel.",
+    "En las listas puedes ordenar por fecha, días de mora, valor y saldo."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Ventas por período",
+   "subtitulo": "Facturación/Ventas › Reportes y gráficas › Ventas por período",
+   "pasos": [
+    "Abre Facturación/Ventas › Reportes y gráficas › «Ventas por período».",
+    "En «Empresa» elige la organización y la localidad (ejemplo: 3-02 · MAVISA, S. A.). Al cambiarla se recargan los productos y los datos.",
+    "«Desde» trae el 1 de enero y «Al» la fecha de hoy; cámbialas para otro período.",
+    "«Contenido»: Resumido (un renglón por mes con documentos, valor y %) o Detallado (cada factura agrupada por mes con subtotales). Con un producto muestra también cantidad y precio promedio.",
+    "En «Producto» deja el campo vacío para «Todos los productos», o escribe parte del nombre o del código y elige de la lista (ejemplo: «OMEPRAZOL 40 MG. POLVO LIOFILIZADO PARA USO PARENTERAL — VIT 0040»). Para volver a todos, borra el campo.",
+    "Revisa la vista previa: arriba los indicadores (KPI), en medio la tabla con grupos, subtotales y el total fijo al pie, y al final las gráficas.",
+    "La casilla «Gráficas» las muestra u oculta; también decide si salen en el PDF y en el Excel.",
+    "«PDF» abre la ventana de impresión (elige «Guardar como PDF» o la impresora). «Excel» descarga el archivo .xlsx con el logo, los parámetros y las gráficas como imagen debajo de los datos.",
+    "Ejemplo real 3-02 · MAVISA, S. A., 2026: 1,602 facturas por Q 5,483,655.52 (enero: 143 facturas, Q 500,515.40). Con el producto VIT 0040: 225 facturas, 57,712 unidades, Q 543,583.20."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Ventas por cliente",
+   "subtitulo": "Facturación/Ventas › Reportes y gráficas › Ventas por cliente",
+   "pasos": [
+    "Abre Facturación/Ventas › Reportes y gráficas › «Ventas por cliente».",
+    "En «Empresa» elige la organización y la localidad (ejemplo: 3-02 · MAVISA, S. A.). Al cambiarla se recargan los productos y los datos.",
+    "Elige el período con «Desde» y «Al».",
+    "«Contenido»: Resumido (un renglón por cliente, ordenado de mayor a menor) o Detallado (las facturas de cada cliente con su subtotal).",
+    "En «Producto» deja el campo vacío para «Todos los productos», o escribe parte del nombre o del código y elige de la lista (ejemplo: «OMEPRAZOL 40 MG. POLVO LIOFILIZADO PARA USO PARENTERAL — VIT 0040»). Para volver a todos, borra el campo.",
+    "Revisa la vista previa: arriba los indicadores (KPI), en medio la tabla con grupos, subtotales y el total fijo al pie, y al final las gráficas.",
+    "La casilla «Gráficas» las muestra u oculta; también decide si salen en el PDF y en el Excel.",
+    "«PDF» abre la ventana de impresión (elige «Guardar como PDF» o la impresora). «Excel» descarga el archivo .xlsx con el logo, los parámetros y las gráficas como imagen debajo de los datos.",
+    "Ejemplo real 3-02 · MAVISA, S. A., 2026: 180 clientes. La gráfica muestra los 10 clientes principales con su participación en el total."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Cuentas por cobrar a una fecha",
+   "subtitulo": "Facturación/Ventas › Reportes y gráficas › Cuentas por cobrar",
+   "pasos": [
+    "Abre Facturación/Ventas › Reportes y gráficas › «Cuentas por cobrar».",
+    "En «Empresa» elige la organización y la localidad (ejemplo: 3-02 · MAVISA, S. A.). Al cambiarla se recargan los productos y los datos.",
+    "En «Saldo al» elige la fecha de corte: el saldo de cada factura se reconstruye con los cobros y notas hasta ese día.",
+    "«Contenido»: Resumido (por cliente con antigüedad: no vencido, 1-30, 31-60, 61-90 y más de 90 días) o Detallado (cada factura con fecha, vencimiento, días de mora, valor y saldo).",
+    "Con un producto, solo se incluyen las facturas que lo llevan.",
+    "En «Producto» deja el campo vacío para «Todos los productos», o escribe parte del nombre o del código y elige de la lista (ejemplo: «OMEPRAZOL 40 MG. POLVO LIOFILIZADO PARA USO PARENTERAL — VIT 0040»). Para volver a todos, borra el campo.",
+    "Revisa la vista previa: arriba los indicadores (KPI), en medio la tabla con grupos, subtotales y el total fijo al pie, y al final las gráficas.",
+    "La casilla «Gráficas» las muestra u oculta; también decide si salen en el PDF y en el Excel.",
+    "«PDF» abre la ventana de impresión (elige «Guardar como PDF» o la impresora). «Excel» descarga el archivo .xlsx con el logo, los parámetros y las gráficas como imagen debajo de los datos.",
+    "Ejemplo real 3-02 · MAVISA, S. A.: 74 clientes, 225 facturas con saldo, Q 925,163.30 por cobrar, de los cuales Q 611,482.99 vencidos y Q 136,546.53 con más de 90 días."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Gráfica de ventas",
+   "subtitulo": "Facturación/Ventas › Reportes y gráficas › Gráfica de ventas",
+   "pasos": [
+    "Abre Facturación/Ventas › Reportes y gráficas › «Gráfica de ventas».",
+    "En «Empresa» elige la organización y la localidad (ejemplo: 3-02 · MAVISA, S. A.). Al cambiarla se recargan los productos y los datos.",
+    "Elige el período con «Desde» y «Al».",
+    "En «Producto» deja el campo vacío para «Todos los productos», o escribe parte del nombre o del código y elige de la lista (ejemplo: «OMEPRAZOL 40 MG. POLVO LIOFILIZADO PARA USO PARENTERAL — VIT 0040»). Para volver a todos, borra el campo.",
+    "Revisa la vista previa: arriba los indicadores (KPI), en medio la tabla con grupos, subtotales y el total fijo al pie, y al final las gráficas.",
+    "La casilla «Gráficas» las muestra u oculta; también decide si salen en el PDF y en el Excel.",
+    "«PDF» abre la ventana de impresión (elige «Guardar como PDF» o la impresora). «Excel» descarga el archivo .xlsx con el logo, los parámetros y las gráficas como imagen debajo de los datos.",
+    "Trae tres gráficas: ventas por mes, los 10 clientes principales y los 10 productos principales (valor y unidades), con la tabla de datos por mes."
+   ]
+  },
+  {
+   "tipo": "consejos",
+   "titulo": "Buenas prácticas",
+   "puntos": [
+    "Certifica las facturas el mismo día; una factura sin certificar no tiene validez fiscal.",
+    "Registra los cobros con recibo y asigna siempre las facturas: así el saldo y la antigüedad son reales.",
+    "Revisa cada semana el reporte de Cuentas por cobrar y da seguimiento a lo vencido de más de 90 días.",
+    "Compara cada mes las ventas por período con la contabilidad y con el libro de ventas."
+   ]
+  },
+  {
+   "tipo": "cierre",
+   "titulo": "¡Listo para vender!",
+   "subtitulo": "Consulta este manual en Facturación/Ventas › Ayuda › Manual del módulo"
+  }
+ ]
+}

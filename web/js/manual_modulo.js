@@ -12,7 +12,7 @@
     facturacion: ['clientes', 'productos', 'vendedores', 'tipos_precio'],
     compras: ['proveedores', 'compras_saldo', 'ordenes_compra', 'ingresos_compra', 'notas_compra', 'bodegas', 'regularizaciones_anticipo'],
     'presupuesto-flujo': ['rubros_presupuesto', 'presupuestos'],
-    inventarios: ['productos', 'bodegas', 'existencias']
+    inventarios: ['productos', 'bodegas', 'existencias', 'tomas_fisicas', 'cierres_inventario']
   };
   // Columnas que no se muestran ni se envían (identificadores, auditoría y datos de contacto).
   const OCULTA = /(^id$|_id$|^creado_|^modificado_|correo|telefono|ruta|firma|imagen|logo|eslogan|clave|token)/i;

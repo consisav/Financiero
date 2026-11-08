@@ -1,0 +1,384 @@
+{
+ "version": "2026.11b",
+ "titulo": "Manual del módulo Inventarios",
+ "resumen": "Movimientos, traslados y ajustes, Kardex y costos, toma física, costo promedio, cierre mensual y reportes con PDF, Excel y gráficas.",
+ "nombresTablas": {
+  "productos": "Productos",
+  "bodegas": "Bodegas",
+  "existencias": "Existencias por bodega",
+  "tomas_fisicas": "Tomas físicas",
+  "cierres_inventario": "Cierres de inventario"
+ },
+ "diapositivas": [
+  {
+   "tipo": "portada",
+   "titulo": "Módulo de Inventarios",
+   "subtitulo": "Del ingreso de mercadería al libro de inventarios",
+   "nota": "CONSISAV Financiero · manual de operación paso a paso"
+  },
+  {
+   "tipo": "indice",
+   "titulo": "Contenido",
+   "puntos": [
+    "Conceptos: bodegas, lotes, costo promedio ponderado y cierre mensual",
+    "Registros › Movimientos: Entradas, Salidas y Vencimiento de productos",
+    "Registros › Traslados y ajustes: traslados, ajustes por lote y por producto, devoluciones y reingresos",
+    "Mantenimientos › Kardex (sin costos / con costos), Análisis de costos, Mínimos y máximos, Costos",
+    "Procesos › Toma física, Recalcular costo promedio y Cierre de inventario",
+    "Reportes › Existencias, Kardex por producto, Valuación de inventario y Rotación"
+   ]
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "Cómo funciona el inventario",
+   "subtitulo": "Todo sale de los movimientos; nada se digita dos veces",
+   "pasos": [
+    "Cada compra, ingreso de orden, factura, nota, traslado o ajuste deja un movimiento con fecha, bodega, lote, cantidad y costo.",
+    "La existencia de un producto es la suma de sus movimientos en cada bodega y lote (vista «Existencias»).",
+    "El costo es el promedio ponderado perpetuo (Decreto 10-2012, art. 55): cada entrada con costo recalcula el promedio y las salidas salen a ese promedio. Los traslados entre bodegas y los cambios de lote no lo alteran.",
+    "Cada mes se cierra (Procesos › Cierre de inventario): quedan guardados los saldos y ya no se aceptan movimientos con fecha de ese mes.",
+    "El cierre de diciembre es el inventario anual del libro de inventarios (Código de Comercio, art. 368)."
+   ],
+   "ejemplo": {
+    "titulo": "Bodegas de 3-02 · MAVISA, S. A. (ejemplo real)",
+    "columnas": [
+     "Código",
+     "Bodega"
+    ],
+    "filas": [
+     [
+      "1",
+      "VITALIS PRIVADO"
+     ],
+     [
+      "2",
+      "VENCIDOS Y/O QUEBRADOS"
+     ],
+     [
+      "3",
+      "CUENTA AJENA VITALIS"
+     ],
+     [
+      "6",
+      "LICITACIONES"
+     ],
+     [
+      "7",
+      "CONSIGNACION"
+     ],
+     [
+      "10",
+      "VITALIS"
+     ]
+    ]
+   }
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Consultar entradas y salidas",
+   "subtitulo": "Inventarios › Registros › Movimientos › Entradas / Salidas",
+   "pasos": [
+    "Abre «Entradas» (o «Salidas»).",
+    "Elige la organización y la localidad; luego el rango de fechas «Desde» y «Hasta».",
+    "Filtra por proveedor (entradas) o cliente (salidas) y, si quieres, por uno o varios productos.",
+    "La tabla muestra fecha, documento, bodega, lote, cantidad y costo de cada movimiento, con los indicadores arriba.",
+    "Imprime con «PDF» o descarga con «Excel» los mismos datos filtrados.",
+    "Ejemplo: en 3-02 · MAVISA, S. A., las salidas del producto VIT 0040 (Omeprazol 40 mg) en 2026 son las facturas de venta de ese producto."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Revisar los vencimientos",
+   "subtitulo": "Inventarios › Registros › Movimientos › Vencimiento de productos",
+   "pasos": [
+    "Abre «Vencimiento de productos» y elige la empresa y la «Bodega» (o todas).",
+    "Elige el horizonte (vencidos, por vencer en 30, 60, 90 días…) y si se incluyen existencias en cero.",
+    "Cada fila muestra producto, lote, fecha de vencimiento, días que faltan y existencia del lote.",
+    "Traslada lo vencido a la bodega de vencidos con «Traslados entre bodegas» (ejemplo: de 1 · VITALIS PRIVADO a 2 · VENCIDOS Y/O QUEBRADOS).",
+    "Imprime en PDF o Excel para el control de bodega."
+   ],
+   "ejemplo": {
+    "titulo": "Ejemplo real · bodega 1 · VITALIS PRIVADO",
+    "columnas": [
+     "Código",
+     "Producto",
+     "Lote",
+     "Vence",
+     "Existencia"
+    ],
+    "filas": [
+     [
+      "VIT 0002",
+      "ÁCIDO ZOLEDRÓNICO 4MG/5ML SOLUCIÓN INYECTABLE",
+      "S250217",
+      "04/06/2028",
+      "500"
+     ],
+     [
+      "VIT 0068",
+      "AMIKACINA 500 MG/2ML SOLUCIÓN INYECTABLE",
+      "A250751",
+      "24/10/2028",
+      "2,848"
+     ]
+    ]
+   }
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Trasladar entre bodegas",
+   "subtitulo": "Inventarios › Registros › Traslados y ajustes › Traslados entre bodegas",
+   "pasos": [
+    "Abre «Traslados entre bodegas» y presiona «Nuevo».",
+    "Llena la fecha, la bodega de origen, la bodega destino y la descripción (ejemplo: «Producto vencido a bodega de vencidos»).",
+    "Agrega cada producto con su lote y la cantidad; el sistema muestra la existencia disponible del lote en la bodega de origen.",
+    "Presiona «Guardar». El documento queda en estado de borrador y puede modificarse.",
+    "Presiona «Operar»: se registran la salida de la bodega de origen y la entrada en la destino, al mismo costo.",
+    "Si te equivocaste, «Anular» con motivo revierte los dos movimientos."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Ajustar el inventario",
+   "subtitulo": "Inventarios › Registros › Traslados y ajustes › Ajustes por lotes / por producto",
+   "pasos": [
+    "Ajuste por producto: para corregir cantidades (añadir o disminuir). Ajuste por lotes: para cambiar el lote o la fecha de vencimiento de una existencia.",
+    "Presiona «Nuevo», elige la bodega, la fecha y el motivo del ajuste (catálogo de motivos de la organización).",
+    "Agrega los productos con lote y cantidad; en el ajuste por lotes indica el lote nuevo y su vencimiento.",
+    "Guarda y luego «Operar». Si la salida deja una existencia negativa, el sistema avisa (EXISTENCIA) y pide confirmar.",
+    "Los ajustes de la toma física los genera el sistema solo, con el motivo «TOMA FÍSICA»."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Devoluciones y reingresos",
+   "subtitulo": "Inventarios › Registros › Traslados y ajustes › Devoluciones y reingresos",
+   "pasos": [
+    "Devolución: mercadería que sale (por ejemplo, al proveedor). Reingreso: mercadería que vuelve a la bodega.",
+    "Presiona «Nuevo», elige el tipo, la bodega, la fecha y la descripción.",
+    "Agrega productos, lotes y cantidades; guarda y presiona «Operar».",
+    "Los documentos migrados del sistema anterior se identifican con la marca «Sistema anterior» y no se modifican."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Kardex de un producto",
+   "subtitulo": "Inventarios › Mantenimientos › Kardex › Movimiento de Kardex",
+   "pasos": [
+    "Elige «Kardex sin costos» (cantidades por lote) o «Kardex con costos» (con costo unitario, promedio y valor).",
+    "Elige la empresa, la bodega (o todas) y escribe en «Buscar producto» el código, código de barras, nombre o principio activo.",
+    "Selecciona el producto en la lista: se muestran sus entradas y salidas en orden cronológico con el saldo acumulado.",
+    "Cada fila trae el tipo de movimiento, el documento interno y físico, el tercero, el lote y las fechas.",
+    "Imprime en PDF o Excel con los parámetros elegidos."
+   ],
+   "ejemplo": {
+    "titulo": "Ejemplo real · VIT 0040 en 3-02 · MAVISA, S. A.",
+    "columnas": [
+     "Dato",
+     "Valor"
+    ],
+    "filas": [
+     [
+      "Movimientos en 2026",
+      "275"
+     ],
+     [
+      "Existencia actual",
+      "6,838 unidades"
+     ],
+     [
+      "Costo del catálogo",
+      "Q 6.50"
+     ]
+    ]
+   }
+  },
+  {
+   "tipo": "pantalla",
+   "titulo": "Análisis de costos, mínimos y máximos y costos",
+   "subtitulo": "Inventarios › Mantenimientos",
+   "puntos": [
+    "Análisis de costos (local e importación): compras de un producto con su costo, costo promedio, último costo y margen.",
+    "Mínimos y máximos: existencia mínima y máxima por producto y bodega; marca lo que hay que pedir.",
+    "Costos: costo del catálogo por producto, con su historial de cambios.",
+    "Todas tienen impresión en PDF y Excel."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Toma física: preparar y contar",
+   "subtitulo": "Inventarios › Procesos › Toma física",
+   "pasos": [
+    "Abre «Toma física», elige la empresa y presiona «Nueva toma física».",
+    "Elige la bodega (ejemplo: 1 · VITALIS PRIVADO), la fecha de corte (hoy por defecto), el responsable del conteo y la descripción.",
+    "Deja marcado «Conteo ciego» para que quien cuenta no vea la existencia del sistema (buena práctica de control interno).",
+    "Presiona «Abrir toma física»: el sistema toma la fotografía de existencias por producto y lote (ejemplo real: 102 productos/lotes en la bodega 1).",
+    "En «Imprimir» elige «Hoja de conteo» y «PDF»: sale la lista ordenada por nombre, con columnas para el conteo y el recuento, renglones para productos encontrados que no estaban en la lista y firmas (contó, verificó, encargado de bodega).",
+    "Durante el conteo no registres movimientos en esa bodega."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Toma física: registrar, cerrar y ajustar",
+   "subtitulo": "Inventarios › Procesos › Toma física",
+   "pasos": [
+    "Escribe el «Conteo físico» de cada fila (Enter pasa a la siguiente); se guarda solo y la hora aparece en «Guardado».",
+    "Usa los filtros «Todos», «Pendientes» y (sin conteo ciego) «Con diferencia», y la búsqueda por código, nombre o lote.",
+    "Si encuentras un producto que no está en la lista, escríbelo en «Producto encontrado…», su lote y presiona «Agregar».",
+    "Presiona «Cerrar y ajustar»: lo no contado se toma igual al sistema (una existencia negativa se lleva a cero) y se generan y operan los ajustes de sobrantes y faltantes con fecha de corte.",
+    "Imprime el «Acta de toma física» en PDF o Excel: sistema, conteo, diferencia, costo y valor de la diferencia, con firmas del responsable, encargado de bodega y contador o auditor.",
+    "Si la toma no procede, «Anular» con motivo (solo mientras está en conteo)."
+   ],
+   "ejemplo": {
+    "titulo": "Resultado de una toma (ejemplo)",
+    "columnas": [
+     "Indicador",
+     "Valor"
+    ],
+    "filas": [
+     [
+      "Productos / lotes",
+      "102"
+     ],
+     [
+      "Sobrantes (4)",
+      "Q 51,247.20"
+     ],
+     [
+      "Faltantes (2)",
+      "Q -56,172.00"
+     ],
+     [
+      "Diferencia neta",
+      "Q -4,924.80"
+     ]
+    ]
+   }
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Recalcular el costo promedio",
+   "subtitulo": "Inventarios › Procesos › Recalcular costo promedio",
+   "pasos": [
+    "Abre la pantalla, elige la empresa y la «Fecha de corte».",
+    "En «Mostrar» elige «Con diferencia mayor a 1 %», «Con existencia» o «Todos los calculados»; busca un producto si quieres.",
+    "Compara «Costo catálogo» contra «Costo promedio» y la columna «Diferencia»; arriba ves el inventario valuado de las dos formas.",
+    "Marca los productos a corregir (o la casilla del encabezado para todos) y presiona «Aplicar a los marcados».",
+    "El costo del catálogo cambia y queda en el historial (columna «Último aplicado» con fecha y usuario).",
+    "Imprime en PDF o Excel el cálculo como respaldo."
+   ],
+   "ejemplo": {
+    "titulo": "Ejemplo real · 3-02 · MAVISA, S. A.",
+    "columnas": [
+     "Indicador",
+     "Valor"
+    ],
+    "filas": [
+     [
+      "Productos calculados",
+      "96"
+     ],
+     [
+      "Inventario al promedio",
+      "Q 2,061,284.11"
+     ],
+     [
+      "Inventario al catálogo",
+      "Q 2,552,968.81"
+     ]
+    ]
+   }
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Cerrar el mes de inventario",
+   "subtitulo": "Inventarios › Procesos › Cierre de inventario",
+   "pasos": [
+    "Antes de cerrar: revisa vencimientos, registra los ajustes pendientes y recalcula el costo promedio.",
+    "Abre «Cierre de inventario», elige la empresa y el año: ves los 12 meses con su estado (Abierto, Cerrado, Reabierto, En curso).",
+    "En el mes terminado presiona «Cerrar» y confirma: se guardan los saldos por producto y bodega valuados al costo.",
+    "Desde ese momento no se pueden registrar, cambiar ni borrar movimientos con fecha de ese mes o anterior.",
+    "«Libro» imprime el Libro de inventarios del mes en PDF o Excel (por bodega, con subtotales y firmas de representante legal y contador).",
+    "Para corregir, «Reabrir» con motivo; solo se puede si los meses posteriores están abiertos."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Reporte de existencias",
+   "subtitulo": "Inventarios › Reportes y gráficas › Existencias",
+   "pasos": [
+    "Abre Inventarios › Reportes y gráficas › «Existencias».",
+    "En «Empresa» elige la organización y la localidad (ejemplo: 3-02 · MAVISA, S. A.). Al cambiarla se recargan los productos y los datos.",
+    "En «A la fecha» deja hoy o elige otra fecha: las existencias se calculan con los movimientos hasta ese día.",
+    "Marca «Incluir en cero» si quieres ver también los lotes agotados.",
+    "En «Producto» deja el campo vacío para «Todos los productos», o escribe parte del nombre o del código y elige de la lista (ejemplo: «OMEPRAZOL 40 MG. POLVO LIOFILIZADO PARA USO PARENTERAL — VIT 0040»). Para volver a todos, borra el campo.",
+    "Revisa la vista previa: arriba los indicadores (KPI), en medio la tabla con grupos, subtotales y el total fijo al pie, y al final las gráficas.",
+    "La casilla «Gráficas» las muestra u oculta; también decide si salen en el PDF y en el Excel.",
+    "«PDF» abre la ventana de impresión (elige «Guardar como PDF» o la impresora). «Excel» descarga el archivo .xlsx con el logo, los parámetros y las gráficas como imagen debajo de los datos.",
+    "Ejemplo real 3-02 · MAVISA, S. A.: 144 productos en 8 bodegas, 329 líneas producto · lote y 362,214 unidades. Gráficas: existencia por bodega y los 10 productos con más existencia."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Kardex por producto",
+   "subtitulo": "Inventarios › Reportes y gráficas › Kardex por producto",
+   "pasos": [
+    "Abre Inventarios › Reportes y gráficas › «Kardex por producto».",
+    "En «Empresa» elige la organización y la localidad (ejemplo: 3-02 · MAVISA, S. A.). Al cambiarla se recargan los productos y los datos.",
+    "En «A la fecha» elige el corte: el reporte va del 1 de enero de ese año a esa fecha.",
+    "En «Producto» deja el campo vacío para «Todos los productos», o escribe parte del nombre o del código y elige de la lista (ejemplo: «OMEPRAZOL 40 MG. POLVO LIOFILIZADO PARA USO PARENTERAL — VIT 0040»). Para volver a todos, borra el campo.",
+    "Revisa la vista previa: arriba los indicadores (KPI), en medio la tabla con grupos, subtotales y el total fijo al pie, y al final las gráficas.",
+    "La casilla «Gráficas» las muestra u oculta; también decide si salen en el PDF y en el Excel.",
+    "«PDF» abre la ventana de impresión (elige «Guardar como PDF» o la impresora). «Excel» descarga el archivo .xlsx con el logo, los parámetros y las gráficas como imagen debajo de los datos.",
+    "Cada producto trae su saldo inicial al 1 de enero, cada movimiento (fecha, tipo, documento, bodega, lote, entrada, salida, saldo, costo y valor) y sus totales. Gráficas: entradas y salidas por mes y, con un solo producto, la evolución de su saldo."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Valuación de inventario",
+   "subtitulo": "Inventarios › Reportes y gráficas › Valuación de inventario",
+   "pasos": [
+    "Abre Inventarios › Reportes y gráficas › «Valuación de inventario».",
+    "En «Empresa» elige la organización y la localidad (ejemplo: 3-02 · MAVISA, S. A.). Al cambiarla se recargan los productos y los datos.",
+    "En «A la fecha» elige el corte de la valuación (por ejemplo, el último día del mes para conciliar con contabilidad).",
+    "En «Producto» deja el campo vacío para «Todos los productos», o escribe parte del nombre o del código y elige de la lista (ejemplo: «OMEPRAZOL 40 MG. POLVO LIOFILIZADO PARA USO PARENTERAL — VIT 0040»). Para volver a todos, borra el campo.",
+    "Revisa la vista previa: arriba los indicadores (KPI), en medio la tabla con grupos, subtotales y el total fijo al pie, y al final las gráficas.",
+    "La casilla «Gráficas» las muestra u oculta; también decide si salen en el PDF y en el Excel.",
+    "«PDF» abre la ventana de impresión (elige «Guardar como PDF» o la impresora). «Excel» descarga el archivo .xlsx con el logo, los parámetros y las gráficas como imagen debajo de los datos.",
+    "Cada producto con existencia, su costo promedio, el valor y el % del total. Gráficas: los 10 productos de mayor valor y la clasificación ABC (A = 80 % del valor, B = 15 %, C = 5 %) para concentrar el control en lo que más vale."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Rotación de inventario",
+   "subtitulo": "Inventarios › Reportes y gráficas › Rotación",
+   "pasos": [
+    "Abre Inventarios › Reportes y gráficas › «Rotación».",
+    "En «Empresa» elige la organización y la localidad (ejemplo: 3-02 · MAVISA, S. A.). Al cambiarla se recargan los productos y los datos.",
+    "En «A la fecha» elige el corte: el período va del 1 de enero a esa fecha.",
+    "Rotación = costo de las salidas ÷ inventario promedio; días = días del período ÷ rotación. Alta ≤ 30 días, media ≤ 90, baja > 90.",
+    "En «Producto» deja el campo vacío para «Todos los productos», o escribe parte del nombre o del código y elige de la lista (ejemplo: «OMEPRAZOL 40 MG. POLVO LIOFILIZADO PARA USO PARENTERAL — VIT 0040»). Para volver a todos, borra el campo.",
+    "Revisa la vista previa: arriba los indicadores (KPI), en medio la tabla con grupos, subtotales y el total fijo al pie, y al final las gráficas.",
+    "La casilla «Gráficas» las muestra u oculta; también decide si salen en el PDF y en el Excel.",
+    "«PDF» abre la ventana de impresión (elige «Guardar como PDF» o la impresora). «Excel» descarga el archivo .xlsx con el logo, los parámetros y las gráficas como imagen debajo de los datos.",
+    "Ejemplo real 3-02 · MAVISA, S. A.: rotación general 1.72 veces, 182 días de inventario; 7 productos de rotación alta, 20 media, 60 baja y 69 sin movimiento. Gráficas: productos por clasificación, los 10 de mayor rotación y el valor inmovilizado."
+   ]
+  },
+  {
+   "tipo": "consejos",
+   "titulo": "Buenas prácticas",
+   "puntos": [
+    "Haz al menos una toma física al año por bodega (y cíclicas de los productos de mayor valor, clase A).",
+    "Recalcula el costo promedio antes de cerrar el mes y concilia la valuación con la cuenta contable de inventarios.",
+    "Cierra cada mes cuando termine; un mes cerrado protege los saldos que ya se reportaron.",
+    "Separa lo vencido o dañado en su bodega para que no se venda ni se valúe como bueno.",
+    "Revisa mensualmente la rotación: los productos sin movimiento inmovilizan dinero."
+   ]
+  },
+  {
+   "tipo": "cierre",
+   "titulo": "¡Listo para administrar el inventario!",
+   "subtitulo": "Consulta este manual en Inventarios › Ayuda › Manual del módulo"
+  }
+ ]
+}

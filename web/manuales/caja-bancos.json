@@ -1,76 +1,160 @@
 {
-  "version": "2026.11",
-  "titulo": "Manual del módulo Caja y Bancos",
-  "resumen": "Cuentas bancarias, depósitos, notas de crédito y débito, cheques, pagos automáticos a proveedores, conciliación, disponibilidad y cajas chicas.",
-  "nombresTablas": { "cuentas_bancarias": "Cuentas bancarias", "movimientos_bancarios": "Movimientos bancarios", "cajas_chicas": "Cajas chicas", "compras_saldo": "Facturas de compra por pagar" },
-  "diapositivas": [
-    { "tipo": "portada", "titulo": "Módulo de Caja y Bancos", "subtitulo": "El dinero de la empresa: ingresos, pagos, conciliación y cajas chicas", "nota": "CONSISAV Financiero · manual de operación" },
-    { "tipo": "indice", "titulo": "Contenido", "puntos": [
-      "Bancos: cuentas bancarias, depósitos, notas de crédito y de débito",
-      "Bancos: conciliación bancaria y disponibilidad (por cuenta e integrada)",
-      "Cheques: solicitud, emisión y facturas de compra por pagar",
-      "Cheques: generación automática de cheques y transferencias",
-      "Cajas: cajas chicas con subcajas, documentos y liquidación" ] },
-    { "tipo": "concepto", "titulo": "Cómo se mueve el dinero", "subtitulo": "Todo documento bancario genera su detalle contable y su póliza", "pasos": [
-      "Ingresos: depósitos (en cualquier moneda) y notas de crédito o transferencias recibidas.",
-      "Egresos: cheques y notas de débito o transferencias enviadas a proveedores.",
-      "Las compras por pagar llegan del módulo de Compras y se pagan con cheque o transferencia.",
-      "Cada mes se concilia cada cuenta contra el estado de cuenta del banco.",
-      "La disponibilidad muestra el saldo de cada cuenta y el consolidado de la organización." ] },
-    { "tipo": "pantalla", "titulo": "Cuentas bancarias", "subtitulo": "Bancos › Cuentas bancarias", "puntos": [
-      "A la izquierda los bancos del sistema bancario de Guatemala; a la derecha las cuentas del banco elegido.",
-      "Cada cuenta: número, nombre, moneda, saldos y su cuenta contable.",
-      "Chequera: número inicial y final, utilizados, mínimo y disponibles, y el formato de cheque.",
-      "Las cuentas son de cada organización y localidad." ] },
-    { "tipo": "pasos", "titulo": "Registrar un depósito o una nota", "subtitulo": "Bancos › Depósitos multimoneda · Notas de crédito · Notas de débito", "pasos": [
-      "Elige la empresa, la cuenta bancaria y el rango de fechas en la barra superior; presiona «Nuevo».",
-      "Escribe el número, la fecha, la moneda y el valor (el valor en quetzales se calcula con el cambio).",
-      "Indica el cliente o proveedor, quién depositó y la descripción.",
-      "En el detalle contable presiona «Contabilizar» para usar la transacción de Objetos contables, o «Agregar línea».",
-      "En los depósitos agrega las facturas o recibos que se liquidan con su abono.",
-      "Guarda; con «Generar partida» se crea la póliza. «Anular» deja constancia del motivo." ] },
-    { "tipo": "pasos", "titulo": "Solicitar y emitir un cheque", "subtitulo": "Cheques › Solicitud de cheques · Emisión de cheques", "pasos": [
-      "En «Solicitud de cheques» presiona «Nueva»: tipo, beneficiario (proveedor o empleado), monto y motivo.",
-      "Presiona «Solicitar cheque»; el responsable usa «Aprobar» o «Rechazar».",
-      "La solicitud aprobada se emite con «Emitir cheque» en «Emisión de cheques».",
-      "El cheque toma el siguiente número de la chequera de la cuenta bancaria.",
-      "Completa el detalle contable y las facturas que paga; «Imprimir» saca el cheque en su formato." ] },
-    { "tipo": "pasos", "titulo": "Pagar facturas de proveedores en lote", "subtitulo": "Cheques › Generación cheques · Generación transferencias", "pasos": [
-      "Elige la empresa, el documento (cheques, recibos o ambos) y presiona «Consultar».",
-      "Aparecen las compras con saldo pendiente: marca en «Generar» las que se pagan («Marcar» marca todas).",
-      "Elige la cuenta bancaria, la fecha, la transacción y si se genera uno por proveedor o uno por factura.",
-      "Genera: los cheques toman el número de la chequera; las transferencias quedan como notas de débito.",
-      "En transferencias presiona «Descargar lote (CSV)» para subirlo al banco e «Imprimir relación».",
-      "La compra queda abonada y su saldo baja en Compras y en Cuentas x Pagar." ] },
-    { "tipo": "pantalla", "titulo": "Facturas de compra por pagar", "subtitulo": "Cheques › Facturas de compra por pagar", "puntos": [
-      "Documento, proveedor, importe (total, bonificaciones, notas, descuentos ND, neto, pagado y pendiente).",
-      "Forma de pago, cuenta bancaria y la cuenta del proveedor para transferencias.",
-      "Pestaña Pagos: los cheques y transferencias que pagaron la factura.",
-      "Las compras completas (con desglose fiscal y artículos) se registran en Compras › Ingreso de compras." ] },
-    { "tipo": "pasos", "titulo": "Conciliación bancaria del mes", "subtitulo": "Bancos › Conciliación bancaria", "pasos": [
-      "Elige la empresa, el año y el mes; luego la cuenta bancaria.",
-      "Escribe el saldo según el banco y adjunta la imagen del estado de cuenta.",
-      "En «Movimientos» marca los documentos que ya aparecen en el estado de cuenta.",
-      "Revisa la diferencia y los documentos en circulación; «Agregar» registra las partidas en conciliación.",
-      "«Cerrar conciliación» la bloquea; «Reversar cierre» la abre de nuevo. «Reporte» la imprime." ] },
-    { "tipo": "pantalla", "titulo": "Disponibilidad", "subtitulo": "Bancos › Disponibilidad bancaria · Disponibilidad integrada", "puntos": [
-      "Disponibilidad bancaria: saldo inicial, ingresos, egresos y saldo final de una cuenta en un rango de fechas.",
-      "Pestañas con el movimiento y el disponible acumulado, el resumen de cuentas y los totales por tipo de documento.",
-      "Disponibilidad integrada: todas las cuentas de la organización a una fecha, en su moneda y en quetzales.",
-      "Vistas por cuenta, por localidad y por banco, con el saldo mínimo de cada cuenta.",
-      "Son consultas: «Detalle», «Resumen» e «Imprimir»." ] },
-    { "tipo": "pasos", "titulo": "Operar una caja chica", "subtitulo": "Cajas › Cajas chicas", "pasos": [
-      "En la selección de cajas elige la caja (o crea una con «Nueva caja») y presiona «Ir a detalle».",
-      "«Crear subcaja» abre el mes con su anticipo (cuenta y cheque).",
-      "Registra los documentos liquidados (facturas y recibos) con su desglose fiscal y cuenta de gasto.",
-      "Marca los documentos y presiona «Reconstruir detalle contable».",
-      "«Liquidar subcaja» genera la póliza de egresos; «Reabrir» la devuelve si su póliza se anuló." ] },
-    { "tipo": "consejos", "titulo": "Buenas prácticas y validaciones", "puntos": [
-      "Revisa que la chequera tenga números disponibles antes de generar cheques en lote.",
-      "Un documento conciliado o con póliza definitiva ya no se modifica; anúlalo con su motivo.",
-      "En moneda extranjera revisa el valor de cambio del día; el valor en quetzales se calcula solo.",
-      "Concilia cada mes antes del cierre contable.",
-      "Registra la cuenta bancaria del proveedor en Compras › Proveedores antes de pagar por transferencia." ] },
-    { "tipo": "cierre", "titulo": "¡Listo para operar!", "subtitulo": "Consulta este manual en Caja y Bancos › Ayuda › Manual del módulo" }
-  ]
+ "version": "2026.11b",
+ "titulo": "Manual del módulo Caja y Bancos",
+ "resumen": "Cuentas bancarias, depósitos, notas de crédito y débito, cheques, pagos automáticos a proveedores, conciliación, disponibilidad y cajas chicas.",
+ "nombresTablas": {
+  "cuentas_bancarias": "Cuentas bancarias",
+  "movimientos_bancarios": "Movimientos bancarios",
+  "cajas_chicas": "Cajas chicas",
+  "compras_saldo": "Facturas de compra por pagar"
+ },
+ "diapositivas": [
+  {
+   "tipo": "portada",
+   "titulo": "Módulo de Caja y Bancos",
+   "subtitulo": "El dinero de la empresa: ingresos, pagos, conciliación y cajas chicas",
+   "nota": "CONSISAV Financiero · manual de operación"
+  },
+  {
+   "tipo": "indice",
+   "titulo": "Contenido",
+   "puntos": [
+    "Bancos: cuentas bancarias, depósitos, notas de crédito y de débito",
+    "Bancos: conciliación bancaria y disponibilidad (por cuenta e integrada)",
+    "Cheques: solicitud, emisión y facturas de compra por pagar",
+    "Cheques: generación automática de cheques y transferencias",
+    "Cajas: cajas chicas con subcajas, documentos y liquidación"
+   ]
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "Cómo se mueve el dinero",
+   "subtitulo": "Todo documento bancario genera su detalle contable y su póliza",
+   "pasos": [
+    "Ingresos: depósitos (en cualquier moneda) y notas de crédito o transferencias recibidas.",
+    "Egresos: cheques y notas de débito o transferencias enviadas a proveedores.",
+    "Las compras por pagar llegan del módulo de Compras y se pagan con cheque o transferencia.",
+    "Cada mes se concilia cada cuenta contra el estado de cuenta del banco.",
+    "La disponibilidad muestra el saldo de cada cuenta y el consolidado de la organización."
+   ]
+  },
+  {
+   "tipo": "pantalla",
+   "titulo": "Cuentas bancarias",
+   "subtitulo": "Bancos › Cuentas bancarias",
+   "puntos": [
+    "A la izquierda los bancos del sistema bancario de Guatemala; a la derecha las cuentas del banco elegido.",
+    "Cada cuenta: número, nombre, moneda, saldos y su cuenta contable.",
+    "Chequera: número inicial y final, utilizados, mínimo y disponibles, y el formato de cheque.",
+    "Las cuentas son de cada organización y localidad."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Registrar un depósito o una nota",
+   "subtitulo": "Bancos › Depósitos multimoneda · Notas de crédito · Notas de débito",
+   "pasos": [
+    "Elige la empresa, la cuenta bancaria y el rango de fechas en la barra superior; presiona «Nuevo».",
+    "Escribe el número, la fecha, la moneda y el valor (el valor en quetzales se calcula con el cambio).",
+    "Indica el cliente o proveedor, quién depositó y la descripción.",
+    "En el detalle contable presiona «Contabilizar» para usar la transacción de Objetos contables, o «Agregar línea».",
+    "En los depósitos agrega las facturas o recibos que se liquidan con su abono.",
+    "Guarda; con «Generar partida» se crea la póliza. «Anular» deja constancia del motivo."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Solicitar y emitir un cheque",
+   "subtitulo": "Cheques › Solicitud de cheques · Emisión de cheques",
+   "pasos": [
+    "En «Solicitud de cheques» presiona «Nueva»: tipo, beneficiario (proveedor o empleado), monto y motivo.",
+    "Presiona «Solicitar cheque»; el responsable usa «Aprobar» o «Rechazar».",
+    "La solicitud aprobada se emite con «Emitir cheque» en «Emisión de cheques».",
+    "El cheque toma el siguiente número de la chequera de la cuenta bancaria.",
+    "Completa el detalle contable y las facturas que paga; «Imprimir» saca el cheque en su formato."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Pagar facturas de proveedores en lote",
+   "subtitulo": "Cheques › Generación cheques · Generación transferencias",
+   "pasos": [
+    "Elige la empresa, el documento (cheques, recibos o ambos) y presiona «Consultar».",
+    "Aparecen las compras con saldo pendiente: marca en «Generar» las que se pagan («Marcar» marca todas).",
+    "Elige la cuenta bancaria, la fecha, la transacción y si se genera uno por proveedor o uno por factura.",
+    "Genera: los cheques toman el número de la chequera; las transferencias quedan como notas de débito.",
+    "En transferencias presiona «Descargar lote (CSV)» para subirlo al banco e «Imprimir relación».",
+    "La compra queda abonada y su saldo baja en Compras y en Cuentas x Pagar."
+   ]
+  },
+  {
+   "tipo": "pantalla",
+   "titulo": "Facturas de compra por pagar",
+   "subtitulo": "Cheques › Facturas de compra por pagar",
+   "puntos": [
+    "Documento, proveedor, importe (total, bonificaciones, notas, descuentos ND, neto, pagado y pendiente).",
+    "Forma de pago, cuenta bancaria y la cuenta del proveedor para transferencias.",
+    "Pestaña Pagos: los cheques y transferencias que pagaron la factura.",
+    "Las compras completas (con desglose fiscal y artículos) se registran en Compras › Ingreso de compras."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Conciliación bancaria del mes",
+   "subtitulo": "Bancos › Conciliación bancaria",
+   "pasos": [
+    "Elige la empresa, el año y el mes; luego la cuenta bancaria.",
+    "Escribe el saldo según el banco y adjunta la imagen del estado de cuenta.",
+    "En «Movimientos» marca los documentos que ya aparecen en el estado de cuenta.",
+    "Revisa la diferencia y los documentos en circulación; «Agregar» registra las partidas en conciliación.",
+    "«Cerrar conciliación» la bloquea; «Reversar cierre» la abre de nuevo. «Reporte» la imprime."
+   ]
+  },
+  {
+   "tipo": "pantalla",
+   "titulo": "Disponibilidad",
+   "subtitulo": "Bancos › Disponibilidad bancaria · Disponibilidad integrada",
+   "puntos": [
+    "Disponibilidad bancaria: saldo inicial, ingresos, egresos y saldo final de una cuenta en un rango de fechas.",
+    "Pestañas con el movimiento y el disponible acumulado, el resumen de cuentas y los totales por tipo de documento.",
+    "Disponibilidad integrada: todas las cuentas de la organización a una fecha, en su moneda y en quetzales.",
+    "Vistas por cuenta, por localidad y por banco, con el saldo mínimo de cada cuenta.",
+    "Son consultas: «Detalle», «Resumen» e «Imprimir»."
+   ]
+  },
+  {
+   "tipo": "pasos",
+   "titulo": "Operar una caja chica",
+   "subtitulo": "Cajas › Cajas chicas",
+   "pasos": [
+    "Abre Caja y Bancos › Cajas › Cajas chicas. En la selección elige la caja (ejemplo: Caja 1 · GERENCIA ADMINISTRATIVA, fondo Q 4,000.00) y presiona «Ir a detalle».",
+    "En «Crear nueva subcaja» elige año y mes y presiona «Crear subcaja»; «Cambiar mes» mueve la subcaja elegida a otro mes y «Actualizar fecha» aplica la fecha de presentación a todos sus documentos.",
+    "En la pestaña «Documentos», a la derecha, ingresa cada factura o recibo: serie, documento, fecha, tipo, NIT, proveedor, moneda, clasificación y total.",
+    "Completa el desglose fiscal (exento, INGUAT, timbre, no deducible, galones de combustible, % IVA y retención): el sistema calcula base, IVA y afecto.",
+    "Elige la justificación, la cuenta de gasto, la cuenta no deducible y el centro de costo; deja marcado «Contable» y presiona «Agregar».",
+    "Con «Marcar/Desmarcar» eliges qué documentos van al detalle contable; presiona «Reconstruir detalle contable» y revisa con «Ver contable» que cuadre.",
+    "En la pestaña «Liquidación» registra el valor del fondo, la tasa de cambio y el anticipo, adelanto y liquidación (cuenta bancaria, cheque, nota y valor); presiona «Guardar liquidación».",
+    "El bloque «Resumen liquidación» muestra total liquidado, total gastos, pendiente de liquidar, pendiente de reembolso y total reembolso (ejemplo: subcaja 21 de octubre 2026 con Q 2,750.00 de gastos).",
+    "Imprimir: los botones «PDF» y «Excel» de la cabecera (antes de «Ver cajas») imprimen lo que estás viendo: la lista de documentos, el detalle contable o, en la pestaña Liquidación, el reporte de liquidación con fondos, resumen y documentos.",
+    "El panel «Reportes» trae además el Resumen contable, Detalle contable, Movimientos y Documentos, con el filtro «Todos / Con / Sin detalle contable».",
+    "«Cerrar caja» liquida la subcaja y genera la póliza de egresos; «Reabrir caja» la devuelve a abierta si su póliza se anuló."
+   ]
+  },
+  {
+   "tipo": "consejos",
+   "titulo": "Buenas prácticas y validaciones",
+   "puntos": [
+    "Revisa que la chequera tenga números disponibles antes de generar cheques en lote.",
+    "Un documento conciliado o con póliza definitiva ya no se modifica; anúlalo con su motivo.",
+    "En moneda extranjera revisa el valor de cambio del día; el valor en quetzales se calcula solo.",
+    "Concilia cada mes antes del cierre contable.",
+    "Registra la cuenta bancaria del proveedor en Compras › Proveedores antes de pagar por transferencia."
+   ]
+  },
+  {
+   "tipo": "cierre",
+   "titulo": "¡Listo para operar!",
+   "subtitulo": "Consulta este manual en Caja y Bancos › Ayuda › Manual del módulo"
+  }
+ ]
 }
