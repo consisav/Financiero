@@ -4827,3 +4827,80 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .vfb-g2 { grid-template-columns: minmax(220px, 2fr) minmax(180px, 1.6fr) minmax(160px, 1.2fr) minmax(110px, .8fr); }
 .vfa-resumen > div span { white-space: nowrap; }
 @media (max-width: 1750px) { .vfa-lado > small { display: none; } .vfa-cards { grid-template-columns: 1.1fr 1.2fr 1.1fr 1fr; } }
+
+/* Facturas Ventas · Detalle contable (transacción, centro de costo y montos MI), Listado de facturas y Procedimientos */
+.vf-transaccion { display: inline-flex; align-items: center; gap: 8px; min-width: 0; padding: 3px 4px 3px 10px; border: 1px solid var(--borde); border-radius: 999px; background: var(--fondo); font-size: 12.5px; white-space: nowrap; }
+.vf-tr-rotulo { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); }
+.vf-tr-num { padding: 1px 9px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); font-variant-numeric: tabular-nums; }
+.vf-tr-desc { font-weight: 600; color: var(--texto); overflow: hidden; text-overflow: ellipsis; max-width: 340px; }
+.vf-tr-cuadre:empty { display: none; }
+.vf-tab-acc { align-items: center; min-width: 0; }
+.vf-conta { table-layout: fixed; }
+.vf-conta .pc-n { width: 34px; } .vf-conta .vf-k-cta { width: 120px; } .vf-conta .vf-k-cc { width: 150px; } .vf-conta .vf-k-con { width: 18%; }
+.vf-conta .vf-k-m { width: 112px; } .vf-conta .pq-x { width: 34px; }
+.vf-conta td { height: 30px; font-variant-numeric: tabular-nums; }
+.vf-conta .vf-k-codigo { font-weight: 600; }
+.vf-conta tfoot td { font-weight: 700; }
+.vf-listado { display: flex; flex-direction: column; min-height: 0; }
+.vf-lista-barra { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.vf-lista-cliente { flex: 0 1 420px; gap: 2px !important; }
+.vf-lista-cliente input { width: 100%; padding: 6px 10px; font-size: 13px; }
+.vf-lista-barra .boton.activo { border-color: var(--acento); color: var(--acento); }
+.vf-lista-resumen { margin-left: auto; font-size: 12.5px; color: var(--tenue); padding-bottom: 6px; }
+.vf-lista-resumen b { color: var(--texto); font-variant-numeric: tabular-nums; }
+.vf-lista td { padding: 6px 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vf-lista td:nth-child(6) { white-space: normal; }
+.vf-lista tbody tr[data-ver-factura] { cursor: pointer; }
+.vf-lista tbody tr[data-ver-factura]:hover td { background: var(--fondo); }
+.vf-lista tbody tr.actual td { background: var(--acento-fondo); }
+.vf-lista .boton { padding: 2px 10px; font-size: 12px; }
+.vf-procesos { display: block; }
+.vf-pr-grid { display: grid; grid-template-columns: minmax(170px, .8fr) minmax(200px, 1fr) minmax(220px, 1.1fr) minmax(240px, 1.2fr); gap: 0; border: 1px solid var(--borde); border-radius: 12px; background: var(--panel); }
+.vf-pr-col { display: flex; flex-direction: column; gap: 7px; padding: 10px 14px; min-width: 0; }
+.vf-pr-col + .vf-pr-col { border-left: 1px solid var(--borde); }
+.vf-pr-col .ta-col-titulo { margin: 0 0 2px; }
+.vf-pr-col > .boton { justify-content: flex-start; width: 100%; max-width: 230px; }
+.vf-pr-guia { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 10px; max-width: 230px; }
+.vf-pr-guia .boton { justify-content: flex-start; }
+.vf-pr-tamanos { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; }
+.vf-pr-tamanos label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.vf-pr-dato { display: grid; grid-template-columns: minmax(110px, auto) minmax(0, 1fr); align-items: center; gap: 8px; font-size: 12px; }
+.vf-pr-dato span { color: var(--tenue); text-align: right; }
+.vf-pr-dato b { padding: 3px 9px; border: 1px solid var(--borde); border-radius: 6px; background: var(--fondo); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vf-pr-poliza { display: grid; grid-template-columns: minmax(110px, auto) repeat(3, minmax(0, 1fr)); align-items: center; gap: 6px; font-size: 12px; }
+.vf-pr-poliza span { color: var(--tenue); text-align: right; }
+.vf-pr-poliza b { padding: 3px 8px; border: 1px solid var(--borde); border-radius: 6px; background: var(--fondo); text-align: center; font-variant-numeric: tabular-nums; }
+.vf-pr-check { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; }
+@media (max-width: 1300px) {
+  .vf-pr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vf-pr-col:nth-child(3) { border-left: 0; }
+  .vf-pr-col:nth-child(n+3) { border-top: 1px solid var(--borde); }
+}
+@media (max-width: 760px) {
+  .vf-pr-grid { grid-template-columns: minmax(0, 1fr); }
+  .vf-pr-col + .vf-pr-col { border-left: 0; border-top: 1px solid var(--borde); }
+}
+.vf-pr-col { gap: 5px; padding: 8px 12px; }
+.vf-pr-col > .boton, .vf-pr-guia .boton { justify-content: flex-start; padding-top: 4px; padding-bottom: 4px; }
+.vf-pr-guia { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 8px; }
+.vf-pr-dato b, .vf-pr-poliza b { padding: 2px 8px; }
+.vf-pr-audit { width: 100%; border-collapse: collapse; font-size: 12px; }
+.vf-pr-audit th, .vf-pr-audit td { padding: 3px 6px; text-align: left; border-bottom: 1px solid var(--borde); white-space: nowrap; }
+.vf-pr-audit thead th { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tenue); }
+.vf-pr-audit tbody th { color: var(--tenue); font-weight: 600; width: 1%; }
+.vf-pr-audit td { font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Detalle factura: tabla de productos y, a la derecha, los datos de la línea seleccionada */
+.vfa .vf-detalle { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 8px; align-items: stretch; min-height: 100%; }
+.vfa .vf-detalle > .pc-lineas { min-height: 0; }
+.vfd-lado { gap: 4px; padding: 6px 10px; overflow: auto; }
+.vfd-lado > small { color: var(--acento); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.vfd-lado .campo { gap: 1px; font-size: 11px; }
+.vfd-lado .campo span { font-weight: 600; color: var(--tenue); }
+.vfd-lado input { padding: 3px 8px; font-size: 12.5px; width: 100%; }
+.vfa .vf-lineas tfoot td { font-weight: 700; }
+@media (max-width: 1100px) { .vfa .vf-detalle { grid-template-columns: minmax(0, 1fr); } }
+.vfa .vf-detalle { grid-template-columns: minmax(0, 1fr) 300px; }
+.vfd-lado { gap: 3px; padding: 5px 10px; }
+.vfd-lado .campo { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 6px; }
+.vfd-lado .campo span { text-align: right; line-height: 1.15; }
+.vfd-lado input { padding: 2px 7px; }

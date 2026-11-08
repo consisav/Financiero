@@ -16,14 +16,17 @@
   const CLASIFICACIONES = ['BIENES', 'SERVICIOS', 'BIENES Y SERVICIOS'];
   const INCOTERMS = ['EXW', 'FCA', 'FAS', 'FOB', 'CFR', 'CIF', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP'];
   const FORMAS_PAGO = ['EFECTIVO', 'CHEQUE', 'DEPÓSITO', 'TRANSFERENCIA', 'TARJETA', 'NOTA DE CRÉDITO'];
-  const PESTANAS = [['DETALLE', 'Detalle factura', 'ti-list-details'], ['CONTABLE', 'Detalle contable', 'ti-notebook'], ['INVENTARIO', 'Detalle inventario', 'ti-packages'], ['PAGOS', 'Pagos', 'ti-cash'], ['PROCESOS', 'Procedimientos', 'ti-settings-automation']];
+  const PESTANAS = [['DETALLE', 'Detalle factura', 'ti-list-details'], ['CONTABLE', 'Detalle contable', 'ti-notebook'], ['INVENTARIO', 'Detalle inventario', 'ti-packages'], ['PAGOS', 'Pagos', 'ti-cash'], ['LISTADO', 'Listado de facturas', 'ti-list-search'], ['PROCESOS', 'Procedimientos', 'ti-settings-automation']];
 
   window.PANTALLAS['facturas-ventas'] = function (cont, m, extra) {
     const ctx = montar(cont, { titulo: 'Facturas Ventas', icono: 'ti-file-invoice', clase: 'bk-movimientos bm-solo vf-facturas', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
     let clientes = [], vendedores = [], precios = [], bodegas = [], productos = [], preciosProd = [], contables = [], centros = [];
     let actual = null, modificando = false, pestana = 'DETALLE', lineaSel = 0;
-    let lineas = [], conta = [], pagos = [], inventario = [];
+    let lineas = [], conta = [], pagos = [], inventario = [], transacciones = [];
+    // Listado de facturas del cliente: null = sin consultar; vista FACTURAS o PRODUCTOS (productos vendidos).
+    let listado = null, listaTexto = '', listaVista = 'FACTURAS', vendidos = null;
+    let poliza = null, guiaTamano = 'COMPLETA';
 
     const cliente = (id) => clientes.find((c) => c.id === id);
     const producto = (id) => productos.find((p) => p.id === id);
@@ -65,6 +68,8 @@
       ]);
       clientes = c.data || []; vendedores = v.data || []; precios = p.data || []; bodegas = b.data || []; productos = pr.data || []; preciosProd = pp.data || [];
       [contables, centros] = await Promise.all([ctx.cuentasContables(), centrosLocalidad()]);
+      const { data: tr } = await sb.from('transacciones_contables').select('numero, descripcion').eq('localidad_id', loc);
+      transacciones = tr || [];
     }
     async function centrosLocalidad() {
       if (!ctx.sel.loc) return [];
@@ -78,6 +83,9 @@
     async function abrir(f) {
       actual = f; modificando = false; lineaSel = 0;
       lineas = []; conta = []; pagos = []; inventario = [];
+      // Abierta desde el listado: el listado se conserva y se refresca; si no, se vuelve a consultar con el cliente de la factura.
+      if (f && pestana === 'LISTADO' && listado) await cargarListado();
+      else { listado = null; vendidos = null; listaVista = 'FACTURAS'; listaTexto = f?.nombre || ''; if (pestana === 'LISTADO' && !f) pestana = 'DETALLE'; }
       if (f) {
         const [l, c, p] = await Promise.all([
           sb.from('factura_venta_lineas').select('*').eq('factura_id', f.id).order('linea'),
@@ -86,8 +94,10 @@
         ]);
         lineas = (l.data || []).map((x) => ({ ...x, fecha_compromiso: x.fecha_compromiso || '', fecha_vencimiento: x.fecha_vencimiento || '', fecha_fabricacion: x.fecha_fabricacion || '' }));
         // La cuenta puede ser de otro catálogo (p. ej. la versión 1 de las facturas migradas): su código y nombre vienen con la línea.
-        conta = (c.data || []).map((x) => ({ cuenta_id: x.cuenta_id, codigo: x.cuentas?.codigo || '', nombre: x.cuentas?.nombre || '', centro_id: x.centro_id, concepto: x.concepto || '', debe: Number(x.debe), haber: Number(x.haber) }));
+        conta = (c.data || []).map((x) => ({ cuenta_id: x.cuenta_id, codigo: x.cuentas?.codigo || '', nombre: x.cuentas?.nombre || '', centro_id: x.centro_id, concepto: x.concepto || '', debe: Number(x.debe), haber: Number(x.haber), debe_mi: x.debe_mi == null ? null : Number(x.debe_mi), haber_mi: x.haber_mi == null ? null : Number(x.haber_mi) }));
         pagos = (p.data || []).map((x) => ({ fecha: x.fecha, forma: x.forma, documento: x.documento || '', banco: x.banco || '', valor: Number(x.valor) }));
+        poliza = null;
+        if (f.partida_id) { const { data: pz } = await sb.from('partidas').select('anio, mes, numero').eq('id', f.partida_id).maybeSingle(); poliza = pz || null; }
         const ids = lineas.map((x) => x.id);
         if (ids.length) { const { data } = await sb.from('inventario_movimientos').select('fecha, cantidad, costo_unitario, lote, fecha_vencimiento, bodega_id, producto_id, factura_linea_id').in('factura_linea_id', ids); inventario = data || []; }
       } else lineas = [nuevaLinea()];
@@ -224,37 +234,37 @@
                 </div>
               </section>
               <section class="vfb-card">
-                <h3 class="ta-col-titulo"><i class="ti ti-pill" aria-hidden="true"></i> Producto y línea</h3>
+                <h3 class="ta-col-titulo"><i class="ti ti-pill" aria-hidden="true"></i> Producto</h3>
                 <div class="vfb-g">
                   <label class="campo vfb-c2"><span>Lab. fab.</span><input name="lab_fab" value="${esc(v.lab_fab || '')}" maxlength="120" ${dis}></label>
                   <label class="pc-check vf-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> Genérico</label>
-                  <div class="vf-lado vfa-lado">${pestana === 'DETALLE' && l ? `
-                <small>Línea ${lineaSel + 1}</small>
-                <label class="campo"><span>Unidad</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
-                <label class="campo"><span>Lote</span><input data-lado="lote" value="${esc(l.lote || '')}" maxlength="40" ${dis}></label>
-                <label class="campo"><span>Registro sanitario</span><input data-lado="registro_sanitario" value="${esc(l.registro_sanitario || '')}" maxlength="60" ${dis}></label>
-                <label class="campo"><span>Vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
-                <label class="campo"><span>Fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>` : ''}</div>
                 </div>
               </section>
             </div>
           <section class="bm-pestanas">
             <div class="bm-tabs-barra">
               <div class="rp-pestanas" role="tablist">${PESTANAS.map(([k, t, i]) => `<button type="button" role="tab" data-pestana="${k}" class="${pestana === k ? 'activa' : ''}" aria-selected="${pestana === k}"><i class="ti ${i}" aria-hidden="true"></i> ${t}${k === 'DETALLE' ? ` <b>${lineas.length}</b>` : k === 'PAGOS' && pagos.length ? ` <b>${pagos.length}</b>` : ''}</button>`).join('')}</div>
-              <span class="vf-tab-acc">${ed && pestana === 'DETALLE' ? '<button type="button" class="boton secundario-sm" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Producto</button>' : ''}${ed && pestana === 'CONTABLE' ? '<button type="button" class="boton secundario-sm" data-accion="conta"><i class="ti ti-plus" aria-hidden="true"></i> Línea contable</button>' : ''}${ctx.admin && pestana === 'PAGOS' && (ed || puede) ? '<button type="button" class="boton secundario-sm" data-accion="pago"><i class="ti ti-plus" aria-hidden="true"></i> Pago</button>' : ''}</span>
+              <span class="vf-tab-acc">${pestana === 'CONTABLE' ? (() => { const t = v.transaccion_anterior != null ? transacciones.find((x) => Number(x.numero) === Number(v.transaccion_anterior)) : null; return `<span class="vf-transaccion" title="Transacción contable"><span class="vf-tr-rotulo">Transacción</span><b class="vf-tr-num">${v.transaccion_anterior != null ? esc(String(v.transaccion_anterior)) : '—'}</b><span class="vf-tr-desc">${esc(t?.descripcion || (v.transaccion_anterior != null ? 'Transacción del sistema anterior' : 'Sin transacción contable'))}</span><span class="vf-tr-cuadre" data-cuadre></span></span>`; })() : ''}${ed && pestana === 'DETALLE' ? '<button type="button" class="boton secundario-sm" data-accion="linea"><i class="ti ti-plus" aria-hidden="true"></i> Producto</button>' : ''}${ed && pestana === 'CONTABLE' ? '<button type="button" class="boton secundario-sm" data-accion="conta"><i class="ti ti-plus" aria-hidden="true"></i> Línea contable</button>' : ''}${ctx.admin && pestana === 'PAGOS' && (ed || puede) ? '<button type="button" class="boton secundario-sm" data-accion="pago"><i class="ti ti-plus" aria-hidden="true"></i> Pago</button>' : ''}</span>
             </div>
             <div class="bm-panel" data-panel="DETALLE" ${pestana === 'DETALLE' ? '' : 'hidden'}>
               <div class="vf-detalle">
                 <div class="pc-lineas"><table class="vf-lineas"><thead><tr><th class="pc-n">#</th><th class="vf-c-prod">Producto</th><th>Descripción</th><th class="vf-c-tipo">Bien / servicio</th><th class="num vf-c-num">Cantidad</th><th class="num vf-c-num">Precio Q</th><th class="num vf-c-num">Total Q</th><th class="num vf-c-num">Precio MI</th><th class="num vf-c-num">Total MI</th><th class="vf-c-chk" title="Descarga del inventario">Inv.</th><th class="vf-c-chk" title="C.P.A.">CPA</th><th class="vf-c-fecha">Fecha comp.</th><th class="pq-x"></th></tr></thead>
                   <tbody>${lineas.map((x, i) => filaLinea(x, i, ed, tc)).join('') || '<tr><td colspan="13" class="tk-vacio">Sin productos.</td></tr>'}</tbody>
                   <tfoot><tr><td colspan="4">Totales</td><td class="num" data-calc="cant">${fmt.monto(lineas.reduce((t, x) => t + Number(x.cantidad || 0), 0))}</td><td></td><td class="num" data-calc="tq">${fmt.monto(total)}</td><td></td><td class="num" data-calc="tmi">${fmt.monto(total / tc)}</td><td colspan="4"></td></tr></tfoot></table></div>
+                <aside class="vf-lado vfd-lado" aria-label="Datos de la línea">${l ? `
+                <small>Línea ${lineaSel + 1}</small>
+                <label class="campo"><span>Unidad de medida</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
+                <label class="campo"><span>Lote</span><input data-lado="lote" value="${esc(l.lote || '')}" maxlength="40" ${dis}></label>
+                <label class="campo"><span>Registro sanitario</span><input data-lado="registro_sanitario" value="${esc(l.registro_sanitario || '')}" maxlength="60" ${dis}></label>
+                <label class="campo"><span>Fecha de vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
+                <label class="campo"><span>Fecha de fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>` : '<small>Sin línea</small>'}</aside>
               </div>
               <datalist id="vf-productos">${productos.filter((p) => p.estado !== 'INACTIVO').map((p) => `<option value="${p.codigo}">${esc(p.nombre)}</option>`).join('')}</datalist>
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
-              <div class="pc-lineas"><table><thead><tr><th class="pc-n">#</th><th>Cuenta</th><th>Nombre de la cuenta</th><th>Concepto</th><th class="num">Debe</th><th class="num">Haber</th><th>Centro</th><th class="pq-x"></th></tr></thead>
-                <tbody>${conta.map((x, i) => { const k = cuenta(x.cuenta_id); const c = centro(x.centro_id); return `<tr data-conta="${i}"><td class="pc-n">${i + 1}</td><td><input list="vf-cuentas" data-c="cuenta" value="${esc(k?.codigo || x.codigo || '')}" ${dis}></td><td class="cc-nombre">${esc(k?.nombre || x.nombre || '')}</td><td><input data-c="concepto" value="${esc(x.concepto || '')}" maxlength="200" ${dis}></td><td class="num"><input type="number" step="0.01" min="0" data-c="debe" value="${x.debe || ''}" ${dis}></td><td class="num"><input type="number" step="0.01" min="0" data-c="haber" value="${x.haber || ''}" ${dis}></td><td><input list="vf-centros" data-c="centro" value="${esc(c?.codigo || '')}" ${dis}></td><td class="pq-x">${ed ? `<button type="button" class="icono-boton" data-quitar-conta="${i}" aria-label="Quitar la línea ${i + 1}"><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="tk-vacio">Sin detalle contable.</td></tr>'}</tbody>
-                <tfoot><tr><td colspan="4">Totales <span data-cuadre></span></td><td class="num" data-calc="debe">${fmt.monto(conta.reduce((t, x) => t + Number(x.debe || 0), 0))}</td><td class="num" data-calc="haber">${fmt.monto(conta.reduce((t, x) => t + Number(x.haber || 0), 0))}</td><td colspan="2"></td></tr></tfoot></table></div>
+              <div class="pc-lineas"><table class="vf-conta"><thead><tr><th class="pc-n">#</th><th class="vf-k-cta">Cuenta</th><th>Nombre de la cuenta</th><th class="vf-k-cc">Centro de costo</th><th class="vf-k-con">Concepto</th><th class="num vf-k-m">Débito</th><th class="num vf-k-m">Débito MI</th><th class="num vf-k-m">Crédito</th><th class="num vf-k-m">Crédito MI</th><th class="pq-x"></th></tr></thead>
+                <tbody>${conta.map((x, i) => filaConta(x, i, ed, tc)).join('') || '<tr><td colspan="10" class="tk-vacio">Sin detalle contable.</td></tr>'}</tbody>
+                <tfoot><tr><td colspan="5">Totales</td><td class="num" data-calc="debe">${fmt.monto(conta.reduce((t, x) => t + Number(x.debe || 0), 0))}</td><td class="num" data-calc="dmi">${fmt.monto(conta.reduce((t, x) => t + miConta(x, 'debe', tc), 0))}</td><td class="num" data-calc="haber">${fmt.monto(conta.reduce((t, x) => t + Number(x.haber || 0), 0))}</td><td class="num" data-calc="hmi">${fmt.monto(conta.reduce((t, x) => t + miConta(x, 'haber', tc), 0))}</td><td></td></tr></tfoot></table></div>
               <datalist id="vf-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
               <datalist id="vf-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
             </div>
@@ -269,21 +279,180 @@
                 <tfoot><tr><td colspan="4">Total pagado · saldo ${fmt.monto(saldo)}</td><td class="num">${fmt.monto(pagado)}</td><td></td></tr></tfoot></table></div>
               ${puede && !modificando ? '<div class="vf-pie"><button type="button" class="boton primario-sm" data-accion="guardar-pagos"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar pagos</button></div>' : ''}
             </div>
+            <div class="bm-panel vf-listado" data-panel="LISTADO" ${pestana === 'LISTADO' ? '' : 'hidden'}>
+              ${pestana === 'LISTADO' ? panelListado() : ''}
+            </div>
             <div class="bm-panel vf-procesos" data-panel="PROCESOS" ${pestana === 'PROCESOS' ? '' : 'hidden'}>
-              <div class="bm-bloque"><h3 class="ta-col-titulo"><i class="ti ti-certificate" aria-hidden="true"></i> Certificación FEL · COFIDI</h3>
-                <p class="cc-ingreso">${certificada() ? `Certificada: autorización ${esc(f.autorizacion)}.` : 'La certificación con COFIDI se conecta con sus credenciales en el servidor. Mientras tanto, registra a mano el número de autorización, la serie y el DTE.'}</p>
-                <button type="button" class="boton secundario-sm" data-accion="certificar" ${f && !certificada() && f.estado === 'FACTURADA' ? '' : 'disabled'}><i class="ti ti-certificate" aria-hidden="true"></i> Certificar con COFIDI</button></div>
-              <div class="bm-bloque"><h3 class="ta-col-titulo"><i class="ti ti-ban" aria-hidden="true"></i> Anulación</h3>
-                <p class="cc-ingreso">Anular deja el saldo en cero y devuelve al inventario los productos de la factura.</p>
-                <button type="button" class="boton secundario-sm rp-peligro" data-accion="anular" ${puede ? '' : 'disabled'}><i class="ti ti-ban" aria-hidden="true"></i> Anular factura</button></div>
-              <div class="bm-bloque"><h3 class="ta-col-titulo"><i class="ti ti-printer" aria-hidden="true"></i> Impresión</h3>
-                <p class="cc-ingreso">La factura en PDF con el encabezado de la empresa, o en Excel con su detalle.</p>
-                <span class="rx-par"><button type="button" class="boton secundario-sm" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button></span></div>
+              ${panelProcesos(f, v, puede)}
             </div>
           </section>
           </div>
         </form>`;
       cuadre();
+    }
+
+    // Monto en moneda de integración de una línea contable: el guardado, o el de quetzales entre el tipo de cambio.
+    function miConta(x, lado, tc) {
+      const q = Number(x[lado] || 0); if (!q) return 0;
+      const mi = x[lado + '_mi'];
+      return mi != null && !x.editada ? Number(mi) : fmt.redondear(q / (tc || 1));
+    }
+    function filaConta(x, i, ed, tc) {
+      const k = cuenta(x.cuenta_id); const c = centro(x.centro_id); const dis = ed ? '' : 'disabled';
+      const m = (lado) => { const q = Number(x[lado] || 0); return q ? fmt.monto(q) : ''; };
+      const mi = (lado) => { const q = miConta(x, lado, tc); return q ? fmt.monto(q) : ''; };
+      const num = (lado) => ed ? `<input type="number" step="0.01" min="0" data-c="${lado}" value="${x[lado] || ''}">` : m(lado);
+      return `<tr data-conta="${i}"><td class="pc-n">${i + 1}</td>
+        <td>${ed ? `<input list="vf-cuentas" data-c="cuenta" value="${esc(k?.codigo || x.codigo || '')}">` : `<span class="vf-k-codigo">${esc(k?.codigo || x.codigo || '')}</span>`}</td>
+        <td class="cc-nombre">${esc(k?.nombre || x.nombre || '')}</td>
+        <td>${ed ? `<input list="vf-centros" data-c="centro" value="${esc(c?.codigo || '')}">` : esc(c ? `${c.codigo} · ${c.nombre}` : '')}</td>
+        <td>${ed ? `<input data-c="concepto" value="${esc(x.concepto || '')}" maxlength="200">` : esc(x.concepto || '')}</td>
+        <td class="num">${num('debe')}</td><td class="num tk-tenue" data-mi="debe">${mi('debe')}</td>
+        <td class="num">${num('haber')}</td><td class="num tk-tenue" data-mi="haber">${mi('haber')}</td>
+        <td class="pq-x">${ed ? `<button type="button" class="icono-boton" data-quitar-conta="${i}" aria-label="Quitar la línea ${i + 1}" ${dis}><i class="ti ti-x" aria-hidden="true"></i></button>` : ''}</td></tr>`;
+    }
+
+    // Listado de facturas del cliente (o de los clientes cuyo nombre contiene el texto) y sus productos vendidos.
+    async function cargarListado() {
+      const txt = listaTexto.trim();
+      let q = sb.from('facturas_venta').select('id, numero, serie, numero_dte, estado, fecha_emision, nombre, nit, cliente_id, total, total_mi, saldo').eq('localidad_id', ctx.sel.loc);
+      if (actual?.cliente_id && txt === (actual.nombre || '')) q = q.eq('cliente_id', actual.cliente_id);
+      else if (txt) q = q.ilike('nombre', `%${txt.replace(/[%_]/g, '')}%`);
+      const { data, error } = await q.order('fecha_emision', { ascending: false }).order('numero', { ascending: false }).limit(500);
+      if (error) { window.FIN.aviso(window.UI.traducirError(error)); listado = []; } else listado = data || [];
+      vendidos = null;
+    }
+    async function cargarVendidos() {
+      const ids = (listado || []).filter((x) => x.estado !== 'ANULADA').map((x) => x.id);
+      const filas = [];
+      for (let i = 0; i < ids.length; i += 150) {
+        const { data, error } = await sb.from('factura_venta_lineas').select('factura_id, producto_id, descripcion, cantidad, total').in('factura_id', ids.slice(i, i + 150));
+        if (error) { window.FIN.aviso(window.UI.traducirError(error)); break; }
+        filas.push(...(data || []));
+      }
+      const g = new Map();
+      for (const l of filas) {
+        const p = producto(l.producto_id); const k = l.producto_id ? `p${l.producto_id}` : `d${l.descripcion}`;
+        const x = g.get(k) || { codigo: p?.codigo ?? '', descripcion: p?.nombre || l.descripcion || '', cantidad: 0, total: 0, facturas: new Set() };
+        x.cantidad += Number(l.cantidad || 0); x.total += Number(l.total || 0); x.facturas.add(l.factura_id); g.set(k, x);
+      }
+      vendidos = [...g.values()].sort((a, b) => b.total - a.total);
+    }
+    function panelListado() {
+      const fac = listado || [];
+      const vig = fac.filter((x) => x.estado !== 'ANULADA');
+      const barra = `<div class="vf-lista-barra">
+          <label class="campo vf-lista-cliente"><span>Consultar por cliente</span><input name="lista_texto" value="${esc(listaTexto)}" placeholder="Nombre del cliente" autocomplete="off"></label>
+          <button type="button" class="boton secundario-sm" data-accion="lista-consultar"><i class="ti ti-search" aria-hidden="true"></i> Consultar</button>
+          <button type="button" class="boton secundario-sm ${listaVista === 'PRODUCTOS' ? 'activo' : ''}" data-accion="lista-productos" ${fac.length ? '' : 'disabled'}><i class="ti ti-packages" aria-hidden="true"></i> ${listaVista === 'PRODUCTOS' ? 'Ver facturas' : 'Productos vendidos'}</button>
+          <span class="vf-lista-resumen">${listado ? `<b>${fac.length}</b> facturas · <b>${fmt.monto(vig.reduce((t, x) => t + Number(x.total || 0), 0))}</b> vigentes · saldo <b>${fmt.monto(vig.reduce((t, x) => t + Number(x.saldo || 0), 0))}</b>` : ''}</span>
+        </div>`;
+      if (!listado) return barra + '<div class="pc-lineas"><p class="tk-vacio">Cargando…</p></div>';
+      if (listaVista === 'PRODUCTOS') {
+        if (!vendidos) return barra + '<div class="pc-lineas"><p class="tk-vacio">Cargando productos vendidos…</p></div>';
+        return barra + `<div class="pc-lineas"><table class="vf-lista"><thead><tr><th>Producto</th><th>Descripción</th><th class="num">Facturas</th><th class="num">Cantidad</th><th class="num">Total Q</th></tr></thead>
+          <tbody>${vendidos.map((x) => `<tr><td class="fuerte">${esc(String(x.codigo))}</td><td>${esc(x.descripcion)}</td><td class="num">${x.facturas.size}</td><td class="num">${fmt.monto(x.cantidad)}</td><td class="num fuerte">${fmt.monto(x.total)}</td></tr>`).join('') || '<tr><td colspan="5" class="tk-vacio">Las facturas no tienen productos.</td></tr>'}</tbody>
+          <tfoot><tr><td colspan="3">Totales</td><td class="num">${fmt.monto(vendidos.reduce((t, x) => t + x.cantidad, 0))}</td><td class="num">${fmt.monto(vendidos.reduce((t, x) => t + x.total, 0))}</td></tr></tfoot></table></div>`;
+      }
+      return barra + `<div class="pc-lineas"><table class="vf-lista"><thead><tr><th>#</th><th>Serie</th><th>Número</th><th>Estado</th><th>Fecha y hora de emisión</th><th>Cliente</th><th class="num">Valor</th><th class="num">Valor MI</th><th class="num">Saldo</th><th class="pq-x"></th></tr></thead>
+        <tbody>${fac.map((x) => `<tr data-ver-factura="${x.id}" class="${x.id === actual?.id ? 'actual' : ''}" title="Abrir la factura">
+          <td class="fuerte">${esc(String(x.numero))}</td><td>${esc(x.serie || '')}</td><td>${esc(x.numero_dte || '')}</td>
+          <td>${x.estado === 'ANULADA' ? '<span class="pc-marca anulada">Anulada</span>' : '<span class="pc-marca aprobada">Facturada</span>'}</td>
+          <td>${esc(fmt.fechaHora(x.fecha_emision))}</td><td>${esc(x.nombre || '')}</td>
+          <td class="num fuerte">${fmt.monto(x.total)}</td><td class="num tk-tenue">${fmt.monto(x.total_mi)}</td><td class="num">${Number(x.saldo) ? fmt.monto(x.saldo) : ''}</td>
+          <td class="pq-x">${ctx.admin && x.estado === 'FACTURADA' ? `<button type="button" class="boton secundario-sm rp-peligro" data-anular-id="${x.id}">Anular</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="10" class="tk-vacio">No hay facturas para ese cliente.</td></tr>'}</tbody></table></div>`;
+    }
+
+    // Procedimientos: acciones de la factura, impresiones de despacho y datos de control (póliza y auditoría).
+    function panelProcesos(f, v, puede) {
+      const dato = (r, val) => `<div class="vf-pr-dato"><span>${r}</span><b>${esc(val || '') || '—'}</b></div>`;
+      const tf = { M: 'MANUAL', A: 'AUTOMÁTICA' }[v.tipo_factura_anterior] || v.tipo_factura_anterior || (f ? 'MANUAL' : '');
+      const nf = !f ? 'disabled title="Registra primero la factura"' : '';
+      return `<div class="vf-pr-grid">
+        <section class="vf-pr-col">
+          <h3 class="ta-col-titulo"><i class="ti ti-file-invoice" aria-hidden="true"></i> Factura</h3>
+          <button type="button" class="boton secundario-sm" data-accion="certificar" ${f && !certificada() && f.estado === 'FACTURADA' ? '' : 'disabled'}><i class="ti ti-certificate" aria-hidden="true"></i> Certificar factura</button>
+          <button type="button" class="boton secundario-sm" data-accion="pdf" ${nf}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir factura</button>
+          <button type="button" class="boton secundario-sm rp-peligro" data-accion="anular" ${puede ? '' : 'disabled'}><i class="ti ti-ban" aria-hidden="true"></i> Anular factura</button>
+          <button type="button" class="boton secundario-sm" data-accion="validar" ${nf}><i class="ti ti-checklist" aria-hidden="true"></i> Validar factura</button>
+          ${f?.estado === 'ANULADA' && f.motivo_anulacion ? `<p class="cc-ingreso">Anulada: ${esc(f.motivo_anulacion)}</p>` : ''}
+        </section>
+        <section class="vf-pr-col">
+          <h3 class="ta-col-titulo"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Despacho</h3>
+          <button type="button" class="boton secundario-sm" data-accion="rep-salida" ${nf}><i class="ti ti-package-export" aria-hidden="true"></i> Imprimir rep. salida</button>
+          <button type="button" class="boton secundario-sm" data-accion="rep-envio" ${nf}><i class="ti ti-send" aria-hidden="true"></i> Imprimir rep. envío</button>
+          <div class="vf-pr-guia">
+            <button type="button" class="boton secundario-sm" data-accion="guia" ${nf}><i class="ti ti-tag" aria-hidden="true"></i> Imprimir guía</button>
+            <div class="vf-pr-tamanos" role="radiogroup" aria-label="Tamaño de la guía">${[['COMPLETA', 'Completa'], ['MEDIANA', 'Mediana'], ['PEQUEÑA', 'Pequeña']].map(([k, t]) => `<label><input type="radio" name="guia_tamano" value="${k}" ${guiaTamano === k ? 'checked' : ''}> ${t}</label>`).join('')}</div>
+          </div>
+        </section>
+        <section class="vf-pr-col">
+          <h3 class="ta-col-titulo"><i class="ti ti-notebook" aria-hidden="true"></i> Póliza y tipo</h3>
+          <div class="vf-pr-poliza"><span>Póliza</span><b>${poliza ? esc(String(poliza.anio)) : '—'}</b><b>${poliza ? esc(String(poliza.mes).padStart(2, '0')) : '—'}</b><b>${poliza ? esc(String(poliza.numero)) : '—'}</b></div>
+          ${dato('Tipo de factura', tf)}
+          <label class="vf-pr-check"><input type="checkbox" disabled ${v.autoriza_credito_extra_anterior ? 'checked' : ''}> ¿Autoriza crédito extra?</label>
+          ${dato('Usuario autoriza crédito extra', v.usuario_autoriza_credito_anterior)}
+          ${dato('Fecha autoriza crédito extra', v.fecha_autoriza_credito_anterior ? fmt.fechaHora(v.fecha_autoriza_credito_anterior) : '')}
+        </section>
+        <section class="vf-pr-col">
+          <h3 class="ta-col-titulo"><i class="ti ti-history" aria-hidden="true"></i> Auditoría</h3>
+          <table class="vf-pr-audit"><thead><tr><th></th><th>Usuario</th><th>Fecha</th></tr></thead><tbody>
+            ${[['Ingresa', v.usuario_ingresa_anterior || v.creado_por_nombre || v.usuario, v.fecha_ingresa_anterior || v.creado_en], ['Modifica', v.usuario_modifica_anterior || v.modificado_por_nombre, v.fecha_modifica_anterior || v.modificado_en], ['Anula', v.anulada_por, v.anulada_en]].map(([r, u, d]) => `<tr><th>${r}</th><td>${esc(u || '') || '—'}</td><td>${d ? esc(fmt.fechaHora(d)) : '—'}</td></tr>`).join('')}
+          </tbody></table>
+        </section>
+      </div>`;
+    }
+
+    // Revisa la factura y muestra lo que falta o no cuadra.
+    function validar() {
+      const f = actual; if (!f) return;
+      const tq = fmt.redondear(lineas.reduce((t, l) => t + Number(l.cantidad || 0) * Number(l.precio || 0), 0));
+      const d = fmt.redondear(conta.reduce((t, x) => t + Number(x.debe || 0), 0)), h = fmt.redondear(conta.reduce((t, x) => t + Number(x.haber || 0), 0));
+      const obs = [];
+      if (!f.cliente_id) obs.push('el cliente no está en el catálogo');
+      if (!f.nit) obs.push('no tiene NIT');
+      if (!lineas.length) obs.push('no tiene productos');
+      else if (Math.abs(tq - Number(f.total || 0)) > 0.05) obs.push(`el total (${fmt.monto(f.total)}) no cuadra con sus productos (${fmt.monto(tq)})`);
+      if (!conta.length) obs.push('no tiene detalle contable');
+      else { if (d !== h) obs.push(`el detalle contable no cuadra (diferencia ${fmt.monto(Math.abs(d - h))})`); if (Math.abs(d - Number(f.total || 0)) > 0.05) obs.push(`el débito contable (${fmt.monto(d)}) no es igual al total`); }
+      if (conta.some((x) => !x.cuenta_id)) obs.push('hay líneas contables sin cuenta');
+      if (!f.vendedor_id) obs.push('no tiene vendedor');
+      if (!f.bodega_id) obs.push('no tiene bodega');
+      if (f.estado === 'FACTURADA' && !certificada()) obs.push('no está certificada');
+      window.FIN.aviso(obs.length ? `Factura con observaciones: ${obs.join('; ')}.` : 'Factura válida: cliente, productos, total y detalle contable en orden.');
+    }
+
+    // Reporte de salida (bodega), reporte de envío y guía para el paquete.
+    const nombreFactura = (f) => f.serie ? `${f.serie}-${f.numero_dte || ''}` : `interna ${f.numero}`;
+    function repSalida() {
+      const f = actual; if (!f) return;
+      const b = bodegas.find((x) => x.id === f.bodega_id);
+      imprimir(`Salida ${f.numero}`, `<h1>Reporte de salida · factura ${esc(nombreFactura(f))}</h1><h2>${esc([`Interno: ${f.numero}`, `Emisión: ${fmt.fechaHora(f.fecha_emision)}`, `Cliente: ${f.cliente_codigo || ''} · ${f.nombre}`, `Bodega: ${b ? `${b.codigo} · ${b.nombre}` : '—'}`, `Entrega: ${f.modo_entrega || ''}`].join(' · '))}</h2>
+        <table><thead><tr><th>#</th><th>Producto</th><th>Descripción</th><th>Unidad</th><th>Lote</th><th>Registro sanitario</th><th>Vence</th><th class="n">Cantidad</th></tr></thead><tbody>
+        ${lineas.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(String(x.producto_codigo ?? ''))}</td><td>${esc(x.descripcion)}</td><td>${esc(x.unidad_medida || '')}</td><td>${esc(x.lote || '')}</td><td>${esc(x.registro_sanitario || '')}</td><td>${esc(x.fecha_vencimiento ? fmt.fechaDia(x.fecha_vencimiento) : '')}</td><td class="n">${fmt.monto(x.cantidad)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="7">Total de unidades</td><td class="n">${fmt.monto(lineas.reduce((t, x) => t + Number(x.cantidad || 0), 0))}</td></tr></tfoot></table>
+        <div class="firmas"><div>Despachó</div><div>Revisó</div><div>Recibió</div></div>`, { locId: f.localidad_id, orgId: f.organizacion_id });
+    }
+    function repEnvio() {
+      const f = actual; if (!f) return;
+      const fila = (r, val) => val ? `<tr><th>${r}</th><td>${esc(String(val))}</td></tr>` : '';
+      imprimir(`Envío ${f.numero}`, `<h1>Reporte de envío · factura ${esc(nombreFactura(f))}</h1><h2>${esc([`Interno: ${f.numero}`, `Emisión: ${fmt.fechaHora(f.fecha_emision)}`, `Valor: ${fmt.monto(f.total)}`].join(' · '))}</h2>
+        <table>${fila('Cliente', `${f.cliente_codigo || ''} · ${f.nombre}`)}${fila('NIT', f.nit)}${fila('Dirección de envío', f.direccion_envio || f.direccion)}${fila('Contacto', f.contacto)}${fila('Teléfono', f.telefono)}
+          ${fila('Modo de entrega', f.modo_entrega)}${fila('Transporte', f.transporte_anterior)}${fila('No. de guía', f.no_guia_anterior)}${fila('Piloto', f.piloto_anterior)}${fila('Mensajero', f.mensajero_nombre_anterior)}
+          ${fila('Consignatario', f.consignatario_nombre_anterior)}${fila('Dirección del consignatario', f.consignatario_direccion_anterior)}${fila('Observaciones', f.observaciones_transporte_anterior || f.observaciones)}</table>
+        <table><thead><tr><th>#</th><th>Descripción</th><th>Lote</th><th class="n">Cantidad</th></tr></thead><tbody>${lineas.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.descripcion)}</td><td>${esc(x.lote || '')}</td><td class="n">${fmt.monto(x.cantidad)}</td></tr>`).join('')}</tbody></table>
+        <div class="firmas"><div>Entregó</div><div>Transportista</div><div>Recibió conforme</div></div>`, { locId: f.localidad_id, orgId: f.organizacion_id });
+    }
+    function guia() {
+      const f = actual; if (!f) return;
+      const loc = ctx.localidad(f.localidad_id);
+      const t = { COMPLETA: { w: '190mm', fs: 22 }, MEDIANA: { w: '140mm', fs: 16 }, 'PEQUEÑA': { w: '95mm', fs: 12 } }[guiaTamano];
+      imprimir(`Guía ${f.numero}`, `<style>.g{width:${t.w};border:2px solid #111;border-radius:6px;padding:${t.fs * .8}px;font-size:${t.fs}px;line-height:1.35}.g small{display:block;font-size:.55em;letter-spacing:.08em;text-transform:uppercase;color:#555;margin-top:.5em}.g b{display:block}.g .d{font-size:1.25em}.g .p{display:flex;justify-content:space-between;border-top:1px solid #999;margin-top:.8em;padding-top:.4em;font-size:.7em}</style>
+        <div class="g"><small>Para</small><b class="d">${esc(f.consignatario_nombre_anterior || f.nombre)}</b>
+          <small>Dirección</small><b>${esc(f.consignatario_direccion_anterior || f.direccion_envio || f.direccion || '')}</b>
+          ${f.contacto || f.telefono ? `<small>Contacto</small><b>${esc([f.contacto, f.telefono].filter(Boolean).join(' · '))}</b>` : ''}
+          <small>De</small><b>${esc(loc ? `${loc.codigo} · ${loc.nombre_comercial}` : '')}</b>
+          <div class="p"><span>Factura ${esc(nombreFactura(f))}</span><span>Interno ${f.numero}</span><span>${esc(f.modo_entrega || '')}${f.no_guia_anterior ? ` · guía ${esc(String(f.no_guia_anterior))}` : ''}</span></div></div>`, { sinEncabezado: true });
     }
 
     function filaLinea(x, i, ed, tc) {
@@ -337,12 +506,14 @@
       });
       ctx.pDet.querySelectorAll('[data-lado]').forEach((inp) => { const x = lineas[lineaSel]; if (x) x[inp.dataset.lado] = inp.value; });
       ctx.pDet.querySelectorAll('tr[data-conta]').forEach((tr) => {
-        const x = conta[Number(tr.dataset.conta)]; if (!x) return;
+        const x = conta[Number(tr.dataset.conta)]; if (!x || !tr.querySelector('[data-c=debe]')) return; // solo lectura: no hay campos
         const v = (k) => tr.querySelector(`[data-c=${k}]`).value.trim();
         // Si no cambió el código se conserva la cuenta original aunque sea de otro catálogo.
         if (!(x.cuenta_id && v('cuenta') === x.codigo && !cuenta(x.cuenta_id))) { const k = cuentaPorCodigo(v('cuenta')); x.cuenta_id = k ? k.id : null; x.nombre = k?.nombre || ''; x.codigo = v('cuenta'); }
         const c = centros.find((y) => y.codigo === v('centro') && y.movimiento); x.centro_id = c ? c.id : null; x.centro_codigo = v('centro');
+        const d0 = x.debe, h0 = x.haber;
         x.concepto = v('concepto'); x.debe = Number(v('debe')) || 0; x.haber = Number(v('haber')) || 0;
+        if (x.debe !== d0 || x.haber !== h0) x.editada = true;
       });
       ctx.pDet.querySelectorAll('tr[data-pago]').forEach((tr) => {
         const x = pagos[Number(tr.dataset.pago)]; if (!x) return;
@@ -371,6 +542,9 @@
       set('saldo', fmt.monto(Math.max(0, total - retIva - h.monto_retencion_isr - pagado)));
       form.querySelectorAll('tr[data-linea]').forEach((tr) => { const x = lineas[Number(tr.dataset.linea)]; tr.querySelector('[data-tq]').textContent = fmt.monto(x.cantidad * x.precio); tr.querySelector('[data-pmi]').textContent = fmt.monto(x.precio / tc); tr.querySelector('[data-tmi]').textContent = fmt.monto(x.cantidad * x.precio / tc); });
       set('debe', fmt.monto(conta.reduce((t, x) => t + x.debe, 0))); set('haber', fmt.monto(conta.reduce((t, x) => t + x.haber, 0)));
+      { const tcc = Number(form.elements.tipo_cambio?.value || 1) || 1;
+        form.querySelectorAll('tr[data-conta]').forEach((tr) => { const x = conta[Number(tr.dataset.conta)]; if (!x) return; tr.querySelectorAll('[data-mi]').forEach((c) => { const q = miConta(x, c.dataset.mi, tcc); c.textContent = q ? fmt.monto(q) : ''; }); });
+        set('dmi', fmt.monto(conta.reduce((t, x) => t + miConta(x, 'debe', tcc), 0))); set('hmi', fmt.monto(conta.reduce((t, x) => t + miConta(x, 'haber', tcc), 0))); }
       cuadre();
     }
 
@@ -403,7 +577,7 @@
           cantidad: x.cantidad, precio: x.precio, inventario: x.inventario, cpa: x.cpa, fecha_compromiso: x.fecha_compromiso || null, unidad_medida: x.unidad_medida || null, lote: x.lote || null,
           registro_sanitario: x.registro_sanitario || null, fecha_vencimiento: x.fecha_vencimiento || null, fecha_fabricacion: x.fecha_fabricacion || null })));
         if (r1.error) throw r1.error;
-        if (cs.length) { const r2 = await sb.from('factura_venta_contable').insert(cs.map((x, i) => ({ factura_id: id, linea: i + 1, cuenta_id: x.cuenta_id, centro_id: x.centro_id, concepto: x.concepto || null, debe: x.debe, haber: x.haber }))); if (r2.error) throw r2.error; }
+        if (cs.length) { const r2 = await sb.from('factura_venta_contable').insert(cs.map((x, i) => ({ factura_id: id, linea: i + 1, cuenta_id: x.cuenta_id, centro_id: x.centro_id, concepto: x.concepto || null, debe: x.debe, haber: x.haber, debe_mi: miConta(x, 'debe', Number(h.tipo_cambio || 1) || 1), haber_mi: miConta(x, 'haber', Number(h.tipo_cambio || 1) || 1) }))); if (r2.error) throw r2.error; }
         if (ps.length) { const r3 = await sb.from('factura_venta_pagos').insert(ps.map((x) => ({ factura_id: id, fecha: x.fecha || fmt.hoy(), forma: x.forma, documento: x.documento || null, banco: x.banco || null, valor: x.valor, usuario: (ctx.yo.usuario || '').toUpperCase() }))); if (r3.error) throw r3.error; }
         window.FIN.aviso(actual ? 'Factura guardada' : 'Factura registrada');
         const { data } = await sb.from('facturas_venta').select('*').eq('id', id).single();
@@ -510,15 +684,29 @@
       const lado = ctx.pDet.querySelector('.vf-lado');
       const l = lineas[lineaSel]; const dis = editable() ? '' : 'disabled';
       if (lado && l) lado.innerHTML = `<small>Línea ${lineaSel + 1}</small>
-        <label class="campo"><span>Unidad</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
+        <label class="campo"><span>Unidad de medida</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
         <label class="campo"><span>Lote</span><input data-lado="lote" value="${esc(l.lote || '')}" maxlength="40" ${dis}></label>
         <label class="campo"><span>Registro sanitario</span><input data-lado="registro_sanitario" value="${esc(l.registro_sanitario || '')}" maxlength="60" ${dis}></label>
-        <label class="campo"><span>Vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
-        <label class="campo"><span>Fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>`;
+        <label class="campo"><span>Fecha de vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
+        <label class="campo"><span>Fecha de fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>`;
     });
     cont.addEventListener('click', async (e) => {
       const tab = e.target.closest('[data-pestana]');
-      if (tab) { leerTablas(); pestana = tab.dataset.pestana; const form = ctx.pDet.querySelector('.vf-form'); return form ? repintar() : null; }
+      if (tab) {
+        leerTablas(); pestana = tab.dataset.pestana; const form = ctx.pDet.querySelector('.vf-form'); if (!form) return null;
+        repintar();
+        if (pestana === 'LISTADO' && !listado) { await cargarListado(); if (pestana === 'LISTADO') repintar(); }
+        return null;
+      }
+      const ver = e.target.closest('tr[data-ver-factura]');
+      const anu = e.target.closest('[data-anular-id]');
+      if (anu || (ver && Number(ver.dataset.verFactura) !== actual?.id)) {
+        const id = Number((anu || ver).dataset.anularId || (anu || ver).dataset.verFactura);
+        const { data } = await sb.from('facturas_venta').select('*').eq('id', id).single();
+        if (!data) return null;
+        await abrir(data);
+        return anu ? anular() : null;
+      }
       const ql = e.target.closest('[data-quitar-linea]'); if (ql) { leerTablas(); lineas.splice(Number(ql.dataset.quitarLinea), 1); if (!lineas.length) lineas.push(nuevaLinea()); lineaSel = 0; return repintar(); }
       const qc = e.target.closest('[data-quitar-conta]'); if (qc) { leerTablas(); conta.splice(Number(qc.dataset.quitarConta), 1); return repintar(); }
       const qp = e.target.closest('[data-quitar-pago]'); if (qp) { leerTablas(); pagos.splice(Number(qp.dataset.quitarPago), 1); return repintar(); }
@@ -532,11 +720,27 @@
       if (a === 'pago') { leerTablas(); pagos.push({ fecha: fmt.hoy(), forma: 'EFECTIVO', documento: '', banco: '', valor: 0 }); return repintar(); }
       if (a === 'guardar-pagos') return guardarPagos();
       if (a === 'anular') return anular();
+      if (a === 'lista-consultar') { listaTexto = ctx.pDet.querySelector('[name=lista_texto]')?.value || ''; listado = null; listaVista = 'FACTURAS'; repintar(); await cargarListado(); return repintar(); }
+      if (a === 'lista-productos') {
+        listaVista = listaVista === 'PRODUCTOS' ? 'FACTURAS' : 'PRODUCTOS'; repintar();
+        if (listaVista === 'PRODUCTOS' && !vendidos) { await cargarVendidos(); repintar(); }
+        return null;
+      }
       if (a === 'certificar') return window.FIN.aviso('Certificación con COFIDI: se habilita al configurar sus credenciales en el servidor. Mientras tanto registra la autorización con «Modificar».');
       if (a === 'pdf') return pdf();
+      if (a === 'validar') return validar();
+      if (a === 'rep-salida') return repSalida();
+      if (a === 'rep-envio') return repEnvio();
+      if (a === 'guia') { guiaTamano = ctx.pDet.querySelector('[name=guia_tamano]:checked')?.value || 'COMPLETA'; return guia(); }
       if (a === 'excel') return excel();
     });
-    cont.addEventListener('submit', (e) => { if (e.target.matches('.vf-form')) { e.preventDefault(); guardar(e.target); } });
+    cont.addEventListener('submit', (e) => {
+      if (!e.target.matches('.vf-form')) return;
+      e.preventDefault();
+      // Enter en «Consultar por cliente» consulta el listado; no guarda la factura.
+      if (document.activeElement?.name === 'lista_texto') return ctx.pDet.querySelector('[data-accion=lista-consultar]')?.click();
+      guardar(e.target);
+    });
 
     iniciar();
   };
