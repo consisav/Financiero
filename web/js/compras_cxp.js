@@ -461,6 +461,7 @@
           ${avisoVacio()}
           <div class="pc-lineas cx-tabla"><table>${cuerpo}</table></div>
         </div>`;
+      X.ajustarAlto(cont);
     }
 
     // Aviso del salto automático o, si el periodo elegido sale vacío, botón para ir al más cercano con documentos.

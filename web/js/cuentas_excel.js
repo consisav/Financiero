@@ -26,6 +26,15 @@
   const filaDoc = (x, conTercero = true) => ({ valores: [x.numero, x.serie || '', x.documento || '', dd(x.fecha_doc), dd(x.estimada), x.mora || 0, ...(conTercero ? [x.codigo ?? '', x.nombre || ''] : []), r2(x.valor), r2(x.saldo)] });
   const relleno = (n) => Array(n).fill('');
 
+  // El reporte ocupa toda la altura disponible hasta el borde inferior de la ventana (la tabla toma el resto).
+  function ajustarAlto(cont) {
+    const el = cont.querySelector('.cx-rep');
+    if (!el) return;
+    const fijar = () => { if (!el.isConnected) return window.removeEventListener('resize', fijar); el.style.setProperty('--tk-alto', `${Math.max(420, Math.floor(window.innerHeight - (el.getBoundingClientRect().top + window.scrollY) - (parseFloat(getComputedStyle(el.closest('.vista') || document.body).paddingBottom) || 0) - 4))}px`); };
+    if (!el.dataset.alto) { el.dataset.alto = '1'; window.addEventListener('resize', fijar); }
+    fijar();
+  }
+
   // Orden ascendente / descendente por columna (pantalla, PDF y Excel).
   // o: { campo: 'fdoc' | 'fpago' | 'mora' | 'valor' | 'saldo' | '', dir: 'ASC' | 'DESC' }; get: { campo: (fila) => valor }.
   function ordenar(rows, o, get) {
@@ -97,5 +106,5 @@
     });
   }
 
-  window.CUENTAS_XLSX = { generar, ordenar, th, alternar, opcionesOrden, textoOrden,OPCIONES: [['PDF', 'PDF'], ['RESUMIDO', 'EXCEL · RESUMIDO'], ['DETALLADO', 'EXCEL · DETALLADO'], ['PERIODO', 'EXCEL · POR PERIODO']] };
+  window.CUENTAS_XLSX = { generar, ajustarAlto, ordenar, th, alternar, opcionesOrden, textoOrden,OPCIONES: [['PDF', 'PDF'], ['RESUMIDO', 'EXCEL · RESUMIDO'], ['DETALLADO', 'EXCEL · DETALLADO'], ['PERIODO', 'EXCEL · POR PERIODO']] };
 })();

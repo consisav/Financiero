@@ -196,6 +196,7 @@
           ${avisoVacio()}
           <div class="pc-lineas cx-tabla"><table>${cuerpo}</table></div>
         </div>`;
+      X.ajustarAlto(cont);
     }
 
     function titulo() { return `${TITULOS[modo][0]} · ${modo === 'MENSUAL' ? `${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `saldo al ${fmt.fechaDia(f.hasta)}`}`; }
