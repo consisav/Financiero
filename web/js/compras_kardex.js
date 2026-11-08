@@ -126,7 +126,7 @@
           <section class="kx-cat">
             <div class="kx-cat-cab">
               <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Código, código de barras, nombre o principio activo…" value="${esc(f.buscar)}" aria-label="Buscar producto"></label>
-              ${np ? `<button type="button" class="boton primario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button>`
+              ${np ? `<span class="kx-imp"><select data-formato aria-label="Formato"><option ${f.formato === 'PDF' ? 'selected' : ''}>PDF</option><option ${f.formato === 'EXCEL' ? 'selected' : ''}>EXCEL</option></select><button type="button" class="boton primario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button></span>`
                 : `<label class="pc-check kx-inact"><input type="checkbox" data-inactivos ${f.inactivos ? 'checked' : ''}> Incluir inactivos</label>`}
             </div>
             <div class="pc-lineas kx-productos"><table>
@@ -208,7 +208,22 @@
       const filas0 = movs.map((m, i) => np ? [n - i, m.nombre, m.interno, m.fisico, fechaHora(m.fecha, m.creado_en), m.lote, cant(m.c), cant(m.exLote), cant(m.total)]
         : [n - i, m.nombre, m.interno, fechaHora(m.fecha, m.creado_en), m.fisico, fmt.fechaDia(m.fabricacion), fmt.fechaDia(m.fecha_vencimiento), m.lote, m.c > 0 ? cant(m.c) : '', m.c < 0 ? cant(m.c) : '', cant(m.exLote), cant(m.total), fmt.monto(m.costo), fmt.monto(m.c * m.costo), fmt.monto(m.prom), fmt.monto(m.valorTotal)]);
       const filas = sinC ? filas0.map((r) => r.slice(0, -4)) : filas0;
-      if (!np && f.formato === 'EXCEL') return window.COMPRAS_CAT.descargarCsv(`kardex_${p.codigo_producto || p.codigo}_${f.hasta}.csv`, [cab, ...filas]);
+      if (f.formato === 'EXCEL') {
+        const r4 = (x) => Math.round((Number(x) || 0) * 10000) / 10000;
+        const valores = movs.map((m, i) => (np ? [n - i, m.nombre, String(m.interno ?? ''), m.fisico, fechaHora(m.fecha, m.creado_en), m.lote, r4(m.c), r4(m.exLote), r4(m.total)]
+          : [n - i, m.nombre, String(m.interno ?? ''), fechaHora(m.fecha, m.creado_en), m.fisico, fmt.fechaDia(m.fabricacion), fmt.fechaDia(m.fecha_vencimiento), m.lote, m.c > 0 ? r4(m.c) : '', m.c < 0 ? r4(m.c) : '', r4(m.exLote), r4(m.total),
+            ...(sinC ? [] : [r4(m.costo), r4(m.c * m.costo), r4(m.prom), r4(m.valorTotal)])]));
+        const tipoCol = (c) => (['Cantidad', 'Exist. serie', 'Exist. total', 'Ingreso', 'Salida', 'Exist. lote', 'Exist. producto'].includes(c) ? 'numero' : ['Costo unitario', 'Costo movimiento', 'Costo promedio', 'Costo total'].includes(c) ? 'monto' : c === '#' ? 'entero' : 'texto');
+        const ancho = (c) => ({ '#': 6, Movimiento: 30, Fecha: 16, 'Docto. físico': 18 }[c] || 13);
+        return window.REPORTE_XLSX.generar({
+          titulo: `${np ? 'Productos en bodega' : 'Movimientos de productos en bodega'} (Kardex${!np && conCostos ? ' con costos' : ''})`,
+          parametros: [`Empresa: ${e ? `${e.codigo} · ${e.nombre_comercial}` : ''}`, `Bodega: ${bod}`, ...(np ? [] : [`Periodo: ${f.desde ? `del ${fmt.fechaDia(f.desde)} ` : ''}al ${fmt.fechaDia(f.hasta)}`]),
+            `Producto: ${p.codigo_producto || p.codigo} · ${p.nombre}`, `Existencia: ${cant(movs[0]?.total ?? inicial)}`, ...(!np && conCostos ? [`Costo promedio: Q ${fmt.monto(movs[0]?.prom || 0)}`] : [])],
+          orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Kardex', archivo: `kardex_${p.codigo_producto || p.codigo}_${f.hasta}`,
+          columnas: cab.map((c) => ({ titulo: c, tipo: tipoCol(c), ancho: ancho(c) })),
+          filas: [...valores.map((v) => ({ valores: v })), ...(f.desde && !np ? [{ valores: [`Saldo al ${fmt.fechaDia(f.desde)} (antes de la fecha inicial): ${cant(inicial)}`], tipo: 'nota', combinar: true }] : [])]
+        }).catch((err) => window.FIN.aviso(err.message || 'No se pudo generar el Excel'));
+      }
       const num = np ? [6, 7, 8] : sinC ? [8, 9, 10, 11] : [8, 9, 10, 11, 12, 13, 14, 15];
       imprimir(`Kardex ${p.nombre}`, `<h1>${np ? 'Productos en bodega' : 'Movimientos de productos en bodega'} (Kardex${!np && conCostos ? ' con costos' : ''})</h1><h2>${esc(e ? `${e.codigo} · ${e.nombre_comercial}` : '')} · ${esc(bod)}${esc(per)}</h2>
         <div class="cab"><div><b>Código</b>${p.codigo}</div><div><b>Código producto</b>${esc(p.codigo_producto || '')}</div><div style="grid-column:span 2"><b>Nombre</b>${esc(p.nombre)}</div>
@@ -263,8 +278,9 @@
   // descuentos de línea, las bonificaciones de la compra prorrateadas y las notas de crédito
   // operadas; el promedio ponderado de compras, el costo neto, el último, el mínimo, el máximo y la
   // diferencia contra el precio de costo del catálogo.
-  window.PANTALLAS['analisis-costos'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Análisis de Costos', icono: 'ti-chart-line', clase: 'bk-movimientos kx-kardex ac-costos', grupo: 'Compras · Mantenimientos' });
+  window.PANTALLAS['analisis-costos'] = function (cont, m) {
+    const inv = m?.id === 'inventarios';
+    const ctx = montar(cont, { titulo: inv ? 'Análisis de costos local' : 'Análisis de Costos', icono: 'ti-chart-line', clase: 'bk-movimientos bm-solo kx-kardex ac-costos', grupo: inv ? 'Inventarios · Mantenimientos' : 'Compras · Mantenimientos' });
     const { sb } = ctx;
     const [y] = fmt.hoy().split('-');
     const f = { desde: `${y}-01-01`, hasta: fmt.hoy(), buscar: '', inactivos: false };

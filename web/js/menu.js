@@ -499,8 +499,30 @@ window.MODULOS = [
           subgrupo: 'Kardex',
           icono: 'ti-list-numbers',
           pantallas: [
-            { id: 'kardex-sin-costos', nombre: 'Kardex sin costos', icono: 'ti-list-numbers', descripcion: 'Movimientos de cada producto en bodega con lote, fabricación, vencimiento y existencias por lote y producto.' },
-            { id: 'kardex-con-costos', nombre: 'Kardex con costos', icono: 'ti-report-money', descripcion: 'Movimientos de cada producto en bodega con existencias, costo unitario, costo del movimiento, costo promedio y costo total.' }
+            {
+              subgrupo: 'Movimiento de Kardex',
+              icono: 'ti-arrows-up-down',
+              pantallas: [
+                { id: 'kardex-con-costos', nombre: 'Kardex con costos', icono: 'ti-report-money', descripcion: 'Movimientos de cada producto en bodega con existencias, costo unitario, costo del movimiento, costo promedio y costo total; en PDF o Excel.' },
+                { id: 'kardex-sin-costos', nombre: 'Kardex sin costos', icono: 'ti-list-numbers', descripcion: 'Movimientos de cada producto en bodega con lote, fabricación, vencimiento y existencias por lote y producto; en PDF o Excel.' }
+              ]
+            },
+            {
+              subgrupo: 'Análisis de Costos',
+              icono: 'ti-chart-line',
+              pantallas: [
+                { id: 'analisis-costos-local', nombre: 'Análisis de costos local', icono: 'ti-chart-line', descripcion: 'Compras de cada producto con su costo unitario, promedio ponderado, descuentos, bonificaciones, notas de crédito y costo neto.' },
+                { id: 'analisis-costo-importacion', nombre: 'Análisis costo importación', icono: 'ti-world-dollar', descripcion: 'Compras importadas con sus gastos extras prorrateados: costo unitario, gasto por unidad y costo con gastos en quetzales y dólares; reportes detallado, resumido y consolidado.' }
+              ]
+            }
+          ]
+        },
+        {
+          subgrupo: 'Control de inventario',
+          icono: 'ti-adjustments-alt',
+          pantallas: [
+            { id: 'minimos-y-maximos', nombre: 'Mínimos y máximos', icono: 'ti-arrows-vertical', descripcion: 'Existencia contra puntos mínimos y máximos por producto y bodega: estado, cantidad y valor a pedir; mínimos y máximos editables.' },
+            { id: 'costos', nombre: 'Costos', icono: 'ti-coin', descripcion: 'Costo del catálogo contra el último costo y el promedio ponderado de compras, con la diferencia; actualización del costo.' }
           ]
         }
       ]
@@ -508,7 +530,7 @@ window.MODULOS = [
     opciones: {
       catalogos: [],
       registros: [],
-      mantenimientos: ['Mínimos y máximos', 'Costos', 'Ubicaciones'],
+      mantenimientos: ['Ubicaciones'],
       procesos: ['Toma física', 'Recalcular costo promedio', 'Cierre de inventario'],
       reportes: ['Existencias', 'Kardex por producto', 'Valuación de inventario', 'Rotación'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']

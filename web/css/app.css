@@ -5468,3 +5468,48 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
   .iv-tabla td.num { white-space: nowrap; overflow-wrap: normal; }
   .iv-tabla td.iv-nom > div { white-space: nowrap; }
 }
+
+/* ===== Inventarios · Análisis costo importación ===== */
+.im-rep { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--borde); border-radius: 10px; }
+.im-rep > b { font-size: 11px; text-transform: uppercase; color: var(--texto-suave); letter-spacing: .04em; }
+.im-rep select { height: 30px; }
+.im-compras { flex: 0 0 auto; max-height: clamp(120px, 24vh, 240px); }
+.im-compras tr[data-compra] { cursor: pointer; }
+.im-compras tr.actual td { background: color-mix(in srgb, var(--acento) 14%, transparent); font-weight: 700; }
+.im-compras td.iv-nom > div { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.im-cab { display: grid; grid-template-columns: minmax(0, 1.2fr) 1fr 1fr; gap: 10px; }
+.im-doc { display: flex; flex-direction: column; gap: 1px; padding: 8px 12px; border: 1px solid var(--borde); border-radius: 10px; min-width: 0; }
+.im-doc small { font-size: 10.5px; text-transform: uppercase; color: var(--texto-suave); }
+.im-doc b { font-size: 20px; color: var(--acento); line-height: 1.1; }
+.im-doc span { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.im-gq, .im-gu { display: grid; grid-template-columns: 1.3fr 1fr .7fr; gap: 4px 10px; align-items: end; padding: 6px 12px 8px; border-radius: 10px; }
+.im-gq > b, .im-gu > b { grid-column: 1 / -1; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; }
+.im-gq { background: color-mix(in srgb, #2e90fa 10%, transparent); border: 1px solid color-mix(in srgb, #2e90fa 35%, transparent); }
+.im-gq > b { color: #175cd3; }
+.im-gu { background: color-mix(in srgb, #12b76a 10%, transparent); border: 1px solid color-mix(in srgb, #12b76a 35%, transparent); }
+.im-gu > b { color: #067647; }
+.im-gq .campo b, .im-gu .campo b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.im-gq input, .im-gu input { text-align: right; font-weight: 700; }
+.im-lineas { flex: 1 1 0; min-height: 120px; }
+.im-lineas td.iv-nom > div { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.im-lineas th.im-q, .im-lineas tr.im-grupos .im-q { background: color-mix(in srgb, #2e90fa 12%, var(--panel)) !important; }
+.im-lineas th.im-g { background: color-mix(in srgb, #84cc16 18%, var(--panel)) !important; }
+.im-lineas th.im-c { background: color-mix(in srgb, #06aed4 14%, var(--panel)) !important; }
+.im-lineas tr.im-grupos th { text-align: center; font-size: 11px; letter-spacing: .06em; }
+.im-lineas tr.im-grupos th:last-child { background: color-mix(in srgb, #12b76a 14%, var(--panel)) !important; }
+.im-lineas td.im-q { background: color-mix(in srgb, #fdb022 7%, transparent); }
+.im-lineas td.im-g { background: color-mix(in srgb, #84cc16 8%, transparent); }
+.im-lineas td.im-c { background: color-mix(in srgb, #06aed4 7%, transparent); }
+.im-lineas td { white-space: nowrap; font-size: 12.5px; }
+@media (max-width: 1400px) { .im-cab { grid-template-columns: 1fr 1fr; } .im-doc { grid-column: 1 / -1; } }
+
+/* ===== Mínimos y máximos / Costos ===== */
+.mm-tabla td input[type=number] { width: 96px; text-align: right; font-weight: 600; }
+.mm-tabla tr.mm-cambio td { background: color-mix(in srgb, #fdb022 12%, transparent); }
+.mc-usar { white-space: nowrap; }
+.mc-usar button { border: 1px solid var(--borde); background: var(--panel); border-radius: 6px; padding: 1px 6px; font-size: 11px; cursor: pointer; margin-left: 2px; color: var(--acento); }
+.mc-usar button:hover { background: color-mix(in srgb, var(--acento) 10%, transparent); }
+.mc-masivo { display: inline-flex; gap: 6px; align-items: center; }
+.mc-masivo select { height: 30px; }
+.kx-imp { display: inline-flex; gap: 6px; align-items: center; }
+.kx-imp select { height: 30px; }
