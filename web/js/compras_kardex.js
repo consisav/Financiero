@@ -125,7 +125,7 @@
       });
       const desde = !noPerecedero() && f.desde ? f.desde : '';
       inicial = desde ? todos.filter((m) => m.fecha < desde).reduce((t, m) => t + m.c, 0) : 0;
-      sondeo = !todos.length ? await sondeoInventario(sb, ctx.sel.loc, sel) : '';
+      sondeo = '';
       movs = todos.filter((m) => !desde || m.fecha >= desde).reverse();
       pintarMovs();
     }
@@ -136,15 +136,14 @@
       const p = prod(sel);
       ctx.pDet.innerHTML = `
         <div class="bm-form kx-form cl-clasico ${np ? 'kx-np' : 'kx-pe'}">
-          <div class="cl-banda kx-banda"><span>${np ? 'Productos en bodega (Kardex)' : `Movimientos de productos en bodega (Kardex${conCostos ? ' con costos' : ''})`}</span>
-            <small>${esc({ MEDICAMENTOS: 'Medicamentos', PERECEDEROS: 'Productos perecederos', 'NO PERECEDEROS': 'Productos no perecederos' }[tipoVenta] || 'Venta de productos sin definir en la empresa')}</small></div>
+          ${np ? `<div class="cl-banda kx-banda"><span>Productos en bodega (Kardex)</span><small>${esc({ MEDICAMENTOS: 'Medicamentos', PERECEDEROS: 'Productos perecederos', 'NO PERECEDEROS': 'Productos no perecederos' }[tipoVenta] || 'Venta de productos sin definir en la empresa')}</small></div>` : ''}
           ${np ? '' : barraES()}
           <section class="kx-cat">
-            <div class="kx-cat-cab">
+            ${np ? `<div class="kx-cat-cab">
               <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Código, código de barras, nombre o principio activo…" value="${esc(f.buscar)}" aria-label="Buscar producto"></label>
               ${np ? `<span class="kx-imp"><select data-formato aria-label="Formato"><option ${f.formato === 'PDF' ? 'selected' : ''}>PDF</option><option ${f.formato === 'EXCEL' ? 'selected' : ''}>EXCEL</option></select><button type="button" class="boton primario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button></span>`
-                : `<label class="pc-check kx-inact"><input type="checkbox" data-inactivos ${f.inactivos ? 'checked' : ''}> Incluir inactivos</label>`}
-            </div>
+                : ''}
+            </div>` : ''}
             <div class="pc-lineas kx-productos"><table>
               <thead><tr><th class="num">${np ? 'ID' : 'Código'}</th><th>Código producto</th><th>Nombre</th>${np ? '<th>Clasificación</th><th>Línea / principio activo</th>' : '<th>Principio activo</th><th>Estado</th>'}<th class="num">Existencia</th></tr></thead>
               <tbody data-productos>${filasProductos()}</tbody>
@@ -167,13 +166,14 @@
     function barraES() {
       const np = noPerecedero();
       return `<section class="kx-es">
-          <b class="kx-es-tit">Entradas y salidas</b>
+          ${np ? '<b class="kx-es-tit">Entradas y salidas</b>' : `<label class="tk-buscar kx-es-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar producto: código, barras, nombre o principio activo…" value="${esc(f.buscar)}" aria-label="Buscar producto"></label>`}
           <div class="kx-nav"><button type="button" class="boton secundario-sm" data-mover="-1" title="Producto anterior"><i class="ti ti-chevron-up" aria-hidden="true"></i> Subir</button><button type="button" class="boton secundario-sm" data-mover="1" title="Producto siguiente"><i class="ti ti-chevron-down" aria-hidden="true"></i> Bajar</button></div>
           <label class="campo kx-bod"><span>Bodega</span><select data-bodega ${f.todas ? 'disabled' : ''}>${bodegas.map((b) => `<option value="${b.id}" ${String(b.id) === f.bodega ? 'selected' : ''}>${b.codigo} · ${esc(b.nombre)}</option>`).join('')}</select></label>
           ${np ? '' : `
           <div class="kx-radios"><label><input type="radio" name="kx-todas" value="0" ${f.todas ? '' : 'checked'}> Bodega seleccionada</label><label><input type="radio" name="kx-todas" value="1" ${f.todas ? 'checked' : ''}> Todas las bodegas</label></div>
           <label class="campo"><span>Fecha inicial</span><input type="date" data-f="desde" value="${f.desde}" max="${f.hasta}"></label>
           <label class="campo"><span>Fecha final</span><input type="date" data-f="hasta" value="${f.hasta}" min="${f.desde}"></label>
+${np ? '' : `<label class="pc-check kx-inact"><input type="checkbox" data-inactivos ${f.inactivos ? 'checked' : ''}> Inactivos</label><span class="kx-tv" title="Tipo de venta de la empresa">${esc({ MEDICAMENTOS: 'Medicamentos', PERECEDEROS: 'Productos perecederos', 'NO PERECEDEROS': 'Productos no perecederos' }[tipoVenta] || 'Venta de productos sin definir en la empresa')}</span>`}
           <div class="kx-imp"><select data-formato aria-label="Formato"><option ${f.formato === 'PDF' ? 'selected' : ''}>PDF</option><option ${f.formato === 'EXCEL' ? 'selected' : ''}>EXCEL</option></select><button type="button" class="boton primario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button></div>`}
         </section>`;
     }
@@ -187,7 +187,7 @@
       const ult = movs[0];
       const n = movs.length;
       caja.innerHTML = `
-        <div class="kx-resumen">${p ? `<b>${esc(p.codigo_producto || String(p.codigo))} · ${esc(p.nombre)}</b>
+        <div class="kx-resumen">${p ? `<b class="kx-res-prod" title="${esc(p.nombre)}">${esc(p.codigo_producto || String(p.codigo))} · ${esc(p.nombre)}</b>
           <span>Entradas <b class="kx-ent">${cant(ent)}</b></span><span>Salidas <b class="kx-sal">${cant(sal)}</b></span><span>Existencia <b>${cant(ult ? ult.total : inicial)}</b></span>
           ${np || !conCostos ? '' : `<span>Costo promedio <b>Q ${fmt.monto(ult?.prom || 0)}</b></span><span>Costo total <b>Q ${fmt.monto(ult?.valorTotal || 0)}</b></span>`}
           <span class="tk-tenue">${todas ? 'Todas las bodegas' : esc(bodega(Number(f.bodega))?.nombre || '')}</span>` : '<span class="tk-tenue">Elige un producto.</span>'}</div>
