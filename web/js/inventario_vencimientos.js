@@ -13,7 +13,10 @@
     const cuenta = async (q) => { const r = await q; return r.error ? `error: ${r.error.message}` : r.count ?? 0; };
     const base = () => sb.from('inventario_movimientos').select('id', { count: 'exact', head: true });
     const [total, empresa, migr, prod] = await Promise.all([cuenta(base()), cuenta(base().eq('localidad_id', loc)), cuenta(base().eq('origen_anterior', 'MIGRADO')), productoId ? cuenta(base().eq('producto_id', productoId)) : '—']);
-    return `Lectura de la base de datos: ${total} movimiento(s) visibles en total · ${empresa} de esta empresa · ${migr} migrados${productoId ? ` · ${prod} de este producto (todas las bodegas)` : ''}.`;
+    // Otras tablas con la misma regla de lectura (para saber si el bloqueo es solo de los movimientos).
+    const otra = (t) => cuenta(sb.from(t).select('*', { count: 'exact', head: true }));
+    const [act, prods, tipos, docs, exis] = await Promise.all([sb.rpc('usuario_activo').then((r) => (r.error ? `error: ${r.error.message}` : String(r.data))), otra('productos'), otra('tipos_movimiento_inventario'), otra('documentos_inventario'), otra('existencias')]);
+    return `Lectura de la base de datos: ${total} movimiento(s) visibles en total · ${empresa} de esta empresa · ${migr} migrados${productoId ? ` · ${prod} de este producto (todas las bodegas)` : ''}. Usuario activo: ${act} · productos ${prods} · tipos de movimiento ${tipos} · documentos de inventario ${docs} · existencias ${exis}.`;
   }
 
   const cant = (n) => Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
