@@ -12,6 +12,15 @@
   const { montar, fmt, imprimir } = window.BANCOS;
   window.PANTALLAS = window.PANTALLAS || {};
 
+
+  // Cuando no hay datos, se dice qué se pudo leer de la base de datos con la sesión del usuario (para ubicar la causa).
+  async function sondeoInventario(sb, loc, productoId) {
+    const cuenta = async (q) => { const r = await q; return r.error ? `error: ${r.error.message}` : r.count ?? 0; };
+    const base = () => sb.from('inventario_movimientos').select('id', { count: 'exact', head: true });
+    const [total, empresa, migr, prod] = await Promise.all([cuenta(base()), cuenta(base().eq('localidad_id', loc)), cuenta(base().eq('origen_anterior', 'MIGRADO')), productoId ? cuenta(base().eq('producto_id', productoId)) : '—']);
+    return `Lectura de la base de datos: ${total} movimiento(s) visibles en total · ${empresa} de esta empresa · ${migr} migrados${productoId ? ` · ${prod} de este producto (todas las bodegas)` : ''}.`;
+  }
+
   const cant = (n) => Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
   const fechaHora = (d, t) => `${fmt.fechaDia(d)}${t ? ` ${new Date(t).toLocaleTimeString('es-GT', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit', hour12: false })}` : ''}`;
   // Tipo de movimiento: código y nombre, según su origen y documento.
@@ -37,7 +46,7 @@
     const { sb } = ctx;
     const f = { bodega: '', todas: false, desde: '', hasta: fmt.hoy(), formato: 'PDF', inactivos: false, buscar: '' };
     let tipoVenta = null, productos = [], bodegas = [], existencias = new Map();
-    let sel = null, movs = [], inicial = 0;
+    let sel = null, movs = [], inicial = 0, sondeo = '';
     const noPerecedero = () => tipoVenta === 'NO PERECEDEROS';
     const prod = (id) => productos.find((p) => p.id === id);
     const bodega = (id) => bodegas.find((b) => b.id === id);
@@ -112,6 +121,7 @@
       });
       const desde = !noPerecedero() && f.desde ? f.desde : '';
       inicial = desde ? todos.filter((m) => m.fecha < desde).reduce((t, m) => t + m.c, 0) : 0;
+      sondeo = !todos.length ? await sondeoInventario(sb, ctx.sel.loc, sel) : '';
       movs = todos.filter((m) => !desde || m.fecha >= desde).reverse();
       pintarMovs();
     }
@@ -181,7 +191,7 @@
           ${np ? `<thead><tr><th class="pc-n">#</th><th class="num">Mov.</th><th>Movimiento</th><th class="num"># Interno dcto.</th><th>Docto. físico</th><th>Fecha movto.</th>${todas ? '<th>Bodega</th>' : ''}<th>Serie</th><th class="num">Cantidad</th><th class="num">Existencia serie</th><th class="num">Exist. total</th></tr></thead>
             <tbody>${movs.map((m, i) => `<tr><td class="pc-n">${n - i}</td><td class="num tk-tenue">${m.tipo}</td><td><span class="kx-origen kx-${m.c > 0 ? 'e' : 's'}">${esc(m.nombre)}</span></td><td class="num">${m.interno}</td><td>${esc(m.fisico)}</td><td>${esc(fechaHora(m.fecha, m.creado_en))}</td>
               ${todas ? `<td>${esc(bodega(m.bodega_id)?.nombre || '')}</td>` : ''}<td>${esc(m.lote)}</td><td class="num ${m.c < 0 ? 'pc-rojo' : ''}">${cant(m.c)}</td><td class="num kx-col-lote">${cant(m.exLote)}</td><td class="num kx-col-total">${cant(m.total)}</td></tr>`).join('')
-              || `<tr><td colspan="11" class="tk-vacio">${p ? 'El producto no tiene entradas ni salidas.' : ''}</td></tr>`}</tbody>
+              || `<tr><td colspan="11" class="tk-vacio">${p ? `El producto no tiene entradas ni salidas.${sondeo ? `<br><small class="tk-tenue">${esc(sondeo)}</small>` : ''}` : ''}</td></tr>`}</tbody>
             <tfoot><tr><td colspan="${todas ? 8 : 7}">${n} movimiento(s)</td><td class="num">${cant(ent - sal)}</td><td></td><td class="num">${cant(ult ? ult.total : 0)}</td></tr></tfoot>`
           : `<thead><tr><th class="pc-n">#</th><th class="num">Mov.</th><th>Movimiento</th><th class="num">Docto. interno</th><th>Fecha movto.</th><th>Docto. físico</th>${todas ? '<th>Bodega</th>' : ''}<th>Fabricación</th><th>Vencimiento</th><th>Lote</th><th class="num">Cant. ingreso</th><th class="num">Cant. salida</th><th class="num">Exist. lote</th><th class="num">Exist. producto</th>${conCostos ? '<th class="num">Costo unitario</th><th class="num">Costo movimiento</th><th class="num">Costo promedio</th><th class="num">Costo total</th>' : ''}</tr></thead>
             <tbody>${movs.map((m, i) => `<tr><td class="pc-n">${n - i}</td><td class="num tk-tenue">${m.tipo}</td><td><span class="kx-origen kx-${m.c > 0 ? 'e' : 's'}">${esc(m.nombre)}</span></td><td class="num">${m.interno}</td><td>${esc(fechaHora(m.fecha, m.creado_en))}</td><td class="kx-fis" title="${esc(m.fisico)}">${esc(m.fisico)}</td>
@@ -189,7 +199,7 @@
               <td class="num kx-col-ent">${m.c > 0 ? cant(m.c) : ''}</td><td class="num kx-col-ent pc-rojo">${m.c < 0 ? cant(m.c) : ''}</td><td class="num">${cant(m.exLote)}</td><td class="num kx-col-total">${cant(m.total)}</td>
               ${conCostos ? `<td class="num kx-col-costo">${fmt.monto(m.costo)}</td><td class="num kx-col-costo">${fmt.monto(m.c * m.costo)}</td><td class="num kx-col-costo">${fmt.monto(m.prom)}</td><td class="num kx-col-costo">${fmt.monto(m.valorTotal)}</td>` : ''}</tr>`).join('')}
               ${f.desde && p ? `<tr class="kx-ini"><td colspan="${todas ? 13 : 12}">Saldo al ${esc(fmt.fechaDia(f.desde))} (antes de la fecha inicial)</td><td class="num">${cant(inicial)}</td>${conCostos ? '<td colspan="4"></td>' : ''}</tr>` : ''}
-              ${!movs.length ? `<tr><td colspan="18" class="tk-vacio">${p ? 'Sin entradas ni salidas en el periodo.' : ''}</td></tr>` : ''}</tbody>
+              ${!movs.length ? `<tr><td colspan="18" class="tk-vacio">${p ? `Sin entradas ni salidas en el periodo.${sondeo ? `<br><small class="tk-tenue">${esc(sondeo)}</small>` : ''}` : ''}</td></tr>` : ''}</tbody>
             <tfoot><tr><td colspan="${todas ? 10 : 9}">${n} movimiento(s)</td><td class="num">${cant(ent)}</td><td class="num">${cant(-sal)}</td><td></td><td class="num">${cant(ult ? ult.total : inicial)}</td>${conCostos ? `<td colspan="2"></td><td class="num">${fmt.monto(ult?.prom || 0)}</td><td class="num">${fmt.monto(ult?.valorTotal || 0)}</td>` : ''}</tr></tfoot>`}
         </table></div>`;
     }

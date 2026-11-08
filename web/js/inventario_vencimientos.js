@@ -7,6 +7,15 @@
   const { montar, fmt } = window.BANCOS;
   window.PANTALLAS = window.PANTALLAS || {};
 
+
+  // Cuando no hay datos, se dice qué se pudo leer de la base de datos con la sesión del usuario (para ubicar la causa).
+  async function sondeoInventario(sb, loc, productoId) {
+    const cuenta = async (q) => { const r = await q; return r.error ? `error: ${r.error.message}` : r.count ?? 0; };
+    const base = () => sb.from('inventario_movimientos').select('id', { count: 'exact', head: true });
+    const [total, empresa, migr, prod] = await Promise.all([cuenta(base()), cuenta(base().eq('localidad_id', loc)), cuenta(base().eq('origen_anterior', 'MIGRADO')), productoId ? cuenta(base().eq('producto_id', productoId)) : '—']);
+    return `Lectura de la base de datos: ${total} movimiento(s) visibles en total · ${empresa} de esta empresa · ${migr} migrados${productoId ? ` · ${prod} de este producto (todas las bodegas)` : ''}.`;
+  }
+
   const cant = (n) => Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
   const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
   const masMeses = (d, n) => { const x = new Date(`${d}T12:00:00`); x.setMonth(x.getMonth() + n); return x.toLocaleDateString('en-CA'); };
@@ -27,7 +36,7 @@
     const { sb } = ctx;
     const hoy = fmt.hoy();
     const f = { bodega: '', pestana: 'VENCIDOS', buscar: '', ceros: false };
-    let bodegas = [], productos = new Map(), lotes = [];
+    let bodegas = [], productos = new Map(), lotes = [], sondeo = '';
 
     // Bodega con el número de lotes de la pestaña elegida (las que tienen lotes primero).
     function pintarFiltros() {
@@ -66,6 +75,8 @@
           if (Number(x.cantidad) > 0 && Number(x.costo_unitario)) a.costo = Number(x.costo_unitario);
           g.set(k, a);
         });
+        sondeo = `${mv.length} movimiento(s) leídos de esta empresa · ${g.size} lote(s) · ${[...g.values()].filter((a) => a.vence).length} con vencimiento · ${[...g.values()].filter((a) => a.vence && a.ex > 0.00001).length} con existencia.`;
+        if (!mv.length) sondeo += ' ' + await sondeoInventario(sb, loc, null);
         lotes = [...g.values()].filter((a) => a.vence).map((a) => { const pp = productos.get(a.producto_id); return { ...a, costo: a.costo || Number(pp?.precio_costo) || 0, codigo: pp?.codigo ?? '', codigo_producto: pp?.codigo_producto || '', nombre: pp?.nombre || '', dias: dias(hoy, a.vence) }; });
       } catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
       pintarFiltros();
@@ -91,7 +102,7 @@
             <tbody>${rows.map((a) => `<tr><td class="num fuerte">${a.codigo}</td><td>${esc(a.codigo_producto)}</td><td class="cx-nombre" title="${esc(a.nombre)}"><div>${esc(a.nombre)}</div></td>${todas ? `<td>${esc(bodegas.find((x) => x.id === a.bodega_id)?.nombre || '')}</td>` : ''}
               <td class="fuerte">${esc(a.lote || '—')}</td><td class="${venc ? 'pc-rojo' : a.dias <= 90 ? 'ivv-pronto' : ''}">${esc(fmt.fechaDia(a.vence))}</td><td class="tk-tenue">${esc(fmt.fechaDia(a.fab))}</td>
               <td class="num ${venc ? 'pc-rojo' : a.dias <= 90 ? 'ivv-pronto' : ''}">${Math.abs(a.dias)} día(s)</td><td class="num ${a.ex > 0 ? 'fuerte' : 'tk-tenue'}">${cant(a.ex)}</td><td class="num">${fmt.monto(a.costo)}</td><td class="num">${fmt.monto(a.ex * a.costo)}</td></tr>`).join('')
-              || `<tr><td colspan="11" class="tk-vacio"><i class="ti ti-calendar-check" aria-hidden="true"></i>${venc ? 'No hay lotes vencidos' : 'No hay lotes por vencer en ese plazo'}${f.ceros ? '' : ' con existencia'}.</td></tr>`}</tbody>
+              || `<tr><td colspan="11" class="tk-vacio"><i class="ti ti-calendar-check" aria-hidden="true"></i>${venc ? 'No hay lotes vencidos' : 'No hay lotes por vencer en ese plazo'}${f.ceros ? '' : ' con existencia'}.<br><small class="tk-tenue">${esc(sondeo)}</small></td></tr>`}</tbody>
             <tfoot><tr><td colspan="${todas ? 8 : 7}">${rows.length} lote(s)</td><td class="num">${cant(uds)}</td><td></td><td class="num">${fmt.monto(val)}</td></tr></tfoot>
           </table></div>
         </div>`;
