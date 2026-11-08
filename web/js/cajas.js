@@ -397,6 +397,7 @@
               <button type="button" class="boton secundario-sm" data-accion="ver-contable"><i class="ti ${verContable ? 'ti-receipt' : 'ti-list-details'}" aria-hidden="true"></i> ${verContable ? 'Ver documentos' : 'Ver contable'}</button>
               ${puede() ? `<button type="button" class="boton secundario-sm" data-accion="reconstruir"><i class="ti ti-refresh" aria-hidden="true"></i> Reconstruir detalle contable</button>
                 <button type="button" class="boton secundario-sm" data-accion="marcar" ${documentos.length ? '' : 'disabled'}><i class="ti ti-checks" aria-hidden="true"></i> Marcar/Desmarcar</button>` : ''}
+              <span class="cc-imp"><button type="button" class="boton secundario-sm" data-reporte="${verContable ? 'CONTABLE' : 'MOVIMIENTOS'}" data-fmt="PDF" title="Imprimir en PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-reporte="${verContable ? 'CONTABLE' : 'MOVIMIENTOS'}" data-fmt="EXCEL" title="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button></span>
               <span class="cc-total"><small>Total liquidado</small><b>${esc(sim)} ${fmt.monto(liquidado())}</b></span>
             </footer>
           </section>
@@ -423,7 +424,7 @@
             <input name="${k}_nota" value="${esc(p[`${k}_nota`] || '')}" maxlength="20" aria-label="Nota del ${t.toLowerCase()}" ${dis}>
             <input type="number" step="0.01" min="0" class="num" name="${k}_valor" value="${esc(String(p[`${k}_valor`]))}" aria-label="Valor del ${t.toLowerCase()}" ${dis}>`).join('')}
         </div>
-        <div class="cc-fondos-pie"><p class="modal-error tk-error" role="alert"></p>${puede() ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar liquidación</button>' : ''}</div>
+        <div class="cc-fondos-pie"><p class="modal-error tk-error" role="alert"></p><span class="cc-imp"><button type="button" class="boton secundario-sm" data-reporte="LIQUIDACION" data-fmt="PDF" title="Imprimir en PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-reporte="LIQUIDACION" data-fmt="EXCEL" title="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button></span>${puede() ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar liquidación</button>' : ''}</div>
       </form>`;
     }
 
@@ -676,13 +677,22 @@
     }
 
     // ---------- Reportes ----------
+    function resumenLiq() {
+      const p = periodo, gastos = liquidado();
+      const fondos = Number(p.anticipo_valor) + Number(p.adelanto_valor);
+      const pendLiq = fmt.redondear(gastos - fondos), reembolso = Number(p.liquidacion_valor || 0);
+      const pendReem = p.estado === 'ABIERTA' ? Math.max(0, pendLiq - reembolso) : 0;
+      return [['Total liquidado (anticipo + adelanto)', fondos], ['Total gastos', gastos], [pendLiq < 0 ? 'Disponible' : 'Pendiente de liquidar', Math.abs(pendLiq)], ['Pendiente de reembolso', pendReem], ['Total reembolso', reembolso]];
+    }
+    const cuentaTxt = (id) => { const x = cuentas.find((c) => c.id === id); return x ? ctx.nombreCuentaBancaria(x) : ''; };
     function reporte(tipo) {
       const p = periodo;
+      if (!p) return window.FIN.aviso('Elige una subcaja');
       const sim = simbolo(caja.moneda_id);
       const emp = ctx.localidad(caja.localidad_id);
       const docs = [...documentos].reverse().filter((d) => tipoReporte === 'TODOS' || (tipoReporte === 'CONTABLE' ? d.contable : !d.contable));
       const suma = (k) => fmt.monto(docs.reduce((t, d) => t + Number(d[k]), 0));
-      const titulos = { RESUMEN: 'Resumen contable', CONTABLE: 'Detalle contable', MOVIMIENTOS: 'Detalle de movimientos', DETALLE: 'Detalle de documentos' };
+      const titulos = { RESUMEN: 'Resumen contable', CONTABLE: 'Detalle contable', MOVIMIENTOS: 'Detalle de movimientos', DETALLE: 'Detalle de documentos', LIQUIDACION: 'Liquidación de la subcaja' };
       const cab = `
         <h1>${titulos[tipo]} · Caja ${caja.codigo} ${esc(caja.nombre)}</h1>
         <h2>${esc(emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '')} · Subcaja ${p.numero} · ${esc(mesTxt(p))} · ${p.estado === 'ABIERTA' ? 'Abierta' : `Liquidada por ${esc(p.liquidado_por || '')} ${esc(fmt.fechaHora(p.liquidado_en))}`}</h2>
@@ -697,6 +707,13 @@
         cuerpo = `<table><thead><tr><th>Cuenta</th><th>Nombre</th>${tipo === 'CONTABLE' ? '<th>Concepto</th><th>Centro</th>' : ''}<th class="n">Debe</th><th class="n">Haber</th></tr></thead>
           <tbody>${filas.map((l) => { const k = contable(l.cuenta_id); return `<tr><td>${esc(k?.codigo || '')}</td><td>${esc(k?.nombre || '')}</td>${tipo === 'CONTABLE' ? `<td>${esc(l.concepto || '')}</td><td>${esc(centro(l.centro_id)?.codigo || '')}</td>` : ''}<td class="n">${Number(l.debe) ? fmt.monto(l.debe) : ''}</td><td class="n">${Number(l.haber) ? fmt.monto(l.haber) : ''}</td></tr>`; }).join('')}</tbody>
           <tfoot><tr><td colspan="${tipo === 'CONTABLE' ? 4 : 2}">Totales (Q)</td><td class="n">${fmt.monto(lineas.reduce((t, l) => t + Number(l.debe), 0))}</td><td class="n">${fmt.monto(lineas.reduce((t, l) => t + Number(l.haber), 0))}</td></tr></tfoot></table>`;
+      } else if (tipo === 'LIQUIDACION') {
+        cuerpo = `<table><thead><tr><th>Concepto</th><th>Cuenta bancaria</th><th>No. cheque</th><th># Nota</th><th class="n">Valor ${esc(sim)}</th></tr></thead>
+          <tbody>${FONDOS.map(([k, t]) => `<tr><td>${t}</td><td>${esc(cuentaTxt(p[`${k}_cuenta_id`]))}</td><td>${esc(p[`${k}_cheque`] || '')}</td><td>${esc(p[`${k}_nota`] || '')}</td><td class="n">${fmt.monto(p[`${k}_valor`])}</td></tr>`).join('')}</tbody></table>
+          <h3 style="margin:14px 0 4px;font-size:12px">Resumen de la liquidación</h3><table><tbody>${resumenLiq().map(([t, v]) => `<tr><td>${t}</td><td class="n">${esc(sim)} ${fmt.monto(v)}</td></tr>`).join('')}</tbody></table>
+          <h3 style="margin:14px 0 4px;font-size:12px">Documentos liquidados</h3><table><thead><tr><th>#</th><th>Documento</th><th>Fecha</th><th>NIT</th><th>Proveedor</th><th class="n">Valor</th></tr></thead>
+          <tbody>${docs.map((d) => `<tr><td>${d.linea}</td><td>${esc(docTxt(d))}</td><td>${esc(fmt.fechaDia(d.fecha))}</td><td>${esc(d.nit || '')}</td><td>${esc(d.proveedor_nombre)}</td><td class="n">${fmt.monto(d.total)}</td></tr>`).join('')}</tbody>
+          <tfoot><tr><td colspan="5">${docs.length} documentos</td><td class="n">${suma('total')}</td></tr></tfoot></table>`;
       } else if (tipo === 'MOVIMIENTOS') {
         cuerpo = `<table><thead><tr><th>#</th><th>Serie</th><th>Documento</th><th>Tipo</th><th>Fecha</th><th>NIT</th><th>Proveedor</th><th>Justificación</th><th class="n">Valor</th></tr></thead>
           <tbody>${docs.map((d) => `<tr><td>${d.linea}</td><td>${esc(d.serie || '')}</td><td>${esc(d.documento)}</td><td>${esc((TIPOS_DOC.find(([k]) => k === d.tipo_documento) || [])[1] || '')}</td><td>${esc(fmt.fechaDia(d.fecha))}</td><td>${esc(d.nit || '')}</td><td>${esc(d.proveedor_nombre)}</td><td>${esc(d.justificacion || '')}</td><td class="n">${fmt.monto(d.total)}</td></tr>`).join('')}</tbody>
@@ -712,11 +729,12 @@
     // Los mismos reportes de la subcaja en Excel, con el encabezado común (logo, parámetros, fecha y usuario).
     function reporteExcel(tipo) {
       const p = periodo;
-      if (!p || !window.REPORTE_XLSX) return;
+      if (!p) return window.FIN.aviso('Elige una subcaja');
+      if (!window.REPORTE_XLSX) return;
       const sim = simbolo(caja.moneda_id);
       const emp = ctx.localidad(caja.localidad_id);
       const docs = [...documentos].reverse().filter((d) => tipoReporte === 'TODOS' || (tipoReporte === 'CONTABLE' ? d.contable : !d.contable));
-      const titulos = { RESUMEN: 'Resumen contable', CONTABLE: 'Detalle contable', MOVIMIENTOS: 'Detalle de movimientos', DETALLE: 'Detalle de documentos' };
+      const titulos = { RESUMEN: 'Resumen contable', CONTABLE: 'Detalle contable', MOVIMIENTOS: 'Detalle de movimientos', DETALLE: 'Detalle de documentos', LIQUIDACION: 'Liquidación de la subcaja' };
       const parametros = [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : ''}`, `Caja: ${caja.codigo} · ${caja.nombre}`, `Subcaja: ${p.numero} · ${mesTxt(p)}`, `Estado: ${p.estado}`,
         `Responsable: ${caja.responsable || ''}`, `Documentos: ${(REPORTES.find(([x]) => x === tipoReporte) || [])[1] || ''}`];
       let columnas; let filas;
@@ -726,6 +744,12 @@
         columnas = [{ titulo: 'Línea', ancho: 7 }, { titulo: 'Cuenta', ancho: 14 }, { titulo: 'Nombre de la cuenta', ancho: 40 }, { titulo: 'Concepto', ancho: 34 }, { titulo: 'Centro', ancho: 10 }, { titulo: 'Debe', ancho: 15, tipo: 'monto' }, { titulo: 'Haber', ancho: 15, tipo: 'monto' }];
         filas = ls.map((l, i) => { const c = contable(l.cuenta_id); return { valores: [l.linea || i + 1, c?.codigo || '', c?.nombre || '', l.concepto || '', centro(l.centro_id)?.codigo || '', Number(l.debe) || null, Number(l.haber) || null] }; });
         filas.push({ tipo: 'total', valores: ['', '', 'Totales (Q)', '', '', lineas.reduce((t, l) => t + Number(l.debe), 0), lineas.reduce((t, l) => t + Number(l.haber), 0)] });
+      } else if (tipo === 'LIQUIDACION') {
+        columnas = [{ titulo: 'Concepto', ancho: 34 }, { titulo: 'Cuenta bancaria / Proveedor', ancho: 40 }, { titulo: 'Cheque / Fecha', ancho: 14 }, { titulo: 'Nota / NIT', ancho: 14 }, { titulo: `Valor ${sim}`, ancho: 15, tipo: 'monto' }];
+        filas = [{ tipo: 'grupo', valores: ['Fondos de la subcaja'] }, ...FONDOS.map(([k, t]) => ({ valores: [t, cuentaTxt(p[`${k}_cuenta_id`]), p[`${k}_cheque`] || '', p[`${k}_nota`] || '', Number(p[`${k}_valor`] || 0)] })),
+          { tipo: 'nota', valores: [''] }, { tipo: 'grupo', valores: ['Resumen de la liquidación'] }, ...resumenLiq().map(([t, v], i) => ({ tipo: i === 1 ? 'subtotal' : undefined, valores: [t, '', '', '', v] })),
+          { tipo: 'nota', valores: [''] }, { tipo: 'grupo', valores: ['Documentos liquidados'] }, ...docs.map((d) => ({ valores: [`${d.linea} · ${docTxt(d)}`, d.proveedor_nombre, fmt.fechaDia(d.fecha), d.nit || '', Number(d.total)] })),
+          { tipo: 'total', valores: [`${docs.length} documentos`, '', '', '', docs.reduce((t, d) => t + Number(d.total), 0)] }];
       } else if (tipo === 'MOVIMIENTOS') {
         columnas = [{ titulo: '#', ancho: 6 }, { titulo: 'Serie', ancho: 12 }, { titulo: 'Documento', ancho: 16 }, { titulo: 'Tipo', ancho: 8 }, { titulo: 'Fecha', ancho: 11 }, { titulo: 'NIT', ancho: 13 }, { titulo: 'Proveedor', ancho: 34 }, { titulo: 'Justificación', ancho: 34 }, { titulo: `Valor ${sim}`, ancho: 14, tipo: 'monto' }];
         filas = docs.map((d) => ({ valores: [d.linea, d.serie || '', d.documento, (TIPOS_DOC.find(([x]) => x === d.tipo_documento) || [])[1] || '', fmt.fechaDia(d.fecha), d.nit || '', d.proveedor_nombre, d.justificacion || '', Number(d.total)] }));
@@ -737,8 +761,10 @@
         filas.push({ tipo: 'total', valores: ['', `${docs.length} documentos`, '', '', ...K.map((x) => docs.reduce((t, d) => t + Number(d[x] || 0), 0))] });
       }
       // Fondos al pie: etiqueta, referencia y el valor en la última columna.
+      if (tipo !== 'LIQUIDACION') {
       const pie = (t, ref, v, tp = 'nota') => { const r = Array(columnas.length).fill(''); r[0] = t; r[1] = ref; r[columnas.length - 1] = v; return { tipo: tp, valores: r }; };
       filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'grupo', valores: ['Fondos de la subcaja'] }, ...FONDOS.map(([x, t]) => pie(t, p[`${x}_cheque`] ? `cheque ${p[`${x}_cheque`]}` : p[`${x}_nota`] ? `nota ${p[`${x}_nota`]}` : '', Number(p[`${x}_valor`] || 0))), pie('Total gastos', '', liquidado(), 'subtotal'));
+      }
       window.REPORTE_XLSX.generar({ titulo: `${titulos[tipo]} · Caja ${caja.codigo} · Subcaja ${p.numero}`, parametros, orgId: caja.organizacion_id, locId: caja.localidad_id,
         hoja: titulos[tipo], archivo: `caja_${caja.codigo}_subcaja_${p.numero}_${tipo.toLowerCase()}`, columnas, filas });
     }
@@ -923,7 +949,7 @@
     cont.addEventListener('dblclick', (e) => { if (e.target.closest('tr[data-caja]')) irDetalle(); });
     cont.addEventListener('click', (e) => {
       const rep = e.target.closest('[data-reporte]');
-      if (rep) return formatoRep === 'EXCEL' ? reporteExcel(rep.dataset.reporte) : reporte(rep.dataset.reporte);
+      if (rep) return (rep.dataset.fmt || formatoRep) === 'EXCEL' ? reporteExcel(rep.dataset.reporte) : reporte(rep.dataset.reporte);
       const fmtB = e.target.closest('[data-formato]');
       if (fmtB) { formatoRep = fmtB.dataset.formato; ctx.pMae.querySelectorAll('[data-formato]').forEach((b) => { b.classList.toggle('activo', b === fmtB); b.setAttribute('aria-checked', String(b === fmtB)); }); return; }
       const tabB = e.target.closest('[data-tab-caja]');

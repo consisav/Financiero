@@ -5618,3 +5618,8 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .pr-graficas { padding: 10px 8px 4px; display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 10px; border-top: 1px solid var(--borde); }
 .pr-graficas h3 { grid-column: 1 / -1; margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; color: var(--acento); }
 .pr-graficas svg { width: 100%; height: auto; border: 1px solid var(--borde); border-radius: 8px; }
+
+/* Cajas chicas: impresión directa de la lista de documentos y de la liquidación */
+.cc-imp { display: inline-flex; gap: 4px; }
+.cc-fondos-pie .cc-imp { margin-left: auto; }
+.cc-fondos-pie .cc-imp + .boton { margin-left: 6px; }
