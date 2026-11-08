@@ -239,7 +239,7 @@
       const ini = modo === 'MENSUAL' ? `${f.anio}-${String(f.mes).padStart(2, '0')}-01` : modo === 'PERIODO' ? `${f.anio}-01-01` : f.desde;
       const fin = modo === 'MENSUAL' ? new Date(f.anio, f.mes, 0).toLocaleDateString('en-CA') : f.hasta;
       // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
-      const op = await window.ESTADO_CUENTA.elegir({ tercero: t ? t.nombre : 'Todos los clientes', contenido: f.formato === 'RESUMIDO' ? 'RESUMIDO' : 'DETALLADO', formato: f.formato === 'PDF' ? 'PDF' : 'EXCEL' });
+      const op = await window.ESTADO_CUENTA.elegir({ tipo: 'Cliente', todos: !t, periodo: `Del ${fmt.fechaDia(ini)} al ${fmt.fechaDia(fin)}`, tercero: t ? t.nombre : 'Todos los clientes', contenido: f.formato === 'RESUMIDO' ? 'RESUMIDO' : 'DETALLADO', formato: f.formato === 'PDF' ? 'PDF' : 'EXCEL' });
       if (!op) return;
       return window.ESTADO_CUENTA.generar('CXC', ctx, { desde: ini, hasta: fin, terceroKey: t ? `C${t.id}` : '', tipo: f.tipo || '', mostrar: f.saldo === 'CON SALDO' ? 'CON SALDO' : 'CON MOVIMIENTO', contenido: op.contenido }, op.formato);
     }

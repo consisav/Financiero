@@ -316,7 +316,7 @@
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (a === 'pdf' || a === 'excel') {
         // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
-        return window.ESTADO_CUENTA.elegir({ tercero: selT()?.nombre || `Todos los ${F.plural}`, contenido: f.contenido, formato: a === 'pdf' ? 'PDF' : 'EXCEL' }).then((op) => {
+        return window.ESTADO_CUENTA.elegir({ tercero: selT()?.nombre || `Todos los ${F.plural}`, tipo: F.tercero, todos: !selT(), periodo: periodo(), contenido: f.contenido, formato: a === 'pdf' ? 'PDF' : 'EXCEL' }).then((op) => {
           if (!op) return;
           if (op.contenido !== f.contenido) { f.contenido = op.contenido; pintarFiltros(); }
           return op.formato === 'PDF' ? pdf() : excel();
@@ -338,35 +338,61 @@
 // resumido o detallado, y si sale en PDF o en Excel. Devuelve { contenido, formato } o null si se cancela.
 window.ESTADO_CUENTA = {
   generar(clave, ctx, f, formato) { return window.PANTALLAS[`${clave.toLowerCase()}-estado`](null, null, { ctx, f }).generar(formato); },
-  elegir({ tercero = '', contenido = 'DETALLADO', formato = 'PDF' } = {}) {
+  // o: { tercero, tipo: 'Cliente' | 'Proveedor', todos, periodo, contenido, formato }
+  elegir({ tercero = '', tipo = '', todos = false, periodo = '', contenido = 'DETALLADO', formato = 'PDF' } = {}) {
     const esc = window.UI.esc;
+    const plural = tipo === 'Cliente' ? 'clientes' : tipo === 'Proveedor' ? 'proveedores' : '';
     return new Promise((listo) => {
       const velo = document.createElement('div');
       velo.className = 'modal-velo';
-      const op = (n, v, ic, t, d, sel) => `<label class="ec-op"><input type="radio" name="${n}" value="${v}" ${sel ? 'checked' : ''}><span><i class="ti ${ic}" aria-hidden="true"></i><b>${t}</b><small>${d}</small></span></label>`;
+      const op = (n, v, ic, t, d, sel) => `
+        <label class="ece-op">
+          <input type="radio" name="${n}" value="${v}" ${sel ? 'checked' : ''}>
+          <span class="ece-tarjeta"><span class="ece-ic"><i class="ti ${ic}" aria-hidden="true"></i></span><span class="ece-tx"><b>${t}</b><small>${d}</small></span><i class="ti ti-circle-check-filled ece-ok" aria-hidden="true"></i></span>
+        </label>`;
       velo.innerHTML = `
-        <form class="modal ec-elegir" role="dialog" aria-modal="true" aria-label="Imprimir estado de cuenta">
-          <header class="modal-cab"><h2>Imprimir estado de cuenta</h2><button type="button" class="icono-boton" data-cerrar aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></header>
-          <div class="modal-cuerpo">
-            <p class="ec-quien"><i class="ti ti-users" aria-hidden="true"></i> ${esc(tercero)}</p>
-            <fieldset><legend>Contenido</legend><div class="ec-ops">
-              ${op('contenido', 'RESUMIDO', 'ti-list-numbers', 'Resumido', 'Un renglón por cliente o proveedor: saldo anterior, cargos, abonos, saldo final y antigüedad.', contenido === 'RESUMIDO')}
-              ${op('contenido', 'DETALLADO', 'ti-list-details', 'Detallado', 'Cada movimiento con su saldo acumulado, el saldo final y la antigüedad del saldo.', contenido !== 'RESUMIDO')}
+        <form class="modal ece" role="dialog" aria-modal="true" aria-labelledby="ece-titulo">
+          <header class="ece-cab">
+            <span class="ece-cab-ic"><i class="ti ti-file-invoice" aria-hidden="true"></i></span>
+            <div><h2 id="ece-titulo">Imprimir estado de cuenta</h2><p>Elige el contenido y el formato del reporte</p></div>
+            <button type="button" class="icono-boton" data-cerrar aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button>
+          </header>
+          <div class="ece-cuerpo">
+            <div class="ece-quien">
+              <span class="ece-avatar"><i class="ti ${todos ? 'ti-users-group' : tipo === 'Proveedor' ? 'ti-truck' : 'ti-user'}" aria-hidden="true"></i></span>
+              <div><small>${todos ? `Todos los ${plural || 'registros'}` : esc(tipo || 'Estado de cuenta de')}</small><b>${esc(tercero)}</b></div>
+              ${periodo ? `<span class="ece-periodo"><i class="ti ti-calendar" aria-hidden="true"></i> ${esc(periodo)}</span>` : ''}
+            </div>
+            <fieldset><legend>Contenido</legend><div class="ece-ops">
+              ${op('contenido', 'RESUMIDO', 'ti-list-numbers', 'Resumido', `Un renglón por ${tipo ? tipo.toLowerCase() : 'cliente o proveedor'}: saldos y antigüedad`, contenido === 'RESUMIDO')}
+              ${op('contenido', 'DETALLADO', 'ti-list-details', 'Detallado', 'Cada movimiento con su saldo acumulado', contenido !== 'RESUMIDO')}
             </div></fieldset>
-            <fieldset><legend>Formato</legend><div class="ec-ops">
-              ${op('formato', 'PDF', 'ti-file-type-pdf', 'PDF', 'Imprimir o guardar como PDF.', formato === 'PDF')}
-              ${op('formato', 'EXCEL', 'ti-file-spreadsheet', 'Excel', 'Descargar el archivo .xlsx.', formato !== 'PDF')}
+            <fieldset><legend>Formato</legend><div class="ece-ops">
+              ${op('formato', 'PDF', 'ti-file-type-pdf', 'PDF', 'Imprimir o guardar como PDF', formato === 'PDF')}
+              ${op('formato', 'EXCEL', 'ti-file-spreadsheet', 'Excel', 'Descargar el archivo .xlsx', formato !== 'PDF')}
             </div></fieldset>
           </div>
-          <footer class="modal-pie"><button type="button" class="boton secundario-sm" data-cerrar>Cancelar</button><button type="submit" class="boton primario-sm"><i class="ti ti-printer" aria-hidden="true"></i> Generar</button></footer>
+          <footer class="ece-pie">
+            <p class="ece-resumen" aria-live="polite"></p>
+            <button type="button" class="boton secundario-sm" data-cerrar>Cancelar</button>
+            <button type="submit" class="boton primario-sm ece-generar"></button>
+          </footer>
         </form>`;
       document.body.appendChild(velo);
       const form = velo.querySelector('form');
+      const resumen = () => {
+        const c = form.elements.contenido.value, fm = form.elements.formato.value;
+        form.querySelector('.ece-resumen').innerHTML = `<i class="ti ti-info-circle" aria-hidden="true"></i> Estado de cuenta <b>${c === 'RESUMIDO' ? 'resumido' : 'detallado'}</b> en <b>${fm === 'PDF' ? 'PDF' : 'Excel'}</b>`;
+        form.querySelector('.ece-generar').innerHTML = fm === 'PDF' ? '<i class="ti ti-printer" aria-hidden="true"></i> Generar PDF' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel';
+      };
+      resumen();
+      form.addEventListener('change', resumen);
       const fin = (v) => { velo.remove(); listo(v); };
       velo.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', () => fin(null)));
+      velo.addEventListener('click', (e) => { if (e.target === velo) fin(null); });
       velo.addEventListener('keydown', (e) => { if (e.key === 'Escape') fin(null); });
       form.addEventListener('submit', (e) => { e.preventDefault(); fin({ contenido: form.elements.contenido.value, formato: form.elements.formato.value }); });
-      form.querySelector('input:checked')?.focus();
+      form.querySelector('.ece-generar').focus();
     });
   }
 };
