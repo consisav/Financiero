@@ -5111,3 +5111,75 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .vd-form .campo input, .vd-form .campo select { height: 26px; padding: 2px 7px; font-size: 12.5px; width: 100%; }
 .vd-guias { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 @media (max-width: 1500px) { .vd-g { grid-template-columns: repeat(4, minmax(0, 1fr)); } .vd-guias { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+
+/* ---------- Carga Facturas SAT (Compras y Ventas · Procesos) ---------- */
+.sat-form { display: flex; flex-direction: column; gap: 12px; overflow-y: auto !important; padding-bottom: 4px; }
+.sat-form > * { flex-shrink: 0; }
+.sat-cargas { min-width: 260px; }
+.sat-cargas select { height: 30px; }
+.sat-pasos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sat-pasos li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--borde); border-radius: var(--radio); color: var(--suave); font-size: 13px; background: var(--panel); }
+.sat-pasos li b { width: 24px; height: 24px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--fondo); color: var(--suave); }
+.sat-pasos li.actual { border-color: var(--acento); color: var(--texto); font-weight: 600; box-shadow: 0 0 0 3px var(--acento-fondo); }
+.sat-pasos li.actual b { background: var(--acento); color: #fff; }
+.sat-pasos li.hecho b { background: var(--verde-f); color: var(--verde-t); }
+.sat-g { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 18px; }
+.sat-r { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); margin-bottom: 6px; }
+.sat-archivo-fila { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px dashed var(--borde); border-radius: var(--radio); background: var(--fondo); }
+.sat-archivo-fila > i { font-size: 26px; color: var(--verde-t); }
+.sat-archivo-fila b { display: block; font-size: 13.5px; word-break: break-all; }
+.sat-archivo-fila small { color: var(--suave); font-size: 12px; }
+.sat-botones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.sat-subir { cursor: pointer; }
+.sat-opciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.sat-opciones label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--borde); border-radius: 999px; font-size: 13px; cursor: pointer; background: var(--panel); }
+.sat-opciones label.activa { border-color: var(--acento); color: var(--acento); background: var(--acento-fondo); font-weight: 600; }
+.sat-opciones input { margin: 0; accent-color: var(--acento); }
+.sat-caja { display: grid; grid-template-columns: 1.4fr 1fr .6fr .8fr; gap: 8px; margin-top: 8px; }
+.sat-caja .campo select, .sat-caja .campo input { height: 30px; width: 100%; }
+.sat-nota { margin: 8px 0 0; font-size: 12.5px; color: var(--suave); }
+.sat-instrucciones { margin-top: 10px; font-size: 12.5px; color: var(--suave); }
+.sat-instrucciones summary { cursor: pointer; font-weight: 600; color: var(--texto); }
+.sat-instrucciones ol { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 3px; }
+.sat-kpis { margin-bottom: 0; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.sat-revision { display: flex; flex-direction: column; gap: 8px; flex: 1 0 auto !important; min-height: 380px; }
+.sat-barra { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sat-filtros button b { font-weight: 600; color: var(--tenue); margin-left: 3px; }
+.sat-buscar { position: relative; min-width: 260px; }
+.sat-buscar i { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--tenue); }
+.sat-buscar input { padding-left: 30px; height: 30px; width: 100%; }
+.sat-tabla { flex: 1 1 auto; max-height: none !important; min-height: 300px; }
+.sat-tabla td b { display: block; font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+.sat-tabla td small { display: block; color: var(--suave); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+.sat-tabla td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sat-tabla td.num small { display: inline; margin-right: 4px; }
+.sat-tabla .sat-c-x { width: 30px; padding: 0 2px; }
+.sat-tabla .sat-c-clas { width: 190px; }
+.sat-tabla .sat-c-clas select { width: 100%; height: 28px; font-size: 12.5px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); color: var(--texto); }
+.sat-tabla .sat-c-cta { width: 200px; }
+.sat-tabla .sat-c-cta input { border-color: var(--borde); height: 28px; padding: 3px 7px; font-size: 12.5px; }
+.sat-tabla .sat-c-est { width: 96px; white-space: nowrap; }
+.sat-enlace { margin-left: 6px; font-size: 12px; }
+.sat-tabla tr.abierta td { background: var(--acento-fondo); }
+.sat-tabla tr.sat-anulada td { color: var(--tenue); }
+.sat-tabla tr.sat-anulada td b { text-decoration: line-through; }
+.sat-tabla tr.sat-detalle td { background: var(--fondo); padding: 10px 12px; }
+.sat-tabla tfoot td { font-weight: 700; padding: 7px 6px; background: var(--fondo); position: sticky; bottom: 0; }
+.sat-det { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 18px; }
+.sat-det-g h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.sat-det-g div { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 2px 0; border-bottom: 1px dotted var(--borde); }
+.sat-det-g div span { color: var(--suave); }
+.sat-det-g div b { font-weight: 600; text-align: right; max-width: none; white-space: normal; }
+.sat-obs { grid-column: 1 / -1; }
+.sat-obs input { height: 30px; width: 100%; }
+.sat-resultado { grid-column: 1 / -1; margin: 0; font-size: 12.5px; color: var(--ambar-t); background: var(--ambar-f); padding: 6px 10px; border-radius: var(--radio); }
+.sat-generar { display: flex; align-items: center; gap: 10px; justify-content: flex-end; padding: 10px 12px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--panel); }
+.sat-generar p { margin: 0 auto 0 0; font-size: 13px; color: var(--suave); }
+@media (max-width: 900px) {
+  .sat-g, .sat-caja { grid-template-columns: 1fr 1fr; }
+  .sat-g { grid-template-columns: 1fr; }
+  .sat-pasos { grid-template-columns: 1fr; }
+  .sat-generar { flex-wrap: wrap; }
+}
+.rm-kpi.sat-alerta { background: var(--ambar-f); }
+.rm-kpi.sat-alerta b, .rm-kpi.sat-alerta span { color: var(--ambar-t); }

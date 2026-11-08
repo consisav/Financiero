@@ -247,6 +247,15 @@ window.MODULOS = [
     icono: 'ti-receipt',
     descripcion: 'Clientes, cotizaciones, facturas y cuentas por cobrar.',
     subgrupos: {
+      procesos: [
+        {
+          subgrupo: 'Procesos',
+          icono: 'ti-settings-automation',
+          pantallas: [
+            { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' }
+          ]
+        }
+      ],
       catalogos: [
         {
           subgrupo: 'Ventas',
@@ -331,6 +340,15 @@ window.MODULOS = [
     icono: 'ti-shopping-cart',
     descripcion: 'Proveedores, órdenes de compra, facturas de compra y cuentas por pagar.',
     subgrupos: {
+      procesos: [
+        {
+          subgrupo: 'Procesos',
+          icono: 'ti-settings-automation',
+          pantallas: [
+            { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' }
+          ]
+        }
+      ],
       catalogos: [
         {
           // Generales (script 101): las 4 de productos son las mismas pantallas y tablas de Facturación.
