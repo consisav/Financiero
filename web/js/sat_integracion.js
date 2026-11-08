@@ -479,15 +479,17 @@
       const c = cfg, n = (e) => c.os.filter((o) => o.est === e).length;
       ctx.pDet.innerHTML = `<div class="bm-form cx-form cl-clasico"><div class="cl-banda">${esc(c.titulo)} · ${esc(c.parametros.join(' · '))}</div>
         <div class="ec-kpis">${kpi('Obligaciones', c.os.length)}${kpi('Presentadas', n('PRESENTADA'), 'ec-fin')}${kpi('Próximas (10 días)', n('PRÓXIMA'), n('PRÓXIMA') ? 'ec-alerta' : '')}${kpi('Vencidas', n('VENCIDA'), n('VENCIDA') ? 'ec-alerta' : '')}</div>
-        <p class="pr-guia"><i class="ti ti-info-circle" aria-hidden="true"></i> Las obligaciones salen del régimen registrado en Datos del emisor. ${ctx.admin ? 'Toca una fila para registrar su presentación (fecha, número de acceso de Declaraguate y monto).' : ''} Verifica los asuetos en el calendario oficial de la SAT.</p>
+        <p class="pr-guia"><i class="ti ti-info-circle" aria-hidden="true"></i> Las obligaciones salen del régimen registrado en Datos del emisor. Toca una obligación para ver su cálculo según el régimen y registrar su presentación. Verifica los asuetos en el calendario oficial de la SAT.</p>
         ${tabla(c, false)}</div>`;
       window.CUENTAS_XLSX.ajustarAlto(cont);
     }
     cont.addEventListener('change', (e) => { const cm = ctx.cambioOrgLoc(e); if (cm === 'org' || cm === 'loc') return cargar(); if (e.target.name === 'anio') { f.anio = Number(e.target.value) || f.anio; return cargar(); } if (e.target.name === 'ver') { f.ver = e.target.value; cfg = construir(); pintar(); } });
     cont.addEventListener('click', async (e) => {
       const ex = e.target.closest('[data-exp]'); if (ex) return exportar(cfg, ex.dataset.exp, false);
-      const tr = e.target.closest('tr[data-o]'); if (!tr || !ctx.admin) return;
+      const tr = e.target.closest('tr[data-o]'); if (!tr) return;
       const o = cfg.os.find((x) => x.clave === tr.dataset.o && String(x.periodo) === tr.dataset.per);
+      if (!e.altKey) { try { sessionStorage.setItem('sat-obligacion', JSON.stringify({ anio: f.anio, mes: o.periodo || 12, clave: o.clave })); } catch { /* sin almacenamiento */ } location.hash = '#/sat/impuestos-regimen'; return; }
+      if (!ctx.admin) return;
       if (o.p) { if (!confirm(`¿Quitar el registro de presentación de «${o.nombre}»?`)) return; await sb.from('sat_obligaciones_presentadas').delete().eq('id', o.p.id); return cargar(); }
       const acceso = prompt(`Presentación de «${o.nombre}» (${o.periodo ? MES[o.periodo - 1] : 'anual'} ${f.anio}).\nNúmero de acceso o formulario de Declaraguate:`); if (acceso == null) return;
       const monto = prompt('Monto pagado (Q):', '0'); if (monto == null) return;
@@ -497,4 +499,102 @@
     });
     iniciar();
   };
+  // ===================== Cálculo de impuestos del régimen =====================
+  // Contabilidad del período para ISR y la base del ISO: ingresos, costos y gastos (estado de resultados) y activo.
+  async function contaPeriodo(sb, loc, desde, hasta) {
+    const ls = await leerTodo(() => sb.from('partida_lineas').select('cuenta_id, debe, haber, partidas!inner(localidad_id, fecha, estado)').eq('partidas.localidad_id', loc).eq('partidas.estado', 'VIGENTE').lte('partidas.fecha', hasta).order('id'));
+    const ids = [...new Set(ls.map((l) => l.cuenta_id))];
+    const cs = []; for (let i = 0; i < ids.length; i += 300) cs.push(...((await sb.from('cuentas').select('id, tipo_cuenta_id').in('id', ids.slice(i, i + 300))).data || []));
+    const ts = (await sb.from('tipos_cuenta').select('id, tipo_operacion, reporte_financiero, descripcion').eq('localidad_id', loc)).data || [];
+    const tc = new Map(cs.map((c) => [c.id, ts.find((t) => t.id === c.tipo_cuenta_id)]));
+    let ingresos = 0, egresos = 0, activo = 0;
+    ls.forEach((l) => { const t = tc.get(l.cuenta_id); if (!t) return; const d = num(l.debe), h = num(l.haber);
+      if (t.reporte_financiero === 'E' && l.partidas.fecha >= desde) { if (t.tipo_operacion === 'HABER-DEBE') ingresos += h - d; else egresos += d - h; }
+      if (t.reporte_financiero === 'B' && t.tipo_operacion === 'DEBE-HABER' && /ACTIVO/i.test(t.descripcion || '')) activo += d - h; });
+    return { ingresos, egresos, utilidad: ingresos - egresos, activo };
+  }
+  window.PANTALLAS['impuestos-regimen'] = function (cont) {
+    const ctx = montar(cont, { titulo: 'Cálculo de impuestos del régimen', icono: 'ti-receipt-tax', clase: 'bk-movimientos bm-solo cx-rep pr-rep sat-reg', grupo: 'Integraciones SAT · Procesos' });
+    const { sb } = ctx;
+    const h = new Date(); h.setMonth(h.getMonth() - 1);
+    const f = { anio: h.getFullYear(), mes: h.getMonth() + 1, opcionIsr: 'CIERRE' };
+    try { const x = JSON.parse(sessionStorage.getItem('sat-obligacion') || 'null'); if (x) { f.anio = x.anio; f.mes = x.mes || 12; f.foco = x.clave; sessionStorage.removeItem('sat-obligacion'); } } catch { /* sin almacenamiento */ }
+    let secciones = [], pres = [], em = null;
+    async function iniciar() { if (!(await ctx.cargarBase())) return; await cargar(); }
+    async function cargar() {
+      if (!ctx.sel.loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-receipt-tax'); return; }
+      ctx.filtros('<label class="campo cx-anio"><span>Año</span><input type="number" name="anio" value="' + f.anio + '" min="2000" max="2999"></label><label class="campo"><span>Mes del período</span><select name="mes">' + MES.map((m, i) => '<option value="' + (i + 1) + '" ' + (f.mes === i + 1 ? 'selected' : '') + '>' + m + '</option>').join('') + '</select></label><label class="campo"><span>ISR trimestral</span><select name="opcionIsr"><option value="CIERRE" ' + (f.opcionIsr === 'CIERRE' ? 'selected' : '') + '>Cierre contable parcial</option><option value="ESTIMADA" ' + (f.opcionIsr === 'ESTIMADA' ? 'selected' : '') + '>Renta estimada (8 % de ingresos)</option></select></label>', botonesExp);
+      ctx.pDet.innerHTML = '<p class="vacio">Calculando las obligaciones del régimen…</p>';
+      try { await calcular(); } catch (e) { return faltaScript(ctx, e); }
+      pintar();
+    }
+    async function calcular() {
+      em = await emisorDe(sb, ctx.sel.loc);
+      const a = iniMes(f.anio, f.mes), b = finMes(f.anio, f.mes);
+      const obl = obligaciones(em, f.anio).filter((o) => o.periodo === f.mes || (o.clave === 'ISR-A' && f.mes === 12));
+      const [D, pr, per] = await Promise.all([datosFiscales(ctx, a, b), sb.from('sat_obligaciones_presentadas').select('*').eq('localidad_id', ctx.sel.loc).eq('anio', f.anio), sb.from('sat_periodos_fiscales').select('*').eq('localidad_id', ctx.sel.loc)]);
+      pres = pr.data || [];
+      const ant = (per.data || []).find((p) => p.anio * 12 + p.mes === f.anio * 12 + f.mes - 1 && p.estado === 'CERRADO');
+      const L = liquidar(D, num(ant?.remanente_siguiente), f.anio, f.mes);
+      const fila = (t, v, tipo, nota) => ({ valores: [t, nota || '', typeof v === 'number' ? r2(v) : v], tipo });
+      const ventasNetas = sum([...D.ventas, ...D.notas].map((d) => d.gravado + d.exento));
+      let conta = null, contaAnt = null;
+      const necesitaConta = obl.some((o) => ['ISR-T', 'ISO', 'ISR-A'].includes(o.clave));
+      if (necesitaConta) {
+        const t = Math.ceil(f.mes / 3), iniT = iniMes(f.anio, (t - 1) * 3 + 1);
+        conta = obl.some((o) => o.clave === 'ISR-A') && f.mes === 12 ? await contaPeriodo(sb, ctx.sel.loc, f.anio + '-01-01', f.anio + '-12-31') : await contaPeriodo(sb, ctx.sel.loc, iniT, b);
+        if (obl.some((o) => o.clave === 'ISO')) contaAnt = await contaPeriodo(sb, ctx.sel.loc, (f.anio - 1) + '-01-01', (f.anio - 1) + '-12-31');
+      }
+      // Pagos de ISR trimestral e ISO del año ya registrados como presentados (acreditables en el anual).
+      const pagado = (clave) => sum(pres.filter((p) => p.obligacion === clave).map((p) => p.monto));
+      secciones = obl.map((o) => {
+        let filas = [], total = 0, nota = '';
+        if (o.clave === 'IVA') { filas = [fila('Débito fiscal (IVA de ventas y notas)', L.debito_fiscal), fila('(−) Crédito fiscal (IVA de compras del período)', -L.credito_fiscal), fila('(−) Retenciones de IVA recibidas', -L.retenciones_iva), fila('(−) Remanente del período anterior', -L.remanente_anterior), fila('Remanente para el período siguiente', L.remanente_siguiente, 'subtotal')]; total = L.iva_a_pagar; nota = 'Liquidación del mes; se presenta junto con el detalle de Asiste Libros.'; }
+        else if (o.clave === 'IVA-PEQ') { filas = [fila('Ingresos del mes', ventasNetas), fila('Tasa del régimen', '5 %')]; total = ventasNetas * 0.05; nota = 'Pequeño contribuyente: 5 % sobre los ingresos brutos, sin crédito fiscal.'; }
+        else if (o.clave === 'LIBROS') { filas = [fila('Documentos de venta', D.ventas.length + D.notas.length), fila('Ventas: total del libro', sum([...D.ventas, ...D.notas].map((d) => d.total))), fila('Documentos de compra', D.compras.length), fila('Compras: total del libro', sum(D.compras.map((c) => c.total)))]; total = 0; nota = 'Sin pago: genera el Libro de ventas y el Libro de compras (Reportes) y súbelos en Asiste Libros.'; }
+        else if (o.clave === 'ISR-M') { const base = ventasNetas, tramo1 = Math.min(base, 30000) * 0.05, tramo2 = Math.max(0, base - 30000) * 0.07; filas = [fila('Ingresos del mes (sin IVA)', base), fila('5 % sobre los primeros Q 30,000', tramo1), fila('7 % sobre el excedente', tramo2), fila('(−) ISR retenido por los clientes', -L.retenciones_isr)]; total = Math.max(0, tramo1 + tramo2 - L.retenciones_isr); nota = 'Régimen opcional simplificado sobre ingresos de actividades lucrativas (Decreto 10-2012, art. 44).'; }
+        else if (o.clave === 'RET-ISR') { const prov = sum(D.compras.map((c) => c.retIsr)); filas = [fila('ISR retenido a proveedores (facturas del mes)', prov)]; total = prov; nota = 'Retenciones efectuadas como agente; el ISR de asalariados sale de las planillas pagadas en Nóminas.'; }
+        else if (o.clave === 'RET-IVA') { const prov = sum(D.compras.map((c) => c.retIva)); filas = [fila('IVA retenido a proveedores (constancias emitidas)', prov)]; total = prov; nota = 'Agente de retención del IVA: se entera mediante RetenIVA.'; }
+        else if (o.clave === 'ISR-T') {
+          const t = Math.ceil(f.mes / 3);
+          if (f.opcionIsr === 'ESTIMADA') { const renta = conta.ingresos * 0.08; filas = [fila('Ingresos del trimestre T' + t + ' (contabilidad)', conta.ingresos), fila('Renta imponible estimada (8 %)', renta), fila('ISR 25 %', renta * 0.25)]; total = renta * 0.25; nota = 'Opción de renta imponible estimada: 8 % de los ingresos brutos del trimestre (art. 38).'; }
+          else { const ut = Math.max(0, conta.utilidad); filas = [fila('Ingresos del trimestre T' + t, conta.ingresos), fila('(−) Costos y gastos del trimestre', -conta.egresos), fila('Utilidad del trimestre (cierre contable parcial)', conta.utilidad, 'subtotal'), fila('ISR 25 % sobre la utilidad', ut * 0.25)]; total = ut * 0.25; nota = 'Opción de cierre contable parcial (art. 38); el ISO pagado puede acreditarse al ISR.'; }
+        }
+        else if (o.clave === 'ISO') { const b1 = contaAnt.activo / 4, b2 = contaAnt.ingresos / 4, base = Math.max(b1, b2); filas = [fila('Activo neto al cierre del año anterior', contaAnt.activo), fila('Ingresos brutos del año anterior', contaAnt.ingresos), fila('Base: la mayor entre 1/4 del activo y 1/4 de los ingresos', base, 'subtotal'), fila('ISO anual (1 %)', base * 0.01), fila('Cuota trimestral', base * 0.01 / 4)]; total = base * 0.01 / 4; nota = 'Ley del ISO (Decreto 73-2008): 1 % de la base, pagado en 4 cuotas; acreditable al ISR.'; }
+        else if (o.clave === 'ISR-A') { const ut = Math.max(0, conta.utilidad), isr = ut * 0.25, pt = pagado('ISR-T'), iso = pagado('ISO'); filas = [fila('Ingresos del año', conta.ingresos), fila('(−) Costos y gastos del año', -conta.egresos), fila('Renta imponible (utilidad contable; ajusta los gastos no deducibles)', conta.utilidad, 'subtotal'), fila('ISR 25 %', isr), fila('(−) Pagos trimestrales registrados', -pt), fila('(−) ISO acreditado registrado', -iso)]; total = Math.max(0, isr - pt - iso); nota = 'Declaración anual con estados financieros; antes de presentarla ajusta los gastos no deducibles y las rentas exentas.'; }
+        const p = pres.find((x) => x.obligacion === o.clave && x.periodo === o.periodo);
+        return { o, filas, total: r2(total), nota, p };
+      });
+    }
+    const cfgTodo = () => ({ titulo: 'Impuestos del régimen · ' + MES[f.mes - 1] + ' ' + f.anio, orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Impuestos', archivo: 'impuestos_' + f.anio + '_' + f.mes, firmas: ['Contador registrado', 'Representante legal'],
+      parametros: ['Empresa: ' + empresaDe(ctx), 'NIT: ' + (em?.nit || '—'), 'IVA ' + (em?.regimen_iva || 'GENERAL') + ' · ISR ' + (em?.regimen_isr || 'UTILIDADES')],
+      columnas: [col('Concepto', 'texto', 56), col('Detalle', 'texto', 30), col('Q', 'monto', 16)],
+      filas: secciones.flatMap((x) => [{ valores: [x.o.nombre + ' · ' + x.o.formulario + ' · vence ' + x.o.vence.toLocaleDateString('es-GT')], tipo: 'grupo', combinar: true }, ...x.filas, { valores: ['A PAGAR', x.p ? 'Presentada: ' + (x.p.numero_acceso || '') : '', x.total], tipo: 'total' }]) });
+    function pintar() {
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      ctx.pDet.innerHTML = '<div class="bm-form cx-form cl-clasico"><div class="cl-banda">Obligaciones de ' + MES[f.mes - 1] + ' ' + f.anio + ' · ' + esc(empresaDe(ctx)) + ' · IVA ' + esc(em?.regimen_iva || 'GENERAL (registra los Datos del emisor)') + ' · ISR ' + esc(em?.regimen_isr || 'UTILIDADES') + '</div>'
+        + '<div class="ec-kpis">' + kpi('Obligaciones del período', secciones.length) + kpi('Total a pagar', q(sum(secciones.map((x) => x.total))), 'ec-fin') + kpi('Presentadas', secciones.filter((x) => x.p).length) + kpi('Pendientes', secciones.filter((x) => !x.p).length, secciones.some((x) => !x.p && x.o.vence < hoy) ? 'ec-alerta' : '') + '</div>'
+        + '<div class="sat-obl">' + secciones.map((x, i) => { const est = x.p ? 'PRESENTADA' : x.o.vence < hoy ? 'VENCIDA' : (x.o.vence - hoy) / 864e5 <= 10 ? 'PRÓXIMA' : 'PENDIENTE';
+          return '<section class="sat-obl-c' + (f.foco === x.o.clave ? ' foco' : '') + '" data-i="' + i + '"><header><div><b>' + esc(x.o.nombre) + '</b><small>' + esc(x.o.formulario) + ' · vence ' + x.o.vence.toLocaleDateString('es-GT') + '</small></div>' + marca(est) + '</header>'
+            + '<table>' + x.filas.map((r) => '<tr class="' + (r.tipo === 'subtotal' ? 'pr-s' : '') + '"><td>' + esc(r.valores[0]) + '</td><td class="num">' + (typeof r.valores[2] === 'number' ? fmt.monto(r.valores[2]) : esc(String(r.valores[2]))) + '</td></tr>').join('') + '<tr class="pr-t"><td>A pagar</td><td class="num">' + fmt.monto(x.total) + '</td></tr></table>'
+            + '<p class="tk-tenue">' + esc(x.nota) + '</p>'
+            + (x.p ? '<p class="sat-pres"><i class="ti ti-circle-check"></i> Presentada el ' + fmt.fechaDia(x.p.fecha_presentacion) + ' · ' + esc(x.p.numero_acceso || '') + ' · ' + q(x.p.monto) + '</p>' : ctx.admin ? '<button type="button" class="boton secundario-sm" data-presentar="' + i + '"><i class="ti ti-send" aria-hidden="true"></i> Registrar presentación</button>' : '') + '</section>'; }).join('') + '</div>'
+        + '<p class="pr-guia"><i class="ti ti-info-circle" aria-hidden="true"></i> Cálculos de referencia con los documentos y la contabilidad registrados; la declaración se presenta en Declaraguate. Las obligaciones salen del régimen de Datos del emisor y del Calendario fiscal.</p></div>';
+      window.CUENTAS_XLSX.ajustarAlto(cont);
+      ctx.pDet.querySelector('.sat-obl-c.foco')?.scrollIntoView({ block: 'nearest' });
+    }
+    cont.addEventListener('change', (e) => { const cm = ctx.cambioOrgLoc(e); if (cm === 'org' || cm === 'loc') return cargar(); if (['anio', 'mes'].includes(e.target.name)) { f[e.target.name] = Number(e.target.value) || f[e.target.name]; f.foco = null; return cargar(); } if (e.target.name === 'opcionIsr') { f.opcionIsr = e.target.value; return cargar(); } });
+    cont.addEventListener('click', async (e) => {
+      const ex = e.target.closest('[data-exp]'); if (ex) return exportar(cfgTodo(), ex.dataset.exp, false);
+      const b = e.target.closest('[data-presentar]'); if (!b) return;
+      const x = secciones[Number(b.dataset.presentar)];
+      const acceso = prompt('Presentación de «' + x.o.nombre + '».\nNúmero de acceso o formulario de Declaraguate:'); if (acceso == null) return;
+      const monto = prompt('Monto pagado (Q):', String(x.total)); if (monto == null) return;
+      const { error } = await sb.from('sat_obligaciones_presentadas').insert({ organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, obligacion: x.o.clave, anio: f.anio, periodo: x.o.periodo, formulario: x.o.formulario, numero_acceso: acceso.trim() || null, monto: num(monto), usuario: (window.FIN.perfil()?.usuario || '').toUpperCase() });
+      if (error) return window.FIN.aviso(window.UI.traducirError(error));
+      window.FIN.aviso('Presentación registrada'); cargar();
+    });
+    iniciar();
+  };
+
 })();

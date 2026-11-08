@@ -1803,8 +1803,8 @@
   "pasos": [
    "Abre Integraciones SAT › Procesos › Impuestos › Calendario fiscal y elige {empresa}.",
    "Elige el año y el filtro (todas, pendientes, vencidas o presentadas).",
-   "Revisa los indicadores: próximas a vencer (10 días) y vencidas en rojo.",
-   "Al presentar en Declaraguate, toca la fila y registra el número de acceso y el monto pagado.",
+   "Revisa las próximas a vencer (10 días) y las vencidas en rojo.",
+   "Toca una obligación: se abre su cálculo según el régimen en «Cálculo de impuestos del régimen», donde registras la presentación.",
    "Verifica los asuetos en el calendario oficial de la SAT (el cálculo usa días hábiles de lunes a viernes)."
   ]
  },
@@ -2037,6 +2037,20 @@
    "Elige el año y el mes.",
    "Revisa la provisión: indemnización 9.72 %, aguinaldo 8.33 %, Bono 14 8.33 % y vacaciones 4.17 % del salario.",
    "Usa el total para la partida de provisión del mes; imprime en PDF o Excel."
+  ]
+ },
+ "impuestos-regimen": {
+  "puntos": [
+   "Cálculo de cada obligación del Calendario fiscal según el régimen de la empresa, con lo que se paga y su presentación."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Procesos › Impuestos › Cálculo de impuestos del régimen y elige {empresa} (o toca una obligación en el Calendario fiscal).",
+   "Elige el año y el mes del período: aparece una tarjeta por cada obligación que vence por ese período.",
+   "IVA general: débito − crédito − retenciones − remanente. Pequeño contribuyente: 5 % de los ingresos.",
+   "ISR simplificado: 5 % hasta Q 30,000 y 7 % el excedente, menos lo retenido. ISR sobre utilidades (trimestral): elige «Cierre contable parcial» (25 % de la utilidad del trimestre) o «Renta estimada» (25 % sobre el 8 % de los ingresos).",
+   "ISO: 1 % sobre la mayor base entre 1/4 del activo neto y 1/4 de los ingresos del año anterior, en cuotas trimestrales.",
+   "Retenciones: el ISR y el IVA retenidos a proveedores en el mes. ISR anual (diciembre): 25 % de la utilidad menos los pagos trimestrales y el ISO registrados.",
+   "Presenta en Declaraguate y presiona «Registrar presentación» con el número de acceso y el monto: el calendario la marca como presentada."
   ]
  }
 }

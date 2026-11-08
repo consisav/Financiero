@@ -634,6 +634,7 @@ window.MODULOS = [
         { subgrupo: 'Impuestos', icono: 'ti-calculator', pantallas: [
           { id: 'conciliacion-fiscal', nombre: 'Conciliación fiscal', icono: 'ti-arrows-diff', descripcion: 'DTE de la SAT contra compras registradas, montos distintos y ventas sin certificar.' },
           { id: 'liquidacion-impuestos', nombre: 'Liquidación de impuestos', icono: 'ti-calculator', descripcion: 'IVA del mes (débito, crédito, retenciones, remanente), ISR e ISO; cierre del período fiscal.' },
+          { id: 'impuestos-regimen', nombre: 'Cálculo de impuestos del régimen', icono: 'ti-receipt-tax', descripcion: 'Cálculo de cada obligación del calendario según el régimen: IVA, pequeño contribuyente, ISR mensual o trimestral, ISO, retenciones e ISR anual.' },
           { id: 'calendario-fiscal', nombre: 'Calendario fiscal', icono: 'ti-calendar-due', descripcion: 'Obligaciones del año según el régimen, con vencimientos y registro de su presentación.' }
         ] }
       ],

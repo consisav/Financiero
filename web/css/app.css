@@ -5680,3 +5680,15 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .nom-split tr.actual td { background: color-mix(in srgb, var(--acento) 10%, var(--panel)); }
 .nom-ficha-c { border: 1px solid var(--borde); border-radius: 10px; overflow: auto; }
 @media (max-width: 1100px) { .nom-split { grid-template-columns: 1fr; } }
+
+.sat-obl { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 10px; }
+.sat-obl-c { border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--panel); }
+.sat-obl-c.foco { outline: 2px solid var(--acento); }
+.sat-obl-c header { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.sat-obl-c header small { display: block; color: var(--texto-suave); font-size: 12px; }
+.sat-obl-c table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sat-obl-c td { padding: 3px 4px; border-bottom: 1px solid var(--borde); }
+.sat-obl-c tr.pr-t td { font-weight: 700; border-top: 2px solid var(--acento); }
+.sat-obl-c p { margin: 0; font-size: 12px; }
+.sat-pres { color: #067647; }
+.sat-rep tr[data-o], .pr-rep tr[data-o] { cursor: pointer; }
