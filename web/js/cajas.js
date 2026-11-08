@@ -268,7 +268,7 @@
         <div class="cd-dato"><small>Responsable</small><b>${esc(c.responsable || '—')}</b><small>${esc(c.tipo_caja)} · ${c.modalidad === 'NORMAL' ? 'Normal' : 'Liquidación'}</small></div>
         <div class="cd-dato"><small>Cuenta de la caja</small><b>${esc(k?.codigo || '—')}</b><small>${esc(k?.nombre || '')}</small></div>
         <div class="cd-dato"><small>Fondo asignado</small><b>${esc(simbolo(c.moneda_id))} ${fmt.monto(c.monto_fondo)}</b><small>${esc(c.usuario_liquida ? `Liquida ${c.usuario_liquida}` : '')}</small></div>
-        <button type="button" class="boton cd-ver" data-accion="ir-cajas"><i class="ti ti-layout-list" aria-hidden="true"></i> Ver cajas</button>`;
+        <div class="cd-acc-cab"><span class="cc-imp"><button type="button" class="boton secundario-sm" data-reporte="ACTUAL" data-fmt="PDF" title="Imprimir en PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-reporte="ACTUAL" data-fmt="EXCEL" title="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button></span><button type="button" class="boton cd-ver" data-accion="ir-cajas"><i class="ti ti-layout-list" aria-hidden="true"></i> Ver cajas</button></div>`;
     }
 
     function pintarSubcajas() {
@@ -397,7 +397,6 @@
               <button type="button" class="boton secundario-sm" data-accion="ver-contable"><i class="ti ${verContable ? 'ti-receipt' : 'ti-list-details'}" aria-hidden="true"></i> ${verContable ? 'Ver documentos' : 'Ver contable'}</button>
               ${puede() ? `<button type="button" class="boton secundario-sm" data-accion="reconstruir"><i class="ti ti-refresh" aria-hidden="true"></i> Reconstruir detalle contable</button>
                 <button type="button" class="boton secundario-sm" data-accion="marcar" ${documentos.length ? '' : 'disabled'}><i class="ti ti-checks" aria-hidden="true"></i> Marcar/Desmarcar</button>` : ''}
-              <span class="cc-imp"><button type="button" class="boton secundario-sm" data-reporte="${verContable ? 'CONTABLE' : 'MOVIMIENTOS'}" data-fmt="PDF" title="Imprimir en PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-reporte="${verContable ? 'CONTABLE' : 'MOVIMIENTOS'}" data-fmt="EXCEL" title="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button></span>
               <span class="cc-total"><small>Total liquidado</small><b>${esc(sim)} ${fmt.monto(liquidado())}</b></span>
             </footer>
           </section>
@@ -424,7 +423,7 @@
             <input name="${k}_nota" value="${esc(p[`${k}_nota`] || '')}" maxlength="20" aria-label="Nota del ${t.toLowerCase()}" ${dis}>
             <input type="number" step="0.01" min="0" class="num" name="${k}_valor" value="${esc(String(p[`${k}_valor`]))}" aria-label="Valor del ${t.toLowerCase()}" ${dis}>`).join('')}
         </div>
-        <div class="cc-fondos-pie"><p class="modal-error tk-error" role="alert"></p><span class="cc-imp"><button type="button" class="boton secundario-sm" data-reporte="LIQUIDACION" data-fmt="PDF" title="Imprimir en PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-reporte="LIQUIDACION" data-fmt="EXCEL" title="Descargar en Excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button></span>${puede() ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar liquidación</button>' : ''}</div>
+        <div class="cc-fondos-pie"><p class="modal-error tk-error" role="alert"></p>${puede() ? '<button type="submit" class="boton primario-sm"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar liquidación</button>' : ''}</div>
       </form>`;
     }
 
@@ -949,7 +948,10 @@
     cont.addEventListener('dblclick', (e) => { if (e.target.closest('tr[data-caja]')) irDetalle(); });
     cont.addEventListener('click', (e) => {
       const rep = e.target.closest('[data-reporte]');
-      if (rep) return (rep.dataset.fmt || formatoRep) === 'EXCEL' ? reporteExcel(rep.dataset.reporte) : reporte(rep.dataset.reporte);
+      if (rep) {
+        const t = rep.dataset.reporte === 'ACTUAL' ? (pestanaDet === 'LIQUIDACION' ? 'LIQUIDACION' : verContable ? 'CONTABLE' : 'MOVIMIENTOS') : rep.dataset.reporte;
+        return (rep.dataset.fmt || formatoRep) === 'EXCEL' ? reporteExcel(t) : reporte(t);
+      }
       const fmtB = e.target.closest('[data-formato]');
       if (fmtB) { formatoRep = fmtB.dataset.formato; ctx.pMae.querySelectorAll('[data-formato]').forEach((b) => { b.classList.toggle('activo', b === fmtB); b.setAttribute('aria-checked', String(b === fmtB)); }); return; }
       const tabB = e.target.closest('[data-tab-caja]');

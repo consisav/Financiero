@@ -5623,3 +5623,6 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cc-imp { display: inline-flex; gap: 4px; }
 .cc-fondos-pie .cc-imp { margin-left: auto; }
 .cc-fondos-pie .cc-imp + .boton { margin-left: 6px; }
+.cd-acc-cab { justify-self: end; display: inline-flex; align-items: center; gap: 8px; }
+.cd-acc-cab .cd-ver { justify-self: auto; }
+.cd-acc-cab .cc-imp .boton { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; font-weight: 600; }
