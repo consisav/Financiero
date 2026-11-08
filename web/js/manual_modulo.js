@@ -123,8 +123,8 @@
   }
   function imprimirManual() {
     const { manual } = estado;
-    const v = window.open('', '_blank');
-    if (!v) return window.FIN.aviso('Permite las ventanas emergentes para imprimir');
+    // Se imprime en un marco oculto de la misma página (ver «marcoImpresion» en bancos.js): no bloquea el sitio.
+    const { v, imprimirYa } = window.FIN_IMPRESION();
     const guardado = estado.i;
     const paginas = manual.diapositivas.map((s, k) => diapositiva(s, k + 1, manual.diapositivas.length)).join('');
     estado.i = guardado;
@@ -136,8 +136,9 @@
       .mm-tipo{font-size:28px;color:#1f5fa8}.mm-cuerpo{flex:1;padding-top:10px;font-size:15px}.mm-cuerpo li{margin:5px 0}.mm-pasos li{margin:7px 0}
       table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left}th{background:#e1eefb}
       footer{display:flex;justify-content:space-between;color:#666;font-size:11px;border-top:1px solid #ddd;padding-top:6px}.mm-t-portada h2{font-size:34px}
-      </style></head><body>${paginas}<script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`);
+      </style></head><body>${paginas}</body></html>`);
     v.document.close();
+    setTimeout(imprimirYa, 900);
   }
   async function generarIA() {
     const sb = window.FIN.sb;

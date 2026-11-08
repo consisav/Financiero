@@ -51,7 +51,7 @@
       ctx.filtros(`
         ${modo === 'GENERAL' ? `<label class="campo"><span>Fecha inicio</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label><label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>` : ''}
         ${modo === 'PERIODO' ? `<label class="campo cx-anio"><span>Año venta</span><input type="number" name="anio" min="2000" max="2999" value="${f.anio}"></label><label class="campo"><span>Saldo al</span><input type="date" name="hasta" value="${f.hasta}"></label>` : ''}
-        <label class="campo cx-prov"><span>Cliente</span><input list="cx-clientes" name="cliente" value="${esc(f.cliente)}" placeholder="TODOS"></label>
+        <label class="campo cx-prov"><span>Cliente</span><input list="cx-clientes" name="cliente" autocomplete="off" value="${esc(f.cliente)}" placeholder="TODOS"></label>
         ${modo !== 'PERIODO' ? `<label class="campo"><span>Tipo fecha</span>${sl('fecha', [['ESTIMADA', 'ESTIMADA COBRO'], ['EMISION', 'EMISIÓN']], f.fecha)}</label>` : ''}
         <label class="campo"><span>Saldo?</span>${sl('saldo', [['CON SALDO', 'CON SALDO'], ['SIN SALDO', 'SIN SALDO'], ['TODAS', 'TODAS']], f.saldo)}</label>
         <label class="campo"><span>Tipo cliente</span>${sl('tipo', [['', 'TODOS'], ...tipos.map((t) => [t, t])], f.tipo)}</label>
@@ -62,7 +62,7 @@
         ${c || !f.cliente ? '' : '<small class="cx-aviso pc-rojo">Cliente no encontrado</small>'}`,
         `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato === 'PDF' ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
          ${modo === 'PERIODO' ? `<button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>` : ''}
-         <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del cliente elegido (o de la fila seleccionada)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
+         <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del cliente elegido o, si está en TODOS, de todos los clientes (en PDF o Excel según el formato)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
     }
     async function iniciar() {
@@ -231,6 +231,18 @@
         <tfoot><tr><td colspan="9">${filas.length} facturas · Total</td><td class="n">${fmt.monto(filas.reduce((t, x) => t + x.valor, 0))}</td><td class="n">${fmt.monto(filas.reduce((t, x) => t + x.saldoQ, 0))}</td></tr></tfoot></table>`, { horizontal: true });
     }
     // Estado de cuenta: las facturas del cliente con sus cobros y notas, y el saldo acumulado.
+    // Estado de cuenta del cliente elegido o, en TODOS, de todos (PDF o Excel según «Formato»), con el periodo del encabezado:
+    // lo anterior a la fecha inicial queda como saldo anterior.
+    async function estadoCuentaRep() {
+      const t = cliDe(f.cliente);
+      if (f.cliente && !t) return window.FIN.aviso('Cliente no encontrado: elígelo de la lista o deja TODOS');
+      const ini = modo === 'MENSUAL' ? `${f.anio}-${String(f.mes).padStart(2, '0')}-01` : modo === 'PERIODO' ? `${f.anio}-01-01` : f.desde;
+      const fin = modo === 'MENSUAL' ? new Date(f.anio, f.mes, 0).toLocaleDateString('en-CA') : f.hasta;
+      // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
+      const op = await window.ESTADO_CUENTA.elegir({ tercero: t ? t.nombre : 'Todos los clientes', contenido: f.formato === 'RESUMIDO' ? 'RESUMIDO' : 'DETALLADO', formato: f.formato === 'PDF' ? 'PDF' : 'EXCEL' });
+      if (!op) return;
+      return window.ESTADO_CUENTA.generar('CXC', ctx, { desde: ini, hasta: fin, terceroKey: t ? `C${t.id}` : '', tipo: f.tipo || '', mostrar: f.saldo === 'CON SALDO' ? 'CON SALDO' : 'CON MOVIMIENTO', contenido: op.contenido }, op.formato);
+    }
     async function estadoCuenta(clienteId) {
       const c = cli(clienteId) || cliDe(f.cliente) || cli(facturas.find((x) => x.id === sel)?.cliente_id);
       if (!c) return window.FIN.aviso('Elige el cliente o selecciona una fila del reporte');
@@ -290,7 +302,7 @@
       if (a === 'imprimir') return imprimirRep();
       if (a === 'resumen') { resumen = !resumen; pintarFiltros(); return pintar(); }
       if (a === 'sugerencia') { const s = sugerencia(); if (s) { s.aplicar(); pintarFiltros(); } return pintar(); }
-      if (a === 'estado-cuenta') return estadoCuenta();
+      if (a === 'estado-cuenta') return estadoCuentaRep();
       if (a === 'regresar') return history.length > 1 ? history.back() : (location.hash = '#/facturacion');
     });
     // Clic (o Enter) en el encabezado: ordena por esa columna y alterna ascendente / descendente.

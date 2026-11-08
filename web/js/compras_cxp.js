@@ -315,7 +315,7 @@
     // Supabase entrega 1000 filas por consulta: se lee todo de mil en mil.
     const leerTodo = async (hacer) => { const out = []; for (let i = 0; ; i += 1000) { const { data, error } = await hacer().range(i, i + 999); if (error) throw error; out.push(...(data || [])); if (!data || data.length < 1000) break; } return out; };
     const prov = (id) => proveedores.find((p) => p.id === id);
-    const provDe = (t) => { const s = String(t || '').trim().toUpperCase(); return s ? proveedores.find((p) => `${p.codigo} · ${p.nombre_comercial}`.toUpperCase() === s || String(p.codigo) === s || (p.nit && p.nit.toUpperCase() === s)) || null : null; };
+    const provDe = (t) => { const s = String(t || '').trim().toUpperCase(); const cod = s.includes(' — ') ? s.slice(s.lastIndexOf(' — ') + 3).trim() : null; return s ? proveedores.find((p) => (cod !== null && String(p.codigo) === cod) || `${p.nombre_comercial} — ${p.codigo}`.toUpperCase() === s || `${p.codigo} · ${p.nombre_comercial}`.toUpperCase() === s || p.nombre_comercial.toUpperCase() === s || String(p.codigo) === s || (p.nit && p.nit.toUpperCase() === s)) || null : null; };
     const aBase = (c) => (ctx.moneda(c.moneda_id)?.iso === 'GTQ' ? 1 : Number(c.tipo_cambio) || 1);
     const fechaDe = (c) => (f.fecha === 'ESTIMADA' ? c.fecha_vencimiento || c.fecha_documento : f.fecha === 'INGRESO' ? c.fecha_ingreso : c.fecha_documento);
 
@@ -325,18 +325,18 @@
       ctx.filtros(`
         ${modo === 'GENERAL' ? `<label class="campo"><span>Fecha inicio</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label><label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>` : ''}
         ${modo === 'PERIODO' ? `<label class="campo cx-anio"><span>Año pago</span><input type="number" name="anio" min="2000" max="2999" value="${f.anio}"></label><label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}"></label>` : ''}
-        <label class="campo cx-prov"><span>Proveedor</span><input list="cx-proveedores" name="proveedor" value="${esc(f.proveedor)}" placeholder="TODOS"></label>
+        <label class="campo cx-prov"><span>Proveedor</span><input list="cx-proveedores" name="proveedor" autocomplete="off" value="${esc(f.proveedor)}" placeholder="TODOS"></label>
         ${modo !== 'PERIODO' ? `<label class="campo"><span>Tipo fecha</span>${sl('fecha', [['ESTIMADA', 'ESTIMADA PAGO'], ['DOCUMENTO', 'DOCUMENTO'], ['INGRESO', 'INGRESO']], f.fecha)}</label>` : ''}
         <label class="campo"><span>Saldo?</span>${sl('saldo', [['CON SALDO', 'CON SALDO'], ['SIN SALDO', 'SIN SALDO'], ['TODAS', 'TODAS']], f.saldo)}</label>
         <label class="campo"><span>Tipo proveedor</span>${sl('tipo', [['', 'TODOS'], ...tipos.map((t) => [t.id, t.nombre])], f.tipo)}</label>
         <label class="campo cx-orden"><span>Ordenar por</span>${sl('orden', X.opcionesOrden('FECHA PAGO'), f.orden)}</label>
         <label class="campo cx-dir"><span>Orden</span>${sl('dir', [['ASC', 'ASCENDENTE'], ['DESC', 'DESCENDENTE']], f.dir)}</label>
         <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
-        <datalist id="cx-proveedores">${proveedores.map((x) => `<option value="${esc(`${x.codigo} · ${x.nombre_comercial}`)}"></option>`).join('')}</datalist>
+        <datalist id="cx-proveedores">${proveedores.map((x) => `<option value="${esc(`${x.nombre_comercial} — ${x.codigo}`)}"></option>`).join('')}</datalist>
         ${p || !f.proveedor ? '' : '<small class="cx-aviso pc-rojo">Proveedor no encontrado</small>'}`,
         `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato === 'PDF' ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
          ${modo === 'PERIODO' ? `<button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>` : ''}
-         <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del proveedor elegido (o de la fila seleccionada)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
+         <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del proveedor elegido o, si está en TODOS, de todos los proveedores (en PDF o Excel según el formato)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
     }
     async function iniciar() {
@@ -502,6 +502,18 @@
         <tfoot><tr><td colspan="8">${filas.length} documentos · Total</td><td class="n">${fmt.monto(filas.reduce((t, c) => t + c.valorQ, 0))}</td><td class="n">${fmt.monto(filas.reduce((t, c) => t + c.saldoQ, 0))}</td></tr></tfoot></table>`);
     }
     // Estado de cuenta: las compras del proveedor con sus abonos y el saldo acumulado.
+    // Estado de cuenta del proveedor elegido o, en TODOS, de todos (PDF o Excel según «Formato»), con el periodo del encabezado:
+    // lo anterior a la fecha inicial queda como saldo anterior.
+    async function estadoCuentaRep() {
+      const t = provDe(f.proveedor);
+      if (f.proveedor && !t) return window.FIN.aviso('Proveedor no encontrado: elígelo de la lista o deja TODOS');
+      const ini = modo === 'MENSUAL' ? `${f.anio}-${String(f.mes).padStart(2, '0')}-01` : modo === 'PERIODO' ? `${f.anio}-01-01` : f.desde;
+      const fin = modo === 'MENSUAL' ? new Date(f.anio, f.mes, 0).toLocaleDateString('en-CA') : f.hasta;
+      // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
+      const op = await window.ESTADO_CUENTA.elegir({ tercero: t ? t.nombre_comercial : 'Todos los proveedores', contenido: f.formato === 'RESUMIDO' ? 'RESUMIDO' : 'DETALLADO', formato: f.formato === 'PDF' ? 'PDF' : 'EXCEL' });
+      if (!op) return;
+      return window.ESTADO_CUENTA.generar('CXP', ctx, { desde: ini, hasta: fin, terceroKey: t ? `P${t.id}` : '', tipo: tipos.find((x) => String(x.id) === String(f.tipo))?.nombre || '', mostrar: f.saldo === 'CON SALDO' ? 'CON SALDO' : 'CON MOVIMIENTO', contenido: op.contenido }, op.formato);
+    }
     async function estadoCuenta() {
       const p = provDe(f.proveedor) || prov(compras.find((c) => c.id === sel)?.proveedor_id);
       if (!p) return window.FIN.aviso('Elige el proveedor o selecciona una fila del reporte');
@@ -545,7 +557,7 @@
       if (a === 'imprimir') return imprimirRep();
       if (a === 'resumen') { resumen = !resumen; pintarFiltros(); return pintar(); }
       if (a === 'sugerencia') { const s = sugerencia(); if (s) { s.aplicar(); pintarFiltros(); } return pintar(); }
-      if (a === 'estado-cuenta') return estadoCuenta();
+      if (a === 'estado-cuenta') return estadoCuentaRep();
       if (a === 'regresar') return history.length > 1 ? history.back() : (location.hash = '#/compras');
     });
     // Clic (o Enter) en el encabezado: ordena por esa columna y alterna ascendente / descendente.

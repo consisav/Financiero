@@ -142,14 +142,31 @@
   // centro el título y los parámetros; a la derecha la fecha y hora de generación y el usuario; una línea de
   // separación y después el contenido. El título y los parámetros salen del primer <h1> y <h2> del cuerpo
   // (los parámetros separados por « · »). opciones: { locId, orgId, horizontal }.
+  // Los reportes se imprimen en un marco oculto de la misma página, no en otra pestaña: el diálogo de impresión
+  // (Imprimir o Guardar como PDF) aparece sobre el sistema y, al cerrarlo, se sigue trabajando. Una pestaña abierta
+  // desde aquí comparte el proceso con el sistema: mientras su diálogo seguía abierto (o si se cerraba la pestaña con
+  // el diálogo abierto) el sitio quedaba bloqueado hasta recargar la página.
+  function marcoImpresion() {
+    document.querySelectorAll('iframe.fin-impresion').forEach((x) => x.remove());
+    const fr = document.createElement('iframe');
+    fr.className = 'fin-impresion'; fr.title = 'Impresión'; fr.tabIndex = -1; fr.setAttribute('aria-hidden', 'true');
+    fr.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
+    document.body.appendChild(fr);
+    const v = fr.contentWindow;
+    const quitar = () => setTimeout(() => fr.remove(), 300);
+    // El aviso de fin de impresión se registra justo antes de imprimir (document.write borra los anteriores).
+    return { v, fr, imprimirYa: () => { if (!fr.isConnected) return; try { v.addEventListener('afterprint', quitar, { once: true }); v.focus(); v.print(); } catch { quitar(); } } };
+  }
+  window.FIN_IMPRESION = marcoImpresion;
+
   function imprimir(titulo, cuerpo, opciones = {}) {
-    const v = window.open('', '_blank');
-    if (!v) return window.FIN.aviso('Permite las ventanas emergentes para imprimir');
+    const { v, fr, imprimirYa } = marcoImpresion();
     let html = String(cuerpo || '');
     // Formatos que se imprimen sobre papel preimpreso (el cheque): sin encabezado.
     if (opciones.sinEncabezado) {
-      v.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title><style>body{font:12px/1.4 Arial,sans-serif;color:#111;margin:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left}.n{text-align:right}@media print{body{margin:8mm}}</style></head><body>${html}<script>window.onload=()=>window.print()</script></body></html>`);
+      v.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title><style>body{font:12px/1.4 Arial,sans-serif;color:#111;margin:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left}.n{text-align:right}@media print{body{margin:8mm}}</style></head><body>${html}</body></html>`);
       v.document.close();
+      setTimeout(imprimirYa, 300);
       return;
     }
     const plano = (x) => String(x || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -207,7 +224,7 @@
         const orgId = opciones.orgId || loc?.organizacion_id || seleccion.org || yo.organizacion_id;
         if (orgId) org = (await sb.from('organizaciones').select('nombre, logo_ruta').eq('id', orgId).maybeSingle()).data;
       } catch (err) { /* sin datos de la empresa: el reporte sale sin logo */ }
-      if (v.closed) return;
+      if (!fr.isConnected) return;
       const d = v.document;
       if (org?.nombre) d.getElementById('rp-org').textContent = org.nombre;
       if (loc) d.getElementById('rp-loc').textContent = `${loc.codigo} · ${loc.nombre_comercial}`;
@@ -220,8 +237,7 @@
         img.onerror = () => { clearTimeout(t); ok(); };
         img.src = sb.storage.from('organizaciones').getPublicUrl(ruta).data.publicUrl;
       });
-      v.focus();
-      v.print();
+      imprimirYa();
     })();
   }
 

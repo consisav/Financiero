@@ -93,18 +93,21 @@
     }
   };
 
-  function estadoCuenta(cont, clave) {
+  // directo: { ctx, f } para generar el PDF o el Excel sin la pantalla (desde los reportes de CXP y CXC).
+  function estadoCuenta(cont, clave, extra) {
+    const directo = extra && extra.ctx ? extra : null;
     const F = FUENTES[clave];
-    const ctx = montar(cont, { titulo: F.titulo, icono: 'ti-file-invoice', clase: 'bk-movimientos bm-solo cx-rep cx-estado', grupo: F.grupo });
+    const ctx = directo ? directo.ctx : montar(cont, { titulo: F.titulo, icono: 'ti-file-invoice', clase: 'bk-movimientos bm-solo cx-rep cx-estado', grupo: F.grupo });
     const { sb } = ctx;
     const hoy = fmt.hoy();
-    const f = { desde: `${hoy.slice(0, 4)}-01-01`, hasta: hoy, tercero: '', tipo: '', mostrar: 'CON SALDO', orden: 'NOMBRE', contenido: 'DETALLADO' };
+    const f = { desde: `${hoy.slice(0, 4)}-01-01`, hasta: hoy, tercero: '', terceroKey: '', tipo: '', mostrar: 'CON SALDO', orden: 'NOMBRE', contenido: 'DETALLADO', ...(directo?.f || {}) };
     let terceros = [], movs = [], cargadoHasta = '', datos = null, abiertos = new Set(), turno = 0;
     const tDe = (txt) => { const s = String(txt || '').trim().toUpperCase(); if (!s) return null; const cod = s.includes(' — ') ? s.slice(s.lastIndexOf(' — ') + 3).trim() : s; return terceros.find((t) => (t.codigo !== '' && String(t.codigo) === cod) || (t.nit && t.nit.toUpperCase() === cod) || t.nombre.toUpperCase() === s) || null; };
+    const selT = () => (f.terceroKey ? terceros.find((t) => t.key === f.terceroKey) || null : tDe(f.tercero));
     const empresa = () => { const e = ctx.localidad(ctx.sel.loc); return e ? `${e.codigo} · ${e.nombre_comercial}` : ''; };
     const tipos = () => [...new Set(terceros.map((t) => t.tipo).filter(Boolean))].sort();
     const periodo = () => `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`;
-    const parametros = () => [`Empresa: ${empresa()}`, periodo(), `${F.tercero}: ${tDe(f.tercero)?.nombre || 'TODOS'}`, `Tipo ${F.tercero.toLowerCase()}: ${f.tipo || 'TODOS'}`, `Mostrar: ${f.mostrar}`, `Orden: ${f.orden}`];
+    const parametros = () => [`Empresa: ${empresa()}`, periodo(), `${F.tercero}: ${selT()?.nombre || 'TODOS'}`, `Tipo ${F.tercero.toLowerCase()}: ${f.tipo || 'TODOS'}`, `Mostrar: ${f.mostrar}`, `Orden: ${f.orden}`];
 
     function pintarFiltros() {
       const t = tDe(f.tercero);
@@ -112,7 +115,7 @@
       ctx.filtros(`
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
-        <label class="campo cx-prov"><span>${F.tercero}</span><input list="ec-terceros" name="tercero" value="${esc(f.tercero)}" placeholder="TODOS"></label>
+        <label class="campo cx-prov"><span>${F.tercero}</span><input list="ec-terceros" name="tercero" autocomplete="off" value="${esc(f.tercero)}" placeholder="TODOS"></label>
         <label class="campo"><span>Tipo ${F.tercero.toLowerCase()}</span>${sl('tipo', [['', 'TODOS'], ...tipos().map((x) => [x, x])], f.tipo)}</label>
         <label class="campo"><span>Mostrar</span>${sl('mostrar', [['CON SALDO', 'CON SALDO'], ['CON MOVIMIENTO', 'CON MOVIMIENTO O SALDO'], ['VENCIDOS', 'CON SALDO VENCIDO'], ['TODOS', 'TODOS']], f.mostrar)}</label>
         <label class="campo"><span>Ordenar ${F.plural}</span>${sl('orden', [['NOMBRE', 'NOMBRE'], ['CÓDIGO', 'CÓDIGO'], ['SALDO', 'MAYOR SALDO'], ['VENCIDO', 'MAYOR VENCIDO'], ['MORA', 'MAYOR MORA']], f.orden)}</label>
@@ -149,7 +152,7 @@
     }
 
     function calcular() {
-      const sel = tDe(f.tercero);
+      const sel = selT();
       const g = new Map();
       const de = (k) => { if (!g.has(k)) g.set(k, { t: terceros.find((x) => x.key === k) || { key: k, codigo: '', nombre: k, nit: '', tipo: '' }, ant: 0, cargos: 0, abonos: 0, movs: [], docs: new Map(), vence: new Map() }); return g.get(k); };
       movs.forEach((m) => {
@@ -275,6 +278,23 @@
       return window.REPORTE_XLSX.generar(cfg).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
     }
 
+    // Sin pantalla: lee los datos y genera el PDF o el Excel de uno o de todos los clientes o proveedores.
+    if (directo) return {
+      async generar(formato) {
+        try {
+          window.FIN.aviso('Generando el estado de cuenta…');
+          terceros = await F.terceros(sb, ctx.sel.loc);
+          const r = await F.movimientos(sb, ctx.sel.loc, f.hasta, ctx);
+          movs = r.movs.sort((a, b) => a.fecha.localeCompare(b.fecha) || b.cargo - a.cargo);
+          const ya = new Set(terceros.map((x) => x.key));
+          r.extra.forEach((x) => { if (!ya.has(x.key)) terceros.push(x); });
+          datos = calcular();
+          if (!datos.lista.length) return window.FIN.aviso(`No hay ${F.plural} con esos parámetros`);
+          return formato === 'PDF' ? pdf() : excel();
+        } catch (e) { window.FIN.aviso(window.UI.traducirError(e)); }
+      }
+    };
+
     cont.addEventListener('change', (e) => {
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') return cargarLocalidad();
@@ -294,14 +314,59 @@
       const fila = e.target.closest('tr.ec-fila');
       if (fila) return alternar(fila.dataset.t);
       const a = e.target.closest('[data-accion]')?.dataset.accion;
-      if (a === 'pdf') return pdf();
-      if (a === 'excel') return excel();
+      if (a === 'pdf' || a === 'excel') {
+        // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
+        return window.ESTADO_CUENTA.elegir({ tercero: selT()?.nombre || `Todos los ${F.plural}`, contenido: f.contenido, formato: a === 'pdf' ? 'PDF' : 'EXCEL' }).then((op) => {
+          if (!op) return;
+          if (op.contenido !== f.contenido) { f.contenido = op.contenido; pintarFiltros(); }
+          return op.formato === 'PDF' ? pdf() : excel();
+        });
+      }
       if (a === 'abrir-todo') { abiertos = abiertos.size ? new Set() : new Set((datos?.lista || []).map((x) => x.t.key)); return pintar(); }
       if (a === 'regresar') return history.length > 1 ? history.back() : (location.hash = F.volver);
     });
     cont.addEventListener('keydown', (e) => { const fila = e.target.closest?.('tr.ec-fila'); if (fila && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); alternar(fila.dataset.t); } });
     iniciar();
   }
-  window.PANTALLAS['cxc-estado'] = (cont) => estadoCuenta(cont, 'CXC');
-  window.PANTALLAS['cxp-estado'] = (cont) => estadoCuenta(cont, 'CXP');
+  window.PANTALLAS['cxc-estado'] = (cont, m, directo) => estadoCuenta(cont, 'CXC', directo);
+  window.PANTALLAS['cxp-estado'] = (cont, m, directo) => estadoCuenta(cont, 'CXP', directo);
 })();
+
+// Estado de cuenta desde los reportes de CXP y CXC (botón «Est. cuenta»), de uno o de todos, en PDF o Excel:
+// window.ESTADO_CUENTA.generar('CXP' | 'CXC', ctx, { desde, hasta, terceroKey, tipo, mostrar, contenido }, 'PDF' | 'EXCEL')
+// window.ESTADO_CUENTA.elegir({ tercero, contenido, formato }): antes de imprimir se confirma si el estado de cuenta es
+// resumido o detallado, y si sale en PDF o en Excel. Devuelve { contenido, formato } o null si se cancela.
+window.ESTADO_CUENTA = {
+  generar(clave, ctx, f, formato) { return window.PANTALLAS[`${clave.toLowerCase()}-estado`](null, null, { ctx, f }).generar(formato); },
+  elegir({ tercero = '', contenido = 'DETALLADO', formato = 'PDF' } = {}) {
+    const esc = window.UI.esc;
+    return new Promise((listo) => {
+      const velo = document.createElement('div');
+      velo.className = 'modal-velo';
+      const op = (n, v, ic, t, d, sel) => `<label class="ec-op"><input type="radio" name="${n}" value="${v}" ${sel ? 'checked' : ''}><span><i class="ti ${ic}" aria-hidden="true"></i><b>${t}</b><small>${d}</small></span></label>`;
+      velo.innerHTML = `
+        <form class="modal ec-elegir" role="dialog" aria-modal="true" aria-label="Imprimir estado de cuenta">
+          <header class="modal-cab"><h2>Imprimir estado de cuenta</h2><button type="button" class="icono-boton" data-cerrar aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></header>
+          <div class="modal-cuerpo">
+            <p class="ec-quien"><i class="ti ti-users" aria-hidden="true"></i> ${esc(tercero)}</p>
+            <fieldset><legend>Contenido</legend><div class="ec-ops">
+              ${op('contenido', 'RESUMIDO', 'ti-list-numbers', 'Resumido', 'Un renglón por cliente o proveedor: saldo anterior, cargos, abonos, saldo final y antigüedad.', contenido === 'RESUMIDO')}
+              ${op('contenido', 'DETALLADO', 'ti-list-details', 'Detallado', 'Cada movimiento con su saldo acumulado, el saldo final y la antigüedad del saldo.', contenido !== 'RESUMIDO')}
+            </div></fieldset>
+            <fieldset><legend>Formato</legend><div class="ec-ops">
+              ${op('formato', 'PDF', 'ti-file-type-pdf', 'PDF', 'Imprimir o guardar como PDF.', formato === 'PDF')}
+              ${op('formato', 'EXCEL', 'ti-file-spreadsheet', 'Excel', 'Descargar el archivo .xlsx.', formato !== 'PDF')}
+            </div></fieldset>
+          </div>
+          <footer class="modal-pie"><button type="button" class="boton secundario-sm" data-cerrar>Cancelar</button><button type="submit" class="boton primario-sm"><i class="ti ti-printer" aria-hidden="true"></i> Generar</button></footer>
+        </form>`;
+      document.body.appendChild(velo);
+      const form = velo.querySelector('form');
+      const fin = (v) => { velo.remove(); listo(v); };
+      velo.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', () => fin(null)));
+      velo.addEventListener('keydown', (e) => { if (e.key === 'Escape') fin(null); });
+      form.addEventListener('submit', (e) => { e.preventDefault(); fin({ contenido: form.elements.contenido.value, formato: form.elements.formato.value }); });
+      form.querySelector('input:checked')?.focus();
+    });
+  }
+};
