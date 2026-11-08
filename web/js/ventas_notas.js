@@ -160,7 +160,7 @@
                   <label class="campo"><span>Dirección</span><input name="direccion" value="${esc(v.direccion || '')}" maxlength="300" ${dis}></label>
                   <label class="campo"><span>Dirección de envío</span><input name="direccion_envio" value="${esc(v.direccion_envio || '')}" maxlength="300" ${dis}></label>
                 </div>
-                <datalist id="vn-clientes">${clientes.filter((c) => c.estado !== 'INACTIVO').map((c) => `<option value="${c.codigo}">${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · ${esc(c.documento)}` : ''}</option>`).join('')}</datalist>
+                <datalist id="vn-clientes">${clientes.filter((c) => c.estado !== 'INACTIVO').map((c) => `<option value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
               </section>
               <section class="vfb-card vfb-resumen vfa-resumen vn-resumen">
                 <div class="vfb-total"><span>Valor</span><b data-calc="total">${esc(sim(v.moneda_id))} ${fmt.monto(total)}</b></div>
@@ -217,14 +217,14 @@
                     <tfoot><tr><td colspan="4">Totales</td><td class="num" data-calc="cant">${fmt.monto(lineas.reduce((t, x) => t + Number(x.cantidad || 0), 0))}</td><td></td><td class="num" data-calc="tq">${fmt.monto(total)}</td><td></td><td class="num" data-calc="tmi">${fmt.monto(total / tc)}</td><td colspan="2"></td></tr></tfoot></table></div>
                   <aside class="vf-lado vfd-lado" aria-label="Datos de la línea">${ladoLinea(l, dis)}</aside>
                 </div>
-                <datalist id="vn-productos">${productos.filter((p) => p.estado !== 'INACTIVO').map((p) => `<option value="${p.codigo}">${esc(p.nombre)}</option>`).join('')}</datalist>
+                <datalist id="vn-productos">${productos.filter((p) => p.estado !== 'INACTIVO').map((p) => `<option value="${esc(p.nombre)} — ${p.codigo}"></option>`).join('')}</datalist>
               </div>
               <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
                 <div class="pc-lineas"><table class="vf-conta"><thead><tr><th class="pc-n">#</th><th class="vf-k-cta">Cuenta</th><th>Nombre de la cuenta</th><th class="vf-k-cc">Centro de costo</th><th class="vf-k-con">Nombre del centro de costo</th><th class="num vf-k-m">Débito</th><th class="num vf-k-m">Débito MI</th><th class="num vf-k-m">Crédito</th><th class="num vf-k-m">Crédito MI</th><th class="pq-x"></th></tr></thead>
                   <tbody>${conta.map((x, i) => filaConta(x, i, ed, tc)).join('') || '<tr><td colspan="10" class="tk-vacio">Sin detalle contable.</td></tr>'}</tbody>
                   <tfoot><tr><td colspan="5">Totales</td><td class="num" data-calc="debe">${fmt.monto(conta.reduce((t, x) => t + Number(x.debe || 0), 0))}</td><td class="num">${fmt.monto(conta.reduce((t, x) => t + miConta(x, 'debe', tc), 0))}</td><td class="num" data-calc="haber">${fmt.monto(conta.reduce((t, x) => t + Number(x.haber || 0), 0))}</td><td class="num">${fmt.monto(conta.reduce((t, x) => t + miConta(x, 'haber', tc), 0))}</td><td></td></tr></tfoot></table></div>
-                <datalist id="vn-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
-                <datalist id="vn-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
+                <datalist id="vn-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.nombre)} — ${esc(x.codigo)}"></option>`).join('')}</datalist>
+                <datalist id="vn-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.nombre)} — ${esc(x.codigo)}"></option>`).join('')}</datalist>
               </div>
               <div class="bm-panel vf-listado" data-panel="LISTADO" ${pestana === 'LISTADO' ? '' : 'hidden'}>${pestana === 'LISTADO' ? panelListado() : ''}</div>
               <div class="bm-panel vf-procesos" data-panel="PROCESOS" ${pestana === 'PROCESOS' ? '' : 'hidden'}>${panelProcesos(n, v, puede)}</div>
@@ -358,8 +358,8 @@
       });
     }
     function repintar(cambios = {}) {
+      // Las tablas ya se leyeron antes de cambiarlas (si se leyeran aquí, la pantalla anterior pisaría los cambios).
       const form = ctx.pDet.querySelector('.vn-form'); if (!form) return;
-      leerTablas();
       pintar({ ...(actual || valoresNuevos()), ...encabezado(form), estado: actual?.estado, ...cambios });
     }
     function totalizar() {
@@ -480,12 +480,15 @@
       abrir(data);
     }
 
+    // Listas de valores: cada opción es «descripción — código» (se busca por cualquiera de los dos); al elegirla el campo queda con el código.
+    cont.addEventListener('change', (e) => { const i = e.target; if (i && i.matches && i.matches('input[list]')) { const k = i.value.lastIndexOf(' — '); if (k >= 0) i.value = i.value.slice(k + 3).trim(); } }, true);
     // ---------- Eventos ----------
     cont.addEventListener('change', async (e) => {
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') { await cargarLocalidad(); listado = null; return abrir(null); }
       if (e.target.name === 'ir_nota') return irNota(e.target.value);
       const form = e.target.closest('.vn-form'); if (!form) return;
+      leerTablas();
       const k = e.target.name;
       if (k === 'factura_numero') { if (e.target.value.trim()) return usarFactura(Number(e.target.value), true); factura = null; return repintar({ factura_id: null }); }
       if (k === 'cliente_codigo') {
@@ -495,7 +498,6 @@
       if (k === 'moneda_id') { const mo = ctx.moneda(Number(e.target.value)); return repintar({ tipo_cambio: mo?.cambio || 1 }); }
       const prod = e.target.closest('[data-l=producto]');
       if (prod) {
-        leerTablas();
         const x = lineas[Number(prod.closest('tr').dataset.linea)]; const p = porCodigoProd(prod.value);
         if (p) { x.producto_id = p.id; x.producto_codigo = p.codigo; x.descripcion = x.descripcion || p.nombre; x.lote = x.lote || p.lote || ''; } else { x.producto_id = null; x.producto_codigo = prod.value.trim(); }
         return repintar();

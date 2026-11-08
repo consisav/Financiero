@@ -145,7 +145,7 @@
                 <label class="campo"><span>Documento</span><input name="documento" value="${esc(v.documento || '')}" maxlength="60" ${dis}></label>
                 <label class="campo"><span>Valor documento</span><input type="number" step="0.01" min="0" name="valor_documento" value="${esc(String(v.valor_documento ?? ''))}" ${dis}></label>
               </div>
-              <datalist id="vr-clientes">${clientes.filter((x) => x.estado !== 'INACTIVO').map((x) => `<option value="${x.codigo}">${esc(x.nombre)}${x.tipo_documento !== 'CF' && x.documento ? ` · ${esc(x.documento)}` : ''}</option>`).join('')}</datalist>
+              <datalist id="vr-clientes">${clientes.filter((x) => x.estado !== 'INACTIVO').map((x) => `<option value="${esc(x.nombre)}${x.tipo_documento !== 'CF' && x.documento ? ` · NIT ${esc(x.documento)}` : ''} — ${x.codigo}"></option>`).join('')}</datalist>
             </section>
             <aside class="vr-lado">
               <section class="vfb-card vfb-resumen vr-valor">
@@ -262,8 +262,8 @@
       });
     }
     function repintar(cambios = {}) {
+      // Las líneas ya se leyeron antes de cambiarlas (si se leyeran aquí, la pantalla anterior pisaría los cambios).
       const form = ctx.pDet.querySelector('.vr-form'); if (!form) return pintar();
-      leerLineas();
       pintar({ ...(actual || valoresNuevos()), ...encabezado(form), ...cambios });
     }
     function totalizar() {
@@ -399,12 +399,15 @@
         <div class="firmas"><div>${r.firma_digital ? `Firma y sello digital<br>${esc(r.usuario || '')} · ${esc(fmt.fechaHora(r.fecha_ingreso || r.creado_en))}` : 'Recibió'}</div><div>Cliente</div></div>`, { locId: r.localidad_id, orgId: r.organizacion_id });
     }
 
+    // Listas de valores: cada opción es «descripción — código» (se busca por cualquiera de los dos); al elegirla el campo queda con el código.
+    cont.addEventListener('change', (e) => { const i = e.target; if (i && i.matches && i.matches('input[list]')) { const k = i.value.lastIndexOf(' — '); if (k >= 0) i.value = i.value.slice(k + 3).trim(); } }, true);
     // ---------- Eventos ----------
     cont.addEventListener('change', async (e) => {
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') { await cargarLocalidad(); return abrir(null); }
       if (e.target.name === 'ir_recibo') return irRecibo(e.target.value);
       const form = e.target.closest('.vr-form'); if (!form) return;
+      leerLineas();
       const n = e.target.name;
       if (n === 'tipo_impresion') { tipoImp = e.target.value; return; }
       if (n === 'serie_libre') { serieLibre = e.target.checked; return repintar(); }

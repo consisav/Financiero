@@ -190,7 +190,7 @@
                   <label class="campo"><span>Lab. fab.</span><input name="lab_fab" value="${esc(v.lab_fab || '')}" maxlength="120" ${dis}></label>
                   <label class="pc-check vf-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> Genérico</label>
                 </div>
-                <datalist id="vf-clientes">${clientes.filter((c) => c.estado === 'ACTIVO').map((c) => `<option value="${c.codigo}">${esc(c.nombre)}${c.tipo_documento !== 'CF' ? ` · ${esc(c.documento)}` : ''}</option>`).join('')}</datalist>
+                <datalist id="vf-clientes">${clientes.filter((c) => c.estado === 'ACTIVO').map((c) => `<option value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
               </section>
               <section class="vfb-card vfb-resumen vfa-resumen">
                 <div><span>Subtotal</span><b data-calc="subtotal">${fmt.monto(total - iva)}</b></div>
@@ -266,14 +266,14 @@
                 <label class="campo"><span>Fecha de vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
                 <label class="campo"><span>Fecha de fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>` : '<small>Sin línea</small>'}</aside>
               </div>
-              <datalist id="vf-productos">${productos.filter((p) => p.estado !== 'INACTIVO').map((p) => `<option value="${p.codigo}">${esc(p.nombre)}</option>`).join('')}</datalist>
+              <datalist id="vf-productos">${productos.filter((p) => p.estado !== 'INACTIVO').map((p) => `<option value="${esc(p.nombre)} — ${p.codigo}"></option>`).join('')}</datalist>
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
               <div class="pc-lineas"><table class="vf-conta"><thead><tr><th class="pc-n">#</th><th class="vf-k-cta">Cuenta</th><th>Nombre de la cuenta</th><th class="vf-k-cc">Centro de costo</th><th class="vf-k-con">Nombre del centro de costo</th><th class="num vf-k-m">Débito</th><th class="num vf-k-m">Débito MI</th><th class="num vf-k-m">Crédito</th><th class="num vf-k-m">Crédito MI</th><th class="pq-x"></th></tr></thead>
                 <tbody>${conta.map((x, i) => filaConta(x, i, ed, tc)).join('') || '<tr><td colspan="10" class="tk-vacio">Sin detalle contable.</td></tr>'}</tbody>
                 <tfoot><tr><td colspan="5">Totales</td><td class="num" data-calc="debe">${fmt.monto(conta.reduce((t, x) => t + Number(x.debe || 0), 0))}</td><td class="num" data-calc="dmi">${fmt.monto(conta.reduce((t, x) => t + miConta(x, 'debe', tc), 0))}</td><td class="num" data-calc="haber">${fmt.monto(conta.reduce((t, x) => t + Number(x.haber || 0), 0))}</td><td class="num" data-calc="hmi">${fmt.monto(conta.reduce((t, x) => t + miConta(x, 'haber', tc), 0))}</td><td></td></tr></tfoot></table></div>
-              <datalist id="vf-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
-              <datalist id="vf-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
+              <datalist id="vf-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.nombre)} — ${esc(x.codigo)}"></option>`).join('')}</datalist>
+              <datalist id="vf-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.nombre)} — ${esc(x.codigo)}"></option>`).join('')}</datalist>
             </div>
             <div class="bm-panel" data-panel="INVENTARIO" ${pestana === 'INVENTARIO' ? '' : 'hidden'}>
               <div class="pc-lineas"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Bodega</th><th>Lote</th><th>Vence</th><th class="num">Cantidad</th><th class="num">Costo unitario</th></tr></thead>
@@ -652,6 +652,8 @@
         filas });
     }
 
+    // Listas de valores: cada opción es «descripción — código» (se busca por cualquiera de los dos); al elegirla el campo queda con el código.
+    cont.addEventListener('change', (e) => { const i = e.target; if (i && i.matches && i.matches('input[list]')) { const k = i.value.lastIndexOf(' — '); if (k >= 0) i.value = i.value.slice(k + 3).trim(); } }, true);
     // ---------- Eventos ----------
     cont.addEventListener('change', (e) => {
       const cambio = ctx.cambioOrgLoc(e);
