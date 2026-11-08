@@ -744,6 +744,22 @@ window.MODULOS = [
     opciones: {
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
+  },
+  {
+    id: 'hospital',
+    corto: 'Hospital',
+    color: 'rojo',
+    hereda: 'comercio',
+    nombre: 'Administración hospitalaria',
+    icono: 'ti-building-hospital',
+    descripcion: 'Pacientes, admisión, cuenta del paciente, camas, honorarios médicos, aseguradoras y facturación hospitalaria.',
+    opciones: {
+      catalogos: ['Pacientes', 'Médicos y especialidades', 'Áreas, habitaciones y camas', 'Servicios y tarifas', 'Aseguradoras y convenios'],
+      registros: ['Admisión', 'Citas y agenda médica', 'Cuenta del paciente', 'Órdenes médicas y farmacia', 'Programación de quirófanos'],
+      procesos: ['Censo diario y cargo día-cama', 'Egreso y facturación', 'Liquidación de honorarios médicos', 'Reclamos a aseguradoras', 'Cierre de caja hospitalaria'],
+      reportes: ['Censo y ocupación', 'Ingresos por servicio y médico', 'Cuentas abiertas de pacientes', 'Cartera de aseguradoras', 'Indicadores hospitalarios'],
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
+    }
   }
 ];
 

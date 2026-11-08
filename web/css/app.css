@@ -5697,3 +5697,8 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .com-det { border: 1px solid var(--borde); border-radius: 10px; padding: 4px 8px; }
 .com-det summary { cursor: pointer; font-weight: 600; padding: 4px; }
 .com-pol tr[data-l], .com-pol tr[data-g], .pr-rep tr[data-e] { cursor: pointer; }
+
+/* Módulo Hospital */
+[data-color=rojo] { --m-f: #fdecec; --m-t: #b42318; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) [data-color=rojo] { --m-f: #3a1514; --m-t: #f97066; } }
+:root[data-theme="dark"] [data-color=rojo] { --m-f: #3a1514; --m-t: #f97066; }
