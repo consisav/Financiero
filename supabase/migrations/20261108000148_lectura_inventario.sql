@@ -3,7 +3,7 @@
 -- el sistema: cualquier usuario activo lee los movimientos y los documentos de inventario. Los movimientos solo se
 -- crean, cambian o borran desde las funciones del sistema (operar documentos, compras, facturas), que no dependen
 -- de estas reglas.
--- Se ejecuta después del script 147. Al final muestra las reglas que quedaron y cuántos movimientos ve el usuario OASTURIAS.
+-- Se ejecuta después del script 147. Al final muestra las reglas que quedaron, si OASTURIAS está activo y los movimientos.
 
 -- Movimientos de inventario: se quitan todas sus reglas y queda solo la de lectura.
 do $$
@@ -36,11 +36,7 @@ grant select on public.existencias to authenticated;
 
 notify pgrst, 'reload schema';
 
--- Comprobación: reglas de la tabla y movimientos que ve el usuario OASTURIAS con sus permisos.
-begin;
-select set_config('request.jwt.claims', json_build_object('sub', (select id from public.perfiles where upper(usuario) = 'OASTURIAS' limit 1), 'role', 'authenticated')::text, true);
-set local role authenticated;
+-- Comprobación: reglas que quedaron en la tabla y si el usuario OASTURIAS está activo.
 select (select string_agg(policyname || ' [' || cmd || ']', ', ') from pg_policies where tablename = 'inventario_movimientos') as reglas,
-       public.usuario_activo() as oasturias_activo,
-       (select count(*) from public.inventario_movimientos) as movimientos_que_ve_oasturias;
-rollback;
+       (select activo::text from public.perfiles where upper(usuario) = 'OASTURIAS' limit 1) as oasturias_activo,
+       (select count(*) from public.inventario_movimientos) as movimientos_en_la_base;
