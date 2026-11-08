@@ -13,3 +13,5 @@ supabase/pendientes/128_clientes_parte_*.sql
 supabase/migrations/20261107000131_facturas_venta_organizacion_3.sql
 supabase/pendientes/131_facturas_parte_*.sql
 supabase/privados/
+supabase/migrations/20261107000132_recibos_venta_organizacion_3.sql
+supabase/pendientes/132_recibos_parte_*.sql
