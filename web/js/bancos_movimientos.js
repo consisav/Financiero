@@ -66,6 +66,8 @@
     const dec = r < 30 ? UNIDADES[r] : `${DECENAS[Math.floor(r / 10)]}${r % 10 ? ` Y ${UNIDADES[r % 10]}` : ''}`;
     return [CENTENAS[Math.floor(x / 100)], dec].filter(Boolean).join(' ');
   }
+  // También la usan otras pantallas (p. ej. Recibos).
+  window.BANCOS.enLetras = (v, m) => enLetras(v, m);
   function enLetras(valor, moneda = 'QUETZALES') {
     const centavos = Math.round(Number(valor || 0) * 100);
     const entero = Math.floor(centavos / 100);

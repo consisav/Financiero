@@ -276,6 +276,14 @@ window.MODULOS = [
             { id: 'facturas-ventas', nombre: 'Facturas Ventas', icono: 'ti-file-invoice', descripcion: 'Factura electrónica (FEL, certificador COFIDI): cliente, venta y crédito, impuestos, productos con lote y vencimiento, detalle contable, inventario y pagos.' },
             { id: 'consulta-de-facturas', nombre: 'Consulta de Facturas', icono: 'ti-file-search', descripcion: 'Resumen de las facturas de venta por cliente, vendedor, forma de pago, fechas y estado (con saldo, pagadas, anuladas, sin certificar), con sus productos, detalle contable y pagos.', separador: true }
           ]
+        },
+        {
+          subgrupo: 'Recibos',
+          icono: 'ti-receipt-2',
+          pantallas: [
+            { id: 'recibos', nombre: 'Recibos', icono: 'ti-receipt-2', descripcion: 'Recibos de cobro: cliente, forma y tipo de pago, banco y documento, facturas que paga con su abono, retención, gastos administrativos, anulación e impresión (original o copia, con firma y sello digital).' },
+            { id: 'consulta-de-recibos', nombre: 'Consulta de Recibos', icono: 'ti-file-search', descripcion: 'Resumen de los recibos de cobro por cliente, vendedor, forma de pago, fechas y estado (emitidos, liquidados, anulados), con las facturas que pagó cada uno.', separador: true }
+          ]
         }
       ]
     },
