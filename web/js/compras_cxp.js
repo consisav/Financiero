@@ -305,7 +305,11 @@
     const { sb } = ctx;
     const hoy = fmt.hoy();
     const [y, m] = hoy.split('-').map(Number);
-    const f = { anio: y, mes: m, desde: `${y}-01-01`, hasta: hoy, fecha: modo === 'MENSUAL' ? 'ESTIMADA' : 'DOCUMENTO', saldo: modo === 'MENSUAL' ? 'CON SALDO' : 'TODAS', tipo: '', proveedor: '', formato: 'PDF' };
+    const f = { anio: y, mes: m, desde: `${y}-01-01`, hasta: hoy, fecha: modo === 'MENSUAL' ? 'ESTIMADA' : 'DOCUMENTO', saldo: modo === 'MENSUAL' ? 'CON SALDO' : 'TODAS', tipo: '', proveedor: '', formato: 'PDF', orden: '', dir: 'ASC' };
+    const X = window.CUENTAS_XLSX;
+    const ord = () => ({ campo: f.orden, dir: f.dir });
+    const GET = { fdoc: (c) => c.fecha_documento, fpago: (c) => c.fp, mora: (c) => c.mora, valor: (c) => c.valorQ, saldo: (c) => c.saldoQ };
+    const GET_RES = { mora: (x) => x.mora, valor: (x) => x.valorQ, saldo: (x) => x.saldoQ };
     let proveedores = [], tipos = [], compras = [], abonos = new Map();
     let filas = [], resumen = false, sel = null, primera = true, saltoTxt = '';
     // Supabase entrega 1000 filas por consulta: se lee todo de mil en mil.
@@ -325,6 +329,8 @@
         ${modo !== 'PERIODO' ? `<label class="campo"><span>Tipo fecha</span>${sl('fecha', [['ESTIMADA', 'ESTIMADA PAGO'], ['DOCUMENTO', 'DOCUMENTO'], ['INGRESO', 'INGRESO']], f.fecha)}</label>` : ''}
         <label class="campo"><span>Saldo?</span>${sl('saldo', [['CON SALDO', 'CON SALDO'], ['SIN SALDO', 'SIN SALDO'], ['TODAS', 'TODAS']], f.saldo)}</label>
         <label class="campo"><span>Tipo proveedor</span>${sl('tipo', [['', 'TODOS'], ...tipos.map((t) => [t.id, t.nombre])], f.tipo)}</label>
+        <label class="campo cx-orden"><span>Ordenar por</span>${sl('orden', X.opcionesOrden('FECHA PAGO'), f.orden)}</label>
+        <label class="campo cx-dir"><span>Orden</span>${sl('dir', [['ASC', 'ASCENDENTE'], ['DESC', 'DESCENDENTE']], f.dir)}</label>
         <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
         <datalist id="cx-proveedores">${proveedores.map((x) => `<option value="${esc(`${x.codigo} · ${x.nombre_comercial}`)}"></option>`).join('')}</datalist>
         ${p || !f.proveedor ? '' : '<small class="cx-aviso pc-rojo">Proveedor no encontrado</small>'}`,
@@ -423,22 +429,24 @@
     const agrupar = (rows) => {
       const g = new Map();
       rows.forEach((c) => { const x = g.get(c.proveedor_id) || { codigo: c.codigo, nombre: c.nombre, nit: c.nit, docs: 0, valorQ: 0, saldoQ: 0, mora: 0 }; x.docs++; x.valorQ += c.valorQ; x.saldoQ += c.saldoQ; x.mora = Math.max(x.mora, c.mora); g.set(c.proveedor_id, x); });
-      return [...g.values()].sort((a, b) => b.saldoQ - a.saldoQ);
+      const o = ['mora', 'valor', 'saldo'].includes(f.orden) ? ord() : { campo: 'saldo', dir: 'DESC' };
+      return X.ordenar([...g.values()], o, GET_RES);
     };
 
     function pintar() {
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-report-money'); return; }
-      filas = calcular();
+      filas = X.ordenar(calcular(), ord(), GET);
+      const o = ord(), th = X.th;
       const tot = filas.reduce((t, c) => ({ v: t.v + c.valorQ, s: t.s + c.saldoQ, mv: t.mv + (c.mi ? Number(c.neto) : 0), ms: t.ms + (c.mi ? c.saldo : 0) }), { v: 0, s: 0, mv: 0, ms: 0 });
       const meses = modo === 'MENSUAL' ? `<div class="cx-meses">
           <button type="button" class="boton secundario-sm" data-anio="-1" aria-label="Año anterior">−</button><b class="cx-anio-n">${f.anio}</b><button type="button" class="boton secundario-sm" data-anio="1" aria-label="Año siguiente">+</button>
           ${MESES.map((n, i) => `<button type="button" class="cx-mes ${f.mes === i + 1 ? 'activo' : ''}" data-mes="${i + 1}">${n}</button>`).join('')}</div>` : '';
       const fechaCol = modo === 'MENSUAL' ? 'Se estima pago' : 'Fecha pago';
       const cuerpo = resumen ? (() => { const g = agrupar(filas); return `
-          <thead><tr><th class="num">Prov.</th><th>Nombre proveedor</th><th>NIT</th><th class="num">Documentos</th><th class="num">Mayor mora</th><th class="num">Valor total Q</th><th class="num">Saldo Q</th></tr></thead>
+          <thead><tr><th class="num">Prov.</th><th>Nombre proveedor</th><th>NIT</th><th class="num">Documentos</th>${th('mora', 'Mayor mora', o, 'num')}${th('valor', 'Valor total Q', o, 'num')}${th('saldo', 'Saldo Q', o, 'num')}</tr></thead>
           <tbody>${g.map((x) => `<tr><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre"><div>${esc(x.nombre)}</div></td><td>${esc(x.nit || '')}</td><td class="num">${x.docs}</td><td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td class="num">${fmt.monto(x.valorQ)}</td><td class="num fuerte">${fmt.monto(x.saldoQ)}</td></tr>`).join('') || '<tr><td colspan="7" class="tk-vacio">Sin documentos con esos filtros.</td></tr>'}</tbody>
           <tfoot><tr><td colspan="3">${g.length} proveedor(es)</td><td class="num">${filas.length}</td><td></td><td class="num">${fmt.monto(tot.v)}</td><td class="num">${fmt.monto(tot.s)}</td></tr></tfoot>`; })() : `
-          <thead><tr><th class="num">${modo === 'PERIODO' ? 'Compra' : 'ID'}</th><th>Serie</th><th>Documento</th><th>Fecha docto.</th><th>${fechaCol}</th>${modo !== 'PERIODO' ? '<th class="num">Días mora</th>' : ''}<th class="num">${modo === 'MENSUAL' ? '#' : 'Prov.'}</th><th>Nombre proveedor</th><th class="num">Valor total${modo === 'MENSUAL' ? '' : ' Q'}</th><th class="num">Saldo${modo === 'MENSUAL' ? '' : ' Q'}</th>${modo === 'PERIODO' ? '<th class="num">Valor total MI</th><th class="num">Saldo MI</th>' : ''}</tr></thead>
+          <thead><tr><th class="num">${modo === 'PERIODO' ? 'Compra' : 'ID'}</th><th>Serie</th><th>Documento</th>${th('fdoc', 'Fecha docto.', o)}${th('fpago', fechaCol, o)}${modo !== 'PERIODO' ? th('mora', 'Días mora', o, 'num') : ''}<th class="num">${modo === 'MENSUAL' ? '#' : 'Prov.'}</th><th>Nombre proveedor</th>${th('valor', `Valor total${modo === 'MENSUAL' ? '' : ' Q'}`, o, 'num')}${th('saldo', `Saldo${modo === 'MENSUAL' ? '' : ' Q'}`, o, 'num')}${modo === 'PERIODO' ? '<th class="num">Valor total MI</th><th class="num">Saldo MI</th>' : ''}</tr></thead>
           <tbody>${filas.map((c) => `<tr data-fila="${c.id}" class="${sel === c.id ? 'actual' : ''}" tabindex="0">
             <td class="num fuerte">${c.numero}</td><td>${esc(c.serie || '')}</td><td>${esc(c.documento || '')}</td><td>${esc(fmt.fechaDia(c.fecha_documento))}</td><td>${esc(fmt.fechaDia(c.fp))}</td>
             ${modo !== 'PERIODO' ? `<td class="num ${c.mora ? 'pc-rojo' : ''}">${c.mora}</td>` : ''}<td class="num">${c.codigo ?? ''}</td><td class="cx-nombre" title="${esc(c.nombre)}"><div>${esc(c.nombre)}</div></td>
@@ -468,16 +476,16 @@
     function excelRep() {
       const periodo = modo === 'MENSUAL' ? `Mes: ${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `Saldo al ${fmt.fechaDia(f.hasta)}`;
       return window.CUENTAS_XLSX.generar({
-        tipo: f.formato, modo, titulo: TITULOS[modo][0], tercero: 'Proveedor', orgId: ctx.sel.org, locId: ctx.sel.loc, corte: modo === 'PERIODO' ? f.hasta : hoy,
+        tipo: f.formato, modo, orden: ord(), titulo: TITULOS[modo][0], tercero: 'Proveedor', orgId: ctx.sel.org, locId: ctx.sel.loc, corte: modo === 'PERIODO' ? f.hasta : hoy,
         archivo: `cxp_${modo.toLowerCase()}_${modo === 'MENSUAL' ? `${f.anio}_${String(f.mes).padStart(2, '0')}` : f.hasta}`,
-        parametros: [`Empresa: ${empresaTxt(ctx)}`, periodo, `Proveedor: ${provDe(f.proveedor)?.nombre_comercial || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo proveedor: ${tipos.find((t) => String(t.id) === String(f.tipo))?.nombre || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha}`] : [])],
+        parametros: [`Empresa: ${empresaTxt(ctx)}`, periodo, `Proveedor: ${provDe(f.proveedor)?.nombre_comercial || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo proveedor: ${tipos.find((t) => String(t.id) === String(f.tipo))?.nombre || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha}`] : []), X.textoOrden(ord(), 'FECHA PAGO')],
         filas: filas.map((c) => ({ tercero_id: c.proveedor_id, codigo: c.codigo, nombre: c.nombre, nit: c.nit, numero: c.numero, serie: c.serie, documento: c.documento, fecha: modo === 'PERIODO' ? c.fecha_documento : fechaDe(c), fecha_doc: c.fecha_documento, estimada: c.fp, mora: c.mora, valor: c.valorQ, saldo: c.saldoQ }))
       }).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
     }
     function imprimirRep() {
       if (!filas.length) return window.FIN.aviso('No hay documentos con esos filtros');
       if (f.formato !== 'PDF') return excelRep();
-      const filtros = `Proveedor: ${provDe(f.proveedor)?.nombre_comercial || 'TODOS'} · Saldo: ${f.saldo} · Tipo proveedor: ${tipos.find((t) => String(t.id) === String(f.tipo))?.nombre || 'TODOS'}${modo !== 'PERIODO' ? ` · Tipo fecha: ${f.fecha}` : ''}`;
+      const filtros = `Proveedor: ${provDe(f.proveedor)?.nombre_comercial || 'TODOS'} · Saldo: ${f.saldo} · Tipo proveedor: ${tipos.find((t) => String(t.id) === String(f.tipo))?.nombre || 'TODOS'}${modo !== 'PERIODO' ? ` · Tipo fecha: ${f.fecha}` : ''} · ${X.textoOrden(ord(), 'FECHA PAGO')}`;
       if (resumen) {
         const g = agrupar(filas);
         if (f.formato === 'EXCEL') return window.COMPRAS_CAT.descargarCsv(`cxp_resumen_${f.hasta}.csv`, [['Prov.', 'Nombre proveedor', 'NIT', 'Documentos', 'Mayor mora', 'Valor total Q', 'Saldo Q'], ...g.map((x) => [x.codigo, x.nombre, x.nit || '', x.docs, x.mora, x.valorQ.toFixed(2), x.saldoQ.toFixed(2)])]);
@@ -530,6 +538,8 @@
       if (an) { f.anio += Number(an.dataset.anio); return pintar(); }
       const fila = e.target.closest('tr[data-fila]');
       if (fila) { sel = Number(fila.dataset.fila); ctx.pDet.querySelectorAll('tr[data-fila]').forEach((tr) => tr.classList.toggle('actual', tr === fila)); return; }
+      const col = e.target.closest('th[data-orden]');
+      if (col) return ordenarCol(col.dataset.orden);
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (a === 'imprimir') return imprimirRep();
       if (a === 'resumen') { resumen = !resumen; pintarFiltros(); return pintar(); }
@@ -537,6 +547,9 @@
       if (a === 'estado-cuenta') return estadoCuenta();
       if (a === 'regresar') return history.length > 1 ? history.back() : (location.hash = '#/compras');
     });
+    // Clic (o Enter) en el encabezado: ordena por esa columna y alterna ascendente / descendente.
+    function ordenarCol(campo) { const o = ord(); X.alternar(o, campo); f.orden = o.campo; f.dir = o.dir; pintarFiltros(); pintar(); ctx.pDet.querySelector(`th[data-orden="${campo}"]`)?.focus(); }
+    cont.addEventListener('keydown', (e) => { const col = e.target.closest?.('th[data-orden]'); if (col && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ordenarCol(col.dataset.orden); } });
     iniciar();
   }
   window.PANTALLAS['cxp-mensual'] = (cont) => reporteCxp(cont, 'MENSUAL');

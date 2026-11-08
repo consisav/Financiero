@@ -32,7 +32,11 @@
     const { sb } = ctx;
     const hoy = fmt.hoy();
     const [y, m] = hoy.split('-').map(Number);
-    const f = { anio: y, mes: m, desde: `${y}-01-01`, hasta: hoy, fecha: modo === 'MENSUAL' ? 'ESTIMADA' : 'EMISION', saldo: modo === 'MENSUAL' ? 'CON SALDO' : 'TODAS', tipo: '', cliente: '', formato: 'PDF' };
+    const f = { anio: y, mes: m, desde: `${y}-01-01`, hasta: hoy, fecha: modo === 'MENSUAL' ? 'ESTIMADA' : 'EMISION', saldo: modo === 'MENSUAL' ? 'CON SALDO' : 'TODAS', tipo: '', cliente: '', formato: 'PDF', orden: '', dir: 'ASC' };
+    const X = window.CUENTAS_XLSX;
+    const ord = () => ({ campo: f.orden, dir: f.dir });
+    const GET = { fdoc: (x) => x.emision, fpago: (x) => x.fc, mora: (x) => x.mora, valor: (x) => x.valor, saldo: (x) => x.saldoQ };
+    const GET_RES = { mora: (x) => x.mora, valor: (x) => x.valor, saldo: (x) => x.saldo };
     let clientes = [], tipos = [], facturas = [], movs = new Map(), filas = [], resumen = false, sel = null, turno = 0, primera = true, saltoTxt = '';
     const cli = (id) => clientes.find((c) => c.id === id);
     const cliDe = (t) => { const s = String(t || '').trim().toUpperCase(); if (!s) return null; const cod = s.includes(' — ') ? s.slice(s.lastIndexOf(' — ') + 3).trim() : s; return clientes.find((c) => String(c.codigo) === cod || (c.documento && c.documento.toUpperCase() === cod) || c.nombre.toUpperCase() === s) || null; };
@@ -50,6 +54,8 @@
         ${modo !== 'PERIODO' ? `<label class="campo"><span>Tipo fecha</span>${sl('fecha', [['ESTIMADA', 'ESTIMADA COBRO'], ['EMISION', 'EMISIÓN']], f.fecha)}</label>` : ''}
         <label class="campo"><span>Saldo?</span>${sl('saldo', [['CON SALDO', 'CON SALDO'], ['SIN SALDO', 'SIN SALDO'], ['TODAS', 'TODAS']], f.saldo)}</label>
         <label class="campo"><span>Tipo cliente</span>${sl('tipo', [['', 'TODOS'], ...tipos.map((t) => [t, t])], f.tipo)}</label>
+        <label class="campo cx-orden"><span>Ordenar por</span>${sl('orden', X.opcionesOrden('FECHA COBRO'), f.orden)}</label>
+        <label class="campo cx-dir"><span>Orden</span>${sl('dir', [['ASC', 'ASCENDENTE'], ['DESC', 'DESCENDENTE']], f.dir)}</label>
         <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
         <datalist id="cx-clientes">${clientes.map((x) => `<option value="${esc(x.nombre)} — ${x.codigo}"></option>`).join('')}</datalist>
         ${c || !f.cliente ? '' : '<small class="cx-aviso pc-rojo">Cliente no encontrado</small>'}`,
@@ -160,21 +166,23 @@
     const agrupar = (rows) => {
       const g = new Map();
       rows.forEach((x) => { const k = x.cliente_id || `N${x.nit}`; const a = g.get(k) || { id: x.cliente_id, codigo: x.codigo, nombre: x.nombreCli, nit: x.nit, docs: 0, valor: 0, saldo: 0, mora: 0 }; a.docs++; a.valor += x.valor; a.saldo += x.saldoQ; a.mora = Math.max(a.mora, x.mora); g.set(k, a); });
-      return [...g.values()].sort((a, b) => b.saldo - a.saldo);
+      const o = ['mora', 'valor', 'saldo'].includes(f.orden) ? ord() : { campo: 'saldo', dir: 'DESC' };
+      return X.ordenar([...g.values()], o, GET_RES);
     };
 
     function pintar() {
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-report-money'); return; }
-      filas = calcular();
+      filas = X.ordenar(calcular(), ord(), GET);
+      const o = ord(), th = X.th;
       const tot = filas.reduce((t, x) => ({ v: t.v + x.valor, s: t.s + x.saldoQ, m: t.m + (x.mora > 0 ? x.saldoQ : 0) }), { v: 0, s: 0, m: 0 });
       const meses = modo === 'MENSUAL' ? `<div class="cx-meses">
           <button type="button" class="boton secundario-sm" data-anio="-1" aria-label="Año anterior">−</button><b class="cx-anio-n">${f.anio}</b><button type="button" class="boton secundario-sm" data-anio="1" aria-label="Año siguiente">+</button>
           ${MESES.map((n, i) => `<button type="button" class="cx-mes ${f.mes === i + 1 ? 'activo' : ''}" data-mes="${i + 1}">${n}</button>`).join('')}</div>` : '';
       const cuerpo = resumen ? (() => { const g = agrupar(filas); return `
-          <thead><tr><th class="num">Cliente</th><th>Nombre cliente</th><th>NIT</th><th class="num">Facturas</th><th class="num">Mayor mora</th><th class="num">Valor total Q</th><th class="num">Saldo Q</th></tr></thead>
+          <thead><tr><th class="num">Cliente</th><th>Nombre cliente</th><th>NIT</th><th class="num">Facturas</th>${th('mora', 'Mayor mora', o, 'num')}${th('valor', 'Valor total Q', o, 'num')}${th('saldo', 'Saldo Q', o, 'num')}</tr></thead>
           <tbody>${g.map((x) => `<tr data-cliente="${x.id || ''}"><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre"><div>${esc(x.nombre)}</div></td><td>${esc(x.nit || '')}</td><td class="num">${x.docs}</td><td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td class="num">${fmt.monto(x.valor)}</td><td class="num fuerte">${fmt.monto(x.saldo)}</td></tr>`).join('') || '<tr><td colspan="7" class="tk-vacio">Sin facturas con esos filtros.</td></tr>'}</tbody>
           <tfoot><tr><td colspan="3">${g.length} cliente(s)</td><td class="num">${filas.length}</td><td></td><td class="num">${fmt.monto(tot.v)}</td><td class="num">${fmt.monto(tot.s)}</td></tr></tfoot>`; })() : `
-          <thead><tr><th class="num">Factura</th><th>Serie</th><th>Número DTE</th><th>Emisión</th><th>Se estima cobro</th><th class="num">Días mora</th><th class="num">Cliente</th><th>Nombre cliente</th><th class="num">Valor total</th><th class="num">Saldo</th></tr></thead>
+          <thead><tr><th class="num">Factura</th><th>Serie</th><th>Número DTE</th>${th('fdoc', 'Emisión', o)}${th('fpago', 'Se estima cobro', o)}${th('mora', 'Días mora', o, 'num')}<th class="num">Cliente</th><th>Nombre cliente</th>${th('valor', 'Valor total', o, 'num')}${th('saldo', 'Saldo', o, 'num')}</tr></thead>
           <tbody>${filas.map((x) => `<tr data-fila="${x.id}" class="${sel === x.id ? 'actual' : ''}" tabindex="0">
             <td class="num fuerte"><a href="#/facturacion/facturas-ventas/${x.id}" title="Abrir la factura">${esc(x.no_interno || String(x.numero))}</a></td><td>${esc(x.serie || '')}</td><td>${esc(x.numero_dte || '')}</td><td>${esc(fmt.fechaDia(x.emision))}</td><td>${esc(fmt.fechaDia(x.fc))}</td>
             <td class="num ${x.mora ? 'pc-rojo' : ''}">${x.mora}</td><td class="num">${x.codigo ?? ''}</td><td class="cx-nombre" title="${esc(x.nombreCli)}${x.contrasena ? ` · Contraseña ${esc(x.contrasena)}` : ''}"><div>${esc(x.nombreCli)}</div></td>
@@ -195,16 +203,16 @@
     function excelRep() {
       const periodo = modo === 'MENSUAL' ? `Mes: ${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `Saldo al ${fmt.fechaDia(f.hasta)}`;
       return window.CUENTAS_XLSX.generar({
-        tipo: f.formato, modo, titulo: TITULOS[modo][0], tercero: 'Cliente', orgId: ctx.sel.org, locId: ctx.sel.loc, corte: modo === 'PERIODO' ? f.hasta : hoy,
+        tipo: f.formato, modo, orden: ord(), titulo: TITULOS[modo][0], tercero: 'Cliente', orgId: ctx.sel.org, locId: ctx.sel.loc, corte: modo === 'PERIODO' ? f.hasta : hoy,
         archivo: `cxc_${modo.toLowerCase()}_${modo === 'MENSUAL' ? `${f.anio}_${String(f.mes).padStart(2, '0')}` : f.hasta}`,
-        parametros: [`Empresa: ${empresaTxt(ctx)}`, periodo, `Cliente: ${cliDe(f.cliente)?.nombre || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo cliente: ${f.tipo || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha === 'ESTIMADA' ? 'ESTIMADA COBRO' : 'EMISIÓN'}`] : [])],
+        parametros: [`Empresa: ${empresaTxt(ctx)}`, periodo, `Cliente: ${cliDe(f.cliente)?.nombre || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo cliente: ${f.tipo || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha === 'ESTIMADA' ? 'ESTIMADA COBRO' : 'EMISIÓN'}`] : []), X.textoOrden(ord(), 'FECHA COBRO')],
         filas: filas.map((x) => ({ tercero_id: x.cliente_id, codigo: x.codigo, nombre: x.nombreCli, nit: x.nit, numero: x.no_interno || x.numero, serie: x.serie, documento: x.numero_dte, fecha: modo === 'PERIODO' ? x.emision : fechaDe(x), fecha_doc: x.emision, estimada: x.fc, mora: x.mora, valor: x.valor, saldo: x.saldoQ }))
       }).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
     }
     function imprimirRep() {
       if (!filas.length) return window.FIN.aviso('No hay facturas con esos filtros');
       if (f.formato !== 'PDF') return excelRep();
-      const filtros = `Cliente: ${cliDe(f.cliente)?.nombre || 'TODOS'} · Saldo: ${f.saldo} · Tipo cliente: ${f.tipo || 'TODOS'}${modo !== 'PERIODO' ? ` · Tipo fecha: ${f.fecha === 'ESTIMADA' ? 'ESTIMADA COBRO' : 'EMISIÓN'}` : ''}`;
+      const filtros = `Cliente: ${cliDe(f.cliente)?.nombre || 'TODOS'} · Saldo: ${f.saldo} · Tipo cliente: ${f.tipo || 'TODOS'}${modo !== 'PERIODO' ? ` · Tipo fecha: ${f.fecha === 'ESTIMADA' ? 'ESTIMADA COBRO' : 'EMISIÓN'}` : ''} · ${X.textoOrden(ord(), 'FECHA COBRO')}`;
       const csv = (n, filasCsv) => (window.COMPRAS_CAT?.descargarCsv ? window.COMPRAS_CAT.descargarCsv(n, filasCsv) : window.FIN.aviso('No se pudo generar el Excel'));
       if (resumen) {
         const g = agrupar(filas);
@@ -272,6 +280,8 @@
       if (e.target.closest('a[href]')) return;
       const fila = e.target.closest('tr[data-fila]');
       if (fila) { sel = Number(fila.dataset.fila); ctx.pDet.querySelectorAll('tr[data-fila]').forEach((tr) => tr.classList.toggle('actual', tr === fila)); return; }
+      const col = e.target.closest('th[data-orden]');
+      if (col) return ordenarCol(col.dataset.orden);
       const rc = e.target.closest('tr[data-cliente]');
       if (rc && rc.dataset.cliente) return estadoCuenta(Number(rc.dataset.cliente));
       const a = e.target.closest('[data-accion]')?.dataset.accion;
@@ -281,6 +291,9 @@
       if (a === 'estado-cuenta') return estadoCuenta();
       if (a === 'regresar') return history.length > 1 ? history.back() : (location.hash = '#/facturacion');
     });
+    // Clic (o Enter) en el encabezado: ordena por esa columna y alterna ascendente / descendente.
+    function ordenarCol(campo) { const o = ord(); X.alternar(o, campo); f.orden = o.campo; f.dir = o.dir; pintarFiltros(); pintar(); ctx.pDet.querySelector(`th[data-orden="${campo}"]`)?.focus(); }
+    cont.addEventListener('keydown', (e) => { const col = e.target.closest?.('th[data-orden]'); if (col && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ordenarCol(col.dataset.orden); } });
     iniciar();
   }
   window.PANTALLAS['cxc-mensual'] = (cont) => reporteCxc(cont, 'MENSUAL');

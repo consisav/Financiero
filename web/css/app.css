@@ -5219,3 +5219,13 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cx-tabla th:has(+ th), .cx-tabla th { overflow-wrap: normal; }
 .cx-periodo .cx-tabla .cx-nombre > div { max-width: 190px; }
 .cx-periodo .cx-tabla td { font-size: 12px; }
+
+/* CXP / CXC: encabezados que ordenan ascendente o descendente */
+.cx-rep th.cx-ord { cursor: pointer; user-select: none; white-space: nowrap; }
+.cx-rep th.cx-ord i { font-size: 11px; margin-left: 3px; opacity: .45; vertical-align: -1px; }
+.cx-rep th.cx-ord:hover i, .cx-rep th.cx-ord:focus-visible i { opacity: .9; }
+.cx-rep th.cx-ord.activo { color: var(--primario, #1d4ed8); }
+.cx-rep th.cx-ord.activo i { opacity: 1; }
+.cx-rep th.cx-ord:focus-visible { outline: 2px solid var(--primario, #1d4ed8); outline-offset: -2px; }
+.cx-rep .cx-orden select { min-width: 150px; }
+.cx-rep .cx-dir select { min-width: 120px; }

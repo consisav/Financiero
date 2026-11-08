@@ -16,15 +16,35 @@
 
   function columnasDet(tercero, conTercero = true) {
     return [
-      { titulo: 'No.', ancho: 10, tipo: 'texto' }, { titulo: 'Serie', ancho: 12, tipo: 'texto' }, { titulo: 'Documento', ancho: 16, tipo: 'texto' },
+      { titulo: 'No.', ancho: conTercero ? 32 : 46, tipo: 'texto' }, { titulo: 'Serie', ancho: 12, tipo: 'texto' }, { titulo: 'Documento', ancho: 16, tipo: 'texto' },
       { titulo: 'Fecha docto.', ancho: 12, tipo: 'texto' }, { titulo: tercero === 'Cliente' ? 'Se estima cobro' : 'Se estima pago', ancho: 14, tipo: 'texto' },
-      { titulo: 'Días mora', ancho: 9, tipo: 'numero' },
+      { titulo: 'Días mora', ancho: 10, tipo: 'entero' },
       ...(conTercero ? [{ titulo: tercero, ancho: 9, tipo: 'texto' }, { titulo: `Nombre ${tercero.toLowerCase()}`, ancho: 40, tipo: 'texto' }] : []),
       { titulo: 'Valor total Q', ancho: 15, tipo: 'monto' }, { titulo: 'Saldo Q', ancho: 15, tipo: 'monto' }
     ];
   }
   const filaDoc = (x, conTercero = true) => ({ valores: [x.numero, x.serie || '', x.documento || '', dd(x.fecha_doc), dd(x.estimada), x.mora || 0, ...(conTercero ? [x.codigo ?? '', x.nombre || ''] : []), r2(x.valor), r2(x.saldo)] });
   const relleno = (n) => Array(n).fill('');
+
+  // Orden ascendente / descendente por columna (pantalla, PDF y Excel).
+  // o: { campo: 'fdoc' | 'fpago' | 'mora' | 'valor' | 'saldo' | '', dir: 'ASC' | 'DESC' }; get: { campo: (fila) => valor }.
+  function ordenar(rows, o, get) {
+    if (!o || !o.campo || !get[o.campo]) return rows;
+    const s = o.dir === 'DESC' ? -1 : 1, g = get[o.campo];
+    return rows.map((r, i) => [r, i]).sort(([a, i], [b, j]) => {
+      const x = g(a), y = g(b);
+      const c = typeof x === 'number' || typeof y === 'number' ? (Number(x) || 0) - (Number(y) || 0) : String(x || '').localeCompare(String(y || ''));
+      return c ? c * s : i - j;
+    }).map(([r]) => r);
+  }
+  // Encabezado de columna que ordena al hacer clic (alterna ascendente y descendente).
+  function th(campo, txt, o, cls = '') {
+    const act = o.campo === campo, desc = o.dir === 'DESC';
+    return `<th class="${cls} cx-ord${act ? ' activo' : ''}" data-orden="${campo}" tabindex="0" aria-sort="${act ? (desc ? 'descending' : 'ascending') : 'none'}" title="Ordenar ${act && !desc ? 'descendente' : 'ascendente'}">${txt}<i class="ti ${act ? (desc ? 'ti-arrow-down' : 'ti-arrow-up') : 'ti-arrows-sort'}" aria-hidden="true"></i></th>`;
+  }
+  function alternar(o, campo) { if (o.campo === campo) o.dir = o.dir === 'ASC' ? 'DESC' : 'ASC'; else { o.campo = campo; o.dir = 'ASC'; } }
+  const opcionesOrden = (pago) => [['', 'PREDETERMINADO'], ['fdoc', 'FECHA DOCTO.'], ['fpago', pago], ['mora', 'DÍAS MORA'], ['valor', 'VALOR'], ['saldo', 'SALDO']];
+  const textoOrden = (o, pago) => (o.campo ? `Orden: ${opcionesOrden(pago).find(([k]) => k === o.campo)[1]} ${o.dir === 'DESC' ? 'descendente' : 'ascendente'}` : 'Orden: predeterminado');
 
   function generar(o) {
     const filas = o.filas || [];
@@ -34,8 +54,9 @@
       sufijo = 'Resumido';
       const g = new Map();
       filas.forEach((x) => { const k = x.tercero_id || `N${x.nit}${x.nombre}`; const a = g.get(k) || { codigo: x.codigo, nombre: x.nombre, nit: x.nit, docs: 0, mora: 0, v: 0, s: 0 }; a.docs++; a.mora = Math.max(a.mora, x.mora || 0); a.v += Number(x.valor || 0); a.s += Number(x.saldo || 0); g.set(k, a); });
-      columnas = [{ titulo: o.tercero, ancho: 10, tipo: 'texto' }, { titulo: `Nombre ${o.tercero.toLowerCase()}`, ancho: 44, tipo: 'texto' }, { titulo: 'NIT', ancho: 14, tipo: 'texto' }, { titulo: 'Documentos', ancho: 11, tipo: 'numero' }, { titulo: 'Mayor mora', ancho: 11, tipo: 'numero' }, { titulo: 'Valor total Q', ancho: 16, tipo: 'monto' }, { titulo: 'Saldo Q', ancho: 16, tipo: 'monto' }];
-      salida = [...g.values()].sort((a, b) => b.s - a.s).map((a) => ({ valores: [a.codigo ?? '', a.nombre || '', a.nit || '', a.docs, a.mora, r2(a.v), r2(a.s)] }));
+      columnas = [{ titulo: o.tercero, ancho: 10, tipo: 'texto' }, { titulo: `Nombre ${o.tercero.toLowerCase()}`, ancho: 44, tipo: 'texto' }, { titulo: 'NIT', ancho: 14, tipo: 'texto' }, { titulo: 'Documentos', ancho: 11, tipo: 'entero' }, { titulo: 'Mayor mora', ancho: 11, tipo: 'entero' }, { titulo: 'Valor total Q', ancho: 16, tipo: 'monto' }, { titulo: 'Saldo Q', ancho: 16, tipo: 'monto' }];
+      const ord = o.orden && ['mora', 'valor', 'saldo'].includes(o.orden.campo) ? o.orden : { campo: 'saldo', dir: 'DESC' };
+      salida = ordenar([...g.values()], ord, { mora: (a) => a.mora, valor: (a) => a.v, saldo: (a) => a.s }).map((a) => ({ valores: [a.codigo ?? '', a.nombre || '', a.nit || '', a.docs, a.mora, r2(a.v), r2(a.s)] }));
       salida.push({ valores: [`${g.size} ${o.tercero.toLowerCase()}(s)`, '', '', filas.length, '', tot.v, tot.s], tipo: 'total' });
     } else if (o.tipo === 'DETALLADO') {
       sufijo = 'Detallado';
@@ -76,5 +97,5 @@
     });
   }
 
-  window.CUENTAS_XLSX = { generar, OPCIONES: [['PDF', 'PDF'], ['RESUMIDO', 'EXCEL · RESUMIDO'], ['DETALLADO', 'EXCEL · DETALLADO'], ['PERIODO', 'EXCEL · POR PERIODO']] };
+  window.CUENTAS_XLSX = { generar, ordenar, th, alternar, opcionesOrden, textoOrden,OPCIONES: [['PDF', 'PDF'], ['RESUMIDO', 'EXCEL · RESUMIDO'], ['DETALLADO', 'EXCEL · DETALLADO'], ['PERIODO', 'EXCEL · POR PERIODO']] };
 })();
