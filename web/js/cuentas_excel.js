@@ -56,7 +56,7 @@
   const textoOrden = (o, pago) => (o.campo ? `Orden: ${opcionesOrden(pago).find(([k]) => k === o.campo)[1]} ${o.dir === 'DESC' ? 'descendente' : 'ascendente'}` : 'Orden: predeterminado');
 
   // PDF con la misma estructura del Excel (grupos, subtotales, total y notas) y el encabezado común de los reportes.
-  function aPdf({ titulo, parametros, columnas, filas, orgId, locId }) {
+  function aPdf({ titulo, parametros, columnas, filas, orgId, locId, firmas }) {
     const { esc } = window.UI;
     const { fmt, imprimir } = window.BANCOS;
     const n = columnas.length;
@@ -73,7 +73,7 @@
       tr.s td{font-weight:bold;background:#f1f4f9;border-top:1px solid #9fb0c8}tr.t td{font-weight:bold;background:#eaf0f7;border-top:2px solid #1f3a5f}
       tr.nt td{font-style:italic;color:#555;font-size:10px;border:0}tr.g,tr.s{break-inside:avoid}tr.g{break-after:avoid}</style>`;
     imprimir(titulo, `${est}<h1>${esc(titulo)}</h1><h2>${esc((parametros || []).join(' · '))}</h2>
-      <table class="cx"><thead><tr>${columnas.map((c) => `<th class="${c.tipo === 'texto' ? '' : 'n'}">${esc(c.titulo)}</th>`).join('')}</tr></thead><tbody>${cuerpo}</tbody></table>`, { orgId, locId, horizontal: n > 7 });
+      <table class="cx"><thead><tr>${columnas.map((c) => `<th class="${c.tipo === 'texto' ? '' : 'n'}">${esc(c.titulo)}</th>`).join('')}</tr></thead><tbody>${cuerpo}</tbody></table>${firmas && firmas.length ? `<div class="firmas">${firmas.map((x) => `<div>${esc(x)}</div>`).join('')}</div>` : ''}`, { orgId, locId, horizontal: n > 7 });
     return Promise.resolve(true);
   }
 

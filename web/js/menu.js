@@ -525,13 +525,24 @@ window.MODULOS = [
             { id: 'costos', nombre: 'Costos', icono: 'ti-coin', descripcion: 'Costo del catálogo contra el último costo y el promedio ponderado de compras, con la diferencia; actualización del costo.' }
           ]
         }
+      ],
+      procesos: [
+        {
+          subgrupo: 'Procesos de inventario',
+          icono: 'ti-settings-automation',
+          pantallas: [
+            { id: 'toma-fisica', nombre: 'Toma física', icono: 'ti-clipboard-check', descripcion: 'Fotografía de existencias de una bodega a una fecha de corte, conteo físico (ciego), diferencias valuadas y ajustes automáticos de sobrantes y faltantes; acta con firmas.' },
+            { id: 'recalcular-costo-promedio', nombre: 'Recalcular costo promedio', icono: 'ti-calculator', descripcion: 'Promedio ponderado perpetuo de cada producto contra el costo del catálogo; aplica el costo a los productos marcados con su historial.' },
+            { id: 'cierre-de-inventario', nombre: 'Cierre de inventario', icono: 'ti-lock', descripcion: 'Cierre mensual con los saldos por producto y bodega (libro de inventarios); un mes cerrado ya no acepta movimientos; reapertura con motivo.' }
+          ]
+        }
       ]
     },
     opciones: {
       catalogos: [],
       registros: [],
       mantenimientos: ['Ubicaciones'],
-      procesos: ['Toma física', 'Recalcular costo promedio', 'Cierre de inventario'],
+      procesos: [],
       reportes: ['Existencias', 'Kardex por producto', 'Valuación de inventario', 'Rotación'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }

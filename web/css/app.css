@@ -5559,3 +5559,48 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .ac-costos .kx-productos td.cx-nombre:nth-child(3) { width: auto; }
 .ac-costos .ac-compras .kx-tabla { flex: 1 1 0; min-height: 0; }
 @media (max-width: 1400px) { .ac-costos .ac-lado { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* Inventarios · Procesos: toma física, costo promedio y cierre de inventario */
+.pr-toma .bm-form, .pr-costo .bm-form, .pr-cierre .bm-form { display: flex; flex-direction: column; gap: 6px; min-height: 0; height: 100%; }
+.pr-cab { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; border: 1px solid var(--borde); border-radius: 10px; padding: 6px 12px; background: var(--panel); }
+.pr-id { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding-right: 12px; border-right: 1px solid var(--borde); }
+.pr-id small, .pr-datos small { font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em; color: var(--texto-suave); }
+.pr-id b { font-size: 18px; }
+.pr-datos { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; min-width: 0; }
+.pr-datos span { display: flex; flex-direction: column; min-width: 0; }
+.pr-datos .pr-desc { flex: 1 1 200px; }
+.pr-acc { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.pr-barra { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pr-barra .tk-buscar { flex: 0 1 260px; }
+.pr-agregar { display: inline-flex; gap: 4px; align-items: center; flex: 1 1 380px; }
+.pr-agregar input { height: 32px; border: 1px solid var(--borde); border-radius: 8px; padding: 0 8px; min-width: 0; }
+.pr-agregar input[data-agregar] { flex: 1 1 auto; }
+.pr-agregar input[data-agregar-lote] { width: 90px; }
+.pr-guardado { margin-left: auto; font-size: 12px; }
+.pr-lineas { flex: 1 1 0; min-height: 0; overflow: auto; }
+.pr-lineas td input { width: 100%; min-width: 80px; height: 26px; border: 1px solid var(--borde); border-radius: 6px; padding: 0 6px; background: var(--panel); }
+.pr-lineas td input[type=number] { text-align: right; max-width: 120px; }
+.pr-lineas td input:disabled { border-color: transparent; background: transparent; color: inherit; }
+.pr-lineas tr.pr-pend td input[data-c=conteo] { border-color: color-mix(in srgb, #dc6803 55%, var(--borde)); background: color-mix(in srgb, #dc6803 6%, var(--panel)); }
+.pr-guia { margin: 0; font-size: 12.5px; color: var(--texto-suave); display: flex; gap: 6px; align-items: flex-start; line-height: 1.4; }
+.pr-guia i { color: var(--acento); font-size: 16px; }
+.pr-nueva-c { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; padding: 12px; max-width: 980px; }
+.pr-nueva-c .pr-guia, .pr-nueva-c .pr-desc, .pr-nueva-c .pc-check, .pr-nueva-c .modal-error, .pr-nueva-acc { grid-column: 1 / -1; }
+.pr-nueva-acc { display: flex; justify-content: flex-end; gap: 8px; }
+.pr-costo .pc-lineas { flex: 1 1 0; min-height: 0; overflow: auto; }
+.pr-meses { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; align-content: start; }
+.pr-mes-v { min-height: 52px; }
+.pr-mes { display: flex; flex-direction: column; border: 1px solid var(--borde); border-radius: 10px; padding: 8px 10px; background: var(--panel); gap: 4px; min-width: 0; }
+.pr-mes header { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13px; }
+.pr-mes header span { font-size: 11px; font-weight: 600; color: var(--texto-suave); white-space: nowrap; }
+.pr-mes-v { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.pr-mes-v small { font-size: 11px; color: var(--texto-suave); overflow: hidden; text-overflow: ellipsis; }
+.pr-mes-v b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.pr-mes footer { display: flex; gap: 4px; flex-wrap: wrap; }
+.pr-mes footer .boton { padding: 2px 8px; }
+.pr-mes.pr-cerrado { border-color: color-mix(in srgb, var(--acento) 45%, var(--borde)); background: color-mix(in srgb, var(--acento) 5%, var(--panel)); }
+.pr-mes.pr-cerrado header span { color: var(--acento); }
+.pr-mes.pr-reabierto header span { color: #b54708; }
+.pr-mes.pr-curso { opacity: .6; }
+@media (max-width: 1200px) { .pr-meses { grid-template-columns: repeat(4, minmax(0, 1fr)); } .pr-cab { grid-template-columns: 1fr; } .pr-id { border-right: 0; } }
+@media (max-width: 700px) { .pr-meses { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pr-nueva-c { grid-template-columns: 1fr; } }
