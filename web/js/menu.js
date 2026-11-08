@@ -447,22 +447,6 @@ window.MODULOS = [
     }
   },
   {
-    id: 'presupuesto-flujo',
-    corto: 'Presupuesto y Flujo',
-    color: 'rosa',
-    nombre: 'Presupuesto y flujo de efectivo',
-    icono: 'ti-report-money',
-    descripcion: 'Proyección de ingresos y egresos, flujo de efectivo y comparativo contra lo ejecutado.',
-    opciones: {
-      catalogos: ['Rubros de flujo', 'Escenarios'],
-      registros: ['Presupuesto de flujo', 'Proyección de ingresos', 'Proyección de egresos'],
-      mantenimientos: ['Períodos de proyección'],
-      procesos: ['Cálculo del flujo proyectado', 'Comparativo real vs. proyectado'],
-      reportes: ['Flujo de efectivo', 'Presupuesto vs. ejecutado', 'Gráfica de flujo'],
-      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
-    }
-  },
-  {
     id: 'inventarios',
     corto: 'Inventarios',
     color: 'ambar',
@@ -572,6 +556,22 @@ window.MODULOS = [
       mantenimientos: ['Vidas útiles', 'Porcentajes de depreciación'],
       procesos: ['Depreciación mensual', 'Cierre de activos'],
       reportes: ['Inventario de activos', 'Depreciación acumulada', 'Activos por ubicación'],
+      ayuda: ['Manual del módulo', 'Preguntas frecuentes']
+    }
+  },
+  {
+    id: 'presupuesto-flujo',
+    corto: 'Presupuesto y Flujo',
+    color: 'rosa',
+    nombre: 'Presupuesto y flujo de efectivo',
+    icono: 'ti-report-money',
+    descripcion: 'Proyección de ingresos y egresos, flujo de efectivo y comparativo contra lo ejecutado.',
+    opciones: {
+      catalogos: ['Rubros de flujo', 'Escenarios'],
+      registros: ['Presupuesto de flujo', 'Proyección de ingresos', 'Proyección de egresos'],
+      mantenimientos: ['Períodos de proyección'],
+      procesos: ['Cálculo del flujo proyectado', 'Comparativo real vs. proyectado'],
+      reportes: ['Flujo de efectivo', 'Presupuesto vs. ejecutado', 'Gráfica de flujo'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },
