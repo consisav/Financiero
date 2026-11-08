@@ -5626,3 +5626,10 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .cd-acc-cab { justify-self: end; display: inline-flex; align-items: center; gap: 8px; }
 .cd-acc-cab .cd-ver { justify-self: auto; }
 .cd-acc-cab .cc-imp .boton { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; font-weight: 600; }
+
+/* Contabilidad · reportes: rubros de nivel 2 y totales destacados */
+.cr-conta .pr-tabla tr.cr-n2 td { font-weight: 600; }
+.cr-conta .pr-tabla table { table-layout: auto; width: 100%; }
+.cr-conta .pr-tabla td:first-child, .cr-conta .pr-tabla th:first-child { width: 1%; white-space: nowrap; }
+.cr-conta .pr-tabla td:nth-child(2) { white-space: pre; text-align: left; }
+.cr-conta .pr-tabla td.pc-rojo { color: #b42318; }

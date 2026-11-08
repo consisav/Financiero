@@ -171,7 +171,7 @@ window.MODULOS = [
       registros: [],
       mantenimientos: ['Períodos contables', 'Empresas', 'Parámetros contables'],
       procesos: ['Mayorización', 'Cierre de año'],
-      reportes: ['Libro diario', 'Libro mayor', 'Balance general', 'Estado de resultados', 'Presupuesto vs. ejecutado'],
+      reportes: [],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },
@@ -653,4 +653,23 @@ window.MODULOS = [
     { id: 'reporte-cuentas-por-pagar', nombre: 'Cuentas por pagar', icono: 'ti-receipt-2', descripcion: 'Saldo por pagar a una fecha con antigüedad (no vencido, 1-30, 31-60, 61-90 y más de 90 días), por proveedor o por documento. PDF y Excel.' },
     { id: 'grafica-de-compras', nombre: 'Gráfica de compras', icono: 'ti-chart-histogram', descripcion: 'Compras por mes, proveedores principales y productos principales del período, con su tabla de datos. PDF y Excel.' }
   ]);
+})();
+
+// Contabilidad › Reportes y gráficas (contabilidad_reportes.js).
+(function () {
+  const m = window.MODULOS.find((x) => x.id === 'contabilidad');
+  if (!m) return;
+  m.subgrupos = m.subgrupos || {};
+  m.subgrupos.reportes = [
+    { subgrupo: 'Libros contables', icono: 'ti-books', pantallas: [
+      { id: 'libro-diario', nombre: 'Libro diario', icono: 'ti-notebook', descripcion: 'Partidas del período en orden cronológico con su detalle de cuentas (detallado) o una línea por partida (resumido); empresa o consolidado. PDF y Excel.' },
+      { id: 'libro-mayor', nombre: 'Libro mayor', icono: 'ti-book-2', descripcion: 'Movimientos de cada cuenta con saldo inicial, debe, haber y saldo acumulado; una cuenta o todas; detallado o resumido. PDF y Excel.' },
+      { id: 'balanza-de-comprobacion', nombre: 'Balanza de comprobación', icono: 'ti-scale', descripcion: 'Saldos iniciales, movimientos y saldos finales deudores y acreedores por cuenta y nivel, con la comprobación de cuadre. PDF y Excel.' }
+    ] },
+    { subgrupo: 'Estados financieros', icono: 'ti-report-money', pantallas: [
+      { id: 'balance-general', nombre: 'Balance general', icono: 'ti-building-bank', descripcion: 'Activo, pasivo y patrimonio a una fecha por nivel de cuenta, con el resultado del ejercicio, cuadre, gráficas y firmas. PDF y Excel.' },
+      { id: 'estado-de-resultados', nombre: 'Estado de resultados', icono: 'ti-chart-line', descripcion: 'Ingresos, costos y gastos del período con utilidad bruta, de operación y neta, % sobre ingresos y columnas por mes. PDF y Excel.' },
+      { id: 'presupuesto-vs-ejecutado', nombre: 'Presupuesto vs. ejecutado', icono: 'ti-target-arrow', descripcion: 'Rubros del presupuesto del año con lo presupuestado, ejecutado, variación y % de ejecución por grupo. PDF y Excel.' }
+    ] }
+  ];
 })();
