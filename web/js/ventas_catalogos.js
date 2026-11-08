@@ -374,7 +374,7 @@
 
   // ===================== Tipos de medida, Tipos de precio y Presentación productos =====================
   // Las mismas pantallas se abren desde Compras › Catálogos › Generales (script 101): el rótulo dice de dónde.
-  const grupoCat = () => location.hash.startsWith('#/compras/') ? 'Compras · Catálogos' : 'Ventas · Catálogos';
+  const grupoCat = () => location.hash.startsWith('#/compras/') ? 'Compras · Catálogos' : location.hash.startsWith('#/inventarios/') ? 'Inventarios · Catálogos' : 'Ventas · Catálogos';
   const LOCAL = { local: true, script: '59 (catálogos de ventas y productos)', get grupo() { return grupoCat(); } };
   window.PANTALLAS['tipos-de-medida'] = (cont) => window.CATALOGO_GRID(cont, { ...LOCAL, tabla: 'tipos_medida', titulo: 'Tipos de medida', icono: 'ti-ruler-measure', codigo: 'Tipo', enColumnas: 3,
     descripcion: 'Unidades de medida con que se venden y se controlan los productos.', columnas: [{ k: 'nombre', t: 'Descripción', req: true, max: 80 }] });

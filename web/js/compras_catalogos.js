@@ -44,8 +44,8 @@
   window.PANTALLAS = window.PANTALLAS || {};
 
   // ===================== Proveedores =====================
-  window.PANTALLAS.proveedores = function (cont) {
-    const ctx = montar(cont, { titulo: 'Proveedores', icono: 'ti-truck', clase: 'bk-proveedores cb-apilado', grupo: 'Compras · Catálogos' });
+  window.PANTALLAS.proveedores = function (cont, m) {
+    const ctx = montar(cont, { titulo: 'Proveedores', icono: 'ti-truck', clase: 'bk-proveedores cb-apilado', grupo: `${m?.id === 'inventarios' ? 'Inventarios' : 'Compras'} · Catálogos` });
     const { sb, yo } = ctx;
     const f = { estado: 'ACTIVO', tipo: '', formato: 'PDF' };
     let lista = [];
@@ -380,8 +380,8 @@
   };
 
   // ===================== Bodegas =====================
-  window.PANTALLAS.bodegas = function (cont) {
-    const ctx = montar(cont, { titulo: 'Administración de bodegas', icono: 'ti-building-warehouse', clase: 'bk-bodegas cb-apilado', grupo: 'Compras · Catálogos' });
+  window.PANTALLAS.bodegas = function (cont, m) {
+    const ctx = montar(cont, { titulo: 'Administración de bodegas', icono: 'ti-building-warehouse', clase: 'bk-bodegas cb-apilado', grupo: `${m?.id === 'inventarios' ? 'Inventarios' : 'Compras'} · Catálogos` });
     const { sb } = ctx;
     const f = { estado: 'ACTIVO' };
     const TRX = [['trx_entradas_id', 'Entradas'], ['trx_ajuste_mas_id', 'Ajuste (+)'], ['trx_ajuste_menos_id', 'Ajuste (−)'], ['trx_despachos_id', 'Despachos'], ['trx_traslados_id', 'Traslados']];

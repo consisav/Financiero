@@ -81,7 +81,7 @@
         <header class="pcm-cab">
           <span class="tk-icono"><i class="ti ti-adjustments" aria-hidden="true"></i></span>
           <div class="pcm-titulo">
-            <small>Compras · Catálogos · Generales</small>
+            <small>${location.hash.startsWith('#/inventarios/') ? 'Inventarios' : 'Compras'} · Catálogos · Generales</small>
             <h2>Parámetros del módulo de compras</h2>
           </div>
           <label class="pcm-empresa"><span>Empresa</span>

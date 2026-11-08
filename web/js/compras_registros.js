@@ -69,7 +69,7 @@
         <div class="cl-banda">${esc(cfg.titulo)}</div>
         <header class="cg-cab">
           <span class="tk-icono"><i class="ti ${cfg.icono}" aria-hidden="true"></i></span>
-          <div class="cg-titulo"><small>${esc(cfg.grupo || 'Compras · Catálogos')} · ${filas.length} registros${filas.some((x) => x.activo === false) ? ` · ${filas.filter((x) => x.activo !== false).length} activos` : ''}</small><p>${esc(cfg.descripcion)}</p></div>
+          <div class="cg-titulo"><small>${esc(cfg.grupo || (location.hash.startsWith('#/inventarios/') ? 'Inventarios · Catálogos' : 'Compras · Catálogos'))} · ${filas.length} registros${filas.some((x) => x.activo === false) ? ` · ${filas.filter((x) => x.activo !== false).length} activos` : ''}</small><p>${esc(cfg.descripcion)}</p></div>
           ${cfg.local ? `<label class="campo cg-empresa"><span>Empresa</span><select data-empresa>${organizaciones.map((o) => ({ o, ls: localidades.filter((l) => l.organizacion_id === o.id) })).filter((g) => g.ls.length).map((g) => `<optgroup label="${g.o.codigo} · ${esc(g.o.nombre)}">${g.ls.map((l) => `<option value="${l.id}" ${l.id === seleccion.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('')}</optgroup>`).join('')}</select></label>` : ''}
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar…" value="${esc(buscar)}" aria-label="Buscar"></label>
           ${ed ? `<button type="button" class="boton secundario-sm" data-accion="agregar"><i class="ti ti-plus" aria-hidden="true"></i> Agregar</button>

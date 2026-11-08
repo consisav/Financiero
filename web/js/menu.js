@@ -468,8 +468,11 @@ window.MODULOS = [
     nombre: 'Inventarios',
     icono: 'ti-packages',
     descripcion: 'Productos, bodegas, existencias y kardex.',
+    // Catálogos (script 143): los grupos Generales y Proveedores de Compras y el grupo Productos de
+    // Facturación/Ventas, con las mismas pantallas y tablas (se llenan al final de este archivo).
+    subgrupos: { catalogos: [] },
     opciones: {
-      catalogos: ['Productos', 'Categorías', 'Bodegas', 'Unidades de medida', 'Proveedores'],
+      catalogos: [],
       registros: ['Entradas', 'Salidas', 'Traslados entre bodegas', 'Ajustes'],
       mantenimientos: ['Mínimos y máximos', 'Costos', 'Ubicaciones'],
       procesos: ['Toma física', 'Recalcular costo promedio', 'Cierre de inventario'],
@@ -542,3 +545,15 @@ window.MODULOS = [
     }
   }
 ];
+
+// Inventarios › Catálogos: acceso a los grupos de Compras (Generales y Proveedores) y al grupo Productos de
+// Facturación/Ventas. Son los mismos objetos, así que cualquier cambio en esos grupos se ve también aquí.
+(function () {
+  const mod = (id) => window.MODULOS.find((m) => m.id === id);
+  const inv = mod('inventarios'), com = mod('compras'), fac = mod('facturacion');
+  if (!inv || !com || !fac) return;
+  inv.subgrupos.catalogos = [
+    ...(com.subgrupos.catalogos || []),
+    ...(fac.subgrupos.catalogos || []).filter((s) => s.subgrupo === 'Productos')
+  ];
+})();
