@@ -1,0 +1,42 @@
+{
+ "version": "2026.11g",
+ "titulo": "Manual del módulo Hospital",
+ "resumen": "Pacientes, admisión, cuenta, farmacia, quirófanos, egreso, aseguradoras, honorarios y caja.",
+ "nombresTablas": {},
+ "diapositivas": [
+  {
+   "tipo": "portada",
+   "titulo": "Módulo de Administración hospitalaria",
+   "subtitulo": "Del ingreso del paciente al cobro a la aseguradora"
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "El flujo del paciente",
+   "subtitulo": "Cita › Admisión › Cuenta › Egreso › Cobro",
+   "pasos": [
+    "Cita o emergencia: el paciente se registra con su expediente y su aseguradora.",
+    "Admisión: se asigna médico y cama; la cama queda ocupada.",
+    "Cuenta: servicios, honorarios, medicamentos despachados por farmacia (salen de la bodega) y el día-cama diario.",
+    "Egreso: se divide la cuenta entre aseguradora (reclamo) y paciente (deducible + coaseguro); la cama pasa a limpieza.",
+    "Facturación FEL, cobro al paciente en caja y seguimiento del reclamo hasta su pago.",
+    "Liquidación mensual de honorarios médicos con su retención de ISR."
+   ]
+  },
+  {
+   "tipo": "consejos",
+   "titulo": "Buenas prácticas",
+   "puntos": [
+    "Carga el día-cama todos los días desde el Censo.",
+    "Despacha la farmacia siempre desde una orden médica: así cuadra el inventario.",
+    "Cobra un anticipo al admitir a pacientes particulares.",
+    "Da seguimiento semanal a los reclamos de más de 60 días.",
+    "Cierra la caja todos los días con el arqueo del efectivo."
+   ]
+  },
+  {
+   "tipo": "cierre",
+   "titulo": "¡Listo para atender!",
+   "subtitulo": "Consulta este manual en Hospital › Ayuda › Manual del módulo"
+  }
+ ]
+}

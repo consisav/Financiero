@@ -2165,5 +2165,216 @@
    "Abre Import. y export. › Reportes y gráficas › Tributos de aduana y elige {empresa}.",
    "Elige el período; el IVA de importación es crédito fiscal en la liquidación del mes (Integraciones SAT)."
   ]
+ },
+ "hos-pacientes": {
+  "puntos": [
+   "Expediente de cada paciente."
+  ],
+  "pasos": [
+   "Abre Hospital › Catálogos › Pacientes y médicos › Pacientes y elige {empresa}.",
+   "Presiona «Nuevo paciente»: nombres, apellidos, DPI, NIT, fecha de nacimiento y género; el expediente se numera solo.",
+   "Registra teléfono, dirección, tipo de sangre, alergias (aparecen en rojo en su cuenta) y el contacto de emergencia.",
+   "Si tiene seguro elige la aseguradora y escribe la póliza o carné; guarda."
+  ]
+ },
+ "hos-medicos": {
+  "puntos": [
+   "Médicos y especialidades."
+  ],
+  "pasos": [
+   "Abre Hospital › Catálogos › Pacientes y médicos › Médicos y especialidades y elige {empresa}.",
+   "En «Médicos» presiona «Nuevo»: nombre, colegiado, especialidad, tipo (staff, externo, residente), NIT.",
+   "Indica el % de participación del hospital sobre sus honorarios y el % de retención de ISR.",
+   "Cambia a «Especialidades» para agregar especialidades."
+  ]
+ },
+ "hos-camas": {
+  "puntos": [
+   "Áreas y camas con tarifa y estado."
+  ],
+  "pasos": [
+   "Abre Hospital › Catálogos › Instalaciones y tarifas › Áreas, habitaciones y camas y elige {empresa}.",
+   "En «Áreas» revisa emergencia, encamamiento, intensivo, sala de operaciones y consulta externa.",
+   "En «Camas» presiona «Nuevo»: código, área, habitación, tipo y tarifa diaria (día-cama).",
+   "El estado cambia solo al admitir (ocupada) y egresar (limpieza)."
+  ]
+ },
+ "hos-servicios": {
+  "puntos": [
+   "Servicios con precio de lista."
+  ],
+  "pasos": [
+   "Abre Hospital › Catálogos › Instalaciones y tarifas › Servicios y tarifas y elige {empresa}.",
+   "Revisa los servicios por omisión (consultas, laboratorio, imagenología, quirófano, honorarios) y ajusta sus precios.",
+   "Agrega servicios con «Nuevo» indicando su tipo: los de tipo HONORARIO se liquidan al médico."
+  ]
+ },
+ "hos-aseguradoras": {
+  "puntos": [
+   "Aseguradoras y su convenio."
+  ],
+  "pasos": [
+   "Abre Hospital › Catálogos › Instalaciones y tarifas › Aseguradoras y convenios y elige {empresa}.",
+   "Presiona «Nuevo»: nombre, NIT, contacto, deducible por evento, coaseguro % y días de crédito.",
+   "Al egreso, el paciente paga el deducible más el coaseguro sobre el excedente y la aseguradora el resto."
+  ]
+ },
+ "hos-admision": {
+  "puntos": [
+   "Ingreso del paciente."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Atención › Admisión y elige {empresa}.",
+   "Escribe el paciente (expediente o nombre), el tipo de admisión y el médico tratante.",
+   "Elige una cama disponible (el estado cambia a ocupada) y la aseguradora si aplica.",
+   "Escribe el diagnóstico de ingreso y presiona «Admitir».",
+   "Un paciente no puede tener dos admisiones abiertas."
+  ]
+ },
+ "hos-citas": {
+  "puntos": [
+   "Agenda médica diaria."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Atención › Citas y agenda médica y elige {empresa}.",
+   "Elige la fecha y el médico.",
+   "Agenda la cita: paciente, médico, hora, duración y motivo; el sistema avisa si el médico ya tiene una cita a esa hora.",
+   "Toca una cita para marcarla confirmada, atendida, no asistió o cancelada; imprime la agenda."
+  ]
+ },
+ "hos-cuenta": {
+  "puntos": [
+   "Cuenta del paciente: cargos, pagos y estado de cuenta."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Atención › Cuenta del paciente y elige {empresa}.",
+   "Elige la admisión.",
+   "Carga cada servicio (el precio sale de la lista): los honorarios llevan el médico.",
+   "Registra anticipos, abonos o el pago final con su forma de pago.",
+   "Revisa el estado de cuenta por tipo de servicio y el saldo; imprímelo en PDF con firmas.",
+   "Toca un cargo para quitarlo mientras la cuenta esté abierta."
+  ]
+ },
+ "hos-ordenes": {
+  "puntos": [
+   "Órdenes médicas y despacho de farmacia."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Atención › Órdenes médicas y farmacia y elige {empresa}.",
+   "Elige la admisión y registra la orden: tipo, medicamento o servicio, cantidad, médico e indicaciones.",
+   "Farmacia toca la orden pendiente para despacharla: elige la bodega y el lote; sale del inventario y se carga a la cuenta al precio de venta.",
+   "Las órdenes de servicios (laboratorio, imagen) se cargan al precio de lista al realizarse."
+  ]
+ },
+ "hos-quirofanos": {
+  "puntos": [
+   "Programación de cirugías."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Atención › Programación de quirófanos y elige {empresa}.",
+   "Programa la cirugía: sala, fecha, hora, duración, paciente, cirujano, anestesiólogo y procedimiento.",
+   "El sistema avisa si la sala ya está ocupada en ese horario.",
+   "Toca la cirugía para marcarla en curso, realizada o cancelada."
+  ]
+ },
+ "hos-censo": {
+  "puntos": [
+   "Mapa de camas, censo y día-cama."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Hospital › Censo diario y día-cama y elige {empresa}.",
+   "Revisa el mapa de camas por área: verde disponible, rojo ocupada, amarillo limpieza.",
+   "Presiona «Cargar día-cama a hoy»: cada paciente internado recibe los días de habitación pendientes.",
+   "Toca una cama en limpieza o mantenimiento para dejarla disponible; imprime el censo."
+  ]
+ },
+ "hos-egreso": {
+  "puntos": [
+   "Egreso, distribución de la cuenta y facturación."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Hospital › Egreso y facturación y elige {empresa}.",
+   "En «Por egresar» toca la admisión, elige el tipo de egreso y escribe el diagnóstico.",
+   "El sistema carga los días-cama pendientes, libera la cama, divide la cuenta entre aseguradora y paciente y genera el reclamo.",
+   "Emite las facturas FEL en Facturación/Ventas › Facturas Ventas.",
+   "En «Por facturar» toca la admisión y registra los números de factura del paciente y de la aseguradora."
+  ]
+ },
+ "hos-honorarios": {
+  "puntos": [
+   "Liquidación de honorarios médicos."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Hospital › Liquidación de honorarios y elige {empresa}.",
+   "Elige el período: aparecen los honorarios pendientes por médico.",
+   "Toca un médico para liquidar: bruto − participación del hospital − retención de ISR = líquido.",
+   "Toca la liquidación para registrar el pago (cheque o transferencia)."
+  ]
+ },
+ "hos-reclamos": {
+  "puntos": [
+   "Reclamos a aseguradoras."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Hospital › Reclamos a aseguradoras y elige {empresa}.",
+   "Revisa los reclamos pendientes (en rojo los de más de 90 días).",
+   "Toca un reclamo para registrar su avance: en revisión, aprobado con su monto, pagado o rechazado con su motivo."
+  ]
+ },
+ "hos-caja": {
+  "puntos": [
+   "Cierre de caja hospitalaria."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Hospital › Cierre de caja hospitalaria y elige {empresa}.",
+   "Elige la fecha: aparecen los pagos del día por forma de pago.",
+   "Presiona «Cerrar caja» y escribe el efectivo contado: se guarda la diferencia del arqueo.",
+   "Imprime el cierre con firmas."
+  ]
+ },
+ "hos-rep-ocupacion": {
+  "puntos": [
+   "Ocupación por área."
+  ],
+  "pasos": [
+   "Abre Hospital › Reportes y gráficas › Censo y ocupación y elige {empresa}.",
+   "Elige el período: días-cama ocupados ÷ disponibles por área; imprime con la gráfica."
+  ]
+ },
+ "hos-rep-ingresos": {
+  "puntos": [
+   "Ingresos por servicio y médico."
+  ],
+  "pasos": [
+   "Abre Hospital › Reportes y gráficas › Ingresos por servicio y médico y elige {empresa}.",
+   "Elige el período; revisa los ingresos por tipo de servicio y por médico con su participación."
+  ]
+ },
+ "hos-rep-cuentas": {
+  "puntos": [
+   "Cuentas abiertas."
+  ],
+  "pasos": [
+   "Abre Hospital › Reportes y gráficas › Cuentas abiertas de pacientes y elige {empresa}.",
+   "Revisa las admisiones abiertas y egresadas con su saldo; en rojo los egresados con saldo."
+  ]
+ },
+ "hos-rep-cartera": {
+  "puntos": [
+   "Cartera de aseguradoras."
+  ],
+  "pasos": [
+   "Abre Hospital › Reportes y gráficas › Cartera de aseguradoras y elige {empresa}.",
+   "Revisa el saldo por aseguradora y antigüedad (0-30, 31-60, 61-90, más de 90 días)."
+  ]
+ },
+ "hos-rep-indicadores": {
+  "puntos": [
+   "Indicadores hospitalarios."
+  ],
+  "pasos": [
+   "Abre Hospital › Reportes y gráficas › Indicadores hospitalarios y elige {empresa}.",
+   "Elige el período: % de ocupación, estancia promedio, giro de cama, intervalo de sustitución, ingreso por egreso, mortalidad y pacientes asegurados, con su fórmula y referencia."
+  ]
  }
 }

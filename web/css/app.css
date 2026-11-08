@@ -5702,3 +5702,12 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 [data-color=rojo] { --m-f: #fdecec; --m-t: #b42318; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) [data-color=rojo] { --m-f: #3a1514; --m-t: #f97066; } }
 :root[data-theme="dark"] [data-color=rojo] { --m-f: #3a1514; --m-t: #f97066; }
+
+.hos-mapa { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.hos-mapa section { border: 1px solid var(--borde); border-radius: 10px; padding: 8px; }
+.hos-mapa h4 { margin: 0 0 6px; font-size: 13px; }
+.hos-mapa section > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.hos-cama { width: 74px; min-height: 48px; border-radius: 8px; border: 1px solid var(--borde); background: var(--panel); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; }
+.hos-cama small { font-size: 10px; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hos-disponible { background: #ecfdf3; border-color: #75e0a7; } .hos-ocupada { background: #fef3f2; border-color: #fda29b; } .hos-limpieza { background: #fffaeb; border-color: #fec84b; } .hos-mantenimiento { background: #f2f4f7; }
+.pr-rep tr[data-a], .pr-rep tr[data-r], .pr-rep tr[data-h], .pr-rep tr[data-m], .pr-rep tr[data-o], .pr-rep tr[data-q], .pr-rep tr[data-c], .pr-rep tr[data-cargo] { cursor: pointer; }

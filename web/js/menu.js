@@ -753,11 +753,47 @@ window.MODULOS = [
     nombre: 'Administración hospitalaria',
     icono: 'ti-building-hospital',
     descripcion: 'Pacientes, admisión, cuenta del paciente, camas, honorarios médicos, aseguradoras y facturación hospitalaria.',
+    subgrupos: {
+      catalogos: [
+        { subgrupo: 'Pacientes y médicos', icono: 'ti-user-heart', pantallas: [
+          { id: 'hos-pacientes', nombre: 'Pacientes', icono: 'ti-user-heart', descripcion: 'Expediente del paciente: datos personales, alergias, contacto de emergencia y aseguradora.' },
+          { id: 'hos-medicos', nombre: 'Médicos y especialidades', icono: 'ti-stethoscope', descripcion: 'Médicos con colegiado, especialidad, tipo, participación del hospital y retención de ISR.' }
+        ] },
+        { subgrupo: 'Instalaciones y tarifas', icono: 'ti-building-hospital', pantallas: [
+          { id: 'hos-camas', nombre: 'Áreas, habitaciones y camas', icono: 'ti-bed', descripcion: 'Áreas y camas con su tarifa diaria y estado.' },
+          { id: 'hos-servicios', nombre: 'Servicios y tarifas', icono: 'ti-list-check', descripcion: 'Procedimientos, laboratorio, imagenología, honorarios, quirófano e insumos con su precio.' },
+          { id: 'hos-aseguradoras', nombre: 'Aseguradoras y convenios', icono: 'ti-shield-heart', descripcion: 'Aseguradoras con deducible, coaseguro y días de crédito.' }
+        ] }
+      ],
+      registros: [
+        { subgrupo: 'Atención', icono: 'ti-heartbeat', pantallas: [
+          { id: 'hos-admision', nombre: 'Admisión', icono: 'ti-door-enter', descripcion: 'Ingreso del paciente por emergencia, consulta externa, hospitalización o cirugía ambulatoria con su cama.' },
+          { id: 'hos-citas', nombre: 'Citas y agenda médica', icono: 'ti-calendar-plus', descripcion: 'Agenda diaria por médico con el estado de cada cita.' },
+          { id: 'hos-cuenta', nombre: 'Cuenta del paciente', icono: 'ti-file-invoice', descripcion: 'Cargos (servicios, honorarios, días-cama, farmacia), anticipos y estado de cuenta.' },
+          { id: 'hos-ordenes', nombre: 'Órdenes médicas y farmacia', icono: 'ti-pill', descripcion: 'Órdenes médicas y despacho de medicamentos e insumos desde la bodega a la cuenta.' },
+          { id: 'hos-quirofanos', nombre: 'Programación de quirófanos', icono: 'ti-heart-rate-monitor', descripcion: 'Programación de cirugías por sala, cirujano y anestesiólogo.' }
+        ] }
+      ],
+      procesos: [
+        { subgrupo: 'Hospital', icono: 'ti-settings-automation', pantallas: [
+          { id: 'hos-censo', nombre: 'Censo diario y día-cama', icono: 'ti-bed', descripcion: 'Mapa de camas, censo del día y carga automática del día-cama.' },
+          { id: 'hos-egreso', nombre: 'Egreso y facturación', icono: 'ti-door-exit', descripcion: 'Egreso con distribución entre aseguradora y paciente, reclamo automático y registro de facturas.' },
+          { id: 'hos-honorarios', nombre: 'Liquidación de honorarios', icono: 'ti-cash', descripcion: 'Honorarios médicos del período menos la participación del hospital y la retención de ISR.' },
+          { id: 'hos-reclamos', nombre: 'Reclamos a aseguradoras', icono: 'ti-file-certificate', descripcion: 'Seguimiento de reclamos: revisión, aprobación, pago o rechazo.' },
+          { id: 'hos-caja', nombre: 'Cierre de caja hospitalaria', icono: 'ti-cash-register', descripcion: 'Pagos del día por forma de pago y arqueo del efectivo.' }
+        ] }
+      ],
+      reportes: [
+        { subgrupo: 'Reportes', icono: 'ti-report-medical', pantallas: [
+          { id: 'hos-rep-ocupacion', nombre: 'Censo y ocupación', icono: 'ti-chart-pie', descripcion: 'Ocupación por área con días-cama ocupados y disponibles. PDF y Excel.' },
+          { id: 'hos-rep-ingresos', nombre: 'Ingresos por servicio y médico', icono: 'ti-chart-bar', descripcion: 'Ingresos del período por tipo de servicio y por médico. PDF y Excel.' },
+          { id: 'hos-rep-cuentas', nombre: 'Cuentas abiertas de pacientes', icono: 'ti-file-invoice', descripcion: 'Admisiones abiertas y egresadas con su saldo. PDF y Excel.' },
+          { id: 'hos-rep-cartera', nombre: 'Cartera de aseguradoras', icono: 'ti-shield-heart', descripcion: 'Reclamos pendientes por aseguradora y antigüedad. PDF y Excel.' },
+          { id: 'hos-rep-indicadores', nombre: 'Indicadores hospitalarios', icono: 'ti-gauge', descripcion: 'Ocupación, estancia promedio, giro de cama, intervalo de sustitución, ingreso por egreso y mortalidad.' }
+        ] }
+      ]
+    },
     opciones: {
-      catalogos: ['Pacientes', 'Médicos y especialidades', 'Áreas, habitaciones y camas', 'Servicios y tarifas', 'Aseguradoras y convenios'],
-      registros: ['Admisión', 'Citas y agenda médica', 'Cuenta del paciente', 'Órdenes médicas y farmacia', 'Programación de quirófanos'],
-      procesos: ['Censo diario y cargo día-cama', 'Egreso y facturación', 'Liquidación de honorarios médicos', 'Reclamos a aseguradoras', 'Cierre de caja hospitalaria'],
-      reportes: ['Censo y ocupación', 'Ingresos por servicio y médico', 'Cuentas abiertas de pacientes', 'Cartera de aseguradoras', 'Indicadores hospitalarios'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   }
