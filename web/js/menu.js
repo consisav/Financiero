@@ -536,6 +536,18 @@ window.MODULOS = [
             { id: 'cierre-de-inventario', nombre: 'Cierre de inventario', icono: 'ti-lock', descripcion: 'Cierre mensual con los saldos por producto y bodega (libro de inventarios); un mes cerrado ya no acepta movimientos; reapertura con motivo.' }
           ]
         }
+      ],
+      reportes: [
+        {
+          subgrupo: 'Reportes de inventario',
+          icono: 'ti-report-analytics',
+          pantallas: [
+            { id: 'existencias-inventario', nombre: 'Existencias', icono: 'ti-packages', descripcion: 'Existencias a una fecha por bodega, producto y lote, con vencimiento; un producto o todos. PDF y Excel.' },
+            { id: 'kardex-por-producto', nombre: 'Kardex por producto', icono: 'ti-list-details', descripcion: 'Movimientos del 1 de enero a la fecha con saldo inicial, entradas, salidas, saldo y costo promedio; un producto o todos. PDF y Excel.' },
+            { id: 'valuacion-de-inventario', nombre: 'Valuación de inventario', icono: 'ti-report-money', descripcion: 'Existencia a una fecha valuada al costo promedio ponderado, con el porcentaje de cada producto. PDF y Excel.' },
+            { id: 'rotacion-de-inventario', nombre: 'Rotación', icono: 'ti-refresh', descripcion: 'Rotación y días de inventario del 1 de enero a la fecha; clasificación alta, media, baja y sin movimiento. PDF y Excel.' }
+          ]
+        }
       ]
     },
     opciones: {
@@ -543,7 +555,7 @@ window.MODULOS = [
       registros: [],
       mantenimientos: ['Ubicaciones'],
       procesos: [],
-      reportes: ['Existencias', 'Kardex por producto', 'Valuación de inventario', 'Rotación'],
+      reportes: [],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },

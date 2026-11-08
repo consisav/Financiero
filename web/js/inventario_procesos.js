@@ -34,7 +34,7 @@
   window.PANTALLAS['toma-fisica'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Toma física de inventario', icono: 'ti-clipboard-check', clase: 'bk-movimientos bm-solo cx-rep pr-toma', grupo: 'Inventarios · Procesos' });
     const { sb } = ctx;
-    const f = { estado: 'TODAS', vista: 'TODOS', buscar: '', formato: 'PDF' };
+    const f = { estado: 'TODAS', vista: 'TODOS', buscar: '', formato: 'PDF', doc: 'AUTO' };
     let tomas = [], bodegas = [], productos = new Map(), actual = null, lineas = [], nueva = false;
     const bod = (id) => bodegas.find((b) => b.id === id);
     const ESTADO = { 'EN CONTEO': ['En conteo', 'pendiente'], CERRADA: ['Cerrada', 'aprobada'], ANULADA: ['Anulada', 'anulada'] };
@@ -101,7 +101,7 @@
             <div class="pr-acc">
               ${ed ? `<button type="button" class="boton primario-sm" data-accion="cerrar"><i class="ti ti-lock-check" aria-hidden="true"></i> Cerrar y ajustar</button>
                 <button type="button" class="boton secundario-sm" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button>` : ''}
-              <span class="iv-imp"><button type="button" class="boton secundario-sm" data-accion="acta"><i class="ti ti-printer" aria-hidden="true"></i> Acta</button><select name="formato">${['PDF', 'EXCEL'].map((x) => `<option ${f.formato === x ? 'selected' : ''}>${x}</option>`).join('')}</select></span>
+              <span class="iv-imp pr-imp"><select name="doc" aria-label="Documento a imprimir">${[['HOJA', 'Hoja de conteo'], ['ACTA', 'Acta de toma física']].map(([x, tx]) => `<option value="${x}" ${(f.doc === x || (f.doc === 'AUTO' && x === (enConteo ? 'HOJA' : 'ACTA'))) ? 'selected' : ''}>${tx}</option>`).join('')}</select><select name="formato" aria-label="Formato">${['PDF', 'EXCEL'].map((x) => `<option ${f.formato === x ? 'selected' : ''}>${x}</option>`).join('')}</select><button type="button" class="boton secundario-sm" data-accion="acta"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button></span>
             </div>
           </section>
           <div class="ec-kpis">${kpi('Productos / lotes', k.n)}${kpi('Contados', `${k.cont} de ${k.n}`, k.pend ? '' : 'ec-fin')}${kpi('Pendientes', k.pend, k.pend ? 'ec-alerta' : '')}
@@ -174,9 +174,23 @@
       window.FIN.aviso(`Toma cerrada: ${data.sobrantes} sobrante(s) y ${data.faltantes} faltante(s) ajustados`);
       await consultar(actual.id);
     }
+    // Hoja de conteo: para contar en la bodega (a mano) y luego transcribir; con conteo ciego no lleva la existencia del sistema.
+    function hojaConteo() {
+      const t = actual, b = bod(t.bodega_id), ciego = t.conteo_ciego && t.estado === 'EN CONTEO';
+      const ord = [...lineas].sort((x, y) => String(productos.get(x.producto_id)?.nombre).localeCompare(String(productos.get(y.producto_id)?.nombre)) || String(x.lote || '').localeCompare(String(y.lote || '')));
+      const columnas = [col('No.', 'entero', 6), col('Código', 'texto', 12), col('Producto', 'texto', 48), col('Lote', 'texto', 13), col('Vence', 'texto', 11), ...(ciego ? [] : [col('Sistema', 'numero', 11)]), col('Conteo físico', 'texto', 14), col('Recuento', 'texto', 12), col('Observaciones', 'texto', 30)];
+      const filas = ord.map((l, i) => { const p = productos.get(l.producto_id); return { valores: [i + 1, p?.codigo_producto || String(p?.codigo ?? ''), p?.nombre || '', l.lote || '', fmt.fechaDia(l.fecha_vencimiento), ...(ciego ? [] : [r4(l.existencia_sistema)]), l.conteo == null ? '' : String(cant(l.conteo)), '', l.observaciones || ''] }; });
+      for (let i = 0; i < 8; i++) filas.push({ valores: [ord.length + i + 1, '', '(producto encontrado que no está en la lista)', '', '', ...(ciego ? [] : ['']), '', '', ''] });
+      const cfg = { titulo: `Hoja de conteo físico · Toma No. ${t.numero}`, orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Hoja de conteo', archivo: `hoja_conteo_toma_${t.numero}`, columnas, filas,
+        parametros: [`Empresa: ${empresaDe(ctx)}`, `Bodega: ${b ? `${b.codigo} · ${b.nombre}` : ''}`, `Fecha de corte: ${fmt.fechaDia(t.fecha_corte)}`, `Responsable: ${t.responsable || '—'}`, ciego ? 'Conteo ciego' : 'Con existencia del sistema'] };
+      if (f.formato === 'PDF') cfg.firmas = [`Contó${t.responsable ? `: ${t.responsable}` : ''}`, 'Verificó', 'Encargado de bodega'];
+      salida(f.formato, cfg);
+    }
     function acta() {
       const t = actual, k = totales(), b = bod(t.bodega_id);
       const cerrada = t.estado === 'CERRADA';
+      // Con conteo ciego en curso no se imprime lo que dice el sistema.
+      if (t.conteo_ciego && t.estado === 'EN CONTEO') return window.FIN.aviso('Conteo ciego en curso: el acta con existencias y diferencias se imprime al cerrar la toma. Imprime la hoja de conteo.');
       const columnas = [col('Código', 'texto', 12), col('Producto', 'texto', 44), col('Lote', 'texto', 13), col('Vence', 'texto', 11), col('Sistema', 'numero', 11), col('Conteo físico', 'numero', 12), col('Diferencia', 'numero', 11), col('Costo', 'monto', 12), col('Valor diferencia', 'monto', 15), col('Observaciones', 'texto', 28)];
       const filas = lineas.map((l) => { const p = productos.get(l.producto_id); return { valores: [p?.codigo_producto || String(p?.codigo ?? ''), p?.nombre || '', l.lote || '', fmt.fechaDia(l.fecha_vencimiento), r4(l.existencia_sistema), l.conteo == null ? '' : r4(l.conteo), l.conteo == null ? '' : r4(l.diferencia), r2(l.costo_unitario), l.conteo == null ? '' : r2(l.valor_diferencia), l.observaciones || ''] }; });
       filas.push({ valores: [`Total · ${k.n} producto(s) · sobrantes Q ${fmt.monto(k.sob)} · faltantes Q ${fmt.monto(k.fal)}`, '', '', '', '', '', '', '', r2(k.sob + k.fal), ''], tipo: 'total' });
@@ -194,6 +208,7 @@
       if (e.target.name === 'estado') { f.estado = e.target.value; return consultar(null); }
       if (e.target.name === 'toma') return abrir(tomas.find((t) => String(t.id) === e.target.value) || null);
       if (e.target.name === 'formato') { f.formato = e.target.value; return; }
+      if (e.target.name === 'doc') { f.doc = e.target.value; return; }
       if (e.target.name === 'vista') { f.vista = e.target.value; return pintar(); }
       if (e.target.dataset.c) return guardarLinea(e.target.closest('tr[data-l]'));
     });
@@ -215,7 +230,7 @@
       if (a === 'cancelar-nueva') { nueva = false; return pintar(); }
       if (a === 'agregar') return agregar();
       if (a === 'cerrar') return cerrar();
-      if (a === 'acta') return acta();
+      if (a === 'acta') return (ctx.pDet.querySelector('[name=doc]')?.value === 'HOJA' ? hojaConteo() : acta());
       if (a === 'anular') { const m = prompt(`Motivo de la anulación de la toma ${actual.numero}:`); if (!m) return; const { error } = await sb.rpc('anular_toma_fisica', { p_id: actual.id, p_motivo: m }); if (error) return window.FIN.aviso(window.UI.traducirError(error)); return consultar(actual.id); }
     });
     iniciar();

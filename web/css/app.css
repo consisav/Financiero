@@ -5604,3 +5604,13 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .pr-mes.pr-curso { opacity: .6; }
 @media (max-width: 1200px) { .pr-meses { grid-template-columns: repeat(4, minmax(0, 1fr)); } .pr-cab { grid-template-columns: 1fr; } .pr-id { border-right: 0; } }
 @media (max-width: 700px) { .pr-meses { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pr-nueva-c { grid-template-columns: 1fr; } }
+
+/* Inventarios · Reportes: vista previa con grupos, subtotales y total */
+.pr-rep .bm-form { display: flex; flex-direction: column; gap: 6px; min-height: 0; height: 100%; }
+.pr-rep .pr-tabla { flex: 1 1 0; min-height: 0; overflow: auto; }
+.pr-rep .pr-prod { min-width: 340px; }
+.pr-tabla tr.pr-g td { background: color-mix(in srgb, var(--acento) 10%, var(--panel)); color: var(--acento); font-weight: 700; }
+.pr-tabla tr.pr-s td { font-weight: 700; background: var(--fondo); border-top: 1px solid var(--borde); }
+.pr-tabla tr.pr-t td { font-weight: 700; background: color-mix(in srgb, var(--acento) 8%, var(--panel)); border-top: 2px solid var(--acento); position: sticky; bottom: 0; }
+.pr-tabla tr.pr-n td { font-style: italic; color: var(--texto-suave); }
+.pr-tabla tr.pr-alerta td { color: #b42318; }

@@ -64,6 +64,8 @@
       if (v === '' || v == null) return '<td></td>';
       if (c.tipo === 'monto' && typeof v === 'number') return `<td class="n">${fmt.monto(v)}</td>`;
       if (c.tipo === 'entero' && typeof v === 'number') return `<td class="n">${v.toLocaleString('es-GT')}</td>`;
+      if (c.tipo === 'numero' && typeof v === 'number') return `<td class="n">${v.toLocaleString('es-GT', { maximumFractionDigits: 4 })}</td>`;
+      if (c.tipo === 'porcentaje' && typeof v === 'number') return `<td class="n">${(v * 100).toFixed(1)} %</td>`;
       return `<td class="${c.tipo === 'texto' ? '' : 'n'}">${esc(String(v))}</td>`;
     };
     const cuerpo = filas.map((f) => (f.tipo === 'grupo' ? `<tr class="g"><td colspan="${n}">${esc(String(f.valores[0] ?? ''))}</td></tr>`
