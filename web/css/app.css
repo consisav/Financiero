@@ -4925,8 +4925,6 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .vf-form .vfa-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .vf-form .vfa-cards .vfb-card { padding: 5px 10px 7px; gap: 3px; }
 .vf-form .vfa-cards .vfb-g { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px 6px; }
-.vf-form .vfa-cards .vfb-card:has(> .vf-checks) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 14px; }
-.vf-form .vfa-cards .vfb-card:has(> .vf-checks) > .vfb-g { grid-column: 1 / -1; }
 .vf-form .vfa-cards .vf-checks { justify-content: flex-end; gap: 2px 12px; font-size: 12px; }
 .vf-form .bm-pestanas { min-height: 240px; }
 .vf-form .bm-tabs-barra { margin-bottom: 4px; }
@@ -4936,8 +4934,30 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .vf-form .vf-pr-col > .boton, .vf-form .vf-pr-guia .boton { padding-top: 3px; padding-bottom: 3px; font-size: 12.5px; }
 .vf-form .vf-pr-tamanos { gap: 10px; font-size: 12px; flex-wrap: nowrap; }
 @media (max-width: 1500px) { .vf-form .vfa-cards .vfb-g { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.vf-form .vfa-cards .vfb-card:has(> .vf-checks) .vfb-g .vfb-c2 { grid-column: span 1; }
-.vf-form .vfa-cards .vfb-card:has(> .vf-checks) .vf-checks { flex-wrap: nowrap; white-space: nowrap; gap: 10px; font-size: 11.5px; }
-@media (max-width: 1500px) { .vf-form .vfa-cards .vfb-card:has(> .vf-checks) .vfb-g { grid-template-columns: repeat(3, minmax(0, 1fr)); } .vf-form .vfa-cards .vfb-card:has(> .vf-checks) .vf-checks { flex-wrap: wrap; } }
-.vf-form .vfa-cards .vfb-card:has(> .vf-checks) > .ta-col-titulo { white-space: nowrap; }
-.vf-form .vfa-cards .vfb-card:has(> .vf-checks) { grid-template-columns: max-content minmax(0, 1fr); }
+/* Impuestos y cobro: fila 1 = montos y datos; fila 2 = casillas e Incoterm */
+.vf-form .vfa-cards .vfb-card.vf-imp { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px 8px; align-items: end; }
+.vf-form .vf-imp > .ta-col-titulo { grid-column: 1 / -1; }
+.vf-form .vf-imp > .vf-checks, .vf-form .vf-imp > .vfb-g { display: contents; }
+.vf-form .vf-imp .vfb-g > .campo { order: 1; grid-column: auto; }
+.vf-form .vf-imp .vfb-g > .campo:last-child { order: 3; grid-column: span 2; }
+.vf-form .vf-imp .vf-checks > label { order: 2; align-self: end; display: inline-flex; align-items: center; gap: 5px; height: 26px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.vf-form .vf-imp .campo > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Barra de empresa compacta */
+.vf-facturas .bk-filtros { display: flex !important; align-items: center; gap: 10px 24px; padding: 6px 16px !important; min-height: 0; }
+.vf-facturas .bk-filtros .ta-titulo { gap: 10px; }
+.vf-facturas .bk-filtros .ta-titulo h2 { font-size: 16px; line-height: 1.15; }
+.vf-facturas .bk-filtros .tk-icono { width: 32px; height: 32px; }
+.vf-facturas .bk-filtros .bk-empresa { display: flex; flex-direction: row; align-items: center; gap: 8px; margin: 0; }
+.vf-facturas .bk-filtros .bk-empresa > span { margin: 0; font-size: 12px; }
+.vf-facturas .bk-filtros .bk-empresa select { min-width: 280px; height: 32px; padding: 4px 10px; }
+.vf-facturas .bk-filtros .oc-extra:empty { display: none; }
+.vf-facturas .ta-espacio, .vf-facturas.ta-espacio { grid-template-rows: auto minmax(0, 1fr); }
+.vf-form .vf-imp .vfb-g > .campo:last-child { grid-column: span 1; }
+.vf-form .vf-imp .vf-checks > label:nth-child(2) { grid-column: span 2; }
+@media (max-width: 1700px) {
+  .vf-form .vfa-cards .vfb-g { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .vf-form .vfa-cards .vfb-card.vf-imp { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .vf-form .vf-imp .vfb-g > .campo:last-child { order: 1; }
+  .vf-form .vf-imp .vf-checks > label { order: 2; }
+  .vf-form .vf-imp .vf-checks > label:nth-child(2) { grid-column: span 1; }
+}

@@ -224,7 +224,7 @@
                   <label class="pc-check vf-chk"><input type="checkbox" name="unificar_productos" ${v.unificar_productos ? 'checked' : ''} ${dis}> Unificar</label>
                 </div>
               </section>
-              <section class="vfb-card">
+              <section class="vfb-card vf-imp">
                 <h3 class="ta-col-titulo"><i class="ti ti-receipt-tax" aria-hidden="true"></i> Impuestos y cobro</h3>
                 <div class="vf-checks">
                   <label class="pc-check"><input type="checkbox" name="exento_iva" ${v.exento_iva ? 'checked' : ''} ${dis}> Exento de IVA</label>
