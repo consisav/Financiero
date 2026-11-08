@@ -1,0 +1,54 @@
+{
+ "version": "2026.11e",
+ "titulo": "Manual del módulo Nóminas",
+ "resumen": "Personal, novedades, planillas, prestaciones y reportes laborales de Guatemala.",
+ "nombresTablas": {},
+ "diapositivas": [
+  {
+   "tipo": "portada",
+   "titulo": "Módulo de Nóminas",
+   "subtitulo": "Planillas, prestaciones e IGSS según la ley de Guatemala"
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "El ciclo de la planilla",
+   "subtitulo": "Novedades › Calcular › Aprobar › Pagar › Contabilizar",
+   "pasos": [
+    "Registra las novedades del período: horas extra, ausencias, suspensiones, otros ingresos y descuentos.",
+    "Calcula la planilla: salario proporcional, horas extra al 150 %, bonificación incentivo, IGSS 4.83 % e ISR.",
+    "Otra persona la revisa y aprueba (segregación de funciones).",
+    "Registra el pago: se descuentan las cuotas de préstamos.",
+    "Genera la partida de planilla en Contabilidad.",
+    "Imprime las boletas, la planilla del IGSS y el libro de salarios."
+   ]
+  },
+  {
+   "tipo": "concepto",
+   "titulo": "Prestaciones laborales",
+   "subtitulo": "Código de Trabajo y leyes complementarias",
+   "pasos": [
+    "Bono 14 (Decreto 42-92): un salario, del 1 de julio al 30 de junio; se paga en la primera quincena de julio.",
+    "Aguinaldo (Decreto 76-78): un salario, del 1 de diciembre al 30 de noviembre; 50 % en diciembre y 50 % en enero, o completo en diciembre.",
+    "Vacaciones: 15 días hábiles por año de servicio.",
+    "Indemnización por despido injustificado: un salario por año, más 1/6 de aguinaldo y 1/6 de Bono 14.",
+    "Bonificación incentivo Q 250 mensuales (Decreto 37-2001): no afecta IGSS ni prestaciones."
+   ]
+  },
+  {
+   "tipo": "consejos",
+   "titulo": "Buenas prácticas",
+   "puntos": [
+    "Actualiza el salario mínimo cada enero en los Parámetros.",
+    "Registra todas las novedades antes de calcular.",
+    "Revisa la planilla del IGSS: todo empleado debe tener afiliación.",
+    "Provisiona las prestaciones cada mes para no afectar la liquidez en julio y diciembre.",
+    "Conserva las boletas firmadas como comprobante de pago."
+   ]
+  },
+  {
+   "tipo": "cierre",
+   "titulo": "¡Listo para pagar la planilla!",
+   "subtitulo": "Consulta este manual en Nóminas › Ayuda › Manual del módulo"
+  }
+ ]
+}

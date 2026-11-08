@@ -659,12 +659,44 @@ window.MODULOS = [
     nombre: 'Nóminas y planillas',
     icono: 'ti-users',
     descripcion: 'Empleados, planillas, IGSS, ISR y prestaciones.',
+    subgrupos: {
+      catalogos: [
+        { subgrupo: 'Personal', icono: 'ti-users', pantallas: [
+          { id: 'nom-empleados', nombre: 'Empleados', icono: 'ti-users', descripcion: 'Ficha del empleado: DPI, NIT, afiliación IGSS, puesto, jornada, salario, bonificación y cuenta para el pago.' },
+          { id: 'nom-departamentos', nombre: 'Departamentos', icono: 'ti-sitemap', descripcion: 'Departamentos que agrupan la planilla y el costo de personal.' },
+          { id: 'nom-puestos', nombre: 'Puestos', icono: 'ti-briefcase', descripcion: 'Puestos con su departamento y salario base de referencia.' }
+        ] },
+        { subgrupo: 'Configuración', icono: 'ti-adjustments', pantallas: [
+          { id: 'nom-conceptos', nombre: 'Conceptos de ingreso y descuento', icono: 'ti-list-details', descripcion: 'Comisiones, bonos, viáticos y descuentos con su afectación a IGSS, ISR y prestaciones.' },
+          { id: 'nom-parametros', nombre: 'Parámetros de nómina', icono: 'ti-adjustments', descripcion: 'IGSS laboral y patronal, bonificación incentivo, salario mínimo, ISR de asalariados y cuentas de la partida.' }
+        ] }
+      ],
+      registros: [
+        { subgrupo: 'Novedades', icono: 'ti-clock-plus', pantallas: [
+          { id: 'nom-novedades', nombre: 'Novedades del período', icono: 'ti-clock-plus', descripcion: 'Horas extra, ausencias, suspensiones IGSS, otros ingresos y descuentos del mes.' },
+          { id: 'nom-prestamos', nombre: 'Anticipos y préstamos', icono: 'ti-cash-banknote', descripcion: 'Anticipos y préstamos con su cuota, que se descuenta en cada planilla.' },
+          { id: 'nom-vacaciones', nombre: 'Vacaciones', icono: 'ti-beach', descripcion: 'Saldo de vacaciones (15 días por año) y registro de los goces.' }
+        ] }
+      ],
+      procesos: [
+        { subgrupo: 'Planillas', icono: 'ti-file-dollar', pantallas: [
+          { id: 'nom-planilla', nombre: 'Planillas', icono: 'ti-file-dollar', descripcion: 'Planilla ordinaria, Bono 14 y aguinaldo: cálculo, aprobación, pago y partida contable.' },
+          { id: 'nom-liquidacion', nombre: 'Liquidación laboral', icono: 'ti-user-minus', descripcion: 'Salario pendiente, indemnización, aguinaldo, Bono 14 y vacaciones proporcionales al dar de baja.' }
+        ] }
+      ],
+      reportes: [
+        { subgrupo: 'Reportes', icono: 'ti-report', pantallas: [
+          { id: 'nom-reporte-planilla', nombre: 'Planilla del período', icono: 'ti-file-spreadsheet', descripcion: 'Planilla por departamento con ingresos, descuentos, líquido y cuota patronal. PDF y Excel.' },
+          { id: 'nom-boletas', nombre: 'Boletas de pago', icono: 'ti-receipt', descripcion: 'Boleta de cada empleado con ingresos, descuentos, líquido y firma de recibido.' },
+          { id: 'nom-planilla-igss', nombre: 'Planilla del IGSS', icono: 'ti-shield-heart', descripcion: 'Salario afecto, cuota laboral y patronal por afiliado del mes.' },
+          { id: 'nom-retenciones-isr', nombre: 'Retenciones de ISR', icono: 'ti-receipt-tax', descripcion: 'ISR retenido a cada asalariado por mes y total del año.' },
+          { id: 'nom-libro-salarios', nombre: 'Libro de salarios', icono: 'ti-book', descripcion: 'Libro de salarios por empleado y período (Código de Trabajo art. 102).' },
+          { id: 'nom-costo-personal', nombre: 'Costo de personal', icono: 'ti-chart-bar', descripcion: 'Sueldos, bonificación, prestaciones y cuota patronal por departamento y mes.' },
+          { id: 'nom-provision-prestaciones', nombre: 'Provisión de prestaciones', icono: 'ti-pig-money', descripcion: 'Provisión mensual de indemnización, aguinaldo, Bono 14 y vacaciones por empleado.' }
+        ] }
+      ]
+    },
     opciones: {
-      catalogos: ['Empleados', 'Puestos', 'Departamentos', 'Conceptos de pago y descuento'],
-      registros: ['Horas extra', 'Ausencias', 'Anticipos y préstamos', 'Vacaciones'],
-      mantenimientos: ['Tablas de IGSS e ISR', 'Salario mínimo', 'Bonificación incentivo'],
-      procesos: ['Generar planilla', 'Bono 14', 'Aguinaldo', 'Indemnización'],
-      reportes: ['Planilla del período', 'Boletas de pago', 'Planilla IGSS', 'Costo de personal'],
       ayuda: ['Manual del módulo', 'Preguntas frecuentes']
     }
   },

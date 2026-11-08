@@ -1528,25 +1528,6 @@
  "activos-fijos|Inventario de activos": "listado de activos con valor en libros.",
  "activos-fijos|Depreciación acumulada": "depreciación acumulada por activo y cuenta.",
  "activos-fijos|Activos por ubicación": "activos agrupados por ubicación y responsable.",
- "nominas|Empleados": "ficha del empleado.",
- "nominas|Puestos": "puestos y salario base.",
- "nominas|Departamentos": "departamentos de la empresa.",
- "nominas|Conceptos de pago y descuento": "ingresos y descuentos de planilla.",
- "nominas|Horas extra": "registro de horas extra.",
- "nominas|Ausencias": "faltas, permisos y suspensiones IGSS.",
- "nominas|Anticipos y préstamos": "anticipos y préstamos con descuento en planilla.",
- "nominas|Vacaciones": "control de vacaciones.",
- "nominas|Tablas de IGSS e ISR": "cuotas IGSS (4.83 % laboral, 12.67 % patronal) e ISR asalariados.",
- "nominas|Salario mínimo": "salario mínimo vigente por actividad.",
- "nominas|Bonificación incentivo": "bonificación incentivo (Decreto 37-2001).",
- "nominas|Generar planilla": "cálculo de la planilla del período.",
- "nominas|Bono 14": "cálculo del Bono 14 (julio).",
- "nominas|Aguinaldo": "cálculo del aguinaldo (diciembre).",
- "nominas|Indemnización": "cálculo de indemnización y prestaciones.",
- "nominas|Planilla del período": "planilla impresa.",
- "nominas|Boletas de pago": "boleta de cada empleado.",
- "nominas|Planilla IGSS": "planilla de seguridad social.",
- "nominas|Costo de personal": "costo de personal por departamento.",
  "comercio|Agentes aduanales": "agentes aduanales.",
  "comercio|Aduanas": "aduanas de Guatemala.",
  "comercio|Incoterms": "términos de comercio internacional.",
@@ -1868,6 +1849,194 @@
    "Abre Integraciones SAT › Reportes y gráficas › Análisis › DTE por estado y elige {empresa}.",
    "Elige el período.",
    "Revisa los pendientes de certificar por tipo e imprime en PDF o Excel."
+  ]
+ },
+ "nom-empleados": {
+  "puntos": [
+   "Ficha de cada empleado con sus datos legales, puesto, jornada, salario y forma de pago."
+  ],
+  "pasos": [
+   "Abre Nóminas › Catálogos › Personal › Empleados y elige {empresa}.",
+   "Presiona «Nuevo empleado»: código, nombres, apellidos, DPI, NIT y número de afiliación al IGSS.",
+   "Indica la fecha de ingreso, el departamento, el puesto, el tipo de contrato y la jornada (diurna 8 h, mixta 7 h, nocturna 6 h).",
+   "Escribe el salario base mensual (no menor al mínimo) y la bonificación incentivo (Q 250).",
+   "Registra la forma de pago con el banco y la cuenta para las transferencias y guarda.",
+   "Para una baja usa Procesos › Liquidación laboral; el estado cambia al pagarla."
+  ]
+ },
+ "nom-departamentos": {
+  "puntos": [
+   "Departamentos que agrupan la planilla."
+  ],
+  "pasos": [
+   "Abre Nóminas › Catálogos › Personal › Departamentos y elige {empresa}.",
+   "Presiona «Nuevo» y escribe el nombre; edita en la tabla."
+  ]
+ },
+ "nom-puestos": {
+  "puntos": [
+   "Puestos con su departamento y salario base."
+  ],
+  "pasos": [
+   "Abre Nóminas › Catálogos › Personal › Puestos y elige {empresa}.",
+   "Presiona «Nuevo», escribe el nombre, elige el departamento y el salario de referencia."
+  ]
+ },
+ "nom-conceptos": {
+  "puntos": [
+   "Conceptos de ingreso y descuento con su afectación a IGSS, ISR y prestaciones."
+  ],
+  "pasos": [
+   "Abre Nóminas › Catálogos › Configuración › Conceptos de ingreso y descuento y elige {empresa}.",
+   "Revisa los conceptos creados por omisión: comisiones, otros bonos, viáticos, descuentos judiciales y seguro médico.",
+   "Marca si cada ingreso afecta IGSS, ISR y prestaciones (los viáticos no afectan).",
+   "Agrega conceptos con «Nuevo» e indica su cuenta contable."
+  ]
+ },
+ "nom-parametros": {
+  "puntos": [
+   "Porcentajes legales, salario mínimo, ISR de asalariados y cuentas contables de la partida de planilla."
+  ],
+  "pasos": [
+   "Abre Nóminas › Catálogos › Configuración › Parámetros de nómina y elige {empresa}.",
+   "Verifica IGSS laboral 4.83 %, patronal 12.67 %, bonificación Q 250 y escribe el salario mínimo vigente del año.",
+   "Revisa el ISR: deducción personal Q 48,000, 5 % hasta Q 300,000 y 7 % el excedente.",
+   "Elige la frecuencia de pago (mensual o quincenal).",
+   "Escribe las cuentas contables de movimiento de la partida (gasto sueldos, bonificación, cuota patronal, IGSS e ISR por pagar, préstamos y sueldos por pagar); ejemplo: {cuenta}.",
+   "Presiona «Guardar»."
+  ]
+ },
+ "nom-novedades": {
+  "puntos": [
+   "Horas extra, ausencias, suspensiones IGSS, otros ingresos y descuentos del mes."
+  ],
+  "pasos": [
+   "Abre Nóminas › Registros › Novedades › Novedades del período y elige {empresa}.",
+   "Elige el año y el mes (y la quincena si se paga quincenal).",
+   "Elige el empleado y la clase: horas extra (en horas), ausencia o suspensión IGSS (en días), ingreso o descuento (con concepto y monto).",
+   "Presiona «Agregar»; toca una novedad pendiente para quitarla.",
+   "Las novedades se toman al calcular la planilla y se cierran al pagarla."
+  ]
+ },
+ "nom-prestamos": {
+  "puntos": [
+   "Anticipos y préstamos a empleados con cuota por planilla."
+  ],
+  "pasos": [
+   "Abre Nóminas › Registros › Novedades › Anticipos y préstamos y elige {empresa}.",
+   "Elige el empleado, el tipo, la fecha, el monto y el número de cuotas: la cuota se calcula sola.",
+   "Presiona «Registrar»: la cuota se descuenta en cada planilla ordinaria hasta saldar.",
+   "Toca un préstamo activo para anularlo."
+  ]
+ },
+ "nom-vacaciones": {
+  "puntos": [
+   "Saldo de vacaciones por empleado (15 días hábiles por año) y goces registrados."
+  ],
+  "pasos": [
+   "Abre Nóminas › Registros › Novedades › Vacaciones y elige {empresa}.",
+   "Revisa el saldo: días ganados, gozados y pendientes con su valor (en rojo más de 30 días acumulados).",
+   "Para registrar un goce elige el empleado, desde y hasta: los días hábiles se calculan solos.",
+   "Imprime el saldo en PDF o Excel."
+  ]
+ },
+ "nom-planilla": {
+  "puntos": [
+   "Planilla ordinaria, Bono 14 y aguinaldo: Calcular › Aprobar › Pagar › Contabilizar."
+  ],
+  "pasos": [
+   "Abre Nóminas › Procesos › Planillas › Planillas y elige {empresa}.",
+   "Elige el tipo (Ordinaria, Bono 14 en julio, Aguinaldo en diciembre), el año y el mes.",
+   "Presiona «Calcular planilla»: toma los empleados activos, las novedades y las cuotas de préstamos; calcula salario proporcional, horas extra, bonificación, IGSS, ISR y líquido.",
+   "Revisa la planilla por departamento; si corriges novedades, vuelve a calcular.",
+   "Otra persona presiona «Aprobar» (segregación de funciones).",
+   "«Registrar pago» descuenta las cuotas de préstamos y cierra las novedades.",
+   "«Generar partida» crea la póliza de planilla en Contabilidad con las cuentas de los parámetros.",
+   "Imprime la planilla en PDF (con firmas) o Excel."
+  ]
+ },
+ "nom-liquidacion": {
+  "puntos": [
+   "Liquidación al terminar la relación laboral."
+  ],
+  "pasos": [
+   "Abre Nóminas › Procesos › Planillas › Liquidación laboral y elige {empresa}.",
+   "Elige el empleado, la fecha de baja y el motivo.",
+   "Revisa el cálculo: salario pendiente, indemnización (solo despido injustificado), aguinaldo, Bono 14 y vacaciones proporcionales, menos IGSS y saldo de préstamos.",
+   "Imprime el finiquito en PDF con las firmas.",
+   "Presiona «Guardar liquidación» y luego apruébala y págala en Planillas (tipo Liquidación): el empleado queda de baja."
+  ]
+ },
+ "nom-reporte-planilla": {
+  "puntos": [
+   "La planilla completa por departamento."
+  ],
+  "pasos": [
+   "Abre Nóminas › Reportes y gráficas › Planilla del período y elige {empresa}.",
+   "Elige el año y la planilla aprobada o pagada.",
+   "Imprime en PDF (con firmas) o Excel con la gráfica de costo por departamento."
+  ]
+ },
+ "nom-boletas": {
+  "puntos": [
+   "Boleta de pago de cada empleado."
+  ],
+  "pasos": [
+   "Abre Nóminas › Reportes y gráficas › Boletas de pago y elige {empresa}.",
+   "Elige la planilla.",
+   "«PDF» imprime una boleta por empleado con ingresos, descuentos, líquido y firma de recibido; «Excel» descarga la planilla."
+  ]
+ },
+ "nom-planilla-igss": {
+  "puntos": [
+   "Salario afecto y cuotas laboral y patronal por afiliado del mes."
+  ],
+  "pasos": [
+   "Abre Nóminas › Reportes y gráficas › Planilla del IGSS y elige {empresa}.",
+   "Elige el año y el mes.",
+   "Revisa los empleados sin número de afiliación (en rojo) y el total a pagar.",
+   "Usa el reporte para la planilla electrónica del IGSS; imprime en PDF o Excel."
+  ]
+ },
+ "nom-retenciones-isr": {
+  "puntos": [
+   "ISR retenido a cada asalariado por mes y en el año."
+  ],
+  "pasos": [
+   "Abre Nóminas › Reportes y gráficas › Retenciones de ISR y elige {empresa}.",
+   "Elige el año.",
+   "Usa el total por empleado para la constancia anual de retenciones; imprime en PDF o Excel."
+  ]
+ },
+ "nom-libro-salarios": {
+  "puntos": [
+   "Libro de salarios por empleado (Código de Trabajo art. 102)."
+  ],
+  "pasos": [
+   "Abre Nóminas › Reportes y gráficas › Libro de salarios y elige {empresa}.",
+   "Elige el año y un empleado o todos.",
+   "Imprime el libro en PDF para su autorización o en Excel."
+  ]
+ },
+ "nom-costo-personal": {
+  "puntos": [
+   "Costo de personal por departamento y por mes."
+  ],
+  "pasos": [
+   "Abre Nóminas › Reportes y gráficas › Costo de personal y elige {empresa}.",
+   "Elige el año.",
+   "Revisa sueldos, bonificación, prestaciones y cuota patronal por departamento con su participación; imprime con las gráficas."
+  ]
+ },
+ "nom-provision-prestaciones": {
+  "puntos": [
+   "Provisión mensual de prestaciones laborales por empleado."
+  ],
+  "pasos": [
+   "Abre Nóminas › Reportes y gráficas › Provisión de prestaciones y elige {empresa}.",
+   "Elige el año y el mes.",
+   "Revisa la provisión: indemnización 9.72 %, aguinaldo 8.33 %, Bono 14 8.33 % y vacaciones 4.17 % del salario.",
+   "Usa el total para la partida de provisión del mes; imprime en PDF o Excel."
   ]
  }
 }
