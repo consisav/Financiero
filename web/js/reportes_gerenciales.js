@@ -111,7 +111,7 @@
     const par = conf.parametros || {};
     const g = { ...(conf.reportes?.[id]?.param || {}) };
     delete g.desde; delete g.fecha;
-    return { loc: conf.localidad_id, desde: per.desde, fecha: per.fecha, contenido: par.contenido || 'RESUMIDO', producto: '', tercero: '', mostrar: 'CON SALDO', ceros: false, banco: '', cuenta: '', nivel: (par.contenido || 'RESUMIDO') === 'DETALLADO' ? 'DETALLADA' : 'RESUMIDA', ...g };
+    return { loc: conf.localidad_id, desde: per.desde, fecha: per.fecha, contenido: par.contenido || 'RESUMIDO', tipoPeriodo: 'RANGO', producto: '', tercero: '', mostrar: 'CON SALDO', ceros: false, banco: '', cuenta: '', nivel: (par.contenido || 'RESUMIDO') === 'DETALLADO' ? 'DETALLADA' : 'RESUMIDA', ...g };
   }
 
   // Catálogos de una empresa para llenar los parámetros (se leen una vez por empresa).
@@ -158,8 +158,8 @@
         const ters = necesita('cliente') ? clis.map((x) => ({ key: `C${x.id}`, t: etqTer(x) })) : provs.map((x) => ({ key: `P${x.id}`, t: etqTer(x) }));
         const campo = ([c, etq]) => {
           if (c === 'empresa') return `<label class="campo rg-p-emp"><span>Empresa</span>${sel('loc', locs.map((l) => [l.id, `${l.codigo} · ${l.nombre_comercial}`]), p.loc, r.id)}</label>`;
-          if (c === 'desde') return `<label class="campo"><span>Fecha inicial</span><input type="date" data-p="desde" data-r="${r.id}" value="${esc(p.desde)}" max="${esc(p.fecha)}"></label>`;
-          if (c === 'fecha') return `<label class="campo"><span>${etq || 'Fecha'}</span><input type="date" data-p="fecha" data-r="${r.id}" value="${esc(p.fecha)}"></label>`;
+          if (c === 'desde') return `<label class="campo"><span>Período</span>${sel('tipoPeriodo', [['RANGO', 'Fecha inicial y final'], ['FECHA', 'A la fecha']], p.tipoPeriodo, r.id)}</label>${p.tipoPeriodo === 'FECHA' ? '' : `<label class="campo"><span>Fecha inicial</span><input type="date" data-p="desde" data-r="${r.id}" value="${esc(p.desde)}" max="${esc(p.fecha)}"></label>`}`;
+          if (c === 'fecha') return `<label class="campo"><span>${necesita('desde') && p.tipoPeriodo === 'FECHA' ? 'A la fecha' : etq || 'Fecha'}</span><input type="date" data-p="fecha" data-r="${r.id}" value="${esc(p.fecha)}"></label>`;
           if (c === 'producto') { const x = prods.find((y) => String(y.id) === String(p.producto)); return `<label class="campo rg-p-ancho"><span>Producto</span><input data-p="producto" data-r="${r.id}" list="rg-dl-p-${r.id}" value="${esc(x ? etqProd(x) : '')}" placeholder="Todos los productos" autocomplete="off"><datalist id="rg-dl-p-${r.id}">${prods.map((y) => `<option value="${esc(etqProd(y))}"></option>`).join('')}</datalist></label>`; }
           if (c === 'cliente' || c === 'proveedor') { const x = ters.find((y) => y.key === p.tercero); return `<label class="campo rg-p-ancho"><span>${c === 'cliente' ? 'Nombre del cliente' : 'Nombre del proveedor'}</span><input data-p="tercero" data-r="${r.id}" list="rg-dl-t-${r.id}" value="${esc(x ? x.t : '')}" placeholder="${c === 'cliente' ? 'Todos los clientes' : 'Todos los proveedores'}" autocomplete="off"><datalist id="rg-dl-t-${r.id}">${ters.map((y) => `<option value="${esc(y.t)}"></option>`).join('')}</datalist></label>`; }
           if (c === 'mostrar') return `<label class="campo"><span>Mostrar</span>${sel('mostrar', [['CON SALDO', 'Con saldo'], ['CON MOVIMIENTO', 'Con movimiento o saldo'], ['VENCIDOS', 'Con saldo vencido'], ['TODOS', 'Todos']], p.mostrar, r.id)}</label>`;
@@ -201,6 +201,7 @@
         p[n] = t.type === 'checkbox' ? t.checked : t.value;
         if (n === 'loc') { p.producto = ''; p.tercero = ''; p.banco = ''; p.cuenta = ''; return repintar(id); }
         if (n === 'banco') { p.cuenta = ''; return repintar(id); }
+        if (n === 'tipoPeriodo') return repintar(id);
         if (n === 'fecha' && p.desde > p.fecha) { p.desde = p.fecha; return repintar(id); }
       });
       const fin = (v) => { velo.remove(); listo(v); };
@@ -211,11 +212,21 @@
         for (const inp of form.querySelectorAll('[data-p=producto], [data-p=tercero]')) {
           if (!(await resolver(inp))) { form.querySelector('.modal-error').textContent = `«${inp.value}» no está en el catálogo de esa empresa.`; inp.focus(); return; }
         }
-        const malo = elegidos.find((r) => camposDe(r.id).includes('desde') && vals[r.id].desde > vals[r.id].fecha);
+        const malo = elegidos.find((r) => camposDe(r.id).includes('desde') && vals[r.id].tipoPeriodo !== 'FECHA' && vals[r.id].desde > vals[r.id].fecha);
         if (malo) { form.querySelector('.modal-error').textContent = `${malo.nombre}: la fecha inicial es posterior a la final.`; return; }
         fin(vals);
       });
     });
+  }
+
+  // Primera fecha con datos de un reporte en la empresa (para «a la fecha»).
+  async function inicioDatos(id, loc, hasta) {
+    const sb = window.FIN.sb, lado = window.REPORTES_COMERCIALES?.[id]?.lado;
+    try {
+      if (lado === 'VENTAS') { const { data } = await sb.from('facturas_venta').select('fecha_emision').eq('localidad_id', loc).order('fecha_emision').limit(1); if (data?.[0]) return new Date(data[0].fecha_emision).toLocaleDateString('en-CA', { timeZone: 'America/Guatemala' }); }
+      if (lado === 'COMPRAS') { const { data } = await sb.from('compras').select('fecha_documento').eq('localidad_id', loc).order('fecha_documento').limit(1); if (data?.[0]) return data[0].fecha_documento; }
+    } catch { /* desde el inicio */ }
+    return lado ? `${hasta.slice(0, 4)}-01-01` : '2000-01-01';
   }
 
   // ---------- Generación ----------
@@ -246,11 +257,18 @@
     const empTxt = (id) => { const l = locDe(id); return l ? `${l.codigo} · ${l.nombre_comercial}` : ''; };
     const resultados = [];
     for (const r of elegidos) {
-      const p = P(r.id), loc = Number(p.loc) || conf.localidad_id;
+      let p = P(r.id);
+      const loc = Number(p.loc) || conf.localidad_id;
+      const aLaFecha = p.tipoPeriodo === 'FECHA' && camposDe(r.id).includes('desde');
+      if (aLaFecha) p = { ...p, desde: await inicioDatos(r.id, loc, p.fecha) };
       // Contexto mínimo de pantalla que esperan los reportes (empresa del reporte, localidades y monedas).
       const ctx = { sb, sel: { org: conf.organizacion_id, loc }, localidad: (id) => locDe(id) || null, moneda: (id) => monedas.find((x) => x.id === id) };
       const prods = window.REPORTES_COMERCIALES?.[r.id] ? await catalogo('productos', loc) : [];
-      try { resultados.push({ r, p, sal: conf.reportes[r.id], cfg: await construirCfg(r.id, { sb, ctx, empresa: () => empTxt(loc), productos: () => prods }, p) }); }
+      try {
+        const cfg = await construirCfg(r.id, { sb, ctx, empresa: () => empTxt(loc), productos: () => prods }, p);
+        if (aLaFecha) cfg.parametros = (cfg.parametros || []).map((x) => String(x).replace(/^Del \d{2}\/\d{2}\/\d{4} al (\d{2}\/\d{2}\/\d{4})$/i, 'A la fecha: $1'));
+        resultados.push({ r, p, sal: conf.reportes[r.id], cfg });
+      }
       catch (e) { resultados.push({ r, p, sal: conf.reportes[r.id], error: window.UI.traducirError ? window.UI.traducirError(e) : e.message }); }
     }
     const ok = resultados.filter((x) => x.cfg);
@@ -458,9 +476,11 @@
             return x ? x.id : undefined;
           }, locs.map((l) => `${l.codigo} ${l.nombre_comercial}`))); p.producto = ''; p.tercero = ''; p.banco = ''; p.cuenta = '';
         } else if (c === 'desde') {
-          p.desde = await preguntar('¿Fecha inicial?', (t) => fechaDicha(t, F.hoy()) || undefined, ['Inicio de mes', 'Inicio de año', 'Ayer', 'Hoy']);
+          p.tipoPeriodo = await preguntar('¿El período es a la fecha, o con fecha inicial y fecha final?', (t) => (/a la fecha|acumulad|hasta/.test(norm(t)) ? 'FECHA' : /inicial|final|rango|entre|desde/.test(norm(t)) ? 'RANGO' : undefined), ['A la fecha', 'Fecha inicial y final']);
+          if (p.tipoPeriodo === 'RANGO') p.desde = await preguntar('¿Fecha inicial?', (t) => fechaDicha(t, F.hoy()) || undefined, ['Inicio de mes', 'Inicio de año', 'Ayer', 'Hoy']);
         } else if (c === 'fecha') {
-          p.fecha = await preguntar(`¿${etq || 'Fecha'}?`, (t) => { const f = fechaDicha(t, F.hoy()); return f && (!camposDe(r.id).includes('desde') || f >= p.desde) ? f : undefined; }, ['Hoy', 'Ayer', 'Fin de mes anterior']);
+          const aFecha = camposDe(r.id).includes('desde') && p.tipoPeriodo === 'FECHA';
+          p.fecha = await preguntar(`¿${aFecha ? 'A qué fecha' : etq || 'Fecha'}?`, (t) => { const f = fechaDicha(t, F.hoy()); return f && (!camposDe(r.id).includes('desde') || aFecha || f >= p.desde) ? f : undefined; }, ['Hoy', 'Ayer', 'Fin de mes anterior']);
         } else if (c === 'producto') {
           const ls = await catalogo('productos', loc());
           p.producto = await preguntar('¿De qué producto? Diga «todos» o el nombre del producto.', (t) => (/\btodos?\b/.test(norm(t)) ? '' : (mejor(t, ls, (x) => x.nombre, 0.6)?.id ?? undefined)), ['Todos']);
@@ -489,7 +509,7 @@
         return Object.values(o).some(Boolean) ? o : undefined;
       }, ['PDF', 'Excel', 'Voz', 'WhatsApp', 'Correo', 'PDF y voz']);
       const empresa = locs.find((l) => l.id === Number(p.loc));
-      const resumen = `${r.nombre} de ${empresa ? empresa.nombre_comercial : 'la empresa'}, ${p.desde && camposDe(r.id).includes('desde') ? `del ${fechaVoz(p.desde)} ` : ''}al ${fechaVoz(p.fecha)}, en ${SALIDAS.filter(([k]) => salidasDichas[k]).map(([, t]) => t).join(', ')}`;
+      const resumen = `${r.nombre} de ${empresa ? empresa.nombre_comercial : 'la empresa'}, ${p.desde && camposDe(r.id).includes('desde') && p.tipoPeriodo !== 'FECHA' ? `del ${fechaVoz(p.desde)} ` : 'a la fecha, '}al ${fechaVoz(p.fecha)}, en ${SALIDAS.filter(([k]) => salidasDichas[k]).map(([, t]) => t).join(', ')}`;
       const si = await preguntar(`¿Genero ${resumen}?`, (t) => (/\b(si|claro|dale|genera|adelante|ok)\b/.test(norm(t)) ? true : /\bno\b/.test(norm(t)) ? false : undefined), ['Sí', 'No']);
       if (!si) { decir('Está bien, no lo genero.'); await hablarYEsperar('Está bien, no lo genero.'); return cerrar(); }
       decir('Generando…');
@@ -521,7 +541,7 @@
     const { sb } = ctx;
     const yo = window.FIN.perfil();
     const reps = reportesDe(m).filter((r) => generable(r.id));
-    const est = { usuarios: [], conf: null, cambios: false };
+    const est = { usuarios: [], conf: null, cambios: false, tab: 'REP' };
 
     const nuevaConf = () => ({
       organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, modulo: m.id,
@@ -602,9 +622,12 @@
       const us = new Set(c.usuarios);
       const todosU = est.usuarios.length && est.usuarios.every((u) => us.has(u.id));
       const n = reps.length;
+      const nUs = est.usuarios.filter((u) => us.has(u.id)).length;
+      const TABS = [['REP', 'ti-list-check', 'Reportes', n], ['USU', 'ti-users', 'Usuarios', `${nUs}/${est.usuarios.length}`], ['DES', 'ti-send', 'Destinos', ''], ['HOR', 'ti-clock-play', 'Horario', c.modo === 'AUTOMATICO' ? 'Auto' : '']];
       ctx.pDet.innerHTML = `
-        <div class="rg">
-          <section class="rg-card rg-usuarios">
+        <nav class="rg-tabs" role="tablist" aria-label="Secciones">${TABS.map(([k, ic, t, b]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${est.tab === k}"><i class="ti ${ic}" aria-hidden="true"></i><span>${t}</span>${b !== '' ? `<em>${esc(String(b))}</em>` : ''}</button>`).join('')}</nav>
+        <div class="rg" data-tab="${est.tab}">
+          <section class="rg-card rg-usuarios" data-sec="USU">
             <h3 class="ta-col-titulo"><i class="ti ti-users" aria-hidden="true"></i> Usuarios <small>${est.usuarios.filter((u) => us.has(u.id)).length} de ${est.usuarios.length}</small></h3>
             <label class="rg-u rg-u-todos"><input type="checkbox" data-u-todos ${todosU ? 'checked' : ''}><span><b>Todos los usuarios</b><small>Aplicar la generación a todos</small></span></label>
             <div class="rg-u-lista">${est.usuarios.map((u) => `
@@ -613,7 +636,7 @@
                 <span class="rg-u-tx" title="${esc([contacto(u).tel && `WhatsApp ${contacto(u).tel}`, contacto(u).mail].filter(Boolean).join(' · ') || 'Sin teléfono ni correo')}"><b>${esc(u.nombre || u.usuario || u.correo)}</b><small>${esc([u.usuario, u.rolNombre].filter(Boolean).join(' · '))}</small><small class="rg-u-ct">${contacto(u).tel ? `<i class="ti ti-brand-whatsapp" aria-hidden="true"></i> ${esc(contacto(u).tel)} ` : ''}${contacto(u).mail ? `<i class="ti ti-mail" aria-hidden="true"></i> ${esc(contacto(u).mail)}` : ''}</small></span>
                 <em>${us.has(u.id) ? 'Aplica' : 'No aplica'}</em></label>`).join('') || '<p class="rg-nota">Esta localidad no tiene usuarios con acceso al módulo.</p>'}</div>
           </section>
-          <section class="rg-card rg-reportes">
+          <section class="rg-card rg-reportes" data-sec="REP">
             <h3 class="ta-col-titulo"><i class="ti ti-list-check" aria-hidden="true"></i> Reportes del módulo <small>${n} · en orden de prioridad</small></h3>
             <div class="rg-tabla"><table>
               <thead><tr><th class="rg-pri">Prioridad</th><th>Reporte</th>${SALIDAS.map(([k, t, ic]) => `<th class="rg-c"><label title="Marcar ${t} en todos"><i class="ti ${ic}" aria-hidden="true"></i><span>${t}</span><input type="checkbox" data-col="${k}" ${col(k) ? 'checked' : ''}></label></th>`).join('')}<th class="rg-c"><label title="Todas las salidas de todos"><i class="ti ti-checks" aria-hidden="true"></i><span>Todo</span><input type="checkbox" data-todo ${reps.every((r) => fila(r)) ? 'checked' : ''}></label></th></tr></thead>
@@ -623,6 +646,17 @@
                 ${SALIDAS.map(([k, t]) => `<td class="rg-c"><input type="checkbox" data-rep="${r.id}" data-sal="${k}" aria-label="${esc(r.nombre)} · ${t}" ${marcado(r.id, k) ? 'checked' : ''}></td>`).join('')}
                 <td class="rg-c"><input type="checkbox" data-fila="${r.id}" aria-label="${esc(r.nombre)} · todas" ${fila(r) ? 'checked' : ''}></td></tr>`).join('')}</tbody>
             </table></div>
+            <div class="rgm-lista">
+              <div class="rgm-todas"><span>Marcar en todos</span>${SALIDAS.map(([k, t, ic]) => `<label class="rgm-s ${col(k) ? 'si' : ''}" title="${t} en todos"><input type="checkbox" data-col="${k}" ${col(k) ? 'checked' : ''}><i class="ti ${ic}" aria-hidden="true"></i></label>`).join('')}</div>
+              ${ordenados(reps, c).map((r) => `<article class="rgm-card ${SALIDAS.some(([k]) => marcado(r.id, k)) ? '' : 'apagado'}">
+                <div class="rgm-cab">
+                  <select class="rgm-pri" data-pri="${r.id}" aria-label="Prioridad de ${esc(r.nombre)}">${Array.from({ length: n }, (_, i) => `<option value="${i + 1}" ${c.reportes[r.id].prioridad === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
+                  <span class="rgm-ic"><i class="ti ${r.icono}" aria-hidden="true"></i></span>
+                  <span class="rgm-tx"><b>${esc(r.nombre)}</b><small>${esc(r.segmento)}</small></span>
+                </div>
+                <div class="rgm-sal">${SALIDAS.map(([k, t, ic]) => `<label class="rgm-s ${marcado(r.id, k) ? 'si' : ''}"><input type="checkbox" data-rep="${r.id}" data-sal="${k}" aria-label="${esc(r.nombre)} · ${t}" ${marcado(r.id, k) ? 'checked' : ''}><i class="ti ${ic}" aria-hidden="true"></i><span>${t}</span></label>`).join('')}</div>
+              </article>`).join('')}
+            </div>
             <div class="rg-param">
               <label class="campo"><span>Período</span><select data-par="periodo">${PERIODOS.map(([k, t]) => `<option value="${k}" ${par.periodo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
               <label class="campo"><span>Contenido</span><select data-par="contenido">${[['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']].map(([k, t]) => `<option value="${k}" ${par.contenido === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
@@ -631,12 +665,12 @@
             </div>
           </section>
           <div class="rg-lado">
-            <section class="rg-card">
+            <section class="rg-card" data-sec="DES">
               <h3 class="ta-col-titulo"><i class="ti ti-send" aria-hidden="true"></i> Destinos <small>se llenan con los usuarios marcados</small></h3>
               <label class="campo"><span><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp (separados por coma)</span><input data-campo="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="5555 1234, 502 4444 5678" inputmode="tel"></label>
               <label class="campo"><span><i class="ti ti-mail" aria-hidden="true"></i> Correos (separados por coma)</span><input data-campo="correos" value="${esc(c.correos || '')}" placeholder="gerencia@empresa.com"></label>
             </section>
-            <section class="rg-card">
+            <section class="rg-card" data-sec="HOR">
               <h3 class="ta-col-titulo"><i class="ti ti-clock-play" aria-hidden="true"></i> Generación</h3>
               <div class="rg-modo">
                 <label class="${c.modo === 'MANUAL' ? 'si' : ''}"><input type="radio" name="rg-modo" value="MANUAL" ${c.modo === 'MANUAL' ? 'checked' : ''}><i class="ti ti-hand-click" aria-hidden="true"></i><span><b>Manual</b><small>Con «Generar ahora»</small></span></label>
@@ -655,6 +689,11 @@
               <p class="rg-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> En automático se generan en la sesión abierta de cada usuario marcado al llegar la hora (o al entrar, si ya pasó) y avisan para enviarlos.</p>
             </section>
           </div>
+        </div>
+        <div class="rgm-barra">
+          <button type="button" class="rgm-mic" data-accion="voz" aria-label="Asistente por voz"><i class="ti ti-microphone" aria-hidden="true"></i></button>
+          <button type="button" class="boton secundario-sm" data-accion="guardar"><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar</button>
+          <button type="button" class="boton primario-sm" data-accion="generar"><i class="ti ti-player-play" aria-hidden="true"></i> Generar</button>
         </div>`;
       ctx.pDet.querySelector('[data-u-todos]').indeterminate = !todosU && est.usuarios.some((u) => us.has(u.id));
       SALIDAS.forEach(([k]) => { const x = ctx.pDet.querySelector(`[data-col="${k}"]`); x.indeterminate = !col(k) && reps.some((r) => marcado(r.id, k)); });
@@ -713,6 +752,14 @@
     });
     cont.addEventListener('input', (e) => { const t = e.target; if (est.conf && (t.dataset.campo === 'whatsapp' || t.dataset.campo === 'correos')) { est.conf[t.dataset.campo] = t.value; est.cambios = true; } });
     cont.addEventListener('click', async (e) => {
+      const tb = e.target.closest('.rg-tabs [data-tab]');
+      if (tb) {
+        est.tab = tb.dataset.tab;
+        ctx.pDet.querySelector('.rg')?.setAttribute('data-tab', est.tab);
+        ctx.pDet.querySelectorAll('.rg-tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b === tb)));
+        window.scrollTo({ top: 0 });
+        return;
+      }
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (!a || !est.conf) return;
       if (a === 'guardar') return guardar();

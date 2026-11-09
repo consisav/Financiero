@@ -118,7 +118,7 @@
     const mesDe = (x) => x.fecha.slice(0, 7);
     const mesTxt = (ym) => `${MES[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
     const top = (xs, n = 10) => [...xs].sort((a, b) => b.valor - a.valor).slice(0, n);
-    const meses = () => { const out = []; let d = f.desde.slice(0, 7); const h = f.fecha.slice(0, 7); while (d <= h && out.length < 60) { out.push(d); const [y, m] = d.split('-').map(Number); d = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`; } return out; };
+    const meses = () => { const out = []; let d = f.desde.slice(0, 7); const h = f.fecha.slice(0, 7); while (d <= h && out.length < 240) { out.push(d); const [y, m] = d.split('-').map(Number); d = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`; } return out; };
 
     function construir(datos) {
       const regs = datos.regs, conProd = !!f.producto, det = f.contenido === 'DETALLADO';
