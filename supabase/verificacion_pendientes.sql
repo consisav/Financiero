@@ -1,0 +1,17 @@
+-- Verificación de scripts aplicados en Supabase (solo lee, no cambia nada).
+-- Cada renglón: el script, qué se revisa, lo encontrado y si está APLICADO o PENDIENTE.
+with r(script, que, encontrado, aplicado) as (
+  select '145-147', 'Inventario org. 3: kardex migrado', (select count(*) from public.inventario_movimientos where origen_anterior = 'MIGRADO')::text, (select count(*) from public.inventario_movimientos where origen_anterior = 'MIGRADO') > 0
+  union all select 'Corrección', 'Lectura de movimientos de inventario para todo usuario', (select string_agg(policyname, ', ') from pg_policies where schemaname = 'public' and tablename = 'inventario_movimientos' and cmd = 'SELECT'), exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'inventario_movimientos' and cmd = 'SELECT' and policyname = 'inventario_movimientos: leer' and qual = 'true')
+  union all select '158', 'Cierre contable', (to_regclass('public.ejercicios_contables') is not null)::text, to_regclass('public.ejercicios_contables') is not null
+  union all select '159', 'Clínicas médicas', (to_regclass('public.cli_citas') is not null)::text, to_regclass('public.cli_citas') is not null
+  union all select '160', 'Envíos desde despachos migrados', (select count(*) from information_schema.columns where table_name = 'envios_venta' and column_name = 'documento_inventario_id')::text, exists (select 1 from information_schema.columns where table_name = 'envios_venta' and column_name = 'documento_inventario_id')
+  union all select '161', 'Hospital y clínicas, etapa 1', (to_regclass('public.lab_pruebas') is not null)::text, to_regclass('public.lab_pruebas') is not null
+  union all select '162', 'Hospital y clínicas, etapa 2', (to_regclass('public.ceye_ciclos') is not null)::text, to_regclass('public.ceye_ciclos') is not null
+  union all select '163', 'Hospital y clínicas, etapa 3', (select count(*) from pg_proc where proname = 'med_depositar')::text, exists (select 1 from pg_proc where proname = 'med_depositar')
+  union all select '164', 'Repositorio de DTE (estructura)', (to_regclass('public.sat_dte') is not null)::text, to_regclass('public.sat_dte') is not null
+  union all select '164 partes 1-11', 'Historial FEL (9,924 DTE esperados)', (case when to_regclass('public.sat_dte') is not null then (xpath('/row/c/text()', query_to_xml('select count(*) as c from public.sat_dte', false, true, '')))[1]::text::int else 0 end)::text, (case when to_regclass('public.sat_dte') is not null then (xpath('/row/c/text()', query_to_xml('select count(*) as c from public.sat_dte', false, true, '')))[1]::text::int else 0 end) >= 9924
+  union all select '164 partes', 'Líneas de DTE (21,149 esperadas)', (case when to_regclass('public.sat_dte_items') is not null then (xpath('/row/c/text()', query_to_xml('select count(*) as c from public.sat_dte_items', false, true, '')))[1]::text::int else 0 end)::text, (case when to_regclass('public.sat_dte_items') is not null then (xpath('/row/c/text()', query_to_xml('select count(*) as c from public.sat_dte_items', false, true, '')))[1]::text::int else 0 end) >= 21149
+  union all select '165', 'Tipos de frase FEL', (to_regclass('public.sat_tipos_frase') is not null)::text, to_regclass('public.sat_tipos_frase') is not null
+)
+select script, que, encontrado, case when aplicado then 'APLICADO' else 'PENDIENTE' end as estado from r;
