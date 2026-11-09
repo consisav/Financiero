@@ -5727,3 +5727,9 @@ form.cr-rec { margin-top: 14px; }
 /* Clínicas médicas */
 .cli-acc { white-space: nowrap; }
 form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 100%; }
+
+/* Integraciones SAT · historial FEL */
+.sat-fel-det { margin: 8px 0 16px; }
+.sat-fel-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin: 8px 0; }
+.sat-fel-g > div { display: flex; flex-direction: column; }
+.sat-fel-g span { font-size: 12px; color: var(--texto-tenue, #667085); }

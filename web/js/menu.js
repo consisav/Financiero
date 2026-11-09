@@ -667,6 +667,7 @@ window.MODULOS = [
       registros: [
         { subgrupo: 'Documentos', icono: 'ti-files', pantallas: [
           { id: 'dte-emitidos', nombre: 'DTE emitidos', icono: 'ti-file-certificate', descripcion: 'Bandeja de facturas y notas del período: certificadas, pendientes de certificar y anuladas.' },
+          { id: 'sat-historial-fel', nombre: 'Historial FEL (DTE certificados)', icono: 'ti-certificate', descripcion: 'DTE certificados en el sistema anterior con líneas, frases, abonos, anulaciones y errores, enlazados a sus facturas y notas. PDF y Excel.' },
           { id: 'dte-recibidos', nombre: 'DTE recibidos', icono: 'ti-file-download', descripcion: 'Facturas recibidas según el archivo de la SAT y si ya están registradas en compras.' },
           { id: 'constancias-retencion', nombre: 'Constancias de retención', icono: 'ti-receipt-tax', descripcion: 'Retenciones de IVA e ISR recibidas de clientes y emitidas a proveedores.' }
         ] }

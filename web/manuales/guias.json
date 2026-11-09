@@ -3316,5 +3316,18 @@
    "Abre el reporte desde Reportes del módulo y elige el período.",
    "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
   ]
+ },
+ "sat-historial-fel": {
+  "puntos": [
+   "DTE certificados en el sistema anterior con su detalle, anulación y errores.",
+   "Enlazados a sus facturas y notas de venta."
+  ],
+  "pasos": [
+   "Abre Integraciones SAT › Registros › Historial FEL con {empresa} y el período.",
+   "Filtra por tipo, resultado (certificados, anulados, con error) o documento (sin factura ni nota).",
+   "Toca un DTE para ver receptor, certificación, líneas, frases, abonos y adendas, e imprimirlo.",
+   "Si un DTE certificado no tiene factura, presiona «Crear la factura»; «Enlazar documentos» vuelve a relacionar los DTE con las facturas y notas por número interno o autorización.",
+   "Exporta el listado a PDF o Excel."
+  ]
  }
 }
