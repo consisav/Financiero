@@ -52,7 +52,99 @@
     return { empresas: [...emp.values()].sort(ord), bancos: [...ban.values()].sort(ord) };
   }
   const pct = (v, t) => Number(t) ? `${Math.round(v / Number(t) * 1000) / 10}%` : '—';
-  const PESTANAS = [['CUENTAS', 'ti-building-bank', 'Cuentas de la empresa'], ['ORGANIZACION', 'ti-building-community', 'Síntesis de la organización'], ['BANCOS', 'ti-chart-bar', 'Por banco'], ['CONSOLIDADO', 'ti-report-analytics', 'Consolidado general']];
+  const PESTANAS = [['CUENTAS', 'ti-building-bank', 'Cuentas de la empresa'], ['INTEGRACION', 'ti-arrows-split', 'Integración'], ['ORGANIZACION', 'ti-building-community', 'Síntesis de la organización'], ['BANCOS', 'ti-chart-bar', 'Por banco'], ['CONSOLIDADO', 'ti-report-analytics', 'Consolidado general']];
+
+  // Integración: cómo se forma el saldo en libros de cada cuenta con sus movimientos hasta la fecha de corte,
+  // por tipo (depósitos, notas de crédito, cheques y notas de débito), conciliados y en circulación. Los
+  // movimientos se leen al abrir la pestaña o al imprimir el reporte detallado o total, con su estado de
+  // conciliación actual; el detalle lista los documentos en circulación.
+  const TIPOS = [['DEPOSITO', 'Depósitos', 1], ['NOTA_CREDITO', 'Notas de crédito', 1], ['CHEQUE', 'Cheques', -1], ['NOTA_DEBITO', 'Notas de débito', -1]];
+  const SIGLA = { DEPOSITO: 'DP', NOTA_CREDITO: 'NC', CHEQUE: 'CH', NOTA_DEBITO: 'ND' };
+  async function leerMovimientos(sb, gen, det) {
+    const ids = [...new Set(det.map((d) => d.cuenta_bancaria_id).filter(Boolean))];
+    const res = new Map(ids.map((i) => [i, []]));
+    if (!ids.length) return res;
+    const { data: cb } = await sb.from('cuentas_bancarias').select('id, fecha_saldo_inicial').in('id', ids);
+    const desde = new Map((cb || []).map((c) => [c.id, c.fecha_saldo_inicial]));
+    for (let i = 0; ; i += 1000) {
+      const { data, error } = await sb.from('movimientos_bancarios').select('id, cuenta_bancaria_id, tipo, conciliado, valor_cuenta, fecha, numero_documento, folio, tercero_nombre, descripcion')
+        .in('cuenta_bancaria_id', ids).eq('estado', 'ACTIVO').lte('fecha', gen.fecha_corte).order('fecha').order('id').range(i, i + 999);
+      if (error) throw error;
+      (data || []).forEach((x) => { const f = desde.get(x.cuenta_bancaria_id); if (!f || x.fecha >= f) res.get(x.cuenta_bancaria_id)?.push(x); });
+      if (!data || data.length < 1000) break;
+    }
+    return res;
+  }
+  async function movimientosDe(sb, act) {
+    if (!act._movs) act._movs = leerMovimientos(sb, act.gen, act.det).catch((e) => { act._movs = null; throw e; });
+    act.movs = await act._movs;
+    return act.movs;
+  }
+  function integrar(d, movs) {
+    const ls = movs.get(d.cuenta_bancaria_id) || [];
+    const suma = (a) => a.reduce((t, x) => t + Number(x.valor_cuenta || 0), 0);
+    const tipos = TIPOS.map(([k, tx, s]) => {
+      const de = ls.filter((x) => x.tipo === k);
+      const conc = de.filter((x) => x.conciliado), circ = de.filter((x) => !x.conciliado);
+      return { k, tx, s, nc: conc.length, conc: suma(conc), ncirc: circ.length, circ: suma(circ), docs: circ };
+    });
+    const conc = tipos.reduce((t, x) => t + x.s * x.conc, 0), circ = tipos.reduce((t, x) => t + x.s * x.circ, 0);
+    const libros = Number(d.saldo_inicial) + conc + circ;
+    return { tipos, conc, circ, libros, nc: tipos.reduce((t, x) => t + x.nc, 0), ncirc: tipos.reduce((t, x) => t + x.ncirc, 0), difiere: Math.abs(libros - Number(d.saldo)) > 0.005 };
+  }
+  const docTexto = (x) => `${fmt.fechaDia(x.fecha)} · ${SIGLA[x.tipo] || ''} ${x.numero_documento || x.folio || ''} · ${x.tercero_nombre || x.descripcion || ''}`;
+  const docsHtml = (docs) => docs.map((x) => `<tr class="dsp-integ-doc"><td class="dsp-sangria2" title="${esc(docTexto(x))}">${esc(docTexto(x))}</td><td></td><td></td><td></td><td class="num">${m(x.valor_cuenta)}</td><td></td></tr>`).join('');
+  function integracionHtml(det, movs) {
+    if (!det.length) return '<p class="tk-vacio">La generación no tiene cuentas.</p>';
+    if (!movs) return '<p class="tk-vacio"><i class="ti ti-loader-2" aria-hidden="true"></i> Cargando los movimientos que integran cada cuenta…</p>';
+    const neg = (v) => v < 0 ? 'pc-rojo' : '';
+    return `<table class="dsp-integ"><thead><tr><th>Concepto</th><th class="num">Doc.</th><th class="num">Conciliado</th><th class="num">Doc.</th><th class="num">En circulación</th><th class="num">Total</th></tr></thead><tbody>
+      ${det.map((d) => { const r = integrar(d, movs); return `<tr class="dsp-banco"><td colspan="6"><b>${esc(d.cuenta_numero)}</b> · ${esc(d.banco_nombre || '')} <small>${esc(d.cuenta_nombre || '')} · ${esc(d.moneda_simbolo || d.moneda_iso || '')}</small>${r.difiere ? ` <small class="pc-rojo">la generación registró ${m(d.saldo)}: los movimientos cambiaron después</small>` : ''}</td></tr>
+        <tr><td class="dsp-sangria">Saldo inicial</td><td></td><td></td><td></td><td></td><td class="num">${m(d.saldo_inicial)}</td></tr>
+        ${r.tipos.map((t) => `<tr class="dsp-integ-tipo" ${t.ncirc ? `data-integ="${d.cuenta_bancaria_id}:${t.k}" tabindex="0" title="Ver los ${t.ncirc} documentos en circulación"` : ''}><td class="dsp-sangria"><i class="ti ${t.ncirc ? 'ti-chevron-right' : 'ti-point'}" aria-hidden="true"></i> (${t.s > 0 ? '+' : '−'}) ${t.tx}</td><td class="num">${t.nc || '—'}</td><td class="num">${m(t.conc)}</td><td class="num">${t.ncirc || '—'}</td><td class="num">${m(t.circ)}</td><td class="num">${m(t.conc + t.circ)}</td></tr>`).join('')}
+        <tr class="dsp-sub"><td>(=) Saldo en libros</td><td class="num">${r.nc}</td><td class="num ${neg(r.conc)}">${m(r.conc)}</td><td class="num">${r.ncirc}</td><td class="num ${neg(r.circ)}">${m(r.circ)}</td><td class="num ${neg(r.libros)}">${m(r.libros)}</td></tr>`; }).join('')}</tbody></table>`;
+  }
+  // Abre o cierra los documentos en circulación de un tipo de movimiento de una cuenta.
+  function alternarDocs(tr, act) {
+    const abierto = tr.classList.toggle('abierto');
+    tr.querySelector('.ti')?.classList.replace(abierto ? 'ti-chevron-right' : 'ti-chevron-down', abierto ? 'ti-chevron-down' : 'ti-chevron-right');
+    if (!abierto) { while (tr.nextElementSibling?.classList.contains('dsp-integ-doc')) tr.nextElementSibling.remove(); return; }
+    const [id, tipo] = tr.dataset.integ.split(':');
+    const docs = (act.movs?.get(Number(id)) || []).filter((x) => x.tipo === tipo && !x.conciliado);
+    tr.insertAdjacentHTML('afterend', docsHtml(docs));
+  }
+  async function pintarIntegracion(sb, act, raiz) {
+    const p = raiz.querySelector('[data-dsp-panel=INTEGRACION]');
+    if (!p || !act?.gen) return;
+    if (!act.movs) p.innerHTML = integracionHtml(act.det, null);
+    try { await movimientosDe(sb, act); } catch (e) { p.innerHTML = `<p class="tk-vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
+    if (raiz.contains(p)) p.innerHTML = integracionHtml(act.det, act.movs);
+  }
+
+  // Nivel de los reportes: resumida (cuentas y totales), detallada (más la integración y los documentos en
+  // circulación) o total (más todas las paletas de la organización).
+  const NIVELES = [['RESUMIDA', 'Resumida', 'Cuentas de la empresa con sus totales por banco y el resumen por empresa de la organización.'],
+    ['DETALLADA', 'Detallada', 'Lo anterior más la integración de cada cuenta y los documentos en circulación que la forman.'],
+    ['TOTAL', 'Total', 'Todo lo anterior más todas las paletas: síntesis de la organización, por banco y consolidado general.']];
+  function elegirNivel(que, alElegir) {
+    window.UI.formulario({
+      titulo: que === 'pdf' ? 'Imprimir en PDF' : 'Generar Excel',
+      campos: [{ nombre: 'nivel', etiqueta: 'Nivel', tipo: 'texto' }],
+      alPreparar: (form) => {
+        form.querySelector('.modal-cuerpo').innerHTML = `<fieldset class="dsp-niveles"><legend>Nivel del reporte</legend>${NIVELES.map(([k, tx, nota], i) => `<label><input type="radio" name="nivel" value="${k}" ${i ? '' : 'checked'}><span><b>${tx}</b><small>${nota}</small></span></label>`).join('')}</fieldset>`;
+        form.querySelector('[type=submit]').innerHTML = `<i class="ti ${que === 'pdf' ? 'ti-printer' : 'ti-file-spreadsheet'}" aria-hidden="true"></i> ${que === 'pdf' ? 'Imprimir' : 'Generar'}`;
+        form.querySelector('input[name=nivel]').focus();
+      },
+      alGuardar: async (d) => alElegir(d.nivel || 'RESUMIDA')
+    });
+  }
+  // Prepara los movimientos que necesita el nivel y genera el PDF o el Excel.
+  async function reporte(sb, que, act, empresa) {
+    elegirNivel(que, async (nivel) => {
+      if (nivel !== 'RESUMIDA') await movimientosDe(sb, act);
+      (que === 'pdf' ? pdf : excel)(act.gen, act.det, empresa, act.org, nivel, act.movs);
+    });
+  }
 
   // Consolidado general de la organización: matriz empresa × banco (disponible Q) con totales, participación,
   // circulación, estimado y cuentas bajo su mínimo, más los indicadores destacados.
@@ -67,7 +159,7 @@
 
   // Tablero de una generación (opción A): generación y reportes; indicadores de la empresa frente a la
   // organización; pestañas con las cuentas de la empresa, la síntesis de la organización y el resumen por banco.
-  function tablero(gen, det, org = [], { pestana = 'CUENTAS' } = {}) {
+  function tablero(gen, det, org = [], { pestana = 'CUENTAS', movs = null } = {}) {
     if (!gen) return '';
     const grupos = porBanco(det);
     const totEst = grupos.reduce((s, g) => s + g.estimado, 0);
@@ -98,8 +190,8 @@
             ${kpi('Bajo su mínimo', `${gen.bajo_minimo} de ${gen.cuentas}`, hayOrg ? `${gen.org_bajo_minimo} de ${gen.org_cuentas}` : '', 'Cuentas bajo su saldo mínimo', (gen.bajo_minimo || gen.org_bajo_minimo) ? 'alerta' : 'ok')}
           </div>
           <div class="dsp-acciones">
-            <button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Empresa y organización</small></span></button>
-            <button type="button" class="boton cqc-excel" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Empresa y organización</small></span></button>
+            <button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Resumida, detallada o total</small></span></button>
+            <button type="button" class="boton cqc-excel" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Resumida, detallada o total</small></span></button>
           </div>
         </div>
         <div class="dsp-pestanas" role="tablist">
@@ -110,17 +202,20 @@
             <tbody>${grupos.map((g) => `<tr class="dsp-banco"><td colspan="10"><span class="bk-cod">${g.codigo ?? ''}</span> ${esc(g.nombre || '')} <small>${g.filas.length} cuenta${g.filas.length === 1 ? '' : 's'}</small></td></tr>
               ${g.filas.map((d) => `<tr class="${d.bajo_minimo ? 'dsp-bajo' : ''}">
                 <td><b>${esc(d.cuenta_numero)}</b><small>${esc(d.cuenta_nombre || '')}</small></td>
-                <td>${esc(d.moneda_simbolo || d.moneda_iso || '')}${local(d) ? '' : `<small>TC ${Number(d.tipo_cambio)}</small>`}</td>
+                <td ${local(d) ? '' : `title="Tipo de cambio ${Number(d.tipo_cambio)}"`}>${esc(d.moneda_simbolo || d.moneda_iso || '')}${local(d) ? '' : `<small>${Number(d.tipo_cambio)}</small>`}</td>
                 <td class="num">${m(d.saldo_inicial)}</td><td class="num">${m(d.ingresos)}</td><td class="num">${m(d.egresos)}</td>
                 <td class="num fuerte">${m(d.saldo)}</td>
-                <td class="num ${Number(d.circ_ingresos) - Number(d.circ_egresos) < 0 ? 'pc-rojo' : ''}">${m(Number(d.circ_ingresos) - Number(d.circ_egresos))}<small>${d.circ_documentos} doc.</small></td>
+                <td class="num ${Number(d.circ_ingresos) - Number(d.circ_egresos) < 0 ? 'pc-rojo' : ''}" title="${d.circ_documentos} documentos en circulación (detalle en Integración)">${m(Number(d.circ_ingresos) - Number(d.circ_egresos))}</td>
                 <td class="num">${m(estimado(d))}</td>
-                <td class="num">${m(d.saldo_minimo)}${d.bajo_minimo ? '<small class="pc-rojo">bajo el mínimo</small>' : ''}</td>
+                <td class="num" ${d.bajo_minimo ? 'title="El disponible está bajo el saldo mínimo"' : ''}>${d.bajo_minimo ? '<i class="ti ti-alert-triangle pc-rojo" aria-label="Bajo el mínimo"></i> ' : ''}${m(d.saldo_minimo)}</td>
                 <td class="num fuerte">${m(d.saldo_ml)}</td></tr>`).join('')}
               <tr class="dsp-sub"><td colspan="5">Total ${esc(g.nombre || '')}</td><td></td><td class="num">${m(g.circ)}</td><td class="num">${m(g.estimado)}</td><td class="num">${m(g.minimo)}</td><td class="num">${m(g.saldo)}</td></tr>`).join('')
               || '<tr><td colspan="10" class="tk-vacio">La generación no tiene cuentas (no hay cuentas activas con esos parámetros).</td></tr>'}</tbody>
             <tfoot><tr><td colspan="6">Total de la empresa en quetzales</td><td class="num">${m(gen.total_circulacion_ml)}</td><td class="num">${m(totEst)}</td><td></td><td class="num">${m(gen.total_saldo_ml)}</td></tr></tfoot>
           </table>
+        </section>
+        <section class="dsp-panel dsp-cuentas pc-lineas dsp-compacta" data-dsp-panel="INTEGRACION" ${pestana === 'INTEGRACION' ? '' : 'hidden'}>
+          ${integracionHtml(det, movs)}
         </section>
         <section class="dsp-panel dsp-cuentas pc-lineas" data-dsp-panel="ORGANIZACION" ${pestana === 'ORGANIZACION' ? '' : 'hidden'}>
           ${hayOrg ? `<table><thead><tr><th>Empresa · banco</th><th class="num">Cuentas</th><th class="num">Disponible Q</th><th class="num">% de la organización</th><th class="num">En circulación Q</th><th class="num">Estimado en bancos Q</th><th class="num">Bajo su mínimo</th></tr></thead>
@@ -169,11 +264,24 @@
   }
 
   // PDF (ventana de impresión) y Excel de una generación: empresa y síntesis de la organización.
-  function pdf(gen, det, empresa, org = []) {
+  // Integración de cada cuenta para el PDF: tipos de movimiento y, debajo, sus documentos en circulación.
+  function integracionPdf(det, movs) {
+    return `<h3>Integración de las cuentas</h3>
+      <table><thead><tr><th>Concepto</th><th class="n">Doc.</th><th class="n">Conciliado</th><th class="n">Doc.</th><th class="n">En circulación</th><th class="n">Total</th></tr></thead><tbody>
+      ${det.map((d) => { const r = integrar(d, movs); return `<tr class="s"><td colspan="6">${esc(d.cuenta_numero)} · ${esc(d.banco_nombre || '')} · ${esc(d.cuenta_nombre || '')} (${esc(d.moneda_simbolo || '')})</td></tr>
+        <tr><td>Saldo inicial</td><td></td><td></td><td></td><td></td><td class="n">${m(d.saldo_inicial)}</td></tr>
+        ${r.tipos.map((t) => `<tr><td>(${t.s > 0 ? '+' : '−'}) ${t.tx}</td><td class="n">${t.nc}</td><td class="n">${m(t.conc)}</td><td class="n">${t.ncirc}</td><td class="n">${m(t.circ)}</td><td class="n">${m(t.conc + t.circ)}</td></tr>
+          ${t.docs.map((x) => `<tr class="d"><td>&nbsp;&nbsp;&nbsp;&nbsp;${esc(docTexto(x))}</td><td></td><td></td><td></td><td class="n">${m(x.valor_cuenta)}</td><td></td></tr>`).join('')}`).join('')}
+        <tr class="s"><td>(=) Saldo en libros${r.difiere ? ` (la generación registró ${m(d.saldo)})` : ''}</td><td class="n">${r.nc}</td><td class="n">${m(r.conc)}</td><td class="n">${r.ncirc}</td><td class="n">${m(r.circ)}</td><td class="n">${m(r.libros)}</td></tr>`; }).join('')}
+      </tbody></table>`;
+  }
+  const nivelTexto = (n) => (NIVELES.find((x) => x[0] === n) || NIVELES[0])[1];
+
+  function pdf(gen, det, empresa, org = [], nivel = 'TOTAL', movs = null) {
     const grupos = porBanco(det);
     const sx = sintesis(org);
     imprimir(`Disponibilidad ${gen.correlativo}`, `
-      <h1>Disponibilidad bancaria · ${esc(gen.correlativo)}</h1>
+      <h1>Disponibilidad bancaria · ${esc(gen.correlativo)} · ${nivelTexto(nivel)}</h1>
       <h2>${esc(empresa)} · ${gen.banco_nombre ? esc(gen.banco_nombre) : 'Todos los bancos'} · ${gen.cuenta_numero ? `cuenta ${esc(gen.cuenta_numero)}` : 'todas las cuentas'} · al ${esc(fmt.fechaDia(gen.fecha_corte))}</h2>
       <div class="cab"><div><b>Disponible empresa Q</b>${m(gen.total_saldo_ml)}</div><div><b>En circulación empresa Q</b>${m(gen.total_circulacion_ml)}</div><div><b>Bajo su mínimo</b>${gen.bajo_minimo} de ${gen.cuentas}</div><div><b>Correlativo</b>${esc(gen.correlativo)}</div>
         ${org.length ? `<div><b>Disponible organización Q</b>${m(gen.org_saldo_ml)}</div><div><b>En circulación organización Q</b>${m(gen.org_circulacion_ml)}</div><div><b>Bajo su mínimo (org.)</b>${gen.org_bajo_minimo} de ${gen.org_cuentas}</div><div><b>Empresas</b>${gen.org_empresas}</div>` : ''}
@@ -183,7 +291,12 @@
         ${grupos.map((g) => `<tr class="s"><td colspan="10">${esc(g.nombre || '')}</td></tr>${g.filas.map((d) => `<tr><td>${esc(d.cuenta_numero)} ${esc(d.cuenta_nombre || '')}</td><td>${esc(d.moneda_simbolo || '')}${local(d) ? '' : ` TC ${Number(d.tipo_cambio)}`}</td><td class="n">${m(d.saldo_inicial)}</td><td class="n">${m(d.ingresos)}</td><td class="n">${m(d.egresos)}</td><td class="n">${m(d.saldo)}</td><td class="n">${m(Number(d.circ_ingresos) - Number(d.circ_egresos))}</td><td class="n">${m(estimado(d))}</td><td class="n">${m(d.saldo_minimo)}${d.bajo_minimo ? ' ⚠' : ''}</td><td class="n">${m(d.saldo_ml)}</td></tr>`).join('')}
           <tr class="s"><td colspan="6">Total ${esc(g.nombre || '')}</td><td class="n">${m(g.circ)}</td><td class="n">${m(g.estimado)}</td><td class="n">${m(g.minimo)}</td><td class="n">${m(g.saldo)}</td></tr>`).join('')}
       </tbody><tfoot><tr><td colspan="6">Total de la empresa en quetzales</td><td class="n">${m(gen.total_circulacion_ml)}</td><td class="n">${m(grupos.reduce((s, g) => s + g.estimado, 0))}</td><td></td><td class="n">${m(gen.total_saldo_ml)}</td></tr></tfoot></table>
-      ${org.length ? `<h3>Síntesis de la organización</h3>
+      ${nivel !== 'TOTAL' && org.length ? `<h3>Resumen de la organización por empresa</h3>
+      <table><thead><tr><th>Empresa</th><th class="n">Cuentas</th><th class="n">Disponible Q</th><th class="n">%</th><th class="n">En circulación Q</th><th class="n">Estimado Q</th><th class="n">Bajo mínimo</th></tr></thead><tbody>
+        ${sx.empresas.map((e) => `<tr><td>${esc(e.codigo)} · ${esc(e.nombre || '')}</td><td class="n">${e.cuentas}</td><td class="n">${m(e.saldo)}</td><td class="n">${pct(e.saldo, gen.org_saldo_ml)}</td><td class="n">${m(e.circ)}</td><td class="n">${m(e.est)}</td><td class="n">${e.bajo}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td>Total de la organización</td><td class="n">${gen.org_cuentas}</td><td class="n">${m(gen.org_saldo_ml)}</td><td class="n">100%</td><td class="n">${m(gen.org_circulacion_ml)}</td><td class="n">${m(gen.org_estimado_ml)}</td><td class="n">${gen.org_bajo_minimo}</td></tr></tfoot></table>` : ''}
+      ${nivel !== 'RESUMIDA' && movs ? integracionPdf(det, movs) : ''}
+      ${nivel === 'TOTAL' && org.length ? `<h3>Síntesis de la organización</h3>
       <table><thead><tr><th>Empresa · banco</th><th class="n">Cuentas</th><th class="n">Disponible Q</th><th class="n">%</th><th class="n">En circulación Q</th><th class="n">Estimado Q</th><th class="n">Bajo mínimo</th></tr></thead><tbody>
         ${sx.empresas.map((e) => `<tr class="s"><td colspan="7">${esc(e.codigo)} · ${esc(e.nombre || '')}</td></tr>${e.bancos.map((o) => `<tr><td>&nbsp;&nbsp;${esc(o.banco_nombre || '')}</td><td class="n">${o.cuentas}</td><td class="n">${m(o.saldo_ml)}</td><td class="n">${pct(Number(o.saldo_ml), gen.org_saldo_ml)}</td><td class="n">${m(o.circulacion_ml)}</td><td class="n">${m(o.estimado_ml)}</td><td class="n">${o.bajo_minimo}</td></tr>`).join('')}
           <tr class="s"><td>Total ${esc(e.codigo)}</td><td class="n">${e.cuentas}</td><td class="n">${m(e.saldo)}</td><td class="n">${pct(e.saldo, gen.org_saldo_ml)}</td><td class="n">${m(e.circ)}</td><td class="n">${m(e.est)}</td><td class="n">${e.bajo}</td></tr>`).join('')}
@@ -201,7 +314,7 @@
       <div class="firmas"><div>Elaboró: ${esc(gen.usuario || '')}</div><div>Revisó</div><div>Autorizó</div></div>`);
   }
 
-  function excel(gen, det, empresa, org = []) {
+  function excel(gen, det, empresa, org = [], nivel = 'TOTAL', movs = null) {
     if (!window.REPORTE_XLSX) return;
     const grupos = porBanco(det);
     const sx = sintesis(org);
@@ -213,7 +326,25 @@
       filas.push({ tipo: 'subtotal', valores: [`Total ${g.nombre || ''}`, '', '', null, null, null, null, g.circ, g.estimado, g.minimo, g.saldo, ''] });
     });
     filas.push({ tipo: 'total', valores: ['Total de la empresa en quetzales', '', '', null, null, null, null, Number(gen.total_circulacion_ml), grupos.reduce((s, g) => s + g.estimado, 0), null, Number(gen.total_saldo_ml), `${gen.bajo_minimo} bajo su mínimo`] });
-    if (org.length) {
+    if (nivel !== 'TOTAL' && org.length) {
+      filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'nota', valores: ['RESUMEN DE LA ORGANIZACIÓN POR EMPRESA', '', '', 'Cuentas', '', '', '', 'En circulación Q', 'Estimado Q', '% org.', 'Disponible Q', 'Bajo mínimo'] });
+      sx.empresas.forEach((e) => filas.push({ valores: [e.codigo, e.nombre || '', '', e.cuentas, null, null, null, e.circ, e.est, pct(e.saldo, gen.org_saldo_ml), e.saldo, e.bajo], formatos: { 3: 'entero' } }));
+      filas.push({ tipo: 'total', valores: ['Total de la organización', '', '', gen.org_cuentas, null, null, null, Number(gen.org_circulacion_ml), Number(gen.org_estimado_ml), '100%', Number(gen.org_saldo_ml), gen.org_bajo_minimo], formatos: { 3: 'entero' } });
+    }
+    if (nivel !== 'RESUMIDA' && movs) {
+      filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'nota', valores: ['INTEGRACIÓN DE LAS CUENTAS', 'Documento en circulación', '', 'Doc. conciliados', 'Conciliado', 'En circulación', 'Total', '', '', '', '', 'Doc. en circulación'] });
+      det.forEach((d) => {
+        const r = integrar(d, movs);
+        filas.push({ tipo: 'grupo', valores: [`${d.cuenta_numero} · ${d.banco_nombre || ''}`, d.cuenta_nombre || '', d.moneda_simbolo || d.moneda_iso || ''] });
+        filas.push({ valores: ['Saldo inicial', '', '', null, null, null, Number(d.saldo_inicial), null, null, null, null, ''] });
+        r.tipos.forEach((t) => {
+          filas.push({ valores: [`(${t.s > 0 ? '+' : '−'}) ${t.tx}`, '', '', t.nc, t.conc, t.circ, t.conc + t.circ, null, null, null, null, t.ncirc], formatos: { 3: 'entero', 11: 'entero' } });
+          t.docs.forEach((x) => filas.push({ valores: ['', docTexto(x), '', null, null, Number(x.valor_cuenta || 0), null, null, null, null, null, ''] }));
+        });
+        filas.push({ tipo: 'subtotal', valores: ['(=) Saldo en libros', r.difiere ? `La generación registró ${m(d.saldo)}` : '', '', r.nc, r.conc, r.circ, r.libros, null, null, null, null, r.ncirc], formatos: { 3: 'entero', 11: 'entero' } });
+      });
+    }
+    if (nivel === 'TOTAL' && org.length) {
       filas.push({ tipo: 'nota', valores: [''] }, { tipo: 'nota', valores: ['SÍNTESIS DE LA ORGANIZACIÓN', '', '', 'Cuentas', '', '', '', 'En circulación Q', 'Estimado Q', '% org.', 'Disponible Q', 'Bajo mínimo'] });
       sx.empresas.forEach((e) => {
         filas.push({ tipo: 'grupo', valores: [`${e.codigo} · ${e.nombre || ''}`] });
@@ -243,8 +374,8 @@
       }
     }
     window.REPORTE_XLSX.generar({
-      titulo: `Disponibilidad bancaria · ${gen.correlativo}`,
-      parametros: [`Empresa: ${empresa}`, `Banco: ${gen.banco_nombre || 'Todos'}`, `Cuenta: ${gen.cuenta_numero || 'Todas'}`, `Fecha de corte: ${fmt.fechaDia(gen.fecha_corte)}`,
+      titulo: `Disponibilidad bancaria · ${gen.correlativo} · ${nivelTexto(nivel)}`,
+      parametros: [`Empresa: ${empresa}`, `Nivel: ${nivelTexto(nivel)}`, `Banco: ${gen.banco_nombre || 'Todos'}`, `Cuenta: ${gen.cuenta_numero || 'Todas'}`, `Fecha de corte: ${fmt.fechaDia(gen.fecha_corte)}`,
         `Generó: ${gen.usuario || ''}${gen.usuario_nombre ? ` · ${gen.usuario_nombre}` : ''}`, `Generado: ${fhs(gen.generado_en)}`],
       orgId: gen.organizacion_id, locId: gen.localidad_id, hoja: gen.correlativo, archivo: `disponibilidad_${gen.correlativo}`,
       columnas: [{ titulo: 'Cuenta / empresa', ancho: 22 }, { titulo: 'Nombre / banco', ancho: 34 }, { titulo: 'Moneda', ancho: 14 }, { titulo: 'Saldo inicial · cuentas', ancho: 15, tipo: 'monto' }, { titulo: 'Ingresos', ancho: 15, tipo: 'monto' },
@@ -310,8 +441,9 @@
     function pintar() {
       ctx.pMae.innerHTML = '';
       if (!ctx.sel.loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.'); return; }
-      ctx.pDet.innerHTML = actual?.gen ? tablero(actual.gen, actual.det, actual.org, { pestana })
+      ctx.pDet.innerHTML = actual?.gen ? tablero(actual.gen, actual.det, actual.org, { pestana, movs: actual.movs })
         : `<div class="dsp-vacio">${ctx.vacio('Elige el banco, la cuenta y la fecha, y presiona «Generar disponibilidad». Cada generación queda guardada en la Consulta de Disponibilidad.', 'ti-chart-line')}</div>`;
+      if (actual?.gen && pestana === 'INTEGRACION') pintarIntegracion(sb, actual, ctx.pDet);
     }
 
     async function generar(boton) {
@@ -334,14 +466,16 @@
         if (n === 'cuenta' || n === 'fecha') f[n] = e.target.value;
       }
     });
+    cont.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-integ]')) e.target.click(); });
     cont.addEventListener('click', (e) => {
       const tb = e.target.closest('[data-dsp-tab]');
-      if (tb) { pestana = cambiarPestana(ctx.pDet, tb.dataset.dspTab); return; }
+      if (tb) { pestana = cambiarPestana(ctx.pDet, tb.dataset.dspTab); if (pestana === 'INTEGRACION') pintarIntegracion(sb, actual, ctx.pDet); return; }
+      const ti = e.target.closest('[data-integ]');
+      if (ti && actual) return alternarDocs(ti, actual);
       const ac = e.target.closest('[data-accion]');
       if (!ac) return;
       if (ac.dataset.accion === 'generar') return generar(ac);
-      if (ac.dataset.accion === 'pdf' && actual?.gen) return pdf(actual.gen, actual.det, empresa(), actual.org);
-      if (ac.dataset.accion === 'excel' && actual?.gen) return excel(actual.gen, actual.det, empresa(), actual.org);
+      if ((ac.dataset.accion === 'pdf' || ac.dataset.accion === 'excel') && actual?.gen) return reporte(sb, ac.dataset.accion, actual, empresa());
     });
     iniciar();
   };
@@ -431,6 +565,7 @@
       if (sel !== g) return;
       actual = r;
       ctx.pDet.innerHTML = tablero(r.gen, r.det, r.org, { pestana });
+      if (r.gen && pestana === 'INTEGRACION') pintarIntegracion(sb, r, ctx.pDet);
     }
     function pintar() { pintarMaestro(); elegir(sel); }
 
@@ -463,17 +598,18 @@
       pintarMaestro();
       const b = ctx.pMae.querySelector('[data-buscar]'); b.focus(); b.setSelectionRange(pos, pos);
     });
-    cont.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('tr[data-gen]')) e.target.click(); });
+    cont.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('tr[data-gen], [data-integ]')) e.target.click(); });
     cont.addEventListener('click', (e) => {
       const tb = e.target.closest('[data-dsp-tab]');
-      if (tb) { pestana = cambiarPestana(ctx.pDet, tb.dataset.dspTab); return; }
+      if (tb) { pestana = cambiarPestana(ctx.pDet, tb.dataset.dspTab); if (pestana === 'INTEGRACION') pintarIntegracion(sb, actual, ctx.pDet); return; }
+      const ti = e.target.closest('[data-integ]');
+      if (ti && actual) return alternarDocs(ti, actual);
       const tr = e.target.closest('tr[data-gen]');
       if (tr && ctx.pMae.contains(tr)) return elegir(lista.find((g) => String(g.id) === tr.dataset.gen));
       const ac = e.target.closest('[data-accion]');
       if (!ac) return;
       if (ac.dataset.accion === 'excel-lista') return excelLista();
-      if (ac.dataset.accion === 'pdf' && actual?.gen) return pdf(actual.gen, actual.det, empresa(), actual.org);
-      if (ac.dataset.accion === 'excel' && actual?.gen) return excel(actual.gen, actual.det, empresa(), actual.org);
+      if ((ac.dataset.accion === 'pdf' || ac.dataset.accion === 'excel') && actual?.gen) return reporte(sb, ac.dataset.accion, actual, empresa());
     });
     iniciar();
   };

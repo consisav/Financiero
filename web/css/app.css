@@ -4189,7 +4189,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bmc-reportes .boton b { font-size: 12.5px; } .bmc-reportes .boton small { font-size: 10px; opacity: .85; font-weight: 500; }
 /* Detalle compacto de depósitos, notas y cheques: título y acciones en una sola fila, cabecera más baja y
    botones de reporte pequeños en la barra de la lista. */
-.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo):not(.cf-compras) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo { display: flex; flex-wrap: nowrap; align-items: center; padding-bottom: 4px; margin-bottom: 4px; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto { min-width: 0; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 11px; }
@@ -4222,7 +4222,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-c3 { grid-column: span 3; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-check { grid-column: span 1; padding-bottom: 6px; white-space: nowrap; font-size: 12px; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-radios { grid-column: 1 / -1; }
-.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo):not(.cf-compras) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
 .bk-movimientos:not(.bk-conc) .tg-cab h2 { white-space: nowrap; }
 .bk-movimientos:not(.bk-conc) .tg-cab .ta-total { white-space: nowrap; }
 .bk-movimientos:not(.bk-conc) .bm-control .bm-comprobante { padding: 3px 8px; }
@@ -5733,3 +5733,42 @@ form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 10
 .sat-fel-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin: 8px 0; }
 .sat-fel-g > div { display: flex; flex-direction: column; }
 .sat-fel-g span { font-size: 12px; color: var(--texto-tenue, #667085); }
+
+/* Disponibilidad bancaria: tablas de detalle compactas (una línea por fila) y paleta Integración. */
+.dsp-tablero .dsp-cuentas table { font-size: 12px; }
+.dsp-tablero .dsp-cuentas th { padding: 4px 6px; font-size: 10.5px; letter-spacing: .02em; }
+.dsp-tablero .dsp-cuentas td { padding: 3px 6px; line-height: 1.25; }
+.dsp-tablero .dsp-cuentas td small { display: inline; margin-left: 5px; font-size: 10.5px; }
+.dsp-tablero .dsp-cuentas td.num small { display: block; margin-left: 0; font-size: 10px; line-height: 1.1; }
+.dsp-tablero .dsp-cuentas tr.dsp-banco td { padding: 3px 6px; }
+.dsp-tablero .dsp-cuentas tr.dsp-banco td > .bk-cod { width: 22px; height: 18px; font-size: 10.5px; }
+.dsp-tablero .dsp-cuentas tr.dsp-sub td, .dsp-tablero .dsp-cuentas tfoot td { padding: 4px 6px; }
+.dsp-tablero .dsp-cuentas th:nth-child(1) { width: 20%; } .dsp-tablero .dsp-cuentas th:nth-child(2) { width: 52px; }
+.dsp-tablero .dsp-cuentas .dsp-integ th:nth-child(1) { width: 40%; } .dsp-tablero .dsp-cuentas .dsp-integ th:nth-child(2) { width: auto; }
+.dsp-integ th:nth-child(2), .dsp-integ th:nth-child(4) { width: 7% !important; }
+.dsp-integ tr[data-integ] { cursor: pointer; }
+.dsp-integ tr[data-integ]:hover td, .dsp-integ tr[data-integ]:focus-visible td { background: var(--acento-fondo); outline: none; }
+.dsp-integ tr.dsp-integ-tipo .ti { font-size: 13px; vertical-align: -2px; color: var(--tenue); }
+.dsp-integ tr.dsp-integ-doc td { color: var(--tenue); font-size: 11.5px; padding-top: 1px; padding-bottom: 1px; }
+.dsp-integ td.dsp-sangria2 { padding-left: 44px; }
+.dsp-niveles { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.dsp-niveles legend { font-size: 12px; font-weight: 600; color: var(--tenue); margin-bottom: 4px; }
+.dsp-niveles label { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 10px; cursor: pointer; }
+.dsp-niveles label:has(input:checked) { border-color: var(--acento); background: var(--acento-fondo); }
+.dsp-niveles input { margin-top: 3px; }
+.dsp-niveles span { display: flex; flex-direction: column; } .dsp-niveles small { font-size: 11.5px; color: var(--tenue); }
+/* Ingreso de compras: el formulario ocupa todo el alto (no hay listado debajo). */
+.bk-espacio.cf-compras .ta-cuerpo { grid-template-rows: minmax(0, 1fr) !important; }
+/* Ingreso de compras: tabla de artículos sin aplastar el nombre del producto. */
+.cf-art-tabla { min-width: 1080px; }
+.cf-art-tabla col.w-prod { width: 44px; } .cf-art-tabla col.w-cod { width: 78px; }
+.cf-art-tabla col.w-lote { width: 96px; } .cf-art-tabla col.w-fecha { width: 118px; }
+.cf-art-tabla col.w-cant { width: 78px; } .cf-art-tabla col.w-cu { width: 88px; } .cf-art-tabla col.w-desc { width: 78px; }
+.cf-art-tabla col.w-tot { width: 100px; } .cf-art-tabla col.w-cumi { width: 70px; }
+.cf-art-tabla col.w-chk { width: 40px; } .cf-art-tabla col.w-x { width: 28px; }
+/* Barra de la compra: en pantallas medianas Contraseña y Nueva quedan solo con su ícono. */
+@media (min-width: 1501px) and (max-width: 1750px) {
+  .cf-compras .bk-filtros { grid-template-columns: auto minmax(150px, .9fr) minmax(100px, .6fr) minmax(118px, .6fr) minmax(118px, .6fr) minmax(0, 3fr); gap: 6px; }
+  .cf-barra [data-accion=contrasena], .cf-barra [data-accion=nuevo] { font-size: 0; gap: 0; padding: 5px 8px; }
+  .cf-barra [data-accion=contrasena] i, .cf-barra [data-accion=nuevo] i { font-size: 16px; }
+}
