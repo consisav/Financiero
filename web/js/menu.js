@@ -35,7 +35,8 @@ window.CATALOGOS_COMUNES = [
     icono: 'ti-adjustments',
     pantallas: [
       { id: 'geografia', nombre: 'Geografía', icono: 'ti-world', descripcion: 'Países, estados o departamentos y ciudades o municipios.' },
-      { id: 'organizaciones', nombre: 'Organizaciones', icono: 'ti-building', descripcion: 'Organizaciones y sus localidades.' }
+      { id: 'organizaciones', nombre: 'Organizaciones', icono: 'ti-building', descripcion: 'Organizaciones y sus localidades.' },
+      { id: 'acceso-sistemas', nombre: 'Acceso Sistemas', icono: 'ti-lock-access', soloGlobal: true, descripcion: 'Módulos a los que tiene acceso cada organización y localidad. Solo el Super Administrador Global.' }
     ]
   }
 ];

@@ -17,6 +17,7 @@
   let roles = [];
   let rolesCache = [];
   const CLAVE_EMPRESA = 'fin.empresa_elegida'; // en esta pestaña ya se eligió la empresa de la sesión
+  let modulosEmpresa = null; // módulos habilitados a la empresa conectada (Acceso Sistemas); null = todos
   let empresas = null;    // empresas del usuario [{ id, codigo, nombre_comercial, organizacion_id, rol_id }]; null = todas (Super Administrador o sin script 96)
 
   // Lo que necesitan las pantallas de catálogos (js/geografia.js, js/organizaciones.js…)
@@ -218,6 +219,11 @@
     }
     rolesCache = rs || [];
     if (await elegirEmpresa()) return;
+    modulosEmpresa = null;
+    if (perfil.localidad_id && !perfil.es_global) {
+      const ma = await sb.rpc('modulos_permitidos', { p_localidad: perfil.localidad_id });
+      if (!ma.error && Array.isArray(ma.data)) modulosEmpresa = ma.data;
+    }
     aplicarAlcance();
     roles = (rs || []).sort((a, b) => (a.orden ?? 99) - (b.orden ?? 99) || a.nombre.localeCompare(b.nombre));
 
@@ -231,7 +237,10 @@
   }
 
   // ---------- Barra lateral ----------
-  const visibles = () => MODULOS.filter((m) => permisos[m.id] && permisos[m.id].puede_ver);
+  // Además del rol, los módulos que la empresa conectada tiene habilitados (Acceso Sistemas, script 170);
+  // Administración siempre, y el Super Administrador Global los ve todos.
+  const visibles = () => MODULOS.filter((m) => permisos[m.id] && permisos[m.id].puede_ver &&
+    (!modulosEmpresa || m.id === 'administracion' || modulosEmpresa.includes(m.id)));
   const nombreRol = () => perfil.es_global ? 'Super Administrador Global' : (roles.find((r) => r.id === perfil.rol_id) || {}).nombre || perfil.rol_id;
   const primerNombre = () => (perfil.nombre || perfil.correo).split(/[\s@]/)[0];
 
@@ -510,7 +519,7 @@
 
   // Opciones de un subgrupo; una opción con "pantallas" es un subgrupo anidado (p. ej. Replicación).
   function listaOpciones(m, pantallas, actual) {
-    return `<ul>${pantallas.map((p) => p.pantallas ? `
+    return `<ul>${pantallas.filter(permitida).map((p) => p.pantallas ? `
       <li>
         <details class="subgrupo anidado" ${contiene(p, actual) ? 'open' : ''}>
           <summary class="subgrupo-titulo"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
@@ -595,9 +604,11 @@
   }
   const pantallasDe = (m) => gruposDe(m).flatMap((g) => subgruposDe(m, g.id)).flatMap((s) => hojas(s).map((h) => h.p));
 
+  // Pantallas solo del Super Administrador Global («soloGlobal», p. ej. Acceso Sistemas): no aparecen ni se abren para los demás.
+  const permitida = (p) => !p.soloGlobal || window.FIN.esGlobal();
   // Pantallas de un subgrupo con su ruta, también las de sus subgrupos anidados.
   function hojas(s, ruta = s.subgrupo) {
-    return s.pantallas.flatMap((p) => p.pantallas ? hojas(p, `${ruta} · ${p.subgrupo}`) : [{ p, ruta }]);
+    return s.pantallas.filter(permitida).flatMap((p) => p.pantallas ? hojas(p, `${ruta} · ${p.subgrupo}`) : [{ p, ruta }]);
   }
   const contiene = (s, actual) => !!actual && hojas(s).some((h) => h.p === actual);
   // Grupos, subgrupos y pantallas del módulo con su descripción (para el manual del módulo).
