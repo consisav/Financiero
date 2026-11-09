@@ -19,3 +19,6 @@ supabase/migrations/20261107000136_notas_electronicas_organizacion_3.sql
 
 # Historial FEL con datos de clientes: solo local (el original está en el repositorio privado Financiero-datos).
 supabase/migrations/164_fel_bloques/
+
+# Órdenes de compra de la organización 3 (proveedores con su NIT): solo local.
+supabase/migrations/20261109000175_ordenes_compra_organizacion_3.sql
