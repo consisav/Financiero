@@ -5786,3 +5786,27 @@ form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 10
   .bca-pestanas .bca-buscar { min-width: 0; flex: 0 1 130px; }
   .bca-pestanas .bca-suma { font-size: 12px; white-space: nowrap; }
 }
+/* Disponibilidad: bloques compactos hacia arriba para dejar más alto a las tablas. */
+.bk-espacio.dsp-consulta .ta-cuerpo { grid-template-rows: minmax(150px, 25%) minmax(0, 1fr) !important; gap: 8px; }
+.dsp-a { gap: 6px; }
+.dsp-a .dsp-gen { padding: 7px 10px; gap: 2px 8px; border-radius: 12px; }
+.dsp-a .dsp-gen .dsp-corr { font-size: 17px; line-height: 1.1; }
+.dsp-a .dsp-gen dl { margin: 0; gap: 0 12px; }
+.dsp-a .dsp-gen dd { font-size: 12.5px; } .dsp-a .dsp-gen dd small { font-size: 10.5px; }
+.dsp-kpi2 { padding: 6px 10px; gap: 2px; border-radius: 12px; }
+.dsp-kpi2-v b { font-size: 15px; } .dsp-kpi2-v > div + div b { font-size: 13px; }
+.dsp-acciones { gap: 5px; } .dsp-acciones .boton { height: 38px; }
+.dsp-pestanas button { padding: 5px 11px; }
+.dsp-consol { gap: 6px; }
+.dsp-cx { padding: 5px 10px; gap: 0; border-radius: 12px; }
+.dsp-cx b { font-size: 15px; } .dsp-cx b.dsp-cx-txt { font-size: 13px; }
+/* Totales fijos al pie con fondo propio (no se montan sobre las filas). */
+.dsp-matriz tfoot td, .dsp-matriz tfoot tr.dsp-pct td { background: var(--panel); }
+@media (max-width: 1750px) {
+  .dsp-cab { grid-template-columns: minmax(250px, 1fr) minmax(0, 4fr) auto; gap: 8px; }
+  .dsp-a .dsp-gen .dsp-par, .dsp-a .dsp-gen dl > div:nth-child(3) { display: none; }
+  .dsp-a .dsp-gen dl { grid-template-columns: auto auto; }
+  .dsp-kpi2 > small, .dsp-cx small { display: none; }
+  .dsp-kpi2-v small { font-size: 10px; }
+  .dsp-kpi2-v b { font-size: 14px; } .dsp-kpi2-v > div + div b { font-size: 12.5px; }
+}
