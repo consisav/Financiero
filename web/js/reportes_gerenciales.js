@@ -121,12 +121,32 @@
     if (catalogos.has(k)) return catalogos.get(k);
     const sb = window.FIN.sb, leer = (q) => motor().leerTodo(q).catch(() => []);
     const p = tipo === 'productos' ? leer(() => sb.from('productos').select('id, codigo, codigo_producto, nombre').eq('localidad_id', loc).order('nombre'))
-      : tipo === 'clientes' ? leer(() => sb.from('clientes').select('id, codigo, nombre').eq('localidad_id', loc).order('nombre'))
-        : tipo === 'proveedores' ? leer(() => sb.from('proveedores').select('id, codigo, nombre_comercial').eq('localidad_id', loc).order('nombre_comercial'))
+      : tipo === 'clientes' ? terceros(true, loc, leer)
+        : tipo === 'proveedores' ? terceros(false, loc, leer)
           : tipo === 'bancos' ? Promise.all([sb.from('bancos').select('id, codigo, nombre, siglas').eq('localidad_id', loc).order('codigo'), sb.from('cuentas_bancarias').select('id, banco_id, numero, nombre').eq('localidad_id', loc).order('numero')]).then(([b, c]) => ({ bancos: b.data || [], cuentas: c.data || [] }))
             : Promise.resolve([]);
     catalogos.set(k, p);
     return p;
+  }
+  // Clientes o proveedores de una empresa: los del catálogo y además los que tienen documentos sin estar en él (o sin
+  // código, solo con NIT), con la misma llave del estado de cuenta: C<id> / P<id> o N<NIT>.
+  async function terceros(cli, loc, leer) {
+    const sb = window.FIN.sb;
+    const [cat, docs] = await Promise.all([
+      cli ? leer(() => sb.from('clientes').select('id, codigo, nombre').eq('localidad_id', loc).order('id'))
+        : leer(() => sb.from('proveedores').select('id, codigo, nombre_comercial').eq('localidad_id', loc).order('id')),
+      cli ? leer(() => sb.from('facturas_venta').select('cliente_id, cliente_codigo, nombre, nit').eq('localidad_id', loc).neq('estado', 'ANULADA').order('id'))
+        : leer(() => sb.from('compras').select('proveedor_id, proveedor_codigo, proveedor_nombre, nit').eq('localidad_id', loc).eq('estado', 'ACTIVA').order('id'))
+    ]);
+    const L = cli ? 'C' : 'P';
+    const m = new Map(cat.map((x) => [`${L}${x.id}`, { key: `${L}${x.id}`, codigo: x.codigo, nombre: x.nombre || x.nombre_comercial || '' }]));
+    docs.forEach((d) => {
+      const id = cli ? d.cliente_id : d.proveedor_id;
+      const nombre = (cli ? d.nombre : d.proveedor_nombre) || '';
+      const key = id ? `${L}${id}` : `N${String(d.nit || (cli ? 'CF' : '')).toUpperCase()}`;
+      if (!m.has(key) && nombre) m.set(key, { key, codigo: (cli ? d.cliente_codigo : d.proveedor_codigo) ?? (id ? '' : d.nit || ''), nombre });
+    });
+    return [...m.values()].sort((a, b) => a.nombre.localeCompare(b.nombre));
   }
   const etqProd = (x) => `${x.nombre} — ${x.codigo_producto || x.codigo}`;
   const etqTer = (x) => `${x.nombre || x.nombre_comercial}${x.codigo !== '' && x.codigo != null ? ` — ${x.codigo}` : ''}`;
@@ -155,7 +175,7 @@
         const necesita = (n) => cs.some(([c]) => c === n);
         const [prods, clis, provs, bc] = await Promise.all([necesita('producto') ? catalogo('productos', loc) : [], necesita('cliente') ? catalogo('clientes', loc) : [],
           necesita('proveedor') ? catalogo('proveedores', loc) : [], necesita('banco') ? catalogo('bancos', loc) : { bancos: [], cuentas: [] }]);
-        const ters = necesita('cliente') ? clis.map((x) => ({ key: `C${x.id}`, t: etqTer(x) })) : provs.map((x) => ({ key: `P${x.id}`, t: etqTer(x) }));
+        const ters = (necesita('cliente') ? clis : provs).map((x) => ({ key: x.key, t: etqTer(x) }));
         const campo = ([c, etq]) => {
           if (c === 'empresa') return `<label class="campo rg-p-emp"><span>Empresa</span>${sel('loc', locs.map((l) => [l.id, `${l.codigo} · ${l.nombre_comercial}`]), p.loc, r.id)}</label>`;
           if (c === 'desde') return `<label class="campo"><span>Período</span>${sel('tipoPeriodo', [['RANGO', 'Fecha inicial y final'], ['FECHA', 'A la fecha']], p.tipoPeriodo, r.id)}</label>${p.tipoPeriodo === 'FECHA' ? '' : `<label class="campo"><span>Fecha inicial</span><input type="date" data-p="desde" data-r="${r.id}" value="${esc(p.desde)}" max="${esc(p.fecha)}"></label>`}`;
@@ -190,8 +210,9 @@
         }
         const cli = id === 'cxc-estado';
         const ls = await catalogo(cli ? 'clientes' : 'proveedores', loc);
-        const x = t ? ls.find((y) => etqTer(y).toUpperCase() === t || String(y.codigo).toUpperCase() === t || String(y.nombre || y.nombre_comercial || '').toUpperCase() === t) : null;
-        p.tercero = x ? `${cli ? 'C' : 'P'}${x.id}` : ''; return !t || !!x;
+        let x = t ? ls.find((y) => etqTer(y).toUpperCase() === t || String(y.codigo).toUpperCase() === t || String(y.nombre || '').toUpperCase() === t) : null;
+        if (t && !x) { const parc = ls.filter((y) => String(y.nombre || '').toUpperCase().includes(t)); if (parc.length === 1) { x = parc[0]; input.value = etqTer(x); } }
+        p.tercero = x ? x.key : ''; return !t || !!x;
       }
       form.addEventListener('change', async (e) => {
         const t = e.target, id = t.dataset.r, n = t.dataset.p;
@@ -486,7 +507,7 @@
           p.producto = await preguntar('¿De qué producto? Diga «todos» o el nombre del producto.', (t) => (/\btodos?\b/.test(norm(t)) ? '' : (mejor(t, ls, (x) => x.nombre, 0.6)?.id ?? undefined)), ['Todos']);
         } else if (c === 'cliente' || c === 'proveedor') {
           const cli = c === 'cliente', ls = await catalogo(cli ? 'clientes' : 'proveedores', loc());
-          p.tercero = await preguntar(`¿Nombre del ${c}? Diga «todos» o el nombre.`, (t) => { if (/\btodos?\b/.test(norm(t))) return ''; const x = mejor(t, ls, (y) => y.nombre || y.nombre_comercial, 0.6); return x ? `${cli ? 'C' : 'P'}${x.id}` : undefined; }, ['Todos']);
+          p.tercero = await preguntar(`¿Nombre del ${c}? Diga «todos» o el nombre.`, (t) => { if (/\btodos?\b/.test(norm(t))) return ''; const x = mejor(t, ls, (y) => y.nombre, 0.6); return x ? x.key : undefined; }, ['Todos']);
         } else if (c === 'mostrar') {
           p.mostrar = await preguntar('¿Qué desea mostrar: con saldo, con movimiento, vencidos o todos?', (t) => { const s = norm(t); return /vencid/.test(s) ? 'VENCIDOS' : /movimiento/.test(s) ? 'CON MOVIMIENTO' : /saldo/.test(s) ? 'CON SALDO' : /todos/.test(s) ? 'TODOS' : undefined; }, ['Con saldo', 'Con movimiento', 'Vencidos', 'Todos']);
         } else if (c === 'contenido') {
