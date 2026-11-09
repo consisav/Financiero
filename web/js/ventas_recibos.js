@@ -64,6 +64,11 @@
           return pintar({ ...valoresNuevos(), cliente_id: fa.cliente_id, nombre: fa.nombre, vendedor_id: fa.vendedor_id, valor: Number(fa.saldo) || 0, descripcion: `PAGO DE FACTURA ${fa.serie ? `${fa.serie}-${fa.numero_dte || ''}` : fa.numero}` });
         }
       }
+      // Abre con el último documento de la clase y el listado (incluye los migrados del sistema anterior).
+      let ult = sb.from('recibos_venta').select('*').eq('localidad_id', ctx.sel.loc || 0);
+      if (conClase) ult = ult.eq('clase', cfg.clase);
+      const { data: u } = await ult.order('fecha', { ascending: false }).order('numero', { ascending: false }).limit(1);
+      if (u?.[0]) { pestana = 'RECIBOS'; await abrir(u[0]); listaTexto = ''; listado = null; await cargarListado(); return pintar(); }
       abrir(null);
     }
     async function cargarLocalidad() {

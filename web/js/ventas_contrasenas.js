@@ -26,6 +26,9 @@
       ctx.filtros('', '');
       await cargarLocalidad();
       if (/^\d+$/.test(String(extra || ''))) { const { data } = await sb.from('contrasenas_cobro').select('*').eq('id', Number(extra)).maybeSingle(); if (data) return abrir(data); }
+      // Abre con la última contraseña y el listado.
+      const { data: ult } = await sb.from('contrasenas_cobro').select('*').eq('localidad_id', ctx.sel.loc || 0).order('numero', { ascending: false }).limit(500);
+      if (ult?.length) { listado = ult; pestana = 'LISTADO'; return abrir(ult[0]); }
       abrir(null);
     }
     async function cargarLocalidad() { const { data } = await sb.from('clientes').select('id, codigo, nombre, documento, tipo_documento, dias_credito, estado').eq('localidad_id', ctx.sel.loc || 0).order('nombre'); clientes = data || []; }

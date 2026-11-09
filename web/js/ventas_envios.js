@@ -28,6 +28,9 @@
       pintarFiltros();
       await cargarLocalidad();
       if (/^\d+$/.test(String(extra || ''))) { const { data } = await sb.from('envios_venta').select('*').eq('id', Number(extra)).maybeSingle(); if (data) return abrir(data); }
+      // Abre con el último envío y el listado (incluye los migrados del sistema anterior).
+      const { data: ult } = await sb.from('envios_venta').select('*').eq('localidad_id', ctx.sel.loc || 0).order('numero', { ascending: false }).limit(500);
+      if (ult?.length) { listado = ult; pestana = 'LISTADO'; return abrir(ult[0]); }
       abrir(null);
     }
     function pintarFiltros() { ctx.filtros(`<label class="campo vr-ir"><span>Envío No.</span><input name="ir_envio" inputmode="numeric" placeholder="Número" autocomplete="off"></label>`, ''); }

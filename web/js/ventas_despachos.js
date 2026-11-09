@@ -15,7 +15,8 @@
   window.PANTALLAS.despachos = function (cont) {
     const ctx = montar(cont, { titulo: 'Despachos', icono: 'ti-package-export', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta vd-despachos', grupo: 'Ventas · Mantenimientos' });
     const { sb } = ctx;
-    const f = { desde: `${fmt.hoy().slice(0, 7)}-01`, hasta: fmt.hoy(), cliente: '', estado: 'PENDIENTE', formato: 'PDF' };
+    // Por defecto desde el 1 de enero del año anterior: así se ven los despachos pendientes migrados.
+    const f = { desde: `${Number(fmt.hoy().slice(0, 4)) - 1}-01-01`, hasta: fmt.hoy(), cliente: '', estado: 'PENDIENTE', formato: 'PDF' };
     let facturas = [], vendedores = [], sel = null, lineas = [], pestana = 'GUIAS', guiaTam = 'COMPLETA', consulta = 0;
     const vendedor = (id) => vendedores.find((v) => v.id === id);
     const fe = (x) => x.no_interno || (x.serie ? `${x.serie}-${x.numero_dte || ''}` : `Interna ${x.numero}`);
@@ -41,7 +42,7 @@
     async function cargarLocalidad() {
       const v = await sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', ctx.sel.loc || 0);
       vendedores = v.data || [];
-      f.desde = `${fmt.hoy().slice(0, 7)}-01`; f.hasta = fmt.hoy();
+      f.desde = `${Number(fmt.hoy().slice(0, 4)) - 1}-01-01`; f.hasta = fmt.hoy();
       pintarFiltros(); await consultar();
     }
     async function consultar(id = sel?.id) {
