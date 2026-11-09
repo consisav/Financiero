@@ -113,9 +113,23 @@
       CONCILIADOS: movs.filter((m) => m.conciliado),
       TODOS: movs
     });
+    // Qué conciliar: emitidos en el mes, conciliados o en circulación, por tipo de documento.
+    const CATEGORIAS = [
+      ['Emitidos en el mes', [['MES:DEPOSITO', 'Depósitos emitidos'], ['MES:NOTA_CREDITO', 'Notas de crédito'], ['MES:NOTA_DEBITO', 'Notas de débito'], ['MES:CHEQUE', 'Cheques emitidos']]],
+      ['Estado', [['CONC', 'Conciliados']]],
+      ['En circulación', [['CIRC:DEPOSITO', 'Depósitos en circulación'], ['CIRC:NOTA_CREDITO', 'Notas de crédito en circulación'], ['CIRC:NOTA_DEBITO', 'Notas de débito en circulación'], ['CIRC:CHEQUE', 'Cheques en circulación']]],
+      ['Por tipo (cualquier estado)', [['TIPO:DEPOSITO', 'Todos los depósitos'], ['TIPO:NOTA_CREDITO', 'Todas las notas de crédito'], ['TIPO:NOTA_DEBITO', 'Todas las notas de débito'], ['TIPO:CHEQUE', 'Todos los cheques']]]
+    ];
+    const enCategoria = (m, cat) => {
+      if (!cat) return true;
+      if (cat === 'CONC') return m.conciliado;
+      const [g, t] = cat.split(':');
+      if (m.tipo !== t) return false;
+      return g === 'MES' ? delMes(m) : g === 'CIRC' ? !m.conciliado : true;
+    };
     const filtrados = () => {
       const q = fm.buscar.trim().toLowerCase();
-      return vistas()[fm.vista].filter((m) => (!fm.tipo || m.tipo === fm.tipo)
+      return vistas()[fm.vista].filter((m) => enCategoria(m, fm.tipo)
         && (!q || [m.numero_documento, m.folio, m.tercero_nombre, m.deposito_por, m.descripcion, fmt.fechaDia(m.fecha)].some((v) => String(v || '').toLowerCase().includes(q))));
     };
     function pintarMovs() {
@@ -282,7 +296,7 @@
                 <div class="bca-chips" role="radiogroup" aria-label="Movimientos que se muestran">
                   ${[['CIRCULACION', 'En circulación'], ['MES', 'Del mes'], ['CONCILIADOS', 'Conciliados'], ['TODOS', 'Todos']].map(([k, tx]) => `<button type="button" role="radio" aria-checked="${fm.vista === k}" class="bca-chip ${fm.vista === k ? 'activo' : ''}" data-vista="${k}">${tx} <b>${vs[k].length.toLocaleString('es-GT')}</b></button>`).join('')}
                 </div>
-                <select class="bca-tipo-sel" data-filtro-tipo aria-label="Tipo de documento"><option value="">Todos los tipos</option>${Object.entries(TIPOS).map(([k, tx]) => `<option value="${k}" ${fm.tipo === k ? 'selected' : ''}>${tx}</option>`).join('')}</select>
+                <label class="bca-conciliar"><span>Conciliar</span><select class="bca-tipo-sel" data-filtro-tipo aria-label="Qué deseas conciliar"><option value="">Todos los movimientos</option>${CATEGORIAS.map(([g, ops]) => `<optgroup label="${g}">${ops.map(([k, tx]) => `<option value="${k}" ${fm.tipo === k ? 'selected' : ''}>${tx} · ${movs.filter((m) => enCategoria(m, k)).length.toLocaleString('es-GT')}</option>`).join('')}</optgroup>`).join('')}</select></label>
                 <label class="tk-buscar bca-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar-mov placeholder="Documento, folio, cliente o proveedor…" value="${esc(fm.buscar)}" aria-label="Buscar movimientos"></label>
                 <span class="bca-suma" data-movs-n></span>
               </div>
@@ -427,7 +441,7 @@
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') { actual = null; modificando = false; pintarFiltros(); return consultar(); }
       if (cambio === 'otro') { f[e.target.name] = Number(e.target.value); modificando = false; return consultar(); }
-      if (e.target.matches('[data-filtro-tipo]')) { fm.tipo = e.target.value; limite = PASO; return pintarMovs(); }
+      if (e.target.matches('[data-filtro-tipo]')) { fm.tipo = e.target.value; if (fm.tipo) { fm.vista = 'TODOS'; ctx.pDet.querySelectorAll('[data-vista]').forEach((x) => { x.classList.toggle('activo', x.dataset.vista === 'TODOS'); x.setAttribute('aria-checked', String(x.dataset.vista === 'TODOS')); }); } limite = PASO; return pintarMovs(); }
       if (e.target.matches('[data-comprobante]')) {
         const archivo = e.target.files[0];
         if (!archivo) return;
@@ -470,7 +484,7 @@
       const fc = e.target.closest('[data-cuenta]');
       if (fc && ctx.pMae.contains(fc)) { if (modificando) return window.FIN.aviso('Guarda o cancela la conciliación antes de cambiar de cuenta'); return abrir(cuentas.find((c) => String(c.id) === fc.dataset.cuenta)); }
       const vi = e.target.closest('[data-vista]');
-      if (vi) { fm.vista = vi.dataset.vista; limite = PASO; ctx.pDet.querySelectorAll('[data-vista]').forEach((x) => { x.classList.toggle('activo', x === vi); x.setAttribute('aria-checked', String(x === vi)); }); return pintarMovs(); }
+      if (vi) { fm.vista = vi.dataset.vista; fm.tipo = ''; const sel = ctx.pDet.querySelector('[data-filtro-tipo]'); if (sel) sel.value = ''; limite = PASO; ctx.pDet.querySelectorAll('[data-vista]').forEach((x) => { x.classList.toggle('activo', x === vi); x.setAttribute('aria-checked', String(x === vi)); }); return pintarMovs(); }
       if (e.target.closest('[data-ver-mas]')) { limite += PASO; return pintarMovs(); }
       const ac = e.target.closest('[data-accion]');
       if (ac) {

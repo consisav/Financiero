@@ -5775,3 +5775,14 @@ form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 10
 .cf-art-tabla col.w-desc { width: 88px; } .cf-art-tabla col.w-lote { width: 90px; } .cf-art-tabla col.w-chk { width: 46px; }
 /* Pestaña Contabilidad: la transacción va arriba de la tabla, no encima de las pestañas. */
 .bk-movimientos.cf-compras .bm-panel[data-panel=CONTABLE] .bm-transaccion { position: static; max-width: none; justify-content: flex-start; margin: 0 0 6px; }
+/* Conciliación bancaria: selector de qué conciliar. */
+.bca-conciliar { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--tenue); white-space: nowrap; }
+.bca-conciliar select { min-width: 250px; color: var(--texto); font-weight: 500; }
+@media (max-width: 1750px) {
+  .bca-conciliar > span { display: none; }
+  .bca-conciliar select { min-width: 0; width: 240px; }
+  .bca-pestanas .bca-chip { padding: 5px 7px; }
+  .bca-pestanas .bca-filtros { gap: 6px; }
+  .bca-pestanas .bca-buscar { min-width: 0; flex: 0 1 130px; }
+  .bca-pestanas .bca-suma { font-size: 12px; white-space: nowrap; }
+}
