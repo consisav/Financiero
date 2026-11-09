@@ -882,7 +882,7 @@
               <td>${esc(b ? `${b.codigo} · ${b.nombre}` : '')}</td><td class="num">${o.productos}</td>
               <td class="num"><b>${esc(sim)} ${fmt.monto(o.total)}</b></td><td class="num ${o.saldo > 0.004 ? 'cq-saldo' : ''}">${['AUTORIZADA', 'RECIBIDA PARCIAL'].includes(o.estado) ? fmt.monto(o.saldo) : '—'}</td>
               <td>${marca(o.estado)}</td><td>${esc(o.usuario || o.creado_por_nombre || '')}</td>
-              <td class="cq-acc"><button type="button" class="boton secundario-sm ccq-ver" data-ver="${o.id}" title="Abrir la orden en Solicitudes de compra">Consultar</button></td></tr>`; }).join('')
+              <td class="cq-acc"><button type="button" class="boton secundario-sm ccq-ver oqc-ver" data-ver="${o.id}" title="Abrir la orden en Solicitudes de compra"><i class="ti ti-eye" aria-hidden="true"></i> Ver orden</button></td></tr>`; }).join('')
               || `<tr><td colspan="11" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : 'No hay órdenes con estos parámetros.'}</td></tr>`}</tbody></table>
         </div>`;
     }
