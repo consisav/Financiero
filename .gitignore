@@ -16,3 +16,6 @@ supabase/privados/
 supabase/migrations/20261107000132_recibos_venta_organizacion_3.sql
 supabase/pendientes/132_recibos_parte_*.sql
 supabase/migrations/20261107000136_notas_electronicas_organizacion_3.sql
+
+# Historial FEL con datos de clientes: solo local (el original está en el repositorio privado Financiero-datos).
+supabase/migrations/164_fel_bloques/
