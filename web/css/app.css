@@ -5988,3 +5988,6 @@ form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 10
 @keyframes rgv-pulso { 0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, .45); } 50% { box-shadow: 0 0 0 8px rgba(192, 57, 43, 0); } }
 .rgv-estado { margin: 0; padding: 0 20px 10px; font-size: 12px; color: var(--suave); min-height: 14px; }
 .rg-acciones { gap: 8px; }
+.rg-u .rg-u-ct { color: var(--tenue); }
+.rg-u .rg-u-ct i { font-size: 11px; }
+.rg-card h3 small { text-transform: none; letter-spacing: 0; }

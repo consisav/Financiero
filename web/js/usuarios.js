@@ -154,6 +154,8 @@
               <div><dt>Vence clave</dt><dd class="${vencida ? 'pc-rojo' : ''}">${fechaCorta(u.fecha_vence_clave) || '—'}</dd></div>
               <div><dt>Empleado</dt><dd>${esc(u.empleado) || '—'}</dd></div>
               <div><dt>Extensión</dt><dd>${esc(u.extension) || '—'}</dd></div>
+              <div><dt>Teléfono</dt><dd>${esc(u.telefono) || '—'}</dd></div>
+              <div><dt>Correo reportes</dt><dd>${esc(u.correo_reportes || u.correo) || '—'}</dd></div>
               ${u.usuario_anterior ? `<div><dt>Sist. anterior</dt><dd><span class="codigo">${esc(u.usuario_anterior)}</span>${u.fecha_creacion_anterior ? ` · ${fechaCorta(u.fecha_creacion_anterior)}` : ''}</dd></div>` : ''}
               <div><dt>Firma</dt><dd>${estado.firma ? `<a href="${esc(estado.firma)}" target="_blank" rel="noopener"><img class="us-firma" src="${esc(estado.firma)}" alt="Firma de ${esc(u.nombre)}"></a>` : 'Sin firma'}</dd></div>
             </dl>
@@ -205,6 +207,9 @@
           { nombre: 'fecha_vence_clave', etiqueta: 'Fecha vence clave', tipo: 'fecha' },
           { nombre: 'empleado', etiqueta: 'Empleado' },
           { nombre: 'extension', etiqueta: 'Extensión telefónica' },
+          // Destinos por omisión del usuario en los Reportes gerenciales (script 173).
+          { nombre: 'telefono', etiqueta: 'Teléfono (WhatsApp)', placeholder: '5555 1234', max: 30 },
+          { nombre: 'correo_reportes', etiqueta: 'Correo para reportes', placeholder: u.correo || 'correo@empresa.com', max: 120 },
           { nombre: 'firma', etiqueta: 'Firma', tipo: 'imagen' }
         ],
         alPreparar: (form) => {
@@ -276,6 +281,10 @@
           // La empresa activa sigue si aún tiene acceso; si no (o cambió la organización), pasa a la principal.
           if (cambiaOrg || (!seraSuper && !elegidas.some((x) => x.localidad_id === u.localidad_id))) d.localidad_id = d.localidad_principal_id;
           if (cambiaOrg) d.localidades_adicionales = [];
+          d.telefono = String(d.telefono || '').trim() || null;
+          d.correo_reportes = String(d.correo_reportes || '').trim().toLowerCase() || null;
+          if (d.correo_reportes && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.correo_reportes)) throw new Error('El correo para reportes no es válido.');
+          if (!('telefono' in u)) { if (d.telefono || d.correo_reportes) throw new Error('Falta ejecutar en Supabase el script 173 (teléfono y correo de los usuarios).'); delete d.telefono; delete d.correo_reportes; }
           const { error } = await sb.from('perfiles').update(d).eq('id', u.id);
           if (error) {
             if (/perfiles_usuario_key|perfiles_usuario_unico|duplicate/i.test(error.message)) throw new Error(`Ya existe otro usuario con el código ${d.usuario}.`);

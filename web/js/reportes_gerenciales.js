@@ -536,7 +536,7 @@
       const desde = sb.__fromOriginal || sb.from.bind(sb);
       const mod = [m.id, m.hereda].filter(Boolean);
       const [p, pe, rm] = await Promise.all([
-        desde('perfiles').select('id, nombre, usuario, correo, rol_id, organizacion_id, localidad_id, activo, es_global').eq('activo', true).order('nombre'),
+        desde('perfiles').select('*').eq('activo', true).order('nombre'),
         desde('perfil_empresas').select('perfil_id, localidad_id, rol_id, activo').eq('localidad_id', ctx.sel.loc).eq('activo', true),
         desde('rol_modulos').select('rol_id, modulo, puede_ver').in('modulo', mod)
       ]);
@@ -547,6 +547,21 @@
       const roles = window.FIN.roles ? window.FIN.roles() : [];
       est.usuarios.forEach((u) => { const rid = rolEn.get(u.id) || u.rol_id; u.rolNombre = u.es_global ? 'Super Administrador Global' : (roles.find((r) => r.id === rid) || {}).nombre || rid; });
     }
+    // Teléfono y correo de un usuario (script 173; sin correo para reportes, el de entrada al sistema).
+    const contacto = (u) => ({ tel: String(u?.telefono || '').trim(), mail: String(u?.correo_reportes || u?.correo || '').trim().toLowerCase() });
+    const partes = (t) => String(t || '').split(/[,;]+/).map((x) => x.trim()).filter(Boolean);
+    const digitos = (t) => telefono(t);
+    // Agrega o quita de los destinos el teléfono y el correo de los usuarios marcados o desmarcados.
+    function aplicarContactos(c, us, poner) {
+      let wa = partes(c.whatsapp), co = partes(c.correos);
+      us.forEach((u) => {
+        const { tel, mail } = contacto(u);
+        if (tel) { wa = wa.filter((x) => digitos(x) !== digitos(tel)); if (poner) wa.push(tel); }
+        if (mail) { co = co.filter((x) => x.toLowerCase() !== mail); if (poner) co.push(mail); }
+      });
+      c.whatsapp = wa.join(', '); c.correos = co.join(', ');
+    }
+
     async function cargarConf() {
       est.cambios = false;
       if (!ctx.sel.loc) { est.conf = null; return; }
@@ -555,6 +570,8 @@
       const base = nuevaConf();
       const repDe = (d) => Object.fromEntries(reps.map((r) => [r.id, { ...base.reportes[r.id], ...(d?.[r.id] || {}) }]));
       est.conf = data ? { ...base, ...data, hora: String(data.hora).slice(0, 5), reportes: repDe(data.reportes), parametros: { ...base.parametros, ...data.parametros }, usuarios: data.usuarios || [] } : base;
+      // Configuración nueva: los destinos por omisión son el teléfono y el correo de los usuarios marcados.
+      if (!data) { base.correos = ''; aplicarContactos(est.conf, est.usuarios.filter((u) => est.conf.usuarios.includes(u.id)), true); }
       // Prioridades sin repetir del 1 a n.
       ordenados(reps, est.conf).forEach((r, i) => { est.conf.reportes[r.id].prioridad = i + 1; });
     }
@@ -593,7 +610,7 @@
             <div class="rg-u-lista">${est.usuarios.map((u) => `
               <label class="rg-u ${us.has(u.id) ? 'si' : ''}"><input type="checkbox" data-u="${u.id}" ${us.has(u.id) ? 'checked' : ''}>
                 <span class="rg-av">${esc((u.nombre || u.usuario || '?').split(/\s+/).slice(0, 2).map((x) => x[0]).join('').toUpperCase())}</span>
-                <span class="rg-u-tx"><b>${esc(u.nombre || u.usuario || u.correo)}</b><small>${esc([u.usuario, u.rolNombre].filter(Boolean).join(' · '))}</small></span>
+                <span class="rg-u-tx" title="${esc([contacto(u).tel && `WhatsApp ${contacto(u).tel}`, contacto(u).mail].filter(Boolean).join(' · ') || 'Sin teléfono ni correo')}"><b>${esc(u.nombre || u.usuario || u.correo)}</b><small>${esc([u.usuario, u.rolNombre].filter(Boolean).join(' · '))}</small><small class="rg-u-ct">${contacto(u).tel ? `<i class="ti ti-brand-whatsapp" aria-hidden="true"></i> ${esc(contacto(u).tel)} ` : ''}${contacto(u).mail ? `<i class="ti ti-mail" aria-hidden="true"></i> ${esc(contacto(u).mail)}` : ''}</small></span>
                 <em>${us.has(u.id) ? 'Aplica' : 'No aplica'}</em></label>`).join('') || '<p class="rg-nota">Esta localidad no tiene usuarios con acceso al módulo.</p>'}</div>
           </section>
           <section class="rg-card rg-reportes">
@@ -615,7 +632,7 @@
           </section>
           <div class="rg-lado">
             <section class="rg-card">
-              <h3 class="ta-col-titulo"><i class="ti ti-send" aria-hidden="true"></i> Destinos</h3>
+              <h3 class="ta-col-titulo"><i class="ti ti-send" aria-hidden="true"></i> Destinos <small>se llenan con los usuarios marcados</small></h3>
               <label class="campo"><span><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp (separados por coma)</span><input data-campo="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="5555 1234, 502 4444 5678" inputmode="tel"></label>
               <label class="campo"><span><i class="ti ti-mail" aria-hidden="true"></i> Correos (separados por coma)</span><input data-campo="correos" value="${esc(c.correos || '')}" placeholder="gerencia@empresa.com"></label>
             </section>
@@ -683,8 +700,8 @@
       else if (t.dataset.fila) SALIDAS.forEach(([k]) => { sal(t.dataset.fila)[k] = t.checked; });
       else if (t.matches('[data-todo]')) reps.forEach((r) => SALIDAS.forEach(([k]) => { sal(r.id)[k] = t.checked; }));
       else if (t.dataset.pri) renumerar(reps, c, t.dataset.pri, Number(t.value));
-      else if (t.dataset.u) c.usuarios = t.checked ? [...new Set([...c.usuarios, t.dataset.u])] : c.usuarios.filter((x) => x !== t.dataset.u);
-      else if (t.matches('[data-u-todos]')) c.usuarios = t.checked ? est.usuarios.map((u) => u.id) : [];
+      else if (t.dataset.u) { c.usuarios = t.checked ? [...new Set([...c.usuarios, t.dataset.u])] : c.usuarios.filter((x) => x !== t.dataset.u); aplicarContactos(c, est.usuarios.filter((u) => u.id === t.dataset.u), t.checked); }
+      else if (t.matches('[data-u-todos]')) { c.usuarios = t.checked ? est.usuarios.map((u) => u.id) : []; aplicarContactos(c, est.usuarios, t.checked); }
       else if (t.dataset.par) c.parametros[t.dataset.par] = t.type === 'checkbox' ? t.checked : t.value;
       else if (t.name === 'rg-modo') c.modo = t.value;
       else if (t.dataset.campo) c[t.dataset.campo] = t.value;
