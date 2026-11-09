@@ -6223,3 +6223,10 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
 .oqc-consulta .cq-lineas .pc-lineas { overflow-x: auto; }
 .vi-pre-pie { flex-wrap: wrap; align-items: center; }
 .vi-pre-pregunta { flex: 1 1 100%; margin: 0 0 4px; font-weight: 600; color: var(--verde-t); display: flex; gap: 6px; align-items: center; }
+.vi-pre-pregunta small { display: block; font-weight: 500; color: var(--suave); font-size: 12px; }
+.vi-pre-mic { color: var(--acento); font-size: 20px; }
+.vic-acc { white-space: nowrap; text-align: center; }
+.vic-acc-th { text-align: center !important; }
+.vic-acc .icono-boton { color: var(--acento); }
+.vic-eli, .vic-acc .vic-eli { color: var(--error) !important; }
+@media (max-width: 1100px) { .vic-lista th.vic-acc-th, .vic-lista td.vic-acc { display: table-cell !important; } }

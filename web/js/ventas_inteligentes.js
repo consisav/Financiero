@@ -259,10 +259,27 @@
     }
 
     // Factura preliminar: vista del documento; al aceptarla, la venta pasa a Facturas Ventas.
-    function preliminar() {
+    // Datos del documento preliminar (para la pantalla y el PDF).
+    function datosPreliminar() {
       const c = est.cliente || { nombre: est.venta.nombre, documento: est.venta.nit, tipo_documento: est.venta.nit === 'CF' ? 'CF' : 'NIT', forma_pago: '' };
       const tot = total(), iva = fmt.redondear(tot / 1.12 * 0.12);
-      const loc = ctx.localidad(ctx.sel.loc), org = ctx.organizaciones.find((o) => o.id === ctx.sel.org);
+      return { c, tot, iva, loc: ctx.localidad(ctx.sel.loc), org: ctx.organizaciones.find((o) => o.id === ctx.sel.org) };
+    }
+    // PDF de la factura preliminar con el encabezado de la empresa (Imprimir o Guardar como PDF).
+    function pdfPreliminar() {
+      const { c, tot, iva } = datosPreliminar();
+      const filas = conProd().map((l, i) => { const p = prod(l.producto_id); return `<tr><td>${i + 1}</td><td>${esc(String(p.codigo_producto || p.codigo))}</td><td>${esc(p.nombre)}</td><td class="n">${cant(l.cantidad)}</td><td class="n">${fmt.monto(l.precio)}</td><td class="n">${fmt.monto(l.cantidad * l.precio)}</td></tr>`; }).join('');
+      window.BANCOS.imprimir(`Factura preliminar ${est.venta.numero}`, `<style>.sello{display:inline-block;border:2px solid #b44a24;color:#b44a24;font-weight:bold;letter-spacing:.1em;padding:3px 12px;border-radius:6px;margin-bottom:10px}tfoot td{font-weight:bold}tr.t td{font-size:14px;border-top:2px solid #1f3a5f}</style>
+        <h1>Factura preliminar · venta No. ${est.venta.numero}</h1><h2>Cliente: ${esc(c.nombre)} · NIT: ${esc(c.tipo_documento === 'CF' ? 'CF' : c.documento || '—')} · Fecha: ${esc(fmt.fechaDia(est.fecha))} · Pago: ${esc(c.forma_pago || 'CONTADO')}</h2>
+        <div class="sello">PRELIMINAR · SIN VALIDEZ FISCAL</div>
+        <table><thead><tr><th>#</th><th>Código</th><th>Descripción</th><th class="n">Cantidad</th><th class="n">Precio</th><th class="n">Total</th></tr></thead><tbody>${filas}</tbody>
+        <tfoot><tr><td colspan="5">Subtotal sin IVA</td><td class="n">${fmt.monto(tot - iva)}</td></tr><tr><td colspan="5">IVA (12 %)</td><td class="n">${fmt.monto(iva)}</td></tr><tr class="t"><td colspan="5">Total</td><td class="n">Q ${fmt.monto(tot)}</td></tr></tfoot></table>`,
+        { orgId: ctx.sel.org, locId: ctx.sel.loc });
+    }
+    // opciones.voz: viene del asistente por voz al confirmar; pregunta (en voz y con botones) si se deja pendiente o se
+    // genera la factura.
+    function preliminar(opciones = {}) {
+      const { c, tot, iva, loc, org } = datosPreliminar();
       const velo = document.createElement('div');
       velo.className = 'modal-velo';
       velo.innerHTML = `<div class="modal vi-modal vi-pre" role="dialog" aria-modal="true" aria-labelledby="vi-pre-t">
@@ -276,9 +293,10 @@
               <tfoot><tr><td colspan="5">Subtotal sin IVA</td><td class="num">${fmt.monto(tot - iva)}</td></tr><tr><td colspan="5">IVA (12 %)</td><td class="num">${fmt.monto(iva)}</td></tr><tr class="vi-doc-tot"><td colspan="5">Total</td><td class="num">Q ${fmt.monto(tot)}</td></tr></tfoot></table>
           </div>
         </div>
-        <footer class="modal-pie vi-pre-pie">${pie()}</footer></div>`;
+        <footer class="modal-pie vi-pre-pie">${opciones.voz ? pieVoz() : pie()}</footer></div>`;
       document.body.appendChild(velo);
-      const cerrar = () => { velo.remove(); pintarFiltros(); pintar(); };
+      let reco = null;
+      const cerrar = () => { try { reco?.abort(); } catch { /* nada */ } if ('speechSynthesis' in window) speechSynthesis.cancel(); velo.remove(); pintarFiltros(); pintar(); };
       velo.querySelector('[data-cerrar]').addEventListener('click', cerrar);
       velo.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
       // Regresar: cierra la preliminar sin cambiar la venta. Aceptar: la venta queda en FACTURA PRELIMINAR y se pregunta
@@ -286,6 +304,14 @@
       velo.querySelector('.vi-pre-pie').addEventListener('click', async (e) => {
         const a = e.target.closest('[data-pre]')?.dataset.pre;
         if (a === 'regresar') return cerrar();
+        if (a === 'pdf') return pdfPreliminar();
+        // Desde la voz: dejarla pendiente o generar la factura (en los dos casos la preliminar queda aceptada).
+        if (a === 'v-pendiente' || a === 'v-generar') {
+          if (estado() !== 'FACTURA PRELIMINAR' && !(await cambiarEstado('FACTURA PRELIMINAR'))) return;
+          if (a === 'v-pendiente') { cerrar(); return window.FIN.aviso(`Venta No. ${est.venta.numero}: factura preliminar pendiente de trasladar a la factura`); }
+          try { reco?.abort(); } catch { /* nada */ }
+          velo.remove(); return trasladar();
+        }
         if (a === 'pendiente') { cerrar(); return window.FIN.aviso(`Venta No. ${est.venta.numero}: factura preliminar aceptada y pendiente de trasladar a la factura`); }
         if (a === 'trasladar') { velo.remove(); return trasladar(); }
         if (a === 'aceptar') {
@@ -300,11 +326,45 @@
         }
       });
       velo.querySelector('.vi-pre-pie [data-pre]:last-child').focus();
+      // Pregunta en voz alta y escucha «pendiente» o «generar la factura».
+      if (opciones.voz) {
+        const pregunta = `Esta es la factura preliminar de la venta número ${est.venta.numero}, por ${fmt.monto(tot)} quetzales. ¿Desea dejarla pendiente o generar la factura?`;
+        const Reco = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const escuchar = () => {
+          if (!Reco || !velo.isConnected) return;
+          reco = new Reco(); reco.lang = 'es-GT'; reco.interimResults = false;
+          const est0 = velo.querySelector('.vi-pre-escucha');
+          if (est0) est0.textContent = 'Escuchando… diga «pendiente» o «generar la factura».';
+          reco.onresult = (e) => {
+            const t = window.VOZ ? window.VOZ.norm(e.results[0][0].transcript) : e.results[0][0].transcript.toLowerCase();
+            const b = /pendiente|despues|luego/.test(t) ? 'v-pendiente' : /genera|factur|traslad/.test(t) ? 'v-generar' : null;
+            if (b) velo.querySelector(`[data-pre=${b}]`)?.click();
+            else if (est0) est0.textContent = `No le entendí («${e.results[0][0].transcript}»): toque un botón o el micrófono.`;
+          };
+          reco.onerror = () => { if (est0) est0.textContent = 'Toque un botón para continuar.'; };
+          try { reco.start(); } catch { /* ya escuchando */ }
+        };
+        velo.querySelector('[data-pre=v-mic]')?.addEventListener('click', escuchar);
+        if ('speechSynthesis' in window) {
+          speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(pregunta); u.lang = 'es-GT';
+          const v = speechSynthesis.getVoices().find((x) => /^es/i.test(x.lang)); if (v) u.voice = v;
+          u.onend = escuchar; speechSynthesis.speak(u);
+        } else escuchar();
+      }
+    }
+    function pieVoz() {
+      return `<p class="vi-pre-pregunta"><i class="ti ti-microphone" aria-hidden="true"></i> Venta confirmada. ¿Desea dejarla pendiente o generar la factura?<small class="vi-pre-escucha"></small></p>
+        <button type="button" class="icono-boton vi-pre-mic" data-pre="v-mic" aria-label="Contestar por voz" title="Contestar por voz"><i class="ti ti-microphone" aria-hidden="true"></i></button>
+        <button type="button" class="boton secundario-sm" data-pre="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button>
+        <button type="button" class="boton secundario-sm" data-pre="v-pendiente"><i class="ti ti-clock-pause" aria-hidden="true"></i> Dejar pendiente</button>
+        <button type="button" class="boton primario-sm" data-pre="v-generar"><i class="ti ti-file-export" aria-hidden="true"></i> Generar la factura</button>`;
     }
     function pie() {
-      return estado() === 'FACTURA PRELIMINAR'
+      const pdf = '<button type="button" class="boton secundario-sm" data-pre="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button>';
+      return pdf + (estado() === 'FACTURA PRELIMINAR'
         ? '<button type="button" class="boton secundario-sm" data-pre="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button><button type="button" class="boton primario-sm" data-pre="trasladar"><i class="ti ti-file-export" aria-hidden="true"></i> Trasladar a factura</button>'
-        : '<button type="button" class="boton secundario-sm" data-pre="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button><button type="button" class="boton primario-sm" data-pre="aceptar"><i class="ti ti-check" aria-hidden="true"></i> Aceptar</button>';
+        : '<button type="button" class="boton secundario-sm" data-pre="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button><button type="button" class="boton primario-sm" data-pre="aceptar"><i class="ti ti-check" aria-hidden="true"></i> Aceptar</button>');
     }
     // Pasa la venta a Facturas Ventas como factura nueva ya llenada (al registrarla, la venta queda FACTURADA).
     function trasladar() {
@@ -361,6 +421,7 @@
           const msj = ok ? `Venta número ${est.venta.numero} ${confirmando ? 'confirmada' : 'guardada'}.` : 'No se pudo guardar: revise la venta en pantalla.';
           conv.decir(msj); await conv.hablar(msj);
           if (ok && editable()) est.lineas.push(nuevaLinea());
+          if (ok && confirmando) { conv.cerrar(); pintarFiltros(); pintar(); return preliminar({ voz: true }); }
         }
         pintarFiltros(); pintar();
         setTimeout(() => conv.cerrar(), 1500);
@@ -492,16 +553,17 @@
             ${porEstado.map((x) => `<button type="button" class="vic-kpi ${claseEstado(x.k)} ${f.estado === x.k ? 'activo' : ''}" data-estado="${x.k}"><small><i class="ti ${x.ic}" aria-hidden="true"></i> ${x.t}</small><b>${x.n}</b><span>Q ${fmt.monto(x.total)}</span></button>`).join('')}
           </div>
           <div class="vic-lista"><table>
-            <thead><tr><th class="num">No.</th><th>Fecha</th><th>Cliente</th><th>NIT</th><th class="num">Productos</th><th class="num">Total</th><th>Estado</th><th>Factura</th><th>Generó</th></tr></thead>
+            <thead><tr><th class="num">No.</th><th>Fecha</th><th>Cliente</th><th>NIT</th><th class="num">Productos</th><th class="num">Total</th><th>Estado</th><th>Factura</th><th>Generó</th><th class="vic-acc-th">Acciones</th></tr></thead>
             <tbody>${ventas.map((v) => `<tr data-venta="${v.id}" class="${sel?.id === v.id ? 'sel' : ''}" tabindex="0">
               <td class="num">${v.numero}</td><td>${esc(fmt.fechaDia(v.fecha))}</td><td class="vic-nom">${esc(v.nombre)}${v.origen === 'VOZ' ? ' <i class="ti ti-microphone" title="Generada por voz" aria-label="por voz"></i>' : ''}</td><td>${esc(v.nit || '')}</td>
-              <td class="num">${v.venta_inteligente_lineas?.[0]?.count ?? ''}</td><td class="num">${fmt.monto(v.total)}</td><td><span class="vi-est ${claseEstado(v.estado)}">${esc(etqEstado(v.estado))}</span></td><td>${esc(factTxt(v))}</td><td>${esc(v.creado_por_nombre || '')}</td></tr>`).join('')
-              || '<tr><td colspan="9" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>Sin ventas con esos parámetros.</td></tr>'}</tbody>
-            ${ventas.length ? `<tfoot><tr><td colspan="5">${ventas.length} venta(s)</td><td class="num">${fmt.monto(ventas.reduce((s, v) => s + Number(v.total), 0))}</td><td colspan="3"></td></tr></tfoot>` : ''}
+              <td class="num">${v.venta_inteligente_lineas?.[0]?.count ?? ''}</td><td class="num">${fmt.monto(v.total)}</td><td><span class="vi-est ${claseEstado(v.estado)}">${esc(etqEstado(v.estado))}</span></td><td>${esc(factTxt(v))}</td><td>${esc(v.creado_por_nombre || '')}</td>
+              <td class="vic-acc">${['FACTURADA', 'ELIMINADA'].includes(v.estado) ? '' : `<button type="button" class="icono-boton" data-modificar="${v.id}" title="Modificar la venta" aria-label="Modificar la venta ${v.numero}"><i class="ti ti-pencil" aria-hidden="true"></i></button><button type="button" class="icono-boton vic-eli" data-eliminar="${v.id}" title="Eliminar la venta" aria-label="Eliminar la venta ${v.numero}"><i class="ti ti-trash" aria-hidden="true"></i></button>`}</td></tr>`).join('')
+              || '<tr><td colspan="10" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>Sin ventas con esos parámetros.</td></tr>'}</tbody>
+            ${ventas.length ? `<tfoot><tr><td colspan="5">${ventas.length} venta(s)</td><td class="num">${fmt.monto(ventas.reduce((s, v) => s + Number(v.total), 0))}</td><td colspan="4"></td></tr></tfoot>` : ''}
           </table></div>
           ${sel ? `<section class="vic-det">
             <div class="vic-det-cab"><div><b>Venta No. ${sel.numero} · ${esc(sel.nombre)}</b><small>${esc(fmt.fechaDia(sel.fecha))} · <span class="vi-est ${claseEstado(sel.estado)}">${esc(etqEstado(sel.estado))}</span>${sel.motivo_eliminacion ? ` · ${esc(sel.motivo_eliminacion)}` : ''}</small></div>
-              <div class="vic-det-acc"><button type="button" class="boton secundario-sm" data-accion="abrir"><i class="ti ti-external-link" aria-hidden="true"></i> Abrir venta</button>${sel.factura_id ? '<button type="button" class="boton secundario-sm" data-accion="factura"><i class="ti ti-receipt" aria-hidden="true"></i> Ver factura</button>' : ''}</div></div>
+              <div class="vic-det-acc"><button type="button" class="boton secundario-sm" data-accion="abrir"><i class="ti ti-external-link" aria-hidden="true"></i> Abrir venta</button>${['FACTURADA', 'ELIMINADA'].includes(sel.estado) ? '' : `<button type="button" class="boton secundario-sm" data-modificar="${sel.id}"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button><button type="button" class="boton secundario-sm vic-eli" data-eliminar="${sel.id}"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>`}${sel.factura_id ? '<button type="button" class="boton secundario-sm" data-accion="factura"><i class="ti ti-receipt" aria-hidden="true"></i> Ver factura</button>' : ''}</div></div>
             <table><thead><tr><th>#</th><th>Código</th><th>Producto</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Total</th></tr></thead>
               <tbody>${lineas.map((l) => `<tr><td>${l.linea}</td><td>${esc(l.producto_codigo || '')}</td><td>${esc(l.descripcion)}</td><td class="num">${cant(l.cantidad)}</td><td class="num">${fmt.monto(l.precio)}</td><td class="num">${fmt.monto(l.total)}</td></tr>`).join('')}</tbody>
               <tfoot><tr><td colspan="5">Total</td><td class="num">${fmt.monto(sel.total)}</td></tr></tfoot></table>
@@ -528,7 +590,29 @@
       if (n === 'hasta' && f.desde > f.hasta) f.desde = f.hasta;
       pintarFiltros(); consultar();
     });
+    // Modificar: la venta vuelve a GENERADA (editable) y se abre en Generar Ventas. Eliminar: queda ELIMINADA con su motivo.
+    async function modificar(v) {
+      if (v.estado !== 'GENERADA') {
+        if (!confirm(`La venta No. ${v.numero} está ${etqEstado(v.estado).toLowerCase()}. ¿Volverla a generada para modificarla?`)) return;
+        const r = await sb.from('ventas_inteligentes').update({ estado: 'GENERADA' }).eq('id', v.id);
+        if (r.error) return window.FIN.aviso(window.UI.traducirError(r.error));
+      }
+      location.hash = `#/facturacion/generar-ventas/${v.id}`;
+    }
+    async function eliminar(v) {
+      const motivo = prompt(`¿Eliminar la venta No. ${v.numero} de ${v.nombre}? Escribe el motivo:`);
+      if (motivo === null) return;
+      const r = await sb.from('ventas_inteligentes').update({ estado: 'ELIMINADA', motivo_eliminacion: motivo.trim() || null }).eq('id', v.id);
+      if (r.error) return window.FIN.aviso(window.UI.traducirError(r.error));
+      window.FIN.aviso(`Venta No. ${v.numero} eliminada`);
+      sel = v; await consultar();
+    }
+
     cont.addEventListener('click', (e) => {
+      const md = e.target.closest('[data-modificar]');
+      if (md) return modificar(ventas.find((v) => v.id === Number(md.dataset.modificar)));
+      const el = e.target.closest('[data-eliminar]');
+      if (el) return eliminar(ventas.find((v) => v.id === Number(el.dataset.eliminar)));
       const k = e.target.closest('[data-estado]');
       if (k) { f.estado = k.dataset.estado; pintarFiltros(); return consultar(); }
       const tr = e.target.closest('tr[data-venta]');
