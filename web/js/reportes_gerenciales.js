@@ -84,7 +84,7 @@
   // e: { sb, ctx (empresa del reporte), empresa(), productos() }; p: parámetros del reporte (ver PARAMS).
   async function construirCfg(id, e, p) {
     if (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id]) {
-      const M = motor().motor(id, { sb: e.sb, f: { desde: p.desde, fecha: p.fecha, producto: p.producto ? String(p.producto) : '', contenido: p.contenido }, productos: e.productos, loc: () => e.ctx.sel.loc, org: () => e.ctx.sel.org, moneda: e.ctx.moneda, empresa: e.empresa });
+      const M = motor().motor(id, { sb: e.sb, f: { desde: p.desde, fecha: p.fecha, producto: p.producto ? String(p.producto) : '', vendedor: p.vendedor ? String(p.vendedor) : '', contenido: p.contenido }, productos: e.productos, vendedores: e.vendedores || (() => []), loc: () => e.ctx.sel.loc, org: () => e.ctx.sel.org, moneda: e.ctx.moneda, empresa: e.empresa });
       return M.construir(await M.leer());
     }
     if (ESTADOS.has(id)) return window.PANTALLAS[id](null, null, { ctx: e.ctx, f: { desde: p.desde, hasta: p.fecha, contenido: p.contenido, mostrar: p.mostrar || 'CON SALDO', terceroKey: p.tercero || '', tercero: '' } }).cfg();
@@ -99,11 +99,12 @@
   //   banco y cuenta, incluir existencias en cero.
   function camposDe(id) {
     const R = window.REPORTES_COMERCIALES?.[id];
-    if (R) return R.tipo === 'SALDOS' ? ['empresa', 'fecha:Saldo al', 'producto', 'contenido'] : ['empresa', 'desde', 'fecha:Fecha final', 'producto', ...(R.tipo === 'GRAFICA' ? [] : ['contenido'])];
+    const vend = R?.lado === 'VENTAS' ? ['vendedor'] : [];
+    if (R) return R.tipo === 'SALDOS' ? ['empresa', 'fecha:Saldo al', 'producto', ...vend, 'contenido'] : ['empresa', 'desde', 'fecha:Fecha final', 'producto', ...vend, ...(R.tipo === 'GRAFICA' ? [] : ['contenido'])];
     if (id === 'cxc-estado') return ['empresa', 'desde', 'fecha:Fecha final', 'cliente', 'mostrar', 'contenido'];
     if (id === 'cxp-estado') return ['empresa', 'desde', 'fecha:Fecha final', 'proveedor', 'mostrar', 'contenido'];
     if (id === 'existencias-inventario') return ['empresa', 'fecha:A la fecha', 'producto', 'ceros'];
-    if (id === 'disponibilidad-bancaria') return ['empresa', 'fecha:Fecha de corte', 'banco', 'cuenta', 'nivel'];
+    if (id === 'disponibilidad-bancaria') return ['empresa', 'fecha:Fecha de corte', 'cuenta', 'banco', 'nivel'];
     return ['empresa', 'desde', 'fecha:Fecha final'];
   }
   // Parámetros de un reporte: los guardados (sin fechas) sobre los del período general, o los que se llenaron al generar.
@@ -111,7 +112,7 @@
     const par = conf.parametros || {};
     const g = { ...(conf.reportes?.[id]?.param || {}) };
     delete g.desde; delete g.fecha;
-    return { loc: conf.localidad_id, desde: per.desde, fecha: per.fecha, contenido: par.contenido || 'RESUMIDO', tipoPeriodo: 'RANGO', producto: '', tercero: '', mostrar: 'CON SALDO', ceros: false, banco: '', cuenta: '', nivel: (par.contenido || 'RESUMIDO') === 'DETALLADO' ? 'DETALLADA' : 'RESUMIDA', ...g };
+    return { loc: conf.localidad_id, desde: per.desde, fecha: per.fecha, contenido: par.contenido || 'RESUMIDO', tipoPeriodo: 'RANGO', producto: '', vendedor: '', tercero: '', mostrar: 'CON SALDO', ceros: false, banco: '', cuenta: '', nivel: (par.contenido || 'RESUMIDO') === 'DETALLADO' ? 'DETALLADA' : 'RESUMIDA', ...g };
   }
 
   // Catálogos de una empresa para llenar los parámetros (se leen una vez por empresa).
@@ -121,6 +122,7 @@
     if (catalogos.has(k)) return catalogos.get(k);
     const sb = window.FIN.sb, leer = (q) => motor().leerTodo(q).catch(() => []);
     const p = tipo === 'productos' ? leer(() => sb.from('productos').select('id, codigo, codigo_producto, nombre').eq('localidad_id', loc).order('nombre'))
+      : tipo === 'vendedores' ? leer(() => sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo').order('id'))
       : tipo === 'clientes' ? terceros(true, loc, leer)
         : tipo === 'proveedores' ? terceros(false, loc, leer)
           : tipo === 'bancos' ? Promise.all([sb.from('bancos').select('id, codigo, nombre, siglas').eq('localidad_id', loc).order('codigo'), sb.from('cuentas_bancarias').select('id, banco_id, numero, nombre').eq('localidad_id', loc).order('numero')]).then(([b, c]) => ({ bancos: b.data || [], cuentas: c.data || [] }))
@@ -173,6 +175,7 @@
         const p = vals[r.id], loc = Number(p.loc);
         const cs = camposDe(r.id).map((c) => c.split(':'));
         const necesita = (n) => cs.some(([c]) => c === n);
+        const vends = necesita('vendedor') ? await catalogo('vendedores', loc) : [];
         const [prods, clis, provs, bc] = await Promise.all([necesita('producto') ? catalogo('productos', loc) : [], necesita('cliente') ? catalogo('clientes', loc) : [],
           necesita('proveedor') ? catalogo('proveedores', loc) : [], necesita('banco') ? catalogo('bancos', loc) : { bancos: [], cuentas: [] }]);
         const ters = (necesita('cliente') ? clis : provs).map((x) => ({ key: x.key, t: etqTer(x) }));
@@ -185,8 +188,10 @@
           if (c === 'mostrar') return `<label class="campo"><span>Mostrar</span>${sel('mostrar', [['CON SALDO', 'Con saldo'], ['CON MOVIMIENTO', 'Con movimiento o saldo'], ['VENCIDOS', 'Con saldo vencido'], ['TODOS', 'Todos']], p.mostrar, r.id)}</label>`;
           if (c === 'contenido') return `<label class="campo"><span>Contenido</span>${sel('contenido', [['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']], p.contenido, r.id)}</label>`;
           if (c === 'nivel') return `<label class="campo"><span>Nivel</span>${sel('nivel', [['RESUMIDA', 'Resumida'], ['DETALLADA', 'Detallada'], ['TOTAL', 'Total']], p.nivel, r.id)}</label>`;
-          if (c === 'banco') return `<label class="campo"><span>Banco</span>${sel('banco', [['', 'Todos los bancos'], ...bc.bancos.map((b) => [b.id, `${b.codigo} · ${b.siglas || b.nombre}`])], p.banco, r.id)}</label>`;
-          if (c === 'cuenta') return `<label class="campo"><span>Cuenta</span>${sel('cuenta', [['', 'Todas las cuentas'], ...bc.cuentas.filter((x) => !p.banco || String(x.banco_id) === String(p.banco)).map((x) => [x.id, `${x.numero} · ${x.nombre || ''}`])], p.cuenta, r.id)}</label>`;
+          if (c === 'vendedor') return `<label class="campo rg-p-ancho"><span>Nombre del vendedor</span>${sel('vendedor', [['', 'Todos los vendedores'], ...vends.map((v) => [v.id, `${v.nombre}${v.codigo != null ? ` — ${v.codigo}` : ''}${v.activo === false ? ' (inactivo)' : ''}`])], p.vendedor, r.id)}</label>`;
+          // La cuenta bancaria de la empresa primero; el banco sale de la cuenta elegida (o se elige si son todas).
+          if (c === 'cuenta') return `<label class="campo rg-p-ancho"><span>Cuenta bancaria</span>${sel('cuenta', [['', 'Todas las cuentas'], ...bc.cuentas.filter((x) => p.cuenta || !p.banco || String(x.banco_id) === String(p.banco)).map((x) => { const b = bc.bancos.find((y) => y.id === x.banco_id); return [x.id, `${b ? `${b.siglas || b.nombre} · ` : ''}${x.numero} · ${x.nombre || ''}`]; })], p.cuenta, r.id)}</label>`;
+          if (c === 'banco') { const b = p.cuenta && bc.bancos.find((y) => String(y.id) === String(bc.cuentas.find((x) => String(x.id) === String(p.cuenta))?.banco_id)); return p.cuenta ? `<label class="campo"><span>Banco (de la cuenta)</span><input value="${esc(b ? `${b.codigo} · ${b.nombre}` : '')}" readonly tabindex="-1" class="rg-p-auto"></label>` : `<label class="campo"><span>Banco</span>${sel('banco', [['', 'Todos los bancos'], ...bc.bancos.map((y) => [y.id, `${y.codigo} · ${y.siglas || y.nombre}`])], p.banco, r.id)}</label>`; }
           if (c === 'ceros') return `<label class="pc-check rg-p-chk"><input type="checkbox" data-p="ceros" data-r="${r.id}" ${p.ceros ? 'checked' : ''}> Incluir existencias en cero</label>`;
           return '';
         };
@@ -220,7 +225,8 @@
         const p = vals[id];
         if (n === 'producto' || n === 'tercero') { if (!(await resolver(t))) { form.querySelector('.modal-error').textContent = `${n === 'producto' ? 'El producto' : 'El nombre'} «${t.value}» no está en el catálogo de esa empresa.`; } else form.querySelector('.modal-error').textContent = ''; return; }
         p[n] = t.type === 'checkbox' ? t.checked : t.value;
-        if (n === 'loc') { p.producto = ''; p.tercero = ''; p.banco = ''; p.cuenta = ''; return repintar(id); }
+        if (n === 'loc') { p.producto = ''; p.vendedor = ''; p.tercero = ''; p.banco = ''; p.cuenta = ''; return repintar(id); }
+        if (n === 'cuenta') { const bc = await catalogo('bancos', Number(p.loc)); p.banco = p.cuenta ? String(bc.cuentas.find((x) => String(x.id) === String(p.cuenta))?.banco_id || '') : ''; return repintar(id); }
         if (n === 'banco') { p.cuenta = ''; return repintar(id); }
         if (n === 'tipoPeriodo') return repintar(id);
         if (n === 'fecha' && p.desde > p.fecha) { p.desde = p.fecha; return repintar(id); }
@@ -285,8 +291,9 @@
       // Contexto mínimo de pantalla que esperan los reportes (empresa del reporte, localidades y monedas).
       const ctx = { sb, sel: { org: conf.organizacion_id, loc }, localidad: (id) => locDe(id) || null, moneda: (id) => monedas.find((x) => x.id === id) };
       const prods = window.REPORTES_COMERCIALES?.[r.id] ? await catalogo('productos', loc) : [];
+      const vends = window.REPORTES_COMERCIALES?.[r.id]?.lado === 'VENTAS' ? await catalogo('vendedores', loc) : [];
       try {
-        const cfg = await construirCfg(r.id, { sb, ctx, empresa: () => empTxt(loc), productos: () => prods }, p);
+        const cfg = await construirCfg(r.id, { sb, ctx, empresa: () => empTxt(loc), productos: () => prods, vendedores: () => vends }, p);
         if (aLaFecha) cfg.parametros = (cfg.parametros || []).map((x) => String(x).replace(/^Del \d{2}\/\d{2}\/\d{4} al (\d{2}\/\d{2}\/\d{4})$/i, 'A la fecha: $1'));
         resultados.push({ r, p, sal: conf.reportes[r.id], cfg });
       }
@@ -508,19 +515,37 @@
         } else if (c === 'cliente' || c === 'proveedor') {
           const cli = c === 'cliente', ls = await catalogo(cli ? 'clientes' : 'proveedores', loc());
           p.tercero = await preguntar(`¿Nombre del ${c}? Diga «todos» o el nombre.`, (t) => { if (/\btodos?\b/.test(norm(t))) return ''; const x = mejor(t, ls, (y) => y.nombre, 0.6); return x ? x.key : undefined; }, ['Todos']);
+        } else if (c === 'vendedor') {
+          const ls = await catalogo('vendedores', loc());
+          p.vendedor = await preguntar('¿Nombre del vendedor? Diga «todos» o el nombre.', (t) => (/\btodos?\b/.test(norm(t)) ? '' : (mejor(t, ls, (v) => v.nombre, 0.5)?.id ?? undefined)), ['Todos', ...ls.slice(0, 6).map((v) => v.nombre)]);
         } else if (c === 'mostrar') {
           p.mostrar = await preguntar('¿Qué desea mostrar: con saldo, con movimiento, vencidos o todos?', (t) => { const s = norm(t); return /vencid/.test(s) ? 'VENCIDOS' : /movimiento/.test(s) ? 'CON MOVIMIENTO' : /saldo/.test(s) ? 'CON SALDO' : /todos/.test(s) ? 'TODOS' : undefined; }, ['Con saldo', 'Con movimiento', 'Vencidos', 'Todos']);
         } else if (c === 'contenido') {
           p.contenido = await preguntar('¿Resumido o detallado?', (t) => (/detall/.test(norm(t)) ? 'DETALLADO' : /resum/.test(norm(t)) ? 'RESUMIDO' : undefined), ['Resumido', 'Detallado']);
         } else if (c === 'nivel') {
           p.nivel = await preguntar('¿Nivel resumido, detallado o total?', (t) => (/total/.test(norm(t)) ? 'TOTAL' : /detall/.test(norm(t)) ? 'DETALLADA' : /resum/.test(norm(t)) ? 'RESUMIDA' : undefined), ['Resumida', 'Detallada', 'Total']);
+        } else if (c === 'banco' && (p.cuenta || p.bancoDicho)) {
+          // El banco ya salió de la cuenta (o se dijo el banco en la pregunta de la cuenta).
         } else if (c === 'banco') {
           const bc = await catalogo('bancos', loc());
           p.banco = await preguntar('¿De qué banco? Diga «todos» o el nombre del banco.', (t) => (/\btodos?\b/.test(norm(t)) ? '' : (mejor(t, bc.bancos, (b) => `${b.siglas || ''} ${b.nombre}`, 0.34)?.id ?? undefined)), ['Todos', ...bc.bancos.map((b) => b.siglas || b.nombre)]);
         } else if (c === 'cuenta') {
           const bc = await catalogo('bancos', loc());
-          const cs = bc.cuentas.filter((x) => !p.banco || String(x.banco_id) === String(p.banco));
-          p.cuenta = await preguntar('¿Qué cuenta? Diga «todas» o los últimos dígitos.', (t) => { if (/\btodas?\b/.test(norm(t))) return ''; const dig = norm(t).replace(/\D/g, ''); const x = dig.length >= 3 && cs.find((y) => String(y.numero).replace(/\D/g, '').endsWith(dig)); return x ? x.id : undefined; }, ['Todas']);
+          const banco = (id) => bc.bancos.find((y) => String(y.id) === String(id));
+          const r2 = await preguntar('¿Qué cuenta bancaria? Diga «todas», el nombre del banco o los últimos dígitos de la cuenta.', (t) => {
+            if (/\btodas?\b/.test(norm(t)) && !mejor(t, bc.bancos, (b) => `${b.siglas || ''} ${b.nombre}`, 0.34)) return { cuenta: '', banco: '' };
+            const dig = norm(t).replace(/\D/g, '');
+            const x = dig.length >= 3 && bc.cuentas.find((y) => String(y.numero).replace(/\D/g, '').endsWith(dig));
+            if (x) return { cuenta: x.id, banco: x.banco_id };
+            const xn = mejor(t, bc.cuentas, (y) => y.nombre || '', 0.6);
+            if (xn) return { cuenta: xn.id, banco: xn.banco_id };
+            const b = mejor(t, bc.bancos, (y) => `${y.siglas || ''} ${y.nombre}`, 0.34);
+            if (b) { const de = bc.cuentas.filter((y) => y.banco_id === b.id); return de.length === 1 ? { cuenta: de[0].id, banco: b.id } : { cuenta: '', banco: b.id }; }
+            return undefined;
+          }, ['Todas', ...bc.cuentas.slice(0, 5).map((x) => `${banco(x.banco_id)?.siglas || ''} ${String(x.numero).slice(-4)}`.trim())]);
+          p.cuenta = r2.cuenta; p.banco = r2.banco ? String(r2.banco) : ''; p.bancoDicho = !!r2.banco;
+          const b = banco(p.banco);
+          if (b) decir(p.cuenta ? `Banco: ${b.nombre}.` : `Todas las cuentas de ${b.nombre}.`);
         } else if (c === 'ceros') {
           p.ceros = await preguntar('¿Incluir los productos con existencia en cero?', (t) => (/\b(si|incluir|incluya)\b/.test(norm(t)) ? true : /\bno\b/.test(norm(t)) ? false : undefined), ['Sí', 'No']);
         }

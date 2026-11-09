@@ -71,16 +71,19 @@
     const empresa = env.empresa;
     const k = (d) => (env.moneda(d.moneda_id)?.iso && env.moneda(d.moneda_id).iso !== 'GTQ' ? Number(d.tipo_cambio) || 1 : 1);
     const conPeriodo = R.tipo !== 'SALDOS';
+    // Vendedor (solo ventas): f.vendedor = id; env.vendedores() da los nombres para el encabezado.
+    const vend = () => (f.vendedor && R.lado === 'VENTAS' ? Number(f.vendedor) : null);
+    const conV = (q, lineas) => (vend() ? q.eq(lineas ? 'facturas_venta.vendedor_id' : 'vendedor_id', vend()) : q);
     async function leerPeriodo() {
       const loc = env.loc(), pid = f.producto ? Number(f.producto) : null;
       const out = { regs: [], lineas: [] };
       if (pid || R.tipo === 'GRAFICA') {
-        const ls = await leerTodo(() => L.lineas(sb, loc, f.desde, f.fecha, pid));
+        const ls = await leerTodo(() => conV(L.lineas(sb, loc, f.desde, f.fecha, pid), true));
         out.lineas = ls.map((l) => { const d = L.deLinea(l); const kk = k(d); const cantidad = Number(l.cantidad) || 0; const valor = Number(l.total ?? l.costo_total) * kk;
           return { ...L.norm(d, kk), producto_id: l.producto_id, nomProd: prod(l.producto_id)?.nombre || l.descripcion || `Producto ${l.producto_id ?? ''}`, cantidad, valor, iva: 0, precio: cantidad ? valor / cantidad : 0 }; });
       }
       if (pid) out.regs = out.lineas;
-      else out.regs = (await leerTodo(() => L.docs(sb, loc, f.desde, f.fecha))).map((d) => ({ ...L.norm(d, k(d)), cantidad: null }));
+      else out.regs = (await leerTodo(() => conV(L.docs(sb, loc, f.desde, f.fecha)))).map((d) => ({ ...L.norm(d, k(d)), cantidad: null }));
       return out;
     }
     // Saldo a la fecha = saldo actual + lo cobrado/pagado después de la fecha (y notas posteriores en ventas).
@@ -90,7 +93,7 @@
       const sumar = (id, v) => despues.set(id, (despues.get(id) || 0) + v);
       if (R.lado === 'VENTAS') {
         const [fs, pg, nt] = await Promise.all([
-          leerTodo(() => sb.from('facturas_venta').select(L.camposDoc).eq('localidad_id', loc).neq('estado', 'ANULADA').lte('fecha_emision', fin(al)).order('fecha_emision').order('id')),
+          leerTodo(() => conV(sb.from('facturas_venta').select(L.camposDoc).eq('localidad_id', loc).neq('estado', 'ANULADA').lte('fecha_emision', fin(al)).order('fecha_emision').order('id'))),
           leerTodo(() => sb.from('factura_venta_pagos').select('id, factura_id, valor, facturas_venta!inner(localidad_id)').eq('facturas_venta.localidad_id', loc).gt('fecha', fin(al)).order('id')),
           leerTodo(() => sb.from('notas_venta').select('id, factura_id, tipo, valor').eq('localidad_id', loc).neq('estado', 'ANULADA').not('factura_id', 'is', null).gt('fecha_emision', fin(al)).order('id'))
         ]);
@@ -112,7 +115,8 @@
     }
 
     const parametros = (extra = []) => [`Empresa: ${empresa()}`, conPeriodo ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.fecha)}` : `Saldo al ${fmt.fechaDia(f.fecha)}`,
-      `Producto: ${f.producto ? etiqueta(prod(Number(f.producto))) : 'Todos'}`, ...extra];
+      `Producto: ${f.producto ? etiqueta(prod(Number(f.producto))) : 'Todos'}`,
+      ...(R.lado === 'VENTAS' ? [`Vendedor: ${vend() ? ((env.vendedores ? env.vendedores() : []).find((v) => v.id === vend())?.nombre || vend()) : 'Todos'}`] : []), ...extra];
     const agrupar = (xs, key) => { const m = new Map(); xs.forEach((x) => { const kk = key(x); const a = m.get(kk) || []; a.push(x); m.set(kk, a); }); return m; };
     const suma = (xs, c) => xs.reduce((t, x) => t + (Number(x[c]) || 0), 0);
     const mesDe = (x) => x.fecha.slice(0, 7);

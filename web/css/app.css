@@ -6053,3 +6053,4 @@ form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 10
   .rg-par-g .rg-p-emp, .rg-par-g .rg-p-ancho { grid-column: 1 / -1; }
   .rg-aviso { right: 12px; left: 12px; bottom: 16px; width: auto; }
 }
+.rg-p-auto { background: var(--fondo) !important; color: var(--suave) !important; }
