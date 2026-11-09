@@ -521,7 +521,7 @@
   function listaOpciones(m, pantallas, actual) {
     return `<ul>${pantallas.filter(permitida).map((p) => p.pantallas ? `
       <li>
-        <details class="subgrupo anidado" ${contiene(p, actual) ? 'open' : ''}>
+        <details class="subgrupo anidado" ${contiene(p, actual) || p.abierto ? 'open' : ''}>
           <summary class="subgrupo-titulo"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
           ${listaOpciones(m, p.pantallas, actual)}
         </details>

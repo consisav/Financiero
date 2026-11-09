@@ -28,6 +28,7 @@
     // Listado de facturas del cliente: null = sin consultar; vista FACTURAS o PRODUCTOS (productos vendidos).
     let listado = null, listaTexto = '', listaVista = 'FACTURAS', vendidos = null;
     let poliza = null, guiaTamano = 'COMPLETA';
+    let ventaVI = null; // venta de Ventas Inteligentes que se está facturando (queda FACTURADA al registrar la factura)
 
     const cliente = (id) => clientes.find((c) => c.id === id);
     const producto = (id) => productos.find((p) => p.id === id);
@@ -54,7 +55,7 @@
       if (extra === 'inteligente') {
         try { vi = JSON.parse(sessionStorage.getItem('fin-venta-inteligente') || 'null'); sessionStorage.removeItem('fin-venta-inteligente'); } catch { /* sin almacenamiento */ }
         vi = vi || window.VENTA_INTELIGENTE || null; window.VENTA_INTELIGENTE = null;
-        if (vi) { ctx.sel.org = vi.org; ctx.sel.loc = vi.loc; }
+        if (vi) { ctx.sel.org = vi.org; ctx.sel.loc = vi.loc; ventaVI = vi.venta_id || null; }
       }
       pintarFiltros();
       await cargarLocalidad();
@@ -635,6 +636,7 @@
         if (r1.error) throw r1.error;
         if (cs.length) { const r2 = await sb.from('factura_venta_contable').insert(cs.map((x, i) => ({ factura_id: id, linea: i + 1, cuenta_id: x.cuenta_id, centro_id: x.centro_id, concepto: x.concepto || null, debe: x.debe, haber: x.haber, debe_mi: miConta(x, 'debe', Number(h.tipo_cambio || 1) || 1), haber_mi: miConta(x, 'haber', Number(h.tipo_cambio || 1) || 1) }))); if (r2.error) throw r2.error; }
         if (ps.length) { const r3 = await sb.from('factura_venta_pagos').insert(ps.map((x) => ({ factura_id: id, fecha: x.fecha || fmt.hoy(), forma: x.forma, documento: x.documento || null, banco: x.banco || null, valor: x.valor, usuario: (ctx.yo.usuario || '').toUpperCase() }))); if (r3.error) throw r3.error; }
+        if (!actual && ventaVI) { const u = await sb.from('ventas_inteligentes').update({ estado: 'FACTURADA', factura_id: id }).eq('id', ventaVI); if (!u.error) ventaVI = null; }
         window.FIN.aviso(actual ? 'Factura guardada' : 'Factura registrada');
         const { data } = await sb.from('facturas_venta').select('*').eq('id', id).single();
         await abrir(data);
