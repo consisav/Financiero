@@ -120,6 +120,8 @@
     ['DIF_CAMBIARIO_GASTO', 'Diferencial cambiario (pérdida)', 'Revaluación de moneda extranjera', /DIFERENCIAL CAMBIARIO|P[EÉ]RDIDA CAMBIARIA/],
     ['ASEGURADORAS_CXC', 'Cuentas por cobrar aseguradoras', 'Clínicas y hospital: parte de aseguradoras', /ASEGURADORAS/],
     ['HONORARIOS_POR_PAGAR', 'Honorarios médicos por pagar', 'Liquidaciones de honorarios', /HONORARIOS.*POR PAGAR/],
+    ['ESTIMACION_INCOBRABLES', 'Estimación para cuentas incobrables', 'Hospital y clínicas: cuentas incobrables', /ESTIMACI[OÓ]N.*(INCOBRABLE|CUENTAS DUDOSAS)|RESERVA PARA CUENTAS/],
+    ['GASTO_INCOBRABLES', 'Gasto por cuentas incobrables', 'Hospital y clínicas: cuentas incobrables', /(GASTO|P[EÉ]RDIDA).*(INCOBRABLE|CUENTAS DUDOSAS)/],
     ['CLI_CAJA', 'Clínica: caja', 'Cobros en efectivo', /CAJA GENERAL|^CAJA/],
     ['CLI_BANCOS', 'Clínica: bancos', 'Cobros con tarjeta, transferencia y cheque', /BANCOS?|DEP[OÓ]SITOS/],
     ['CLI_INGRESO_CONSULTAS', 'Clínica: ingresos por consultas', 'Consultas, reconsultas y sesiones de paquetes', /CONSULTA/],

@@ -164,7 +164,7 @@
   function registro(cont, op) {
     const ctx = montar(cont, { titulo: op.titulo, icono: op.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep', grupo: op.grupo });
     const { sb } = ctx;
-    const f = { desde: sumarDias(hoy(), -(op.dias || 30)), hasta: hoy(), buscar: '' }; let B = null, filas = [], actual = null, form = null, lineas = [], cfg = null;
+    const f = { desde: sumarDias(hoy(), -(op.dias || 30)), hasta: hoy(), buscar: '' }; let B = null, filas = [], actual = null, form = null, lineas = [], cfg = null, panelHtml = '';
     async function iniciar() { if (!(await ctx.cargarBase())) return; await cargar(); }
     async function cargar() {
       if (!ctx.sel.loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', op.icono); return; }
@@ -173,10 +173,12 @@
       ctx.pDet.innerHTML = '<p class="vacio">Leyendo…</p>';
       try {
         B = await base(ctx);
+        if (op.cargarExtra) await op.cargarExtra(ctx, B);
         let q = sb.from(op.tabla).select(op.select || '*');
         q = op.porAdmision ? q.in('admision_id', B.admisiones.map((a) => a.id).concat([0])) : q.eq('localidad_id', ctx.sel.loc);
         if (op.fecha) { const fh = op.fechaTipo === 'fecha'; q = q.gte(op.fecha, fh ? f.desde : `${f.desde}T00:00:00-06:00`).lte(op.fecha, fh ? f.hasta : `${f.hasta}T23:59:59-06:00`); }
         const { data, error } = await q.order(op.orden || 'id', { ascending: false }).limit(1000); if (error) throw error; filas = data || [];
+        panelHtml = op.panel ? await op.panel(ctx, B) : '';
       } catch (e) { return falta(ctx, e); }
       if (actual) actual = filas.find((x) => x.id === actual.id) || null;
       pintar();
@@ -202,7 +204,7 @@
         columnas: op.columnas.map((c) => col(c.t, c.tipo || 'texto', c.ancho || 14)), filas: vs.map((r) => ({ valores: op.columnas.map((c) => c.v(r, B)), resaltar: op.resaltar ? op.resaltar(r, B) : false })) };
       const v = form || {};
       ctx.pDet.innerHTML = `<div class="bm-form cx-form cl-clasico">${op.ayuda ? `<p class="pr-guia"><i class="ti ti-info-circle" aria-hidden="true"></i> ${op.ayuda}</p>` : ''}
-        ${op.kpis ? `<div class="ec-kpis">${op.kpis(vs, B).map(([t, x, c]) => kpi(t, x, c)).join('')}</div>` : ''}
+        ${panelHtml}${op.kpis ? `<div class="ec-kpis">${op.kpis(vs, B).map(([t, x, c]) => kpi(t, x, c)).join('')}</div>` : ''}
         ${form ? `<form class="sal-form" novalidate><div class="cl-banda">${actual ? `${esc(op.nombre || op.titulo)}${actual.numero ? ` No. ${actual.numero}` : ''}` : `Nuevo: ${esc(op.nombre || op.titulo)}`}</div><div class="sat-g">${op.campos.map((c) => valorCampo(c, v)).join('')}</div>
           ${actual && op.detalle ? detalleHtml() : ''}
           <p class="acciones-form">${ctx.admin ? `<button type="button" class="boton primario-sm" data-accion="guardar"><i class="ti ti-device-floppy" aria-hidden="true"></i> ${actual ? 'Guardar' : 'Registrar'}</button> ` : ''}${actual && op.imprimir !== false ? '<button type="button" class="boton secundario-sm" data-accion="imprimir"><i class="ti ti-printer" aria-hidden="true"></i> Imprimir</button> ' : ''}${(op.acciones ? op.acciones(actual, B) : '')}<button type="button" class="boton secundario-sm" data-accion="cerrar"><i class="ti ti-x" aria-hidden="true"></i> Cerrar</button></p></form><datalist id="sal-pac">${B.pacientes.map((p) => `<option value="${esc(`${p.expediente} · ${p.nombres} ${p.apellidos}`)}">${esc(p.dpi || '')}</option>`).join('')}</datalist>` : ''}
@@ -462,4 +464,5 @@
     nuevo: () => ({ fecha: hoy() }),
     columnas: [{ t: 'Fecha', v: (r) => fmt.fechaDia(r.fecha), ancho: 10 }, { t: 'Paciente', v: (r, B) => nomPac(B, r.paciente_id), ancho: 28 }, { t: 'Vacuna', v: (r, B) => nom(B.vacunas, r.vacuna_id), ancho: 26 }, { t: 'Dosis', v: (r, B) => nom(B.vacunas, r.vacuna_id, 'dosis'), ancho: 12 }, { t: 'Lote', v: (r) => r.lote || '', ancho: 10 }, { t: 'Próxima', v: (r) => (r.proxima ? fmt.fechaDia(r.proxima) : ''), ancho: 10 }],
     kpis: (xs) => [['Dosis aplicadas', xs.length], ['Pacientes', new Set(xs.map((r) => r.paciente_id)).size], ['Próximas en 30 días', xs.filter((r) => r.proxima && r.proxima <= sumarDias(hoy(), 30) && r.proxima >= hoy()).length]] });
+  window.SALUD = { registro, catalogo, base, exportar, botonesExp, marca, nomPac, pacDe, nomMed, nomAdm, nom, fhGt, diaGt, edad, sumarDias, empresaDe, falta, leerTodo, celda, CLS };
 })();

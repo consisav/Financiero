@@ -3083,5 +3083,106 @@
    "Elige al paciente, la vacuna y la dosis, el lote y la próxima dosis.",
    "Busca al paciente en el listado y exporta su historial en PDF como carné."
   ]
+ },
+ "hos-kits-paquetes": {
+  "puntos": [
+   "Paquetes quirúrgicos, kits y devoluciones en la cuenta."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Kits, paquetes y devoluciones y elige la admisión abierta.",
+   "Para un paquete elige el paquete, el cirujano y el anestesiólogo y presiona «Aplicar paquete»: se carga el precio sin honorarios y los honorarios para su liquidación.",
+   "Para un kit elige el kit y la bodega de farmacia y presiona «Cargar kit»: los artículos con producto salen del inventario.",
+   "Lo no utilizado se regresa con «Devolver» en el cargo de farmacia."
+  ]
+ },
+ "hos-auditoria-cuenta": {
+  "puntos": [
+   "Hallazgos de las cuentas antes de facturar."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Auditoría de cuenta médica.",
+   "Revisa los hallazgos de cada cuenta (sin precio, duplicados, días-cama, medicamentos sin orden o sin administración, garantía, epicrisis, facturas).",
+   "Corrige en la cuenta del paciente y vuelve a auditar.",
+   "Imprime el informe en PDF con firmas."
+  ]
+ },
+ "med-facturacion": {
+  "puntos": [
+   "Factura de la cuenta en Facturación/Ventas."
+  ],
+  "pasos": [
+   "Abre Procesos › Facturación de cuentas y elige el origen (Hospital o Clínica).",
+   "En cada cuenta egresada presiona «Facturar» en la parte del paciente o de la aseguradora.",
+   "Escribe el NIT o deja vacío para usar el registrado.",
+   "Abre la factura con «Ver» y certifica el DTE en Facturas Ventas."
+  ]
+ },
+ "med-glosas": {
+  "puntos": [
+   "Preautorizaciones por atender y glosas."
+  ],
+  "pasos": [
+   "Abre Procesos › Preautorizaciones y glosas: arriba ves las cartas de garantía pendientes o por vencer.",
+   "Registra cada glosa con «Nuevo»: aseguradora, reclamo, concepto, motivo y monto.",
+   "Al apelar registra la fecha y el argumento; al resolver, el monto recuperado y el estado."
+  ]
+ },
+ "med-incobrables": {
+  "puntos": [
+   "Estimación y castigo de saldos vencidos."
+  ],
+  "pasos": [
+   "Configura ESTIMACION_INCOBRABLES y GASTO_INCOBRABLES en Contabilidad › Cuentas de integración.",
+   "Abre Procesos › Cuentas incobrables con la antigüedad mínima.",
+   "«Estimar» registra la estimación con su partida PEV; «Castigar» da de baja el saldo con su partida PAJ."
+  ]
+ },
+ "far-botiquines": {
+  "puntos": [
+   "Reposición de botiquines por área."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Botiquines de piso, elige el período y los días de cobertura.",
+   "Imprime la lista por área para que farmacia prepare el traslado."
+  ]
+ },
+ "far-controlados": {
+  "puntos": [
+   "Libro de medicamentos controlados."
+  ],
+  "pasos": [
+   "Marca los controlados con su producto en el formulario terapéutico.",
+   "Abre Hospital › Procesos › Libro de medicamentos controlados, elige el período y el folio inicial.",
+   "Imprime en PDF para el libro de control del MSPAS."
+  ]
+ },
+ "ceye-paquetes": {
+  "puntos": [
+   "Paquetes de esterilización."
+  ],
+  "pasos": [
+   "Abre Hospital › Catálogos › Paquetes de esterilización y ajusta contenido, método y vigencia."
+  ]
+ },
+ "ceye-esterilizacion": {
+  "puntos": [
+   "Ciclos de esterilización."
+  ],
+  "pasos": [
+   "Abre Hospital › Procesos › Esterilización (CEYE) y presiona «Nuevo».",
+   "Registra equipo, método, temperatura, tiempo e indicador químico y presiona «Registrar».",
+   "Agrega los paquetes del ciclo: quedan con lote y vencimiento.",
+   "Con el indicador biológico negativo marca el ciclo «Liberado»; si sale positivo, «Rechazado»."
+  ]
+ },
+ "med-mantenimiento": {
+  "puntos": [
+   "Mantenimiento de equipo médico."
+  ],
+  "pasos": [
+   "Abre Procesos › Mantenimiento de equipo médico y presiona «Nuevo».",
+   "Registra el equipo, su código de activo fijo, el tipo y la fecha programada.",
+   "Al realizarlo registra la fecha, el proveedor, el costo, el trabajo y el próximo servicio."
+  ]
  }
 }

@@ -1009,6 +1009,29 @@ window.MODULOS = [
   }
 })();
 
+// Hospital y Clínicas médicas · procesos (salud_procesos.js, script 162).
+(function () {
+  const mod = (id) => window.MODULOS.find((m) => m.id === id);
+  const p = (id, nombre, icono, descripcion) => ({ id, nombre, icono, descripcion });
+  const FAC = p('med-facturacion', 'Facturación de cuentas', 'ti-file-invoice', 'Factura de la cuenta al paciente (contado) y a la aseguradora (crédito) en Facturación/Ventas, lista para certificar el DTE.');
+  const GLO = p('med-glosas', 'Preautorizaciones y glosas', 'ti-file-alert', 'Preautorizaciones por atender y glosas de aseguradoras con su apelación y recuperación.');
+  const INC = p('med-incobrables', 'Cuentas incobrables', 'ti-cash-off', 'Saldos vencidos de pacientes y aseguradoras: estimación y castigo con su partida contable.');
+  const MAN = p('med-mantenimiento', 'Mantenimiento de equipo médico', 'ti-tool', 'Preventivo, correctivo, calibración y verificación del equipo médico con costo y próximo servicio.');
+  const h = mod('hospital');
+  if (h) {
+    h.subgrupos.catalogos.find((x) => x.subgrupo === 'Recursos del hospital')?.pantallas.push(p('ceye-paquetes', 'Paquetes de esterilización', 'ti-box-seam', 'Paquetes que se esterilizan con su contenido, método y vigencia.'));
+    h.subgrupos.procesos = [...(h.subgrupos.procesos || []),
+      { subgrupo: 'Cuenta del paciente', icono: 'ti-file-invoice', pantallas: [p('hos-kits-paquetes', 'Kits, paquetes y devoluciones', 'ti-package', 'Aplica paquetes quirúrgicos, carga kits con salida de inventario y registra devoluciones de farmacia.'),
+        p('hos-auditoria-cuenta', 'Auditoría de cuenta médica', 'ti-file-search', 'Hallazgos de cada cuenta antes de facturar: sin precio, duplicados, sin orden, sin administración, garantía excedida, sin epicrisis.'), FAC] },
+      { subgrupo: 'Aseguradoras y cartera', icono: 'ti-shield-heart', pantallas: [GLO, INC] },
+      { subgrupo: 'Farmacia y servicios', icono: 'ti-pill', pantallas: [p('far-botiquines', 'Botiquines de piso', 'ti-first-aid-kit', 'Consumo por área y cantidad a reponer en cada botiquín de piso.'),
+        p('far-controlados', 'Libro de medicamentos controlados', 'ti-lock-square', 'Entradas, salidas y existencia de controlados con paciente y médico; libro foliado.'),
+        p('ceye-esterilizacion', 'Esterilización (CEYE)', 'ti-temperature', 'Ciclos del autoclave con indicadores, paquetes esterilizados con lote y vencimiento.'), MAN] }];
+  }
+  const c = mod('clinicas');
+  if (c) c.subgrupos.procesos = [...(c.subgrupos.procesos || []), { subgrupo: 'Caja y cartera', icono: 'ti-file-invoice', pantallas: [FAC, GLO, INC, MAN] }];
+})();
+
 // Orden del menú principal de módulos y separadores (debajo de Presupuesto y Flujo, Importaciones y exportaciones,
 // Activos Fijos y Nóminas).
 (function () {
