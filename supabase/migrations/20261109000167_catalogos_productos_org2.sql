@@ -7,15 +7,12 @@
 -- Los catálogos de compras (Clasificación compras y Tipo documento) son comunes a todas las empresas y ya están cargados.
 -- Se puede ejecutar varias veces: lo que ya existe con el mismo nombre no se duplica.
 
-drop table if exists _org2_loc;
-create temporary table _org2_loc as
-select l.id, l.organizacion_id from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2;
-do $$ begin if not exists (select 1 from _org2_loc) then raise exception 'No se encontró la organización con código 2 o no tiene empresas.'; end if; end $$;
+do $$ begin if not exists (select 1 from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2) then raise exception 'No se encontró la organización con código 2 o no tiene empresas.'; end if; end $$;
 
 -- tipos_medida
 insert into public.tipos_medida (organizacion_id, localidad_id, codigo, nombre, activo)
 select l.organizacion_id, l.id, coalesce((select max(t.codigo) from public.tipos_medida t where t.localidad_id = l.id), 0) + row_number() over (partition by l.id order by v.orden), v.nombre, v.activo
-from _org2_loc l cross join (values
+from (select l.id, l.organizacion_id from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2) l cross join (values
 (1, 'SIN UNIDAD', true),
 (2, 'UNIDAD', true),
 (3, 'TABLETA', true),
@@ -58,7 +55,7 @@ where not exists (select 1 from public.tipos_medida t where t.localidad_id = l.i
 -- presentaciones_producto
 insert into public.presentaciones_producto (organizacion_id, localidad_id, codigo, nombre, activo)
 select l.organizacion_id, l.id, coalesce((select max(t.codigo) from public.presentaciones_producto t where t.localidad_id = l.id), 0) + row_number() over (partition by l.id order by v.orden), v.nombre, v.activo
-from _org2_loc l cross join (values
+from (select l.id, l.organizacion_id from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2) l cross join (values
 (1, 'SIN PRESENTACIÓN', true),
 (2, 'UNIDAD', true),
 (3, 'CAJA X 1', true),
@@ -95,7 +92,7 @@ where not exists (select 1 from public.presentaciones_producto t where t.localid
 -- tipos_precio
 insert into public.tipos_precio (organizacion_id, localidad_id, codigo, nombre, pct_utilidad, pct_descuento, factor, factor_valor, activo)
 select l.organizacion_id, l.id, coalesce((select max(t.codigo) from public.tipos_precio t where t.localidad_id = l.id), 0) + row_number() over (partition by l.id order by v.orden), v.nombre, v.pct_utilidad, v.pct_descuento, v.factor, v.factor_valor, v.activo
-from _org2_loc l cross join (values
+from (select l.id, l.organizacion_id from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2) l cross join (values
 (1, 'PÚBLICO', 30, 0, 'NORMAL', 1, true),
 (2, 'PACIENTE HOSPITALIZADO', 35, 0, 'NORMAL', 1, true),
 (3, 'ASEGURADORAS', 40, 0, 'NORMAL', 1, true),
@@ -107,7 +104,7 @@ where not exists (select 1 from public.tipos_precio t where t.localidad_id = l.i
 -- clasificaciones_producto
 insert into public.clasificaciones_producto (organizacion_id, localidad_id, codigo, nombre, tipo, inventario, utilizar_lote, laboratorio, tipo_servicio, activo)
 select l.organizacion_id, l.id, coalesce((select max(t.codigo) from public.clasificaciones_producto t where t.localidad_id = l.id), 0) + row_number() over (partition by l.id order by v.orden), v.nombre, v.tipo, v.inventario, v.utilizar_lote, v.laboratorio, v.tipo_servicio, v.activo
-from _org2_loc l cross join (values
+from (select l.id, l.organizacion_id from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2) l cross join (values
 (1, 'MEDICAMENTOS', 'PRODUCTO', true, true, false, 'INTERNO', true),
 (2, 'MATERIAL MÉDICO QUIRÚRGICO', 'PRODUCTO', true, true, false, 'INTERNO', true),
 (3, 'LABORATORIO CLÍNICO', 'PRODUCTO', true, true, true, 'INTERNO', true),
@@ -125,7 +122,7 @@ where not exists (select 1 from public.clasificaciones_producto t where t.locali
 -- tipos_producto
 insert into public.tipos_producto (clasificacion_id, organizacion_id, localidad_id, codigo, siglas, nombre, activo)
 select c.id, l.organizacion_id, l.id, coalesce((select max(t.codigo) from public.tipos_producto t where t.localidad_id = l.id), 0) + row_number() over (partition by l.id order by v.orden), v.siglas, v.nombre, true
-from _org2_loc l cross join (values
+from (select l.id, l.organizacion_id from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2) l cross join (values
 (1, 'MEDICAMENTOS', 'ANALG', 'ANALGÉSICOS Y ANTIINFLAMATORIOS'),
 (2, 'MEDICAMENTOS', 'ANTIB', 'ANTIBIÓTICOS'),
 (3, 'MEDICAMENTOS', 'ANTIF', 'ANTIFÚNGICOS Y ANTIVIRALES'),
@@ -191,7 +188,7 @@ select l.organizacion_id, l.id, coalesce((select max(p.codigo) from public.produ
        (select x.id from public.presentaciones_producto x where x.localidad_id = l.id and upper(trim(x.nombre)) = v.presentacion order by x.codigo limit 1),
        (select x.id from public.tipos_medida x where x.localidad_id = l.id and upper(trim(x.nombre)) = v.medida order by x.codigo limit 1),
        v.generico, v.principio, 'ACTIVO', false, 0, 0
-from _org2_loc l cross join (values
+from (select l.id, l.organizacion_id from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2) l cross join (values
 (1, 'MED-0001', 'ACETAMINOFÉN 500 MG TABLETA', 'ANALG', 'TABLETA', 'BLÍSTER X 10', true, 'PARACETAMOL'),
 (2, 'MED-0002', 'ACETAMINOFÉN 120 MG/5 ML JARABE', 'ANALG', 'FRASCO', 'FRASCO 120 ML', true, 'PARACETAMOL'),
 (3, 'MED-0003', 'ACETAMINOFÉN 100 MG/ML GOTAS', 'ANALG', 'FRASCO', 'FRASCO GOTERO', true, 'PARACETAMOL'),
@@ -901,4 +898,3 @@ select l.codigo as empresa,
   (select count(*) from public.tipos_producto t where t.localidad_id = l.id) as tipos,
   (select count(*) from public.productos t where t.localidad_id = l.id) as productos
 from public.localidades l join public.organizaciones o on o.id = l.organizacion_id where o.codigo = 2 order by l.codigo;
-drop table if exists _org2_loc;
