@@ -393,12 +393,13 @@
   // Sin pantalla (Reportes gerenciales): genera y guarda la disponibilidad de todas las cuentas a la fecha de corte y
   // devuelve su contenido; detallada incluye la integración de cada cuenta.
   window.DISPONIBILIDAD = {
-    async cfg(sb, loc, fecha, empresa, contenido = 'RESUMIDO') {
-      const { data, error } = await sb.rpc('generar_disponibilidad', { p_loc: loc, p_banco: null, p_cuenta: null, p_fecha: fecha });
+    // o: { banco, cuenta, nivel: 'RESUMIDA' | 'DETALLADA' | 'TOTAL' } (sin nivel: según el contenido).
+    async cfg(sb, loc, fecha, empresa, contenido = 'RESUMIDO', o = {}) {
+      const { data, error } = await sb.rpc('generar_disponibilidad', { p_loc: loc, p_banco: o.banco ? Number(o.banco) : null, p_cuenta: o.cuenta ? Number(o.cuenta) : null, p_fecha: fecha });
       if (error) throw new Error(sinTabla(error) ? AVISO_SCRIPT : window.UI.traducirError(error));
       const act = await leerGeneracion(sb, data.id);
       if (act.error) throw act.error;
-      const nivel = contenido === 'DETALLADO' ? 'DETALLADA' : 'RESUMIDA';
+      const nivel = o.nivel || (contenido === 'DETALLADO' ? 'DETALLADA' : 'RESUMIDA');
       if (nivel !== 'RESUMIDA') await movimientosDe(sb, act);
       return cfgExcel(act.gen, act.det, empresa, act.org, nivel, act.movs);
     }

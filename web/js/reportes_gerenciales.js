@@ -3,7 +3,8 @@
 // prioridad (1 … n, el orden de la lista y de la generación) y, con casillas, sus salidas: PDF, Excel, voz, WhatsApp y
 // correo. Se generan manualmente («Generar ahora») o automáticamente con su frecuencia (cada hora, diaria, semanal,
 // quincenal o mensual, a la hora indicada): la sesión abierta de cada usuario marcado los genera al llegar la hora y
-// avisa para enviarlos.
+// avisa para enviarlos. Al generar se piden los parámetros de cada reporte (van en su encabezado); el asistente por
+// voz pregunta en voz alta qué reporte generar y con qué parámetros.
 (function () {
   const { esc } = window.UI;
   window.PANTALLAS = window.PANTALLAS || {};
@@ -31,18 +32,6 @@
   const generable = (id) => (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id] && !!motor())
     || (ESTADOS.has(id) && !!window.PANTALLAS[id]) || (id === 'existencias-inventario' && !!window.INVENTARIO_REPORTES)
     || (id === 'disponibilidad-bancaria' && !!window.DISPONIBILIDAD);
-  // Contenido de un reporte sin su pantalla: { titulo, parametros, columnas, filas, kpis, graficas, n }.
-  async function construirCfg(id, e) {
-    if (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id]) {
-      const M = motor().motor(id, { sb: e.sb, f: { desde: e.desde, fecha: e.fecha, producto: '', contenido: e.contenido }, productos: e.productos, loc: () => e.ctx.sel.loc, org: () => e.ctx.sel.org, moneda: e.ctx.moneda, empresa: e.empresa });
-      return M.construir(await M.leer());
-    }
-    if (ESTADOS.has(id)) return window.PANTALLAS[id](null, null, { ctx: e.ctx, f: { desde: e.desde, hasta: e.fecha, contenido: e.contenido, mostrar: 'CON SALDO' } }).cfg();
-    if (id === 'existencias-inventario') return window.INVENTARIO_REPORTES.directo(id, e.ctx, { fecha: e.fecha, ceros: false }).cfg();
-    // La disponibilidad se genera (y queda en su histórico) a la fecha de corte del período.
-    if (id === 'disponibilidad-bancaria') return window.DISPONIBILIDAD.cfg(e.sb, e.ctx.sel.loc, e.fecha, e.empresa(), e.contenido);
-    throw new Error('Este reporte se genera desde su pantalla');
-  }
   const fmt = () => window.BANCOS.fmt;
 
   // Reportes de todos los segmentos (subgrupos) del grupo Reportes del módulo, con el segmento al que pertenecen.
@@ -91,43 +80,185 @@
   const lista = (t) => String(t || '').split(/[,;\s]+/).map((x) => x.trim()).filter(Boolean);
   const telefono = (t) => { const n = String(t).replace(/\D/g, ''); return n.length === 8 ? `502${n}` : n; };
 
+  // Contenido de un reporte sin su pantalla: { titulo, parametros, columnas, filas, kpis, graficas, n }.
+  // e: { sb, ctx (empresa del reporte), empresa(), productos() }; p: parámetros del reporte (ver PARAMS).
+  async function construirCfg(id, e, p) {
+    if (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id]) {
+      const M = motor().motor(id, { sb: e.sb, f: { desde: p.desde, fecha: p.fecha, producto: p.producto ? String(p.producto) : '', contenido: p.contenido }, productos: e.productos, loc: () => e.ctx.sel.loc, org: () => e.ctx.sel.org, moneda: e.ctx.moneda, empresa: e.empresa });
+      return M.construir(await M.leer());
+    }
+    if (ESTADOS.has(id)) return window.PANTALLAS[id](null, null, { ctx: e.ctx, f: { desde: p.desde, hasta: p.fecha, contenido: p.contenido, mostrar: p.mostrar || 'CON SALDO', terceroKey: p.tercero || '', tercero: '' } }).cfg();
+    if (id === 'existencias-inventario') return window.INVENTARIO_REPORTES.directo(id, e.ctx, { fecha: p.fecha, ceros: !!p.ceros, producto: p.producto ? String(p.producto) : '' }).cfg();
+    // La disponibilidad se genera (y queda en su histórico) a la fecha de corte.
+    if (id === 'disponibilidad-bancaria') return window.DISPONIBILIDAD.cfg(e.sb, e.ctx.sel.loc, p.fecha, e.empresa(), p.contenido, { banco: p.banco, cuenta: p.cuenta, nivel: p.nivel });
+    throw new Error('Este reporte se genera desde su pantalla');
+  }
+
+  // Parámetros que pide cada reporte antes de generarse (van en su encabezado):
+  //   empresa, desde y fecha (o solo la fecha de corte), producto, cliente o proveedor, mostrar, contenido o nivel,
+  //   banco y cuenta, incluir existencias en cero.
+  function camposDe(id) {
+    const R = window.REPORTES_COMERCIALES?.[id];
+    if (R) return R.tipo === 'SALDOS' ? ['empresa', 'fecha:Saldo al', 'producto', 'contenido'] : ['empresa', 'desde', 'fecha:Fecha final', 'producto', ...(R.tipo === 'GRAFICA' ? [] : ['contenido'])];
+    if (id === 'cxc-estado') return ['empresa', 'desde', 'fecha:Fecha final', 'cliente', 'mostrar', 'contenido'];
+    if (id === 'cxp-estado') return ['empresa', 'desde', 'fecha:Fecha final', 'proveedor', 'mostrar', 'contenido'];
+    if (id === 'existencias-inventario') return ['empresa', 'fecha:A la fecha', 'producto', 'ceros'];
+    if (id === 'disponibilidad-bancaria') return ['empresa', 'fecha:Fecha de corte', 'banco', 'cuenta', 'nivel'];
+    return ['empresa', 'desde', 'fecha:Fecha final'];
+  }
+  // Parámetros de un reporte: los guardados (sin fechas) sobre los del período general, o los que se llenaron al generar.
+  function paramsDe(conf, id, per) {
+    const par = conf.parametros || {};
+    const g = { ...(conf.reportes?.[id]?.param || {}) };
+    delete g.desde; delete g.fecha;
+    return { loc: conf.localidad_id, desde: per.desde, fecha: per.fecha, contenido: par.contenido || 'RESUMIDO', producto: '', tercero: '', mostrar: 'CON SALDO', ceros: false, banco: '', cuenta: '', nivel: (par.contenido || 'RESUMIDO') === 'DETALLADO' ? 'DETALLADA' : 'RESUMIDA', ...g };
+  }
+
+  // Catálogos de una empresa para llenar los parámetros (se leen una vez por empresa).
+  const catalogos = new Map();
+  async function catalogo(tipo, loc) {
+    const k = `${tipo}:${loc}`;
+    if (catalogos.has(k)) return catalogos.get(k);
+    const sb = window.FIN.sb, leer = (q) => motor().leerTodo(q).catch(() => []);
+    const p = tipo === 'productos' ? leer(() => sb.from('productos').select('id, codigo, codigo_producto, nombre').eq('localidad_id', loc).order('nombre'))
+      : tipo === 'clientes' ? leer(() => sb.from('clientes').select('id, codigo, nombre').eq('localidad_id', loc).order('nombre'))
+        : tipo === 'proveedores' ? leer(() => sb.from('proveedores').select('id, codigo, nombre_comercial').eq('localidad_id', loc).order('nombre_comercial'))
+          : tipo === 'bancos' ? Promise.all([sb.from('bancos').select('id, codigo, nombre, siglas').eq('localidad_id', loc).order('codigo'), sb.from('cuentas_bancarias').select('id, banco_id, numero, nombre').eq('localidad_id', loc).order('numero')]).then(([b, c]) => ({ bancos: b.data || [], cuentas: c.data || [] }))
+            : Promise.resolve([]);
+    catalogos.set(k, p);
+    return p;
+  }
+  const etqProd = (x) => `${x.nombre} — ${x.codigo_producto || x.codigo}`;
+  const etqTer = (x) => `${x.nombre || x.nombre_comercial}${x.codigo !== '' && x.codigo != null ? ` — ${x.codigo}` : ''}`;
+
+  // Diálogo con los parámetros de cada reporte elegido, en orden de prioridad. Devuelve { id: parámetros } o null.
+  function pedirParametros(conf, elegidos, locs, per) {
+    return new Promise((listo) => {
+      const vals = Object.fromEntries(elegidos.map((r) => [r.id, paramsDe(conf, r.id, per)]));
+      const velo = document.createElement('div');
+      velo.className = 'modal-velo';
+      velo.innerHTML = `<form class="modal rg-modal" role="dialog" aria-modal="true" aria-labelledby="rg-par-t">
+          <header class="modal-cab"><h2 id="rg-par-t"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> Parámetros de los reportes <small>${elegidos.length} reporte(s) · en orden de prioridad</small></h2>
+            <button type="button" class="icono-boton" data-cerrar aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></header>
+          <div class="rg-par-lista"></div>
+          <p class="modal-error" aria-live="polite"></p>
+          <footer class="modal-pie"><button type="button" class="boton secundario-sm" data-cerrar>Cancelar</button>
+            <button type="submit" class="boton primario-sm"><i class="ti ti-player-play" aria-hidden="true"></i> Generar ${elegidos.length} reporte(s)</button></footer>
+        </form>`;
+      document.body.appendChild(velo);
+      const form = velo.querySelector('form'), lista = form.querySelector('.rg-par-lista');
+      const sel = (n, ops, v, rid) => `<select data-p="${n}" data-r="${rid}">${ops.map(([k, t]) => `<option value="${esc(String(k))}" ${String(v) === String(k) ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
+
+      async function tarjeta(r, i) {
+        const p = vals[r.id], loc = Number(p.loc);
+        const cs = camposDe(r.id).map((c) => c.split(':'));
+        const necesita = (n) => cs.some(([c]) => c === n);
+        const [prods, clis, provs, bc] = await Promise.all([necesita('producto') ? catalogo('productos', loc) : [], necesita('cliente') ? catalogo('clientes', loc) : [],
+          necesita('proveedor') ? catalogo('proveedores', loc) : [], necesita('banco') ? catalogo('bancos', loc) : { bancos: [], cuentas: [] }]);
+        const ters = necesita('cliente') ? clis.map((x) => ({ key: `C${x.id}`, t: etqTer(x) })) : provs.map((x) => ({ key: `P${x.id}`, t: etqTer(x) }));
+        const campo = ([c, etq]) => {
+          if (c === 'empresa') return `<label class="campo rg-p-emp"><span>Empresa</span>${sel('loc', locs.map((l) => [l.id, `${l.codigo} · ${l.nombre_comercial}`]), p.loc, r.id)}</label>`;
+          if (c === 'desde') return `<label class="campo"><span>Fecha inicial</span><input type="date" data-p="desde" data-r="${r.id}" value="${esc(p.desde)}" max="${esc(p.fecha)}"></label>`;
+          if (c === 'fecha') return `<label class="campo"><span>${etq || 'Fecha'}</span><input type="date" data-p="fecha" data-r="${r.id}" value="${esc(p.fecha)}"></label>`;
+          if (c === 'producto') { const x = prods.find((y) => String(y.id) === String(p.producto)); return `<label class="campo rg-p-ancho"><span>Producto</span><input data-p="producto" data-r="${r.id}" list="rg-dl-p-${r.id}" value="${esc(x ? etqProd(x) : '')}" placeholder="Todos los productos" autocomplete="off"><datalist id="rg-dl-p-${r.id}">${prods.map((y) => `<option value="${esc(etqProd(y))}"></option>`).join('')}</datalist></label>`; }
+          if (c === 'cliente' || c === 'proveedor') { const x = ters.find((y) => y.key === p.tercero); return `<label class="campo rg-p-ancho"><span>${c === 'cliente' ? 'Nombre del cliente' : 'Nombre del proveedor'}</span><input data-p="tercero" data-r="${r.id}" list="rg-dl-t-${r.id}" value="${esc(x ? x.t : '')}" placeholder="${c === 'cliente' ? 'Todos los clientes' : 'Todos los proveedores'}" autocomplete="off"><datalist id="rg-dl-t-${r.id}">${ters.map((y) => `<option value="${esc(y.t)}"></option>`).join('')}</datalist></label>`; }
+          if (c === 'mostrar') return `<label class="campo"><span>Mostrar</span>${sel('mostrar', [['CON SALDO', 'Con saldo'], ['CON MOVIMIENTO', 'Con movimiento o saldo'], ['VENCIDOS', 'Con saldo vencido'], ['TODOS', 'Todos']], p.mostrar, r.id)}</label>`;
+          if (c === 'contenido') return `<label class="campo"><span>Contenido</span>${sel('contenido', [['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']], p.contenido, r.id)}</label>`;
+          if (c === 'nivel') return `<label class="campo"><span>Nivel</span>${sel('nivel', [['RESUMIDA', 'Resumida'], ['DETALLADA', 'Detallada'], ['TOTAL', 'Total']], p.nivel, r.id)}</label>`;
+          if (c === 'banco') return `<label class="campo"><span>Banco</span>${sel('banco', [['', 'Todos los bancos'], ...bc.bancos.map((b) => [b.id, `${b.codigo} · ${b.siglas || b.nombre}`])], p.banco, r.id)}</label>`;
+          if (c === 'cuenta') return `<label class="campo"><span>Cuenta</span>${sel('cuenta', [['', 'Todas las cuentas'], ...bc.cuentas.filter((x) => !p.banco || String(x.banco_id) === String(p.banco)).map((x) => [x.id, `${x.numero} · ${x.nombre || ''}`])], p.cuenta, r.id)}</label>`;
+          if (c === 'ceros') return `<label class="pc-check rg-p-chk"><input type="checkbox" data-p="ceros" data-r="${r.id}" ${p.ceros ? 'checked' : ''}> Incluir existencias en cero</label>`;
+          return '';
+        };
+        return `<section class="rgd-card" data-tarjeta="${r.id}"><h3><span class="rg-par-n">${i + 1}</span><i class="ti ${r.icono}" aria-hidden="true"></i> ${esc(r.nombre)} <small>${esc(r.segmento)}</small></h3>
+          <div class="rg-par-g">${cs.map(campo).join('')}</div></section>`;
+      }
+      const repintar = async (id) => {
+        const i = elegidos.findIndex((r) => r.id === id);
+        const vieja = lista.querySelector(`[data-tarjeta="${id}"]`);
+        if (vieja) vieja.outerHTML = await tarjeta(elegidos[i], i);
+      };
+      (async () => { lista.innerHTML = '<p class="rg-nota">Cargando…</p>'; lista.innerHTML = (await Promise.all(elegidos.map(tarjeta))).join(''); form.querySelector('[data-p]')?.focus(); })();
+
+      // Texto escrito en producto o tercero → su id (al salir del campo o al generar).
+      async function resolver(input) {
+        const id = input.dataset.r, p = vals[id], t = input.value.trim().toUpperCase(), loc = Number(p.loc);
+        if (input.dataset.p === 'producto') {
+          const ls = await catalogo('productos', loc);
+          const x = t ? ls.find((y) => etqProd(y).toUpperCase() === t || String(y.codigo_producto || '').toUpperCase() === t || String(y.codigo) === t) : null;
+          p.producto = x ? x.id : ''; return !t || !!x;
+        }
+        const cli = id === 'cxc-estado';
+        const ls = await catalogo(cli ? 'clientes' : 'proveedores', loc);
+        const x = t ? ls.find((y) => etqTer(y).toUpperCase() === t || String(y.codigo).toUpperCase() === t || String(y.nombre || y.nombre_comercial || '').toUpperCase() === t) : null;
+        p.tercero = x ? `${cli ? 'C' : 'P'}${x.id}` : ''; return !t || !!x;
+      }
+      form.addEventListener('change', async (e) => {
+        const t = e.target, id = t.dataset.r, n = t.dataset.p;
+        if (!id || !n) return;
+        const p = vals[id];
+        if (n === 'producto' || n === 'tercero') { if (!(await resolver(t))) { form.querySelector('.modal-error').textContent = `${n === 'producto' ? 'El producto' : 'El nombre'} «${t.value}» no está en el catálogo de esa empresa.`; } else form.querySelector('.modal-error').textContent = ''; return; }
+        p[n] = t.type === 'checkbox' ? t.checked : t.value;
+        if (n === 'loc') { p.producto = ''; p.tercero = ''; p.banco = ''; p.cuenta = ''; return repintar(id); }
+        if (n === 'banco') { p.cuenta = ''; return repintar(id); }
+        if (n === 'fecha' && p.desde > p.fecha) { p.desde = p.fecha; return repintar(id); }
+      });
+      const fin = (v) => { velo.remove(); listo(v); };
+      velo.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', () => fin(null)));
+      velo.addEventListener('keydown', (e) => { if (e.key === 'Escape') fin(null); });
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        for (const inp of form.querySelectorAll('[data-p=producto], [data-p=tercero]')) {
+          if (!(await resolver(inp))) { form.querySelector('.modal-error').textContent = `«${inp.value}» no está en el catálogo de esa empresa.`; inp.focus(); return; }
+        }
+        const malo = elegidos.find((r) => camposDe(r.id).includes('desde') && vals[r.id].desde > vals[r.id].fecha);
+        if (malo) { form.querySelector('.modal-error').textContent = `${malo.nombre}: la fecha inicial es posterior a la final.`; return; }
+        fin(vals);
+      });
+    });
+  }
+
   // ---------- Generación ----------
-  // conf: fila de reportes_gerenciales. Devuelve { resultados, texto } y deja listas las salidas pedidas.
-  async function generar(conf, m, { automatico = false } = {}) {
+  // conf: fila de reportes_gerenciales; params: { id: parámetros } llenados en el diálogo (sin ellos, los guardados
+  // con las fechas del período). Genera las salidas pedidas en orden de prioridad y avisa para enviarlas.
+  async function generar(conf, m, { automatico = false, params = null } = {}) {
     const sb = window.FIN.sb;
     const desde = sb.__fromOriginal || sb.from.bind(sb);
     const F = fmt();
     const elegidos = ordenados(reportesDe(m), conf).filter((r) => generable(r.id) && SALIDAS.some(([k]) => conf.reportes?.[r.id]?.[k]));
     if (!elegidos.length) { window.FIN.aviso('Marca al menos una salida de un reporte'); return null; }
-    window.FIN.aviso(`Generando ${elegidos.length} reporte(s)…`);
-    const [mo, lo, og] = await Promise.all([
-      sb.from('monedas').select('id, iso'),
-      desde('localidades').select('id, codigo, nombre_comercial').eq('id', conf.localidad_id).maybeSingle(),
-      desde('organizaciones').select('id, codigo, nombre').eq('id', conf.organizacion_id).maybeSingle()
-    ]);
-    const monedas = mo.data || [];
-    const empTxt = lo.data ? `${lo.data.codigo} · ${lo.data.nombre_comercial}` : '';
     const par = conf.parametros || {};
     const per = periodo(par.periodo || 'MES', F.hoy());
-    let productos = [];
-    if (elegidos.some((r) => window.REPORTES_COMERCIALES?.[r.id]?.tipo === 'GRAFICA')) {
-      productos = await motor().leerTodo(() => sb.from('productos').select('id, codigo, codigo_producto, nombre').eq('localidad_id', conf.localidad_id).order('id')).catch(() => []);
+    const [mo, lo, og] = await Promise.all([
+      sb.from('monedas').select('id, iso'),
+      desde('localidades').select('id, codigo, nombre_comercial, organizacion_id').eq('organizacion_id', conf.organizacion_id).eq('activo', true).order('codigo'),
+      desde('organizaciones').select('id, codigo, nombre').eq('id', conf.organizacion_id).maybeSingle()
+    ]);
+    const locs = lo.data || [];
+    if (!params && !automatico) {
+      params = await pedirParametros(conf, elegidos, locs, per);
+      if (!params) return null;
     }
+    const P = (id) => (params && params[id]) || paramsDe(conf, id, per);
+    window.FIN.aviso(`Generando ${elegidos.length} reporte(s)…`);
+    const monedas = mo.data || [];
+    const locDe = (id) => locs.find((x) => x.id === Number(id));
+    const empTxt = (id) => { const l = locDe(id); return l ? `${l.codigo} · ${l.nombre_comercial}` : ''; };
     const resultados = [];
-    // Contexto mínimo de pantalla que esperan los reportes (empresa elegida, localidad y monedas).
-    const ctx = { sb, sel: { org: conf.organizacion_id, loc: conf.localidad_id }, localidad: (id) => (id === conf.localidad_id ? lo.data : null), moneda: (id) => monedas.find((x) => x.id === id) };
-    const env = { sb, ctx, ...per, contenido: par.contenido || 'RESUMIDO', productos: () => productos, empresa: () => empTxt };
     for (const r of elegidos) {
-      try { resultados.push({ r, sal: conf.reportes[r.id], cfg: await construirCfg(r.id, env) }); }
-      catch (e) { resultados.push({ r, sal: conf.reportes[r.id], error: window.UI.traducirError ? window.UI.traducirError(e) : e.message }); }
+      const p = P(r.id), loc = Number(p.loc) || conf.localidad_id;
+      // Contexto mínimo de pantalla que esperan los reportes (empresa del reporte, localidades y monedas).
+      const ctx = { sb, sel: { org: conf.organizacion_id, loc }, localidad: (id) => locDe(id) || null, moneda: (id) => monedas.find((x) => x.id === id) };
+      const prods = window.REPORTES_COMERCIALES?.[r.id] ? await catalogo('productos', loc) : [];
+      try { resultados.push({ r, p, sal: conf.reportes[r.id], cfg: await construirCfg(r.id, { sb, ctx, empresa: () => empTxt(loc), productos: () => prods }, p) }); }
+      catch (e) { resultados.push({ r, p, sal: conf.reportes[r.id], error: window.UI.traducirError ? window.UI.traducirError(e) : e.message }); }
     }
     const ok = resultados.filter((x) => x.cfg);
     const graficas = par.graficas !== false;
     const titulo = `Reportes gerenciales · ${m.corto}`;
-    const cabecera = [`Organización: ${og.data ? `${og.data.codigo} · ${og.data.nombre}` : ''}`, `Empresa: ${empTxt}`,
-      `Período: ${PERIODOS.find((p) => p[0] === (par.periodo || 'MES'))[1]} (${F.fechaDia(per.desde)} al ${F.fechaDia(per.fecha)})`];
+    const cabecera = [`Organización: ${og.data ? `${og.data.codigo} · ${og.data.nombre}` : ''}`, `Empresa: ${empTxt(conf.localidad_id)}`, `${ok.length} reporte(s) en orden de prioridad`];
 
-    // PDF: todos los marcados en un solo documento, un reporte por página.
+    // PDF: todos los marcados en un solo documento, un reporte por página, cada uno con sus parámetros.
     const enPdf = ok.filter((x) => x.sal.pdf);
     if (enPdf.length) {
       const cuerpo = enPdf.map((x, i) => seccionPdf(x.cfg, graficas, i > 0)).join('');
@@ -140,14 +271,14 @@
       const imagenes = await Promise.all(gs.map((g) => window.GRAFICAS.png(g))).catch(() => []);
       await window.REPORTE_XLSX.generar({ ...x.cfg, imagenes });
     }
-    // Voz: lectura del resumen (indicadores) de cada reporte.
+    // Voz: lectura de los parámetros y del resumen (indicadores) de cada reporte.
     const enVoz = ok.filter((x) => x.sal.voz);
-    if (enVoz.length) hablar([`${titulo}. ${empTxt}. ${cabecera[2]}.`, ...enVoz.map((x) => textoVoz(x.cfg))].join(' '));
-    const texto = (sel) => [`*${titulo}*`, ...cabecera, '', ...ok.filter((x) => x.sal[sel]).map((x) => textoResumen(x.cfg))].join('\n');
+    if (enVoz.length) hablar([`${titulo}.`, ...enVoz.map((x) => textoVoz(x.cfg))].join(' '));
+    const texto = (sel) => [`*${titulo}*`, cabecera[0], '', ...ok.filter((x) => x.sal[sel]).map((x) => textoResumen(x.cfg))].join('\n');
     const salida = {
-      resultados,
+      resultados, params: Object.fromEntries(resultados.map((x) => [x.r.id, x.p])),
       whatsapp: ok.some((x) => x.sal.whatsapp) ? { numeros: String(conf.whatsapp || '').split(/[,;]+/).map(telefono).filter((n) => n.length >= 8), texto: texto('whatsapp') } : null,
-      correo: ok.some((x) => x.sal.correo) ? { para: lista(conf.correos), asunto: `${titulo} · ${empTxt} · ${F.fechaDia(per.fecha)}`, texto: texto('correo').replace(/\*/g, '') } : null
+      correo: ok.some((x) => x.sal.correo) ? { para: lista(conf.correos), asunto: `${titulo} · ${empTxt(conf.localidad_id)} · ${F.fechaDia(F.hoy())}`, texto: texto('correo').replace(/\*/g, '') } : null
     };
     avisoEnvio(salida, automatico ? `Se generaron automáticamente los reportes gerenciales de ${m.corto}` : 'Reportes generados');
     return salida;
@@ -172,8 +303,8 @@
       ${c.n ? `<table class="cx"><thead><tr>${c.columnas.map((x) => `<th class="${x.tipo === 'texto' ? '' : 'n'}">${esc(x.titulo)}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table>` : '<p>Sin información en el período.</p>'}
       ${gs ? `<div class="graf">${gs}</div>` : ''}</section>`;
   }
-  const textoResumen = (c) => [`*${c.titulo}*`, ...(c.kpis || []).map(([t, v]) => `• ${t}: ${v}`)].join('\n');
-  const textoVoz = (c) => `${c.titulo}. ${(c.kpis || []).map(([t, v]) => `${t}: ${String(v).replace(/^Q\s*/, '').replace(/,/g, '')}${/^Q/.test(String(v)) ? ' quetzales' : ''}`).join('. ')}.`;
+  const textoResumen = (c) => [`*${c.titulo}*`, `_${(c.parametros || []).join(' · ')}_`, ...(c.kpis || []).map(([t, v]) => `• ${t}: ${v}`)].join('\n');
+  const textoVoz = (c) => `${c.titulo}. ${(c.parametros || []).slice(1, 3).join('. ')}. ${(c.kpis || []).map(([t, v]) => `${t}: ${String(v).replace(/^Q\s*/, '').replace(/,/g, '')}${/^Q/.test(String(v)) ? ' quetzales' : ''}`).join('. ')}.`;
   function hablar(texto) {
     if (!('speechSynthesis' in window)) return window.FIN.aviso('Este navegador no tiene lectura en voz');
     speechSynthesis.cancel();
@@ -199,6 +330,177 @@
       ${errores.length ? '' : ''}`;
     caja.addEventListener('click', (e) => { if (e.target.closest('.rg-cerrar')) caja.remove(); });
     document.body.appendChild(caja);
+  }
+
+  // ---------- Asistente por voz ----------
+  // Pregunta en voz alta qué reporte gerencial generar y luego cada uno de sus parámetros; escucha la respuesta con el
+  // reconocimiento de voz del navegador (Chrome o Edge) o la toma escrita o de los botones de sugerencia. Al final
+  // confirma y genera el reporte con esos parámetros en las salidas elegidas.
+  const norm = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9ñ\s/-]/g, ' ').replace(/\s+/g, ' ').trim();
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const NUM = { uno: 1, primero: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12, trece: 13, catorce: 14, quince: 15, dieciseis: 16, diecisiete: 17, dieciocho: 18, diecinueve: 19, veinte: 20, veintiuno: 21, veintidos: 22, veintitres: 23, veinticuatro: 24, veinticinco: 25, veintiseis: 26, veintisiete: 27, veintiocho: 28, veintinueve: 29, treinta: 30, treintayuno: 31 };
+  const dosDig = (n) => String(n).padStart(2, '0');
+  // Parecido entre la respuesta y un nombre: proporción de palabras del nombre que se dijeron.
+  function parecido(dicho, nombre) {
+    const d = new Set(norm(dicho).split(' ')), ps = norm(nombre).split(' ').filter((x) => x.length > 2 || /\d/.test(x));
+    if (!ps.length) return 0;
+    return ps.filter((x) => d.has(x) || [...d].some((y) => y.length > 3 && (x.startsWith(y) || y.startsWith(x)))).length / ps.length;
+  }
+  function mejor(dicho, items, nombreDe, minimo = 0.5) {
+    let m = null, s = 0;
+    items.forEach((x) => { const v = parecido(dicho, nombreDe(x)); if (v > s) { s = v; m = x; } });
+    return s >= minimo ? m : null;
+  }
+  // Fecha dicha: hoy, ayer, inicio o fin de mes, «5 de noviembre (de 2026)», «5/11/2026».
+  function fechaDicha(t, hoy) {
+    const s = norm(t).replace(/ y /g, 'y');
+    const d = (base, n) => { const x = new Date(`${base}T12:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+    if (/\bhoy\b/.test(s)) return hoy;
+    if (/\bayer\b/.test(s)) return d(hoy, -1);
+    if (/(inicio|principio|primero) de(l)? (este )?mes/.test(s)) return `${hoy.slice(0, 7)}-01`;
+    if (/(inicio|principio) de(l)? (este )?ano/.test(s)) return `${hoy.slice(0, 4)}-01-01`;
+    if (/fin de(l)? mes (anterior|pasado)/.test(s)) return d(`${hoy.slice(0, 7)}-01`, -1);
+    if (/(inicio|principio) de(l)? mes (anterior|pasado)/.test(s)) return `${d(`${hoy.slice(0, 7)}-01`, -1).slice(0, 7)}-01`;
+    let m = s.match(/(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?/);
+    if (m) { const y = m[3] ? (m[3].length === 2 ? `20${m[3]}` : m[3]) : hoy.slice(0, 4); return `${y}-${dosDig(m[2])}-${dosDig(m[1])}`; }
+    m = s.match(/(\d{1,2}|[a-z]+) de (enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?: de(?:l)? (\d{4}))?/);
+    if (m) {
+      const dia = /^\d+$/.test(m[1]) ? Number(m[1]) : NUM[m[1]];
+      const mes = m[2] === 'setiembre' ? 9 : MESES.indexOf(m[2]) + 1;
+      if (dia && mes) return `${m[3] || hoy.slice(0, 4)}-${dosDig(mes)}-${dosDig(dia)}`;
+    }
+    return null;
+  }
+  const fechaVoz = (f) => { const [y, mm, dd] = f.split('-').map(Number); return `${dd} de ${MESES[mm - 1]} de ${y}`; };
+
+  function asistenteVoz(conf, m, reps) {
+    const Reco = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const F = fmt();
+    const per = periodo(conf.parametros?.periodo || 'MES', F.hoy());
+    const velo = document.createElement('div');
+    velo.className = 'modal-velo';
+    velo.innerHTML = `<div class="modal rgv" role="dialog" aria-modal="true" aria-labelledby="rgv-t">
+        <header class="modal-cab"><h2 id="rgv-t"><i class="ti ti-microphone" aria-hidden="true"></i> Asistente por voz <small>Reportes gerenciales · ${esc(m.corto)}</small></h2>
+          <button type="button" class="icono-boton" data-cerrar aria-label="Cerrar"><i class="ti ti-x" aria-hidden="true"></i></button></header>
+        <div class="rgv-chat" aria-live="polite"></div>
+        <div class="rgv-sug"></div>
+        <form class="rgv-pie">
+          <button type="button" class="rgv-mic" data-mic title="Hablar" aria-label="Hablar"><i class="ti ti-microphone" aria-hidden="true"></i></button>
+          <input class="rgv-txt" placeholder="${Reco ? 'Hable o escriba su respuesta' : 'Escriba su respuesta (este navegador no reconoce la voz)'}" autocomplete="off">
+          <button type="submit" class="boton primario-sm"><i class="ti ti-send" aria-hidden="true"></i> Responder</button>
+        </form>
+        <p class="rgv-estado"></p>
+      </div>`;
+    document.body.appendChild(velo);
+    const chat = velo.querySelector('.rgv-chat'), sug = velo.querySelector('.rgv-sug'), txt = velo.querySelector('.rgv-txt'), estado = velo.querySelector('.rgv-estado'), mic = velo.querySelector('[data-mic]');
+    let cerrado = false, responder = null, reco = null;
+    const decir = (t, quien = 'yo') => { chat.insertAdjacentHTML('beforeend', `<div class="rgv-m ${quien}"><i class="ti ${quien === 'yo' ? 'ti-robot' : 'ti-user'}" aria-hidden="true"></i><p>${esc(t)}</p></div>`); chat.scrollTop = chat.scrollHeight; };
+    const hablarYEsperar = (t) => new Promise((ok) => {
+      if (!('speechSynthesis' in window)) return ok();
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(t); u.lang = 'es-GT';
+      const v = speechSynthesis.getVoices().find((x) => /^es/i.test(x.lang)); if (v) u.voice = v;
+      u.onend = ok; u.onerror = ok; speechSynthesis.speak(u);
+      setTimeout(ok, Math.min(15000, 900 + t.length * 70));
+    });
+    function escuchar() {
+      if (!Reco || cerrado) return;
+      try { reco?.abort(); } catch { /* nada */ }
+      reco = new Reco(); reco.lang = 'es-GT'; reco.interimResults = true; reco.maxAlternatives = 1;
+      mic.classList.add('activo'); estado.textContent = 'Escuchando…';
+      reco.onresult = (e) => { const r = e.results[e.results.length - 1]; txt.value = r[0].transcript; if (r.isFinal) { estado.textContent = ''; enviar(); } };
+      reco.onerror = (e) => { estado.textContent = e.error === 'not-allowed' ? 'Permita el micrófono en el navegador o escriba la respuesta.' : e.error === 'no-speech' ? 'No le escuché: toque el micrófono para repetir o escriba.' : ''; };
+      reco.onend = () => mic.classList.remove('activo');
+      try { reco.start(); } catch { /* ya escuchando */ }
+    }
+    function enviar() { const v = txt.value.trim(); if (!v || !responder) return; txt.value = ''; decir(v, 'tu'); const r = responder; responder = null; sug.innerHTML = ''; r(v); }
+    // Pregunta y espera una respuesta que «interpretar» acepte (si no, vuelve a preguntar).
+    async function preguntar(texto, interpretar, sugerencias = []) {
+      for (;;) {
+        if (cerrado) throw new Error('cancelado');
+        decir(texto);
+        sug.innerHTML = sugerencias.map((s) => `<button type="button" class="rgv-chip">${esc(s)}</button>`).join('');
+        const resp = new Promise((ok) => { responder = ok; });
+        await hablarYEsperar(texto);
+        escuchar();
+        const dicho = await resp;
+        if (/\b(cancelar|salir|terminar)\b/.test(norm(dicho))) throw new Error('cancelado');
+        const v = await interpretar(dicho);
+        if (v !== undefined) return v;
+        texto = 'No le entendí. ' + texto;
+      }
+    }
+    velo.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); enviar(); });
+    sug.addEventListener('click', (e) => { const b = e.target.closest('.rgv-chip'); if (b) { txt.value = b.textContent; enviar(); } });
+    mic.addEventListener('click', escuchar);
+    const cerrar = () => { cerrado = true; try { reco?.abort(); } catch { /* nada */ } speechSynthesis?.cancel(); velo.remove(); if (responder) responder('cancelar'); };
+    velo.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', cerrar));
+    velo.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+
+    (async () => {
+      const sb = window.FIN.sb, desde = sb.__fromOriginal || sb.from.bind(sb);
+      const { data: locs } = await desde('localidades').select('id, codigo, nombre_comercial, organizacion_id').eq('organizacion_id', conf.organizacion_id).eq('activo', true).order('codigo');
+      const lista = ordenados(reps, conf);
+      const r = await preguntar('¿Qué reporte gerencial desea generar?', (t) => {
+        const n = norm(t).match(/\b(?:numero|prioridad|el|la)?\s*(\d{1,2})\b/);
+        if (n && lista[Number(n[1]) - 1] && norm(t).replace(/\d+/g, '').trim().split(' ').length <= 2) return lista[Number(n[1]) - 1];
+        return mejor(t, lista, (x) => x.nombre, 0.6) || undefined;
+      }, lista.map((x) => x.nombre));
+      decir(`Muy bien: ${r.nombre}.`);
+      const p = paramsDe(conf, r.id, per);
+      for (const [c, etq] of camposDe(r.id).map((x) => x.split(':'))) {
+        const loc = () => Number(p.loc) || conf.localidad_id;
+        if (c === 'empresa') {
+          p.loc = (await preguntar('¿De qué empresa?', (t) => {
+            if (/\b(esta|actual|la misma)\b/.test(norm(t))) return conf.localidad_id;
+            const cod = norm(t).replace(/\s+/g, '-').match(/\d+-\d+/);
+            const x = (cod && locs.find((l) => l.codigo === cod[0])) || mejor(t, locs, (l) => l.nombre_comercial, 0.5);
+            return x ? x.id : undefined;
+          }, locs.map((l) => `${l.codigo} ${l.nombre_comercial}`))); p.producto = ''; p.tercero = ''; p.banco = ''; p.cuenta = '';
+        } else if (c === 'desde') {
+          p.desde = await preguntar('¿Fecha inicial?', (t) => fechaDicha(t, F.hoy()) || undefined, ['Inicio de mes', 'Inicio de año', 'Ayer', 'Hoy']);
+        } else if (c === 'fecha') {
+          p.fecha = await preguntar(`¿${etq || 'Fecha'}?`, (t) => { const f = fechaDicha(t, F.hoy()); return f && (!camposDe(r.id).includes('desde') || f >= p.desde) ? f : undefined; }, ['Hoy', 'Ayer', 'Fin de mes anterior']);
+        } else if (c === 'producto') {
+          const ls = await catalogo('productos', loc());
+          p.producto = await preguntar('¿De qué producto? Diga «todos» o el nombre del producto.', (t) => (/\btodos?\b/.test(norm(t)) ? '' : (mejor(t, ls, (x) => x.nombre, 0.6)?.id ?? undefined)), ['Todos']);
+        } else if (c === 'cliente' || c === 'proveedor') {
+          const cli = c === 'cliente', ls = await catalogo(cli ? 'clientes' : 'proveedores', loc());
+          p.tercero = await preguntar(`¿Nombre del ${c}? Diga «todos» o el nombre.`, (t) => { if (/\btodos?\b/.test(norm(t))) return ''; const x = mejor(t, ls, (y) => y.nombre || y.nombre_comercial, 0.6); return x ? `${cli ? 'C' : 'P'}${x.id}` : undefined; }, ['Todos']);
+        } else if (c === 'mostrar') {
+          p.mostrar = await preguntar('¿Qué desea mostrar: con saldo, con movimiento, vencidos o todos?', (t) => { const s = norm(t); return /vencid/.test(s) ? 'VENCIDOS' : /movimiento/.test(s) ? 'CON MOVIMIENTO' : /saldo/.test(s) ? 'CON SALDO' : /todos/.test(s) ? 'TODOS' : undefined; }, ['Con saldo', 'Con movimiento', 'Vencidos', 'Todos']);
+        } else if (c === 'contenido') {
+          p.contenido = await preguntar('¿Resumido o detallado?', (t) => (/detall/.test(norm(t)) ? 'DETALLADO' : /resum/.test(norm(t)) ? 'RESUMIDO' : undefined), ['Resumido', 'Detallado']);
+        } else if (c === 'nivel') {
+          p.nivel = await preguntar('¿Nivel resumido, detallado o total?', (t) => (/total/.test(norm(t)) ? 'TOTAL' : /detall/.test(norm(t)) ? 'DETALLADA' : /resum/.test(norm(t)) ? 'RESUMIDA' : undefined), ['Resumida', 'Detallada', 'Total']);
+        } else if (c === 'banco') {
+          const bc = await catalogo('bancos', loc());
+          p.banco = await preguntar('¿De qué banco? Diga «todos» o el nombre del banco.', (t) => (/\btodos?\b/.test(norm(t)) ? '' : (mejor(t, bc.bancos, (b) => `${b.siglas || ''} ${b.nombre}`, 0.34)?.id ?? undefined)), ['Todos', ...bc.bancos.map((b) => b.siglas || b.nombre)]);
+        } else if (c === 'cuenta') {
+          const bc = await catalogo('bancos', loc());
+          const cs = bc.cuentas.filter((x) => !p.banco || String(x.banco_id) === String(p.banco));
+          p.cuenta = await preguntar('¿Qué cuenta? Diga «todas» o los últimos dígitos.', (t) => { if (/\btodas?\b/.test(norm(t))) return ''; const dig = norm(t).replace(/\D/g, ''); const x = dig.length >= 3 && cs.find((y) => String(y.numero).replace(/\D/g, '').endsWith(dig)); return x ? x.id : undefined; }, ['Todas']);
+        } else if (c === 'ceros') {
+          p.ceros = await preguntar('¿Incluir los productos con existencia en cero?', (t) => (/\b(si|incluir|incluya)\b/.test(norm(t)) ? true : /\bno\b/.test(norm(t)) ? false : undefined), ['Sí', 'No']);
+        }
+      }
+      const salidasDichas = await preguntar('¿Cómo lo desea? PDF, Excel, en voz, por WhatsApp o por correo. Puede decir varias.', (t) => {
+        const s = norm(t), o = { pdf: /\bpdf\b/.test(s), excel: /excel/.test(s), voz: /\bvoz\b|leer|lea|escuchar/.test(s), whatsapp: /whats|guasap|wasap/.test(s), correo: /correo|mail/.test(s) };
+        return Object.values(o).some(Boolean) ? o : undefined;
+      }, ['PDF', 'Excel', 'Voz', 'WhatsApp', 'Correo', 'PDF y voz']);
+      const empresa = locs.find((l) => l.id === Number(p.loc));
+      const resumen = `${r.nombre} de ${empresa ? empresa.nombre_comercial : 'la empresa'}, ${p.desde && camposDe(r.id).includes('desde') ? `del ${fechaVoz(p.desde)} ` : ''}al ${fechaVoz(p.fecha)}, en ${SALIDAS.filter(([k]) => salidasDichas[k]).map(([, t]) => t).join(', ')}`;
+      const si = await preguntar(`¿Genero ${resumen}?`, (t) => (/\b(si|claro|dale|genera|adelante|ok)\b/.test(norm(t)) ? true : /\bno\b/.test(norm(t)) ? false : undefined), ['Sí', 'No']);
+      if (!si) { decir('Está bien, no lo genero.'); await hablarYEsperar('Está bien, no lo genero.'); return cerrar(); }
+      decir('Generando…');
+      const confUno = { ...conf, reportes: { [r.id]: { ...(conf.reportes?.[r.id] || {}), ...salidasDichas } } };
+      const s = await generar(confUno, m, { params: { [r.id]: p } });
+      const ok = s?.resultados?.[0];
+      const fin = !ok ? 'No se pudo generar.' : ok.error ? `No se pudo generar: ${ok.error}` : `Listo, se generó ${r.nombre}.`;
+      decir(fin);
+      if (!salidasDichas.voz) await hablarYEsperar(fin);
+      setTimeout(() => { if (!cerrado) { velo.remove(); cerrado = true; } }, 2500);
+    })().catch((e) => { if (e.message !== 'cancelado') { decir(`Ocurrió un problema: ${e.message}`); } else if (!cerrado) cerrar(); });
   }
 
   // ---------- Pantalla ----------
@@ -264,6 +566,7 @@
         <label class="campo"><span>Organización</span><select name="org">${orgs.map((o) => `<option value="${o.id}" ${o.id === ctx.sel.org ? 'selected' : ''}>${esc(String(o.codigo))} · ${esc(o.nombre)}</option>`).join('')}</select></label>
         <label class="campo"><span>Localidad</span><select name="loc">${locs.map((l) => `<option value="${l.id}" ${l.id === ctx.sel.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('') || '<option value="">Sin localidades</option>'}</select></label>
         <div class="oc-extra rg-acciones">
+          <button type="button" class="boton secundario-sm rg-voz-b" data-accion="voz" ${est.conf ? '' : 'disabled'} title="Le pregunta en voz alta qué reporte desea y con qué parámetros"><i class="ti ti-microphone" aria-hidden="true"></i> Asistente por voz</button>
           <button type="button" class="boton secundario-sm" data-accion="guardar" ${est.conf ? '' : 'disabled'}><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar</button>
           <button type="button" class="boton primario-sm" data-accion="generar" ${est.conf ? '' : 'disabled'}><i class="ti ti-player-play" aria-hidden="true"></i> Generar ahora</button>
         </div>`;
@@ -396,12 +699,14 @@
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (!a || !est.conf) return;
       if (a === 'guardar') return guardar();
+      if (a === 'voz') return asistenteVoz({ ...est.conf, ...datosGuardar() }, m, reps);
       if (a === 'generar') {
         if (est.cambios && !(await guardar())) return;
         const s = await generar({ ...est.conf, ...datosGuardar() }, m);
-        if (s && est.conf.id) {
+        if (s) {
+          Object.entries(s.params || {}).forEach(([id, prm]) => { if (est.conf.reportes[id]) est.conf.reportes[id].param = prm; });
           const ahora = new Date().toISOString();
-          await sb.from('reportes_gerenciales').update({ ultima_ejecucion: ahora }).eq('id', est.conf.id);
+          if (est.conf.id) await sb.from('reportes_gerenciales').update({ ultima_ejecucion: ahora, reportes: est.conf.reportes }).eq('id', est.conf.id);
           est.conf.ultima_ejecucion = ahora; pintar();
         }
       }

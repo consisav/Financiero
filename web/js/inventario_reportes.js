@@ -249,6 +249,7 @@
         productos = p; bodegas = new Map((b.data || []).map((x) => [x.id, x]));
         movs = await leerTodo(() => sb.from('inventario_movimientos').select('id, producto_id, bodega_id, fecha, cantidad, costo_unitario, origen, tipo_movimiento, lote, fecha_vencimiento, documento_inventario_lineas(documentos_inventario(numero, tipo))')
           .eq('localidad_id', loc).lte('fecha', f.fecha).order('fecha').order('id'));
+        if (f.producto) movs = movs.filter((x) => String(x.producto_id) === String(f.producto));
         return construir();
       }
     };
