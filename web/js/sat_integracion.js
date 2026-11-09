@@ -153,7 +153,7 @@
   function lista(cont, op) {
     const ctx = montar(cont, { titulo: op.titulo, icono: op.icono, clase: 'bk-movimientos bm-solo cx-rep pf-cat', grupo: 'Integraciones SAT · Catálogos' });
     const { sb } = ctx;
-    let filas = [], aplica = new Set();
+    let filas = [], aplica = new Set(), tiposFrase = [];
     async function iniciar() { if (!(await ctx.cargarBase())) return; await cargar(); }
     async function cargar() {
       if (op.porEmpresa && !ctx.sel.loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', op.icono); return; }
@@ -162,12 +162,13 @@
       const { data, error } = await qy.order(op.orden[0]).order(op.orden[1] || op.orden[0]);
       if (error) return faltaScript(ctx, error);
       filas = data || [];
+      if (op.tabla === 'sat_frases') { const t = await sb.from('sat_tipos_frase').select('codigo, nombre, descripcion').order('codigo'); tiposFrase = t.data || []; filas.forEach((f) => { f.tipo_nombre = tiposFrase.find((x) => x.codigo === f.tipo)?.nombre || ''; }); }
       if (op.tabla === 'sat_frases' && ctx.sel.loc) { const r = await sb.from('sat_emisor_frases').select('frase_id').eq('localidad_id', ctx.sel.loc); aplica = new Set((r.data || []).map((x) => x.frase_id)); }
       pintar();
     }
     function pintar() {
       const ed = ctx.admin;
-      ctx.pDet.innerHTML = `<div class="bm-form cx-form cl-clasico"><p class="pr-guia"><i class="ti ti-info-circle" aria-hidden="true"></i> ${op.ayuda}</p>
+      ctx.pDet.innerHTML = `<div class="bm-form cx-form cl-clasico"><p class="pr-guia"><i class="ti ti-info-circle" aria-hidden="true"></i> ${op.ayuda}</p>${tiposFrase.length ? `<div class="bc-saldos sat-fel-g">${tiposFrase.map((t) => `<div><span>Tipo ${t.codigo}</span><b>${esc(t.nombre)}</b><small>${esc(t.descripcion || '')}</small></div>`).join('')}</div>` : ''}
         <div class="pc-lineas cx-tabla iv-tabla pr-tabla"><table><thead><tr>${op.campos.map((c) => `<th>${c.titulo}</th>`).join('')}${op.tabla === 'sat_frases' ? `<th>Aplica a ${esc(empresaDe(ctx))}</th>` : ''}</tr></thead>
         <tbody>${filas.map((f) => `<tr data-id="${f.id ?? f.codigo}">${op.campos.map((c) => `<td>${c.ro ? esc(String(f[c.k] ?? '')) : c.tipo === 'check' ? `<input type="checkbox" data-c="${c.k}" ${f[c.k] ? 'checked' : ''} ${ed ? '' : 'disabled'}>` : `<input data-c="${c.k}" value="${esc(String(f[c.k] ?? ''))}" ${c.tipo === 'numero' ? 'type="number"' : ''} ${ed ? '' : 'disabled'}>`}</td>`).join('')}
           ${op.tabla === 'sat_frases' ? `<td><input type="checkbox" data-aplica ${aplica.has(f.id) ? 'checked' : ''} ${ed && ctx.sel.loc ? '' : 'disabled'}></td>` : ''}</tr>`).join('') || `<tr><td colspan="${op.campos.length + 1}" class="tk-vacio">Sin registros.</td></tr>`}</tbody></table></div></div>`;
@@ -191,7 +192,7 @@
   }
   window.PANTALLAS['sat-establecimientos'] = (cont) => lista(cont, { titulo: 'Establecimientos', icono: 'ti-building-store', tabla: 'sat_establecimientos', orden: ['codigo'], porEmpresa: true, ayuda: 'Establecimientos registrados en el RTU de la SAT: el código va en cada DTE que se certifica.', campos: [{ k: 'codigo', titulo: 'Código SAT', tipo: 'numero', ancho: 10 }, { k: 'nombre', titulo: 'Nombre', ancho: 36 }, { k: 'direccion', titulo: 'Dirección', ancho: 40 }, { k: 'municipio', titulo: 'Municipio' }, { k: 'departamento', titulo: 'Departamento' }, { k: 'activo', titulo: 'Activo', tipo: 'check' }], nuevo: (f) => ({ codigo: Math.max(0, ...f.map((x) => x.codigo)) + 1, nombre: 'ESTABLECIMIENTO' }) });
   window.PANTALLAS['sat-tipos-dte'] = (cont) => lista(cont, { titulo: 'Tipos de DTE', icono: 'ti-file-certificate', tabla: 'sat_tipos_dte', orden: ['uso', 'codigo'], ayuda: 'Documentos tributarios electrónicos de la FEL y su efecto en el IVA (+1 suma débito, −1 lo resta, 0 sin efecto).', campos: [{ k: 'codigo', titulo: 'Código', ro: true, ancho: 8 }, { k: 'nombre', titulo: 'Nombre', ro: true, ancho: 36 }, { k: 'uso', titulo: 'Uso', ro: true }, { k: 'efecto_iva', titulo: 'Efecto IVA', ro: true }, { k: 'descripcion', titulo: 'Descripción', ro: true, ancho: 50 }, { k: 'activo', titulo: 'Activo', tipo: 'check' }] });
-  window.PANTALLAS['sat-frases'] = (cont) => lista(cont, { titulo: 'Frases y escenarios', icono: 'ti-quote', tabla: 'sat_frases', orden: ['tipo', 'escenario'], ayuda: 'Frases que la SAT exige en los DTE según el régimen (ISR trimestral o retención definitiva, agente de retención, exenciones, pequeño contribuyente). Marca las que aplican a la empresa.', campos: [{ k: 'tipo', titulo: 'Tipo', ro: true, ancho: 6 }, { k: 'escenario', titulo: 'Escenario', ro: true, ancho: 8 }, { k: 'descripcion', titulo: 'Descripción', ro: true, ancho: 44 }, { k: 'texto', titulo: 'Texto en el DTE', ro: true, ancho: 44 }] });
+  window.PANTALLAS['sat-frases'] = (cont) => lista(cont, { titulo: 'Frases y escenarios', icono: 'ti-quote', tabla: 'sat_frases', orden: ['tipo', 'escenario'], ayuda: 'Frases que la SAT exige en los DTE según el régimen (ISR trimestral o retención definitiva, agente de retención, exenciones, pequeño contribuyente). Marca las que aplican a la empresa.', campos: [{ k: 'tipo', titulo: 'Tipo', ro: true, ancho: 6 }, { k: 'tipo_nombre', titulo: 'Tipo de frase', ro: true, ancho: 26 }, { k: 'escenario', titulo: 'Escenario', ro: true, ancho: 8 }, { k: 'descripcion', titulo: 'Descripción', ro: true, ancho: 44 }, { k: 'texto', titulo: 'Texto en el DTE', ro: true, ancho: 44 }] });
 
   // ===================== Reportes / registros sobre los datos fiscales =====================
   const DEF = {
