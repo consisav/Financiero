@@ -5868,7 +5868,7 @@ form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 10
 /* ---------- Reportes gerenciales ---------- */
 .rg-pantalla .bk-detalle { padding: 14px; overflow: auto; }
 .rg-pantalla .rg-usuario select { min-width: 240px; }
-.rg { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 400px); gap: 14px; align-items: start; }
+.rg { display: grid; grid-template-columns: minmax(230px, 270px) minmax(0, 1fr) minmax(300px, 360px); gap: 14px; align-items: start; }
 .rg-card { border: 1px solid var(--borde); border-radius: 12px; padding: 12px 14px; background: var(--panel); }
 .rg-card + .rg-card { margin-top: 12px; }
 .rg-card h3 small { color: var(--suave); font-weight: 500; margin-left: 6px; font-size: 12px; }
@@ -5917,6 +5917,37 @@ form.cli-soap textarea, form.cli-pac textarea, form.cli-doc textarea { width: 10
 .rg-aviso .rg-wa { background: #1f9d55; color: #fff; border-color: #1f9d55; }
 .rg-aviso small, .rg-falta { font-size: 12px; color: var(--suave); margin: 0; }
 @media (max-width: 1100px) { .rg { grid-template-columns: 1fr; } }
-.ta-filtros.bk-filtros:has(.rg-usuario) { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) auto !important; }
-.rg-usuario span { white-space: nowrap; }
+.ta-filtros.bk-filtros:has(.rg-acciones) { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto !important; }
 .rg-pantalla .oc-extra { gap: 8px; }
+.rg-usuarios { display: flex; flex-direction: column; max-height: calc(100vh - 290px); min-height: 0; }
+.rg-u-lista { overflow: auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; margin-top: 6px; }
+.rg-u { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid var(--borde); border-radius: 10px; cursor: pointer; }
+.rg-u.si { border-color: color-mix(in srgb, var(--ok) 50%, var(--borde)); background: var(--verde-f); }
+.rg-u-todos { grid-template-columns: auto minmax(0, 1fr); background: var(--fondo); }
+.rg-u input { width: 16px; height: 16px; margin: 0; accent-color: var(--ok); }
+.rg-av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--acento-fondo); color: var(--acento); font-size: 11px; font-weight: 700; }
+.rg-u b { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-u small { display: block; font-size: 11px; color: var(--suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-u-tx { min-width: 0; }
+.rg-u em { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--suave); }
+.rg-u.si em { color: var(--verde-t); }
+.rg-tabla .rg-pri { width: 64px; text-align: center; }
+.rg-pri select { width: 52px; padding: 4px 2px; border: 1px solid var(--borde); border-radius: 8px; font: inherit; font-weight: 700; text-align: center; background: var(--panel); color: var(--texto); }
+.rg-tabla .rg-c { width: 58px; }
+.rg-tabla th, .rg-tabla td { padding: 6px 5px; }
+.rg-rep b { font-size: 13.5px; }
+@media (max-width: 1750px) { .rg-tabla th.rg-c span { font-size: 11px; } .rg-rep > i { display: none; } }
+@media (max-width: 1300px) { .rg { grid-template-columns: 1fr; } .rg-usuarios { max-height: none; } }
+@media (max-width: 1750px) {
+  .rg { grid-template-columns: 210px minmax(0, 1fr) 280px; gap: 10px; }
+  .rg-card { padding: 10px 11px; }
+  .rg-tabla .rg-c { width: 46px; }
+  .rg-tabla .rg-pri { width: 54px; }
+  .rg-tabla th.rg-pri { font-size: 10.5px; }
+  .rg-tabla th.rg-c span { font-size: 10px; }
+  .rg-rep small { display: none; }
+  .rg-rep b { font-size: 13px; white-space: nowrap; }
+  .rg-u em { display: none; }
+  .rg-u { grid-template-columns: auto auto minmax(0, 1fr); }
+  .rg-modo label { padding: 6px 8px; }
+}

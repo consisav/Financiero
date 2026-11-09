@@ -1,9 +1,9 @@
-// Reportes gerenciales (script 171): al final de los Reportes de un módulo. Por organización, localidad y usuario con
-// acceso al módulo se eligen los reportes de todos los segmentos del módulo y, con casillas, sus salidas: PDF, Excel,
-// voz, WhatsApp y correo. Se generan manualmente («Generar ahora») o automáticamente con su frecuencia (cada hora,
-// diaria, semanal, quincenal o mensual, a la hora indicada): la sesión abierta de ese usuario los genera al llegar la
-// hora y avisa para enviarlos.
-// Los reportes que se generan aquí son los del motor de reportes comerciales (reportes_comerciales.js).
+// Reportes gerenciales (scripts 171 y 172): al final de los Reportes de un módulo. Por organización y localidad se marcan
+// los usuarios del sistema a los que se aplica la generación, los reportes de todos los segmentos del módulo con su
+// prioridad (1 … n, el orden de la lista y de la generación) y, con casillas, sus salidas: PDF, Excel, voz, WhatsApp y
+// correo. Se generan manualmente («Generar ahora») o automáticamente con su frecuencia (cada hora, diaria, semanal,
+// quincenal o mensual, a la hora indicada): la sesión abierta de cada usuario marcado los genera al llegar la hora y
+// avisa para enviarlos.
 (function () {
   const { esc } = window.UI;
   window.PANTALLAS = window.PANTALLAS || {};
@@ -23,12 +23,14 @@
     facturacion: [
       { id: 'cxc-estado', nombre: 'Estado de cuenta por cliente', icono: 'ti-file-invoice', segmento: 'Cuentas x Cobrar' },
       { id: 'cxp-estado', nombre: 'Estado de cuenta por proveedor', icono: 'ti-file-invoice', segmento: 'Compras · Cuentas x Pagar' },
-      { id: 'existencias-inventario', nombre: 'Existencia de productos', icono: 'ti-packages', segmento: 'Inventarios · Reportes' }
+      { id: 'existencias-inventario', nombre: 'Existencia de productos', icono: 'ti-packages', segmento: 'Inventarios · Reportes' },
+      { id: 'disponibilidad-bancaria', nombre: 'Disponibilidad bancaria', icono: 'ti-chart-line', segmento: 'Caja y Bancos · Bancos' }
     ]
   };
   const ESTADOS = new Set(['cxc-estado', 'cxp-estado']);
   const generable = (id) => (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id] && !!motor())
-    || (ESTADOS.has(id) && !!window.PANTALLAS[id]) || (id === 'existencias-inventario' && !!window.INVENTARIO_REPORTES);
+    || (ESTADOS.has(id) && !!window.PANTALLAS[id]) || (id === 'existencias-inventario' && !!window.INVENTARIO_REPORTES)
+    || (id === 'disponibilidad-bancaria' && !!window.DISPONIBILIDAD);
   // Contenido de un reporte sin su pantalla: { titulo, parametros, columnas, filas, kpis, graficas, n }.
   async function construirCfg(id, e) {
     if (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id]) {
@@ -37,6 +39,8 @@
     }
     if (ESTADOS.has(id)) return window.PANTALLAS[id](null, null, { ctx: e.ctx, f: { desde: e.desde, hasta: e.fecha, contenido: e.contenido, mostrar: 'CON SALDO' } }).cfg();
     if (id === 'existencias-inventario') return window.INVENTARIO_REPORTES.directo(id, e.ctx, { fecha: e.fecha, ceros: false }).cfg();
+    // La disponibilidad se genera (y queda en su histórico) a la fecha de corte del período.
+    if (id === 'disponibilidad-bancaria') return window.DISPONIBILIDAD.cfg(e.sb, e.ctx.sel.loc, e.fecha, e.empresa(), e.contenido);
     throw new Error('Este reporte se genera desde su pantalla');
   }
   const fmt = () => window.BANCOS.fmt;
@@ -93,7 +97,7 @@
     const sb = window.FIN.sb;
     const desde = sb.__fromOriginal || sb.from.bind(sb);
     const F = fmt();
-    const elegidos = reportesDe(m).filter((r) => generable(r.id) && SALIDAS.some(([k]) => conf.reportes?.[r.id]?.[k]));
+    const elegidos = ordenados(reportesDe(m), conf).filter((r) => generable(r.id) && SALIDAS.some(([k]) => conf.reportes?.[r.id]?.[k]));
     if (!elegidos.length) { window.FIN.aviso('Marca al menos una salida de un reporte'); return null; }
     window.FIN.aviso(`Generando ${elegidos.length} reporte(s)…`);
     const [mo, lo, og] = await Promise.all([
@@ -198,21 +202,34 @@
   }
 
   // ---------- Pantalla ----------
+  // Prioridad de cada reporte (1 … n): la lista y la generación van en ese orden.
+  function ordenados(reps, conf) {
+    const pos = new Map(reps.map((r, i) => [r.id, i]));
+    return [...reps].sort((a, b) => (Number(conf.reportes?.[a.id]?.prioridad) || 999) - (Number(conf.reportes?.[b.id]?.prioridad) || 999) || pos.get(a.id) - pos.get(b.id));
+  }
+  function renumerar(reps, conf, id, nueva) {
+    const lista = ordenados(reps, conf).filter((r) => r.id !== id);
+    const r = reps.find((x) => x.id === id);
+    if (r) lista.splice(Math.max(0, Math.min(lista.length, nueva - 1)), 0, r);
+    lista.forEach((x, i) => { conf.reportes[x.id] = { ...(conf.reportes[x.id] || {}), prioridad: i + 1 }; });
+  }
+
   window.PANTALLAS['reportes-gerenciales'] = function (cont, m) {
     const ctx = window.BANCOS.montar(cont, { titulo: 'Reportes gerenciales', icono: 'ti-report-analytics', clase: 'bk-movimientos bm-solo rg-pantalla', grupo: `${m.corto} · Reportes` });
     const { sb } = ctx;
     const yo = window.FIN.perfil();
-    const reps = reportesDe(m);
-    const est = { usuarios: [], usuario: null, conf: null, cambios: false };
+    const reps = reportesDe(m).filter((r) => generable(r.id));
+    const est = { usuarios: [], conf: null, cambios: false };
 
     const nuevaConf = () => ({
-      organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, modulo: m.id, perfil_id: est.usuario,
-      reportes: Object.fromEntries(reps.filter((r) => generable(r.id)).map((r) => [r.id, { pdf: true, excel: false, voz: false, whatsapp: false, correo: false }])),
+      organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, modulo: m.id,
+      usuarios: est.usuarios.some((u) => u.id === yo.id) ? [yo.id] : [],
+      reportes: Object.fromEntries(reps.map((r, i) => [r.id, { pdf: true, excel: false, voz: false, whatsapp: false, correo: false, prioridad: i + 1 }])),
       parametros: { periodo: 'MES', contenido: 'RESUMIDO', graficas: true },
-      whatsapp: '', correos: est.usuarios.find((u) => u.id === est.usuario)?.correo || '', modo: 'MANUAL', frecuencia: 'DIARIA', hora: '07:00', dia_semana: 1, dia_mes: 1, activo: true
+      whatsapp: '', correos: yo.correo || '', modo: 'MANUAL', frecuencia: 'DIARIA', hora: '07:00', dia_semana: 1, dia_mes: 1, activo: true, ejecuciones: {}
     });
 
-    // Usuarios con acceso al módulo en la localidad: por su rol en esa empresa (o su empresa principal) o Super Administrador.
+    // Usuarios del sistema con acceso al módulo en la localidad: por su rol en esa empresa (o su empresa principal) o Super Administrador.
     async function cargarUsuarios() {
       const desde = sb.__fromOriginal || sb.from.bind(sb);
       const mod = [m.id, m.hereda].filter(Boolean);
@@ -225,16 +242,19 @@
       const rolEn = new Map((pe.data || []).map((x) => [x.perfil_id, x.rol_id]));
       est.usuarios = (p.data || []).filter((u) => (u.rol_id === 'superadministrador' && (u.es_global || u.organizacion_id === ctx.sel.org))
         || (rolEn.has(u.id) && ven.has(rolEn.get(u.id))) || (u.localidad_id === ctx.sel.loc && ven.has(u.rol_id)));
-      if (!est.usuarios.some((u) => u.id === yo.id) && yo.localidad_id === ctx.sel.loc) est.usuarios.unshift(yo);
-      if (!est.usuarios.some((u) => u.id === est.usuario)) est.usuario = (est.usuarios.find((u) => u.id === yo.id) || est.usuarios[0])?.id || null;
+      const roles = window.FIN.roles ? window.FIN.roles() : [];
+      est.usuarios.forEach((u) => { const rid = rolEn.get(u.id) || u.rol_id; u.rolNombre = u.es_global ? 'Super Administrador Global' : (roles.find((r) => r.id === rid) || {}).nombre || rid; });
     }
     async function cargarConf() {
       est.cambios = false;
-      if (!est.usuario || !ctx.sel.loc) { est.conf = null; return; }
-      const { data, error } = await sb.from('reportes_gerenciales').select('*').eq('localidad_id', ctx.sel.loc).eq('modulo', m.id).eq('perfil_id', est.usuario).maybeSingle();
-      if (error) { ctx.pDet.innerHTML = ctx.vacio(/reportes_gerenciales/.test(error.message) ? 'Falta ejecutar el script 171 (Reportes gerenciales) en Supabase.' : esc(error.message), 'ti-report-analytics'); est.conf = undefined; return; }
+      if (!ctx.sel.loc) { est.conf = null; return; }
+      const { data, error } = await sb.from('reportes_gerenciales').select('*').eq('localidad_id', ctx.sel.loc).eq('modulo', m.id).maybeSingle();
+      if (error) { ctx.pDet.innerHTML = ctx.vacio(/reportes_gerenciales|usuarios|ejecuciones|multiple/.test(error.message) ? 'Falta ejecutar los scripts 171 y 172 (Reportes gerenciales) en Supabase.' : esc(error.message), 'ti-report-analytics'); est.conf = undefined; return; }
       const base = nuevaConf();
-      est.conf = data ? { ...base, ...data, hora: String(data.hora).slice(0, 5), reportes: { ...base.reportes, ...data.reportes }, parametros: { ...base.parametros, ...data.parametros } } : base;
+      const repDe = (d) => Object.fromEntries(reps.map((r) => [r.id, { ...base.reportes[r.id], ...(d?.[r.id] || {}) }]));
+      est.conf = data ? { ...base, ...data, hora: String(data.hora).slice(0, 5), reportes: repDe(data.reportes), parametros: { ...base.parametros, ...data.parametros }, usuarios: data.usuarios || [] } : base;
+      // Prioridades sin repetir del 1 a n.
+      ordenados(reps, est.conf).forEach((r, i) => { est.conf.reportes[r.id].prioridad = i + 1; });
     }
 
     function pintarFiltros() {
@@ -243,8 +263,7 @@
         <div class="ta-titulo"><span class="tk-icono"><i class="ti ti-report-analytics" aria-hidden="true"></i></span><div><small>${esc(ctx.grupo)}</small><h2>Reportes gerenciales</h2></div></div>
         <label class="campo"><span>Organización</span><select name="org">${orgs.map((o) => `<option value="${o.id}" ${o.id === ctx.sel.org ? 'selected' : ''}>${esc(String(o.codigo))} · ${esc(o.nombre)}</option>`).join('')}</select></label>
         <label class="campo"><span>Localidad</span><select name="loc">${locs.map((l) => `<option value="${l.id}" ${l.id === ctx.sel.loc ? 'selected' : ''}>${esc(l.codigo)} · ${esc(l.nombre_comercial)}</option>`).join('') || '<option value="">Sin localidades</option>'}</select></label>
-        <label class="campo rg-usuario"><span>Usuario que los genera</span><select name="usuario">${est.usuarios.map((u) => `<option value="${u.id}" ${u.id === est.usuario ? 'selected' : ''}>${esc(u.nombre || u.usuario || u.correo)}${u.usuario ? ` · ${esc(u.usuario)}` : ''}</option>`).join('') || '<option value="">Sin usuarios con acceso</option>'}</select></label>
-        <div class="oc-extra">
+        <div class="oc-extra rg-acciones">
           <button type="button" class="boton secundario-sm" data-accion="guardar" ${est.conf ? '' : 'disabled'}><i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar</button>
           <button type="button" class="boton primario-sm" data-accion="generar" ${est.conf ? '' : 'disabled'}><i class="ti ti-player-play" aria-hidden="true"></i> Generar ahora</button>
         </div>`;
@@ -253,48 +272,59 @@
     function pintar() {
       pintarFiltros();
       const c = est.conf;
-      if (!c) { if (c === null) ctx.pDet.innerHTML = ctx.vacio(est.usuarios.length ? 'Elige el usuario.' : 'Esta localidad no tiene usuarios con acceso al módulo.', 'ti-report-analytics'); return; }
+      if (!c) { if (c === null) ctx.pDet.innerHTML = ctx.vacio('Elige la localidad.', 'ti-report-analytics'); return; }
       const par = c.parametros;
       const marcado = (id, k) => !!c.reportes[id]?.[k];
-      const gen = reps.filter((r) => generable(r.id));
-      const col = (k) => gen.length && gen.every((r) => marcado(r.id, k));
-      const fila = (r) => gen.length && SALIDAS.every(([k]) => marcado(r.id, k));
+      const col = (k) => reps.length && reps.every((r) => marcado(r.id, k));
+      const fila = (r) => SALIDAS.every(([k]) => marcado(r.id, k));
       const per = periodo(par.periodo, fmt().hoy());
       const prox = c.modo === 'AUTOMATICO' ? proxima(c) : null;
+      const us = new Set(c.usuarios);
+      const todosU = est.usuarios.length && est.usuarios.every((u) => us.has(u.id));
+      const n = reps.length;
       ctx.pDet.innerHTML = `
         <div class="rg">
+          <section class="rg-card rg-usuarios">
+            <h3 class="ta-col-titulo"><i class="ti ti-users" aria-hidden="true"></i> Usuarios <small>${est.usuarios.filter((u) => us.has(u.id)).length} de ${est.usuarios.length}</small></h3>
+            <label class="rg-u rg-u-todos"><input type="checkbox" data-u-todos ${todosU ? 'checked' : ''}><span><b>Todos los usuarios</b><small>Aplicar la generación a todos</small></span></label>
+            <div class="rg-u-lista">${est.usuarios.map((u) => `
+              <label class="rg-u ${us.has(u.id) ? 'si' : ''}"><input type="checkbox" data-u="${u.id}" ${us.has(u.id) ? 'checked' : ''}>
+                <span class="rg-av">${esc((u.nombre || u.usuario || '?').split(/\s+/).slice(0, 2).map((x) => x[0]).join('').toUpperCase())}</span>
+                <span class="rg-u-tx"><b>${esc(u.nombre || u.usuario || u.correo)}</b><small>${esc([u.usuario, u.rolNombre].filter(Boolean).join(' · '))}</small></span>
+                <em>${us.has(u.id) ? 'Aplica' : 'No aplica'}</em></label>`).join('') || '<p class="rg-nota">Esta localidad no tiene usuarios con acceso al módulo.</p>'}</div>
+          </section>
           <section class="rg-card rg-reportes">
-            <h3 class="ta-col-titulo"><i class="ti ti-list-check" aria-hidden="true"></i> Reportes del módulo <small>${gen.length} de ${reps.length}</small></h3>
+            <h3 class="ta-col-titulo"><i class="ti ti-list-check" aria-hidden="true"></i> Reportes del módulo <small>${n} · en orden de prioridad</small></h3>
             <div class="rg-tabla"><table>
-              <thead><tr><th>Reporte</th>${SALIDAS.map(([k, t, ic]) => `<th class="rg-c"><label title="Marcar ${t} en todos"><i class="ti ${ic}" aria-hidden="true"></i><span>${t}</span><input type="checkbox" data-col="${k}" ${col(k) ? 'checked' : ''}></label></th>`).join('')}<th class="rg-c"><label title="Todas las salidas de todos"><i class="ti ti-checks" aria-hidden="true"></i><span>Todo</span><input type="checkbox" data-todo ${gen.length && gen.every((r) => fila(r)) ? 'checked' : ''}></label></th></tr></thead>
-              <tbody>${reps.map((r) => generable(r.id) ? `<tr>
-                <td><span class="rg-rep"><i class="ti ${r.icono}" aria-hidden="true"></i><span><b>${esc(r.nombre)}</b><small>${esc(r.segmento)}</small></span></span></td>
+              <thead><tr><th class="rg-pri">Prioridad</th><th>Reporte</th>${SALIDAS.map(([k, t, ic]) => `<th class="rg-c"><label title="Marcar ${t} en todos"><i class="ti ${ic}" aria-hidden="true"></i><span>${t}</span><input type="checkbox" data-col="${k}" ${col(k) ? 'checked' : ''}></label></th>`).join('')}<th class="rg-c"><label title="Todas las salidas de todos"><i class="ti ti-checks" aria-hidden="true"></i><span>Todo</span><input type="checkbox" data-todo ${reps.every((r) => fila(r)) ? 'checked' : ''}></label></th></tr></thead>
+              <tbody>${ordenados(reps, c).map((r) => `<tr>
+                <td class="rg-pri"><select data-pri="${r.id}" aria-label="Prioridad de ${esc(r.nombre)}">${Array.from({ length: n }, (_, i) => `<option value="${i + 1}" ${c.reportes[r.id].prioridad === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></td>
+                <td><span class="rg-rep" title="${esc(r.segmento)}"><i class="ti ${r.icono}" aria-hidden="true"></i><span><b>${esc(r.nombre)}</b><small>${esc(r.segmento)}</small></span></span></td>
                 ${SALIDAS.map(([k, t]) => `<td class="rg-c"><input type="checkbox" data-rep="${r.id}" data-sal="${k}" aria-label="${esc(r.nombre)} · ${t}" ${marcado(r.id, k) ? 'checked' : ''}></td>`).join('')}
-                <td class="rg-c"><input type="checkbox" data-fila="${r.id}" aria-label="${esc(r.nombre)} · todas" ${fila(r) ? 'checked' : ''}></td></tr>`
-                : `<tr class="rg-no"><td><span class="rg-rep"><i class="ti ${r.icono}" aria-hidden="true"></i><span><b>${esc(r.nombre)}</b><small>${esc(r.segmento)} · se genera desde su pantalla</small></span></span></td><td colspan="${SALIDAS.length + 1}"></td></tr>`).join('')}</tbody>
+                <td class="rg-c"><input type="checkbox" data-fila="${r.id}" aria-label="${esc(r.nombre)} · todas" ${fila(r) ? 'checked' : ''}></td></tr>`).join('')}</tbody>
             </table></div>
             <div class="rg-param">
               <label class="campo"><span>Período</span><select data-par="periodo">${PERIODOS.map(([k, t]) => `<option value="${k}" ${par.periodo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
               <label class="campo"><span>Contenido</span><select data-par="contenido">${[['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']].map(([k, t]) => `<option value="${k}" ${par.contenido === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
               <label class="pc-check"><input type="checkbox" data-par="graficas" ${par.graficas !== false ? 'checked' : ''}> Con gráficas</label>
-              <span class="rg-nota">Hoy sería del ${fmt().fechaDia(per.desde)} al ${fmt().fechaDia(per.fecha)}; saldos y existencias al ${fmt().fechaDia(per.fecha)}.</span>
+              <span class="rg-nota">Hoy sería del ${fmt().fechaDia(per.desde)} al ${fmt().fechaDia(per.fecha)}; saldos, existencias y disponibilidad al ${fmt().fechaDia(per.fecha)}.</span>
             </div>
           </section>
           <div class="rg-lado">
             <section class="rg-card">
               <h3 class="ta-col-titulo"><i class="ti ti-send" aria-hidden="true"></i> Destinos</h3>
-              <label class="campo"><span><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp (números separados por coma)</span><input data-campo="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="5555 1234, 502 4444 5678" inputmode="tel"></label>
+              <label class="campo"><span><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp (separados por coma)</span><input data-campo="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="5555 1234, 502 4444 5678" inputmode="tel"></label>
               <label class="campo"><span><i class="ti ti-mail" aria-hidden="true"></i> Correos (separados por coma)</span><input data-campo="correos" value="${esc(c.correos || '')}" placeholder="gerencia@empresa.com"></label>
             </section>
             <section class="rg-card">
               <h3 class="ta-col-titulo"><i class="ti ti-clock-play" aria-hidden="true"></i> Generación</h3>
               <div class="rg-modo">
                 <label class="${c.modo === 'MANUAL' ? 'si' : ''}"><input type="radio" name="rg-modo" value="MANUAL" ${c.modo === 'MANUAL' ? 'checked' : ''}><i class="ti ti-hand-click" aria-hidden="true"></i><span><b>Manual</b><small>Con «Generar ahora»</small></span></label>
-                <label class="${c.modo === 'AUTOMATICO' ? 'si' : ''}"><input type="radio" name="rg-modo" value="AUTOMATICO" ${c.modo === 'AUTOMATICO' ? 'checked' : ''}><i class="ti ti-repeat" aria-hidden="true"></i><span><b>Automática</b><small>Con la frecuencia indicada</small></span></label>
+                <label class="${c.modo === 'AUTOMATICO' ? 'si' : ''}"><input type="radio" name="rg-modo" value="AUTOMATICO" ${c.modo === 'AUTOMATICO' ? 'checked' : ''}><i class="ti ti-repeat" aria-hidden="true"></i><span><b>Automática</b><small>Con su frecuencia</small></span></label>
               </div>
               <div class="rg-frec ${c.modo === 'AUTOMATICO' ? '' : 'apagado'}">
                 <label class="campo"><span>Frecuencia</span><select data-campo="frecuencia" ${c.modo === 'AUTOMATICO' ? '' : 'disabled'}>${FRECUENCIAS.map(([k, t]) => `<option value="${k}" ${c.frecuencia === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-                <label class="campo"><span>${c.frecuencia === 'CADA_HORA' ? 'Minuto (de cada hora)' : 'Hora'}</span><input type="time" data-campo="hora" value="${esc(c.hora)}" ${c.modo === 'AUTOMATICO' ? '' : 'disabled'}></label>
+                <label class="campo"><span>${c.frecuencia === 'CADA_HORA' ? 'Minuto' : 'Hora'}</span><input type="time" data-campo="hora" value="${esc(c.hora)}" ${c.modo === 'AUTOMATICO' ? '' : 'disabled'}></label>
                 ${c.frecuencia === 'SEMANAL' ? `<label class="campo"><span>Día</span><select data-campo="dia_semana" ${c.modo === 'AUTOMATICO' ? '' : 'disabled'}>${DIAS.map((d, i) => `<option value="${i + 1}" ${Number(c.dia_semana) === i + 1 ? 'selected' : ''}>${d}</option>`).join('')}</select></label>` : ''}
                 ${c.frecuencia === 'MENSUAL' ? `<label class="campo"><span>Día del mes</span><input type="number" min="1" max="31" data-campo="dia_mes" value="${esc(String(c.dia_mes))}" ${c.modo === 'AUTOMATICO' ? '' : 'disabled'}></label>` : ''}
               </div>
@@ -302,12 +332,12 @@
                 <div><dt>Próxima</dt><dd>${c.modo === 'AUTOMATICO' ? esc(fechaHora(prox)) : 'Manual'}</dd></div>
                 <div><dt>Última</dt><dd>${esc(fechaHora(c.ultima_ejecucion))}</dd></div>
               </dl>
-              <p class="rg-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> En automático los genera la sesión abierta de este usuario al llegar la hora (o al entrar, si ya pasó) y avisa para enviarlos por WhatsApp o correo.</p>
+              <p class="rg-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> En automático se generan en la sesión abierta de cada usuario marcado al llegar la hora (o al entrar, si ya pasó) y avisan para enviarlos.</p>
             </section>
           </div>
         </div>`;
-      ctx.pDet.querySelector('[data-todo]').indeterminate = false;
-      SALIDAS.forEach(([k]) => { const x = ctx.pDet.querySelector(`[data-col="${k}"]`); x.indeterminate = !col(k) && gen.some((r) => marcado(r.id, k)); });
+      ctx.pDet.querySelector('[data-u-todos]').indeterminate = !todosU && est.usuarios.some((u) => us.has(u.id));
+      SALIDAS.forEach(([k]) => { const x = ctx.pDet.querySelector(`[data-col="${k}"]`); x.indeterminate = !col(k) && reps.some((r) => marcado(r.id, k)); });
     }
 
     async function cargarTodo() {
@@ -319,7 +349,7 @@
     function datosGuardar() {
       const c = est.conf;
       return {
-        organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, modulo: m.id, perfil_id: est.usuario, reportes: c.reportes, parametros: c.parametros,
+        organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, modulo: m.id, usuarios: c.usuarios, reportes: c.reportes, parametros: c.parametros,
         whatsapp: c.whatsapp || null, correos: c.correos || null, modo: c.modo, frecuencia: c.frecuencia, hora: c.hora || '07:00',
         dia_semana: Number(c.dia_semana) || 1, dia_mes: Math.min(31, Math.max(1, Number(c.dia_mes) || 1)), activo: true,
         proxima_ejecucion: c.modo === 'AUTOMATICO' ? proxima(c)?.toISOString() || null : null,
@@ -328,10 +358,11 @@
     }
     async function guardar() {
       const d = datosGuardar();
+      if (d.modo === 'AUTOMATICO' && !d.usuarios.length) { window.FIN.aviso('Marca al menos un usuario al que se aplique la generación automática'); return false; }
       const r = est.conf.id ? await sb.from('reportes_gerenciales').update(d).eq('id', est.conf.id).select().single()
         : await sb.from('reportes_gerenciales').insert(d).select().single();
       if (r.error) { window.FIN.aviso(window.UI.traducirError ? window.UI.traducirError(r.error) : r.error.message); return false; }
-      est.conf = { ...est.conf, ...r.data, hora: String(r.data.hora).slice(0, 5) };
+      est.conf = { ...est.conf, ...r.data, hora: String(r.data.hora).slice(0, 5), reportes: est.conf.reportes, parametros: est.conf.parametros };
       est.cambios = false;
       window.FIN.aviso(d.modo === 'AUTOMATICO' ? `Guardado. Próxima generación: ${fechaHora(d.proxima_ejecucion)}` : 'Reportes gerenciales guardados');
       pintar();
@@ -342,20 +373,23 @@
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') return cargarTodo();
       const t = e.target, c = est.conf;
-      if (t.name === 'usuario') { est.usuario = t.value || null; await cargarConf(); return est.conf !== undefined ? pintar() : null; }
       if (!c) return;
       const sal = (id) => (c.reportes[id] = c.reportes[id] || {});
-      const gen = reps.filter((r) => generable(r.id));
       if (t.dataset.rep) sal(t.dataset.rep)[t.dataset.sal] = t.checked;
-      else if (t.dataset.col) gen.forEach((r) => { sal(r.id)[t.dataset.col] = t.checked; });
+      else if (t.dataset.col) reps.forEach((r) => { sal(r.id)[t.dataset.col] = t.checked; });
       else if (t.dataset.fila) SALIDAS.forEach(([k]) => { sal(t.dataset.fila)[k] = t.checked; });
-      else if (t.matches('[data-todo]')) gen.forEach((r) => SALIDAS.forEach(([k]) => { sal(r.id)[k] = t.checked; }));
+      else if (t.matches('[data-todo]')) reps.forEach((r) => SALIDAS.forEach(([k]) => { sal(r.id)[k] = t.checked; }));
+      else if (t.dataset.pri) renumerar(reps, c, t.dataset.pri, Number(t.value));
+      else if (t.dataset.u) c.usuarios = t.checked ? [...new Set([...c.usuarios, t.dataset.u])] : c.usuarios.filter((x) => x !== t.dataset.u);
+      else if (t.matches('[data-u-todos]')) c.usuarios = t.checked ? est.usuarios.map((u) => u.id) : [];
       else if (t.dataset.par) c.parametros[t.dataset.par] = t.type === 'checkbox' ? t.checked : t.value;
       else if (t.name === 'rg-modo') c.modo = t.value;
       else if (t.dataset.campo) c[t.dataset.campo] = t.value;
       else return;
       est.cambios = true;
+      const lista = ctx.pDet.querySelector('.rg-u-lista')?.scrollTop;
       pintar();
+      if (lista) ctx.pDet.querySelector('.rg-u-lista').scrollTop = lista;
     });
     cont.addEventListener('input', (e) => { const t = e.target; if (est.conf && (t.dataset.campo === 'whatsapp' || t.dataset.campo === 'correos')) { est.conf[t.dataset.campo] = t.value; est.cambios = true; } });
     cont.addEventListener('click', async (e) => {
@@ -377,8 +411,9 @@
   };
 
   // ---------- Generación automática ----------
-  // Cada minuto, con la sesión abierta, se buscan las configuraciones automáticas vencidas del usuario; cada una se
-  // toma moviendo su próxima ejecución (solo una sesión la toma) y se genera.
+  // Cada minuto, con la sesión abierta, se revisan las configuraciones automáticas en las que está marcado el usuario:
+  // si su próxima generación (desde su última, o desde que se guardó) ya pasó, se marca (solo una sesión del usuario la
+  // toma) y se generan.
   let revisando = false;
   async function revisar() {
     const yo = window.FIN && window.FIN.perfil && window.FIN.perfil();
@@ -386,16 +421,18 @@
     revisando = true;
     try {
       const sb = window.FIN.sb;
-      const { data, error } = await sb.from('reportes_gerenciales').select('*').eq('perfil_id', yo.id).eq('modo', 'AUTOMATICO').eq('activo', true).lte('proxima_ejecucion', new Date().toISOString());
+      const { data, error } = await sb.from('reportes_gerenciales').select('*').contains('usuarios', [yo.id]).eq('modo', 'AUTOMATICO').eq('activo', true);
       if (error || !data) return;
       for (const c of data) {
         const m = (window.MODULOS || []).find((x) => x.id === c.modulo);
         if (!m) continue;
-        const sig = proxima({ ...c, hora: String(c.hora).slice(0, 5) });
-        const t = await sb.from('reportes_gerenciales').update({ ultima_ejecucion: new Date().toISOString(), proxima_ejecucion: sig ? sig.toISOString() : null })
-          .eq('id', c.id).eq('proxima_ejecucion', c.proxima_ejecucion).select('id');
-        if (t.error || !t.data?.length) continue;
-        await generar(c, m, { automatico: true });
+        const previa = c.ejecuciones?.[yo.id] || null;
+        const conf = { ...c, hora: String(c.hora).slice(0, 5) };
+        const toca = proxima(conf, new Date(previa || c.modificado_en || c.creado_en));
+        if (!toca || toca.getTime() > Date.now()) continue;
+        const t = await sb.rpc('marcar_reporte_gerencial', { p_id: c.id, p_previa: previa });
+        if (t.error || t.data !== true) continue;
+        await generar(conf, m, { automatico: true });
       }
     } catch (e) { /* se reintenta en la siguiente revisión */ } finally { revisando = false; }
   }

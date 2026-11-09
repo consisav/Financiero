@@ -316,6 +316,10 @@
 
   function excel(gen, det, empresa, org = [], nivel = 'TOTAL', movs = null) {
     if (!window.REPORTE_XLSX) return;
+    window.REPORTE_XLSX.generar(cfgExcel(gen, det, empresa, org, nivel, movs));
+  }
+  // Contenido del reporte (columnas y filas del Excel); lo usan el Excel y los Reportes gerenciales.
+  function cfgExcel(gen, det, empresa, org = [], nivel = 'TOTAL', movs = null) {
     const grupos = porBanco(det);
     const sx = sintesis(org);
     const filas = [{ tipo: 'nota', valores: ['CUENTAS DE LA EMPRESA'] }];
@@ -373,7 +377,7 @@
         filas.push({ tipo: 'total', valores: ['Consolidado', '', '', gen.org_cuentas, null, null, null, Number(gen.org_circulacion_ml), Number(gen.org_estimado_ml), '100%', Number(gen.org_saldo_ml), gen.org_bajo_minimo] });
       }
     }
-    window.REPORTE_XLSX.generar({
+    return {
       titulo: `Disponibilidad bancaria · ${gen.correlativo} · ${nivelTexto(nivel)}`,
       parametros: [`Empresa: ${empresa}`, `Nivel: ${nivelTexto(nivel)}`, `Banco: ${gen.banco_nombre || 'Todos'}`, `Cuenta: ${gen.cuenta_numero || 'Todas'}`, `Fecha de corte: ${fmt.fechaDia(gen.fecha_corte)}`,
         `Generó: ${gen.usuario || ''}${gen.usuario_nombre ? ` · ${gen.usuario_nombre}` : ''}`, `Generado: ${fhs(gen.generado_en)}`],
@@ -381,9 +385,24 @@
       columnas: [{ titulo: 'Cuenta / empresa', ancho: 22 }, { titulo: 'Nombre / banco', ancho: 34 }, { titulo: 'Moneda', ancho: 14 }, { titulo: 'Saldo inicial · cuentas', ancho: 15, tipo: 'monto' }, { titulo: 'Ingresos', ancho: 15, tipo: 'monto' },
         { titulo: 'Egresos', ancho: 15, tipo: 'monto' }, { titulo: 'Saldo (libros)', ancho: 16, tipo: 'monto' }, { titulo: 'En circulación', ancho: 15, tipo: 'monto' }, { titulo: 'Estimado en banco', ancho: 16, tipo: 'monto' },
         { titulo: 'Mínimo · %', ancho: 13, tipo: 'monto' }, { titulo: 'Disponible Q', ancho: 16, tipo: 'monto' }, { titulo: 'Observación', ancho: 16 }],
-      filas
-    });
+      filas, n: det.length,
+      kpis: [['Cuentas', det.length], ['Disponible', `Q ${m(gen.total_saldo_ml)}`], ['En circulación', `Q ${m(gen.total_circulacion_ml)}`], ['Estimado en bancos', `Q ${m(porBanco(det).reduce((t, g) => t + g.estimado, 0))}`], ['Bajo su mínimo', gen.bajo_minimo]]
+    };
   }
+
+  // Sin pantalla (Reportes gerenciales): genera y guarda la disponibilidad de todas las cuentas a la fecha de corte y
+  // devuelve su contenido; detallada incluye la integración de cada cuenta.
+  window.DISPONIBILIDAD = {
+    async cfg(sb, loc, fecha, empresa, contenido = 'RESUMIDO') {
+      const { data, error } = await sb.rpc('generar_disponibilidad', { p_loc: loc, p_banco: null, p_cuenta: null, p_fecha: fecha });
+      if (error) throw new Error(sinTabla(error) ? AVISO_SCRIPT : window.UI.traducirError(error));
+      const act = await leerGeneracion(sb, data.id);
+      if (act.error) throw act.error;
+      const nivel = contenido === 'DETALLADO' ? 'DETALLADA' : 'RESUMIDA';
+      if (nivel !== 'RESUMIDA') await movimientosDe(sb, act);
+      return cfgExcel(act.gen, act.det, empresa, act.org, nivel, act.movs);
+    }
+  };
 
   async function leerGeneracion(sb, id) {
     const [g, d, o] = await Promise.all([
