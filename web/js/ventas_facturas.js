@@ -83,6 +83,20 @@
       return (data || []).map((x) => ({ ...x, movimiento: !padres.has(x.id) && x.vigente }));
     }
 
+    // Certificación en línea con COFIDI (Edge Function «fel-cofidi»).
+    async function certificar() {
+      const f = actual; if (!f || certificada() || f.estado !== 'FACTURADA') return;
+      if (!confirm(`¿Certificar con COFIDI la factura interna ${f.numero} por ${fmt.monto(f.total)}?`)) return;
+      window.FIN.aviso('Enviando la factura a COFIDI…');
+      try {
+        const r = await window.FEL_COFIDI.enviar(sb, { origen: 'FACTURA', id: f.id, proceso: 'CERTIFICAR' });
+        if (!r?.ok) throw new Error(r?.mensaje || r?.error || 'COFIDI no certificó la factura.');
+        const { data } = await sb.from('facturas_venta').select('*').eq('id', f.id).single();
+        await abrir(data);
+        window.FIN.aviso(`Factura certificada · Serie ${r.serie || ''} · DTE ${r.numero_dte || ''}`);
+      } catch (e) { alert(`No se certificó la factura: ${e.message}`); }
+    }
+
     async function abrir(f) {
       // La factura se muestra con los catálogos de su propia empresa (aunque la pantalla se haya iniciado con otra).
       if (f && f.localidad_id !== locCargada) { ctx.sel.loc = f.localidad_id; ctx.sel.org = f.organizacion_id; pintarFiltros(); await cargarLocalidad(); }
@@ -745,7 +759,7 @@
         if (listaVista === 'PRODUCTOS' && !vendidos) { await cargarVendidos(); repintar(); }
         return null;
       }
-      if (a === 'certificar') return window.FIN.aviso('Certificación con COFIDI: se habilita al configurar sus credenciales en el servidor. Mientras tanto registra la autorización con «Modificar».');
+      if (a === 'certificar') return certificar();
       if (a === 'pdf') return pdf();
       if (a === 'validar') return validar();
       if (a === 'rep-salida') return repSalida();

@@ -83,6 +83,20 @@
       return (data || []).map((x) => ({ ...x, movimiento: !padres.has(x.id) && x.vigente }));
     }
 
+    // Certificación en línea con COFIDI (Edge Function «fel-cofidi»).
+    async function certificar() {
+      const n = actual; if (!n || n.estado !== 'EMITIDA') return;
+      if (!confirm(`¿Certificar con COFIDI la nota ${n.numero} por ${fmt.monto(n.valor)}?`)) return;
+      window.FIN.aviso('Enviando la nota a COFIDI…');
+      try {
+        const r = await window.FEL_COFIDI.enviar(sb, { origen: 'NOTA', id: n.id, proceso: 'CERTIFICAR' });
+        if (!r?.ok) throw new Error(r?.mensaje || r?.error || 'COFIDI no certificó la nota.');
+        const { data } = await sb.from('notas_venta').select('*').eq('id', n.id).single();
+        await abrir(data);
+        window.FIN.aviso(`Nota certificada · Serie ${r.serie || ''} · DTE ${r.numero_dte || ''}`);
+      } catch (e) { alert(`No se certificó la nota: ${e.message}`); }
+    }
+
     async function abrir(n) {
       if (n && n.localidad_id !== locCargada) { ctx.sel.loc = n.localidad_id; ctx.sel.org = n.organizacion_id; pintarFiltros(); await cargarLocalidad(); }
       actual = n; modificando = false; lineaSel = 0; lineas = []; conta = []; factura = null;
@@ -549,7 +563,7 @@
       if (a === 'copiar-productos') return copiarProductos();
       if (a === 'validar') return validar();
       if (a === 'pdf') return pdf();
-      if (a === 'certificar') return window.FIN.aviso('Certificación con COFIDI: se habilita al configurar sus credenciales en el servidor. Mientras tanto registra la autorización con «Modificar».');
+      if (a === 'certificar') return certificar();
       if (a === 'lista-consultar') { listaTexto = ctx.pDet.querySelector('[name=lista_texto]')?.value || ''; listado = null; pintar(); await cargarListado(); return pintar(); }
     });
     cont.addEventListener('submit', (e) => {

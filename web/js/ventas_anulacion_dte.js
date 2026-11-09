@@ -140,7 +140,18 @@
       const quien = (ctx.yo.usuario || '').toUpperCase(); const ahora = new Date().toISOString();
       try {
         const tabla = tipoDoc === 'NOTA' ? 'notas_venta' : 'facturas_venta';
-        const u = await sb.from(tabla).update({ estado: 'ANULADA', motivo_anulacion: motivo, anulada_por: quien, anulada_en: ahora }).eq('id', d.id); if (u.error) throw u.error;
+        // Certificada: primero se anula en la SAT con COFIDI (Edge Function «fel-cofidi»), que deja el documento anulado.
+        let enSat = false;
+        if (d.autorizacion) {
+          try {
+            const r = await window.FEL_COFIDI.enviar(sb, { origen: tipoDoc, id: d.id, proceso: 'ANULAR', motivo });
+            if (!r?.ok) throw new Error(r?.mensaje || r?.error || 'COFIDI no anuló el documento.');
+            enSat = true;
+          } catch (e) {
+            if (!/no está instalada/.test(e.message) || !confirm(`${e.message}\n\n¿Anularlo solo en el sistema? Deberás anularlo también en el portal de COFIDI o de la SAT.`)) throw e;
+          }
+        }
+        if (!enSat) { const u = await sb.from(tabla).update({ estado: 'ANULADA', motivo_anulacion: motivo, anulada_por: quien, anulada_en: ahora }).eq('id', d.id); if (u.error) throw u.error; }
         const r = await sb.from('anulaciones_dte').insert({ organizacion_id: d.organizacion_id, localidad_id: d.localidad_id, documento: tipoDoc, factura_id: tipoDoc === 'FACTURA' ? d.id : null, nota_id: tipoDoc === 'NOTA' ? d.id : null,
           tipo_documento: d.tipo_documento || (tipoDoc === 'NOTA' ? `NOTA DE ${d.tipo}` : d.tipo_factura), fecha_certificacion: d.fecha_certificacion, moneda_id: d.moneda_id,
           valor: tipoDoc === 'NOTA' ? d.valor : d.total, valor_mi: tipoDoc === 'NOTA' ? d.valor_mi : d.total_mi, cliente_id: d.cliente_id, cliente_codigo: d.cliente_codigo != null ? String(d.cliente_codigo) : null,
