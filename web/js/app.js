@@ -504,7 +504,7 @@
             </button>
             <div class="menu-panel" data-panel="${g.id}" hidden>
               ${subgruposDe(m, g.id).map((s) => `
-                <details class="subgrupo" name="sub-${m.id}-${g.id}" ${contiene(s, actual) || subgruposDe(m, g.id).length === 1 ? 'open' : ''}>
+                <details class="subgrupo" name="sub-${m.id}-${g.id}" ${contiene(s, actual) || (!subgruposDe(m, g.id).some((x) => contiene(x, actual)) && (subgruposDe(m, g.id).length === 1 || s.abierto)) ? 'open' : ''}>
                   <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
                   ${listaOpciones(m, s.pantallas, actual)}
                 </details>`).join('')}
@@ -547,7 +547,8 @@
       return;
     }
     migas.innerHTML = `<a href="#/">Panel</a><i class="ti ti-chevron-right" aria-hidden="true"></i><span>${esc(m.nombre)}</span>`;
-    const accesos = gruposDe(m).flatMap((g) => subgruposDe(m, g.id).flatMap((s) => hojas(s).map(({ p, ruta }) => ({ g, ruta, p }))));
+    // Las pantallas «destacado» (p. ej. Ventas Inteligentes) van primero en los accesos directos.
+    const accesos = gruposDe(m).flatMap((g) => subgruposDe(m, g.id).flatMap((s) => hojas(s).map(({ p, ruta }) => ({ g, ruta, p })))).sort((a, b) => (b.p.destacado ? 1 : 0) - (a.p.destacado ? 1 : 0));
     vista.innerHTML = `
       ${menuModulo(m, null)}
       <div class="titulo" data-color="${m.color}">

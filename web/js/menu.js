@@ -291,9 +291,10 @@ window.MODULOS = [
         {
           subgrupo: 'Procesos',
           icono: 'ti-settings-automation',
+          abierto: true,
           pantallas: [
+            { id: 'ventas-inteligentes', nombre: 'Ventas Inteligentes', icono: 'ti-sparkles', destacado: true, descripcion: 'Venta guiada por cliente: productos con su precio, existencia y lo que más compra; confirmación, factura preliminar y traslado a la factura.' },
             { id: 'carga-facturas-sat', nombre: 'Carga Facturas SAT', icono: 'ti-file-import', descripcion: 'Carga del archivo de facturas de la SAT (.xls, .xlsx o .csv) con su clasificación y cuenta contable, y generación de las compras o de los documentos de caja chica.' },
-            { id: 'ventas-inteligentes', nombre: 'Ventas Inteligentes', icono: 'ti-sparkles', descripcion: 'Venta guiada por cliente: productos con su precio, existencia y lo que más compra; confirmación, factura preliminar y traslado a la factura.' },
             { id: 'operaciones-sat-ventas', nombre: 'Operaciones SAT', icono: 'ti-building-bank', descripcion: 'Facturas, notas (ajustes) y retenciones del mes con su estado FEL ante la SAT, resumen por tipo de DTE. PDF y Excel.' }
           ]
         },
