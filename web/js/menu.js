@@ -937,7 +937,8 @@ window.MODULOS = [
     { id: 'ventas-por-periodo', nombre: 'Ventas por período', icono: 'ti-calendar-stats', descripcion: 'Ventas del período por mes (resumido) o por factura (detallado), de un producto o de todos, con gráfica. PDF y Excel.' },
     { id: 'ventas-por-cliente', nombre: 'Ventas por cliente', icono: 'ti-users', descripcion: 'Ventas del período por cliente con su participación, de un producto o de todos; detallado con sus facturas. PDF y Excel.' },
     { id: 'reporte-cuentas-por-cobrar', nombre: 'Cuentas por cobrar', icono: 'ti-cash', descripcion: 'Saldo por cobrar a una fecha con antigüedad (no vencido, 1-30, 31-60, 61-90 y más de 90 días), por cliente o por factura. PDF y Excel.' },
-    { id: 'grafica-de-ventas', nombre: 'Gráfica de ventas', icono: 'ti-chart-histogram', descripcion: 'Ventas por mes, clientes principales y productos principales del período, con su tabla de datos. PDF y Excel.' }
+    { id: 'grafica-de-ventas', nombre: 'Gráfica de ventas', icono: 'ti-chart-histogram', separador: true, descripcion: 'Ventas por mes, clientes principales y productos principales del período, con su tabla de datos. PDF y Excel.' },
+    { id: 'reportes-gerenciales', nombre: 'Reportes Gerenciales', icono: 'ti-report-analytics', descripcion: 'Reportes del módulo por organización, localidad y usuario con sus salidas (PDF, Excel, voz, WhatsApp y correo), generados manual o automáticamente con su frecuencia.' }
   ]);
   pon('compras', 'Reportes de compras', [
     { id: 'compras-por-periodo', nombre: 'Compras por período', icono: 'ti-calendar-stats', descripcion: 'Compras del período por mes (resumido) o por documento (detallado), de un producto o de todos, con gráfica. PDF y Excel.' },

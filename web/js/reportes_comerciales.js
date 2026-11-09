@@ -60,50 +60,19 @@
     return out;
   }
 
-  function reporte(cont, id) {
+  // Motor de un reporte: lee los documentos y arma el reporte (columnas, filas, KPIs y gráficas) sin pantalla.
+  // env: { sb, f: { desde, fecha, producto, contenido }, productos(), loc(), org(), moneda(id), empresa() }.
+  // Lo usan la pantalla de cada reporte y los Reportes gerenciales.
+  function motor(id, env) {
     const R = REPORTES[id], L = LADOS[R.lado];
-    const ctx = montar(cont, { titulo: R.titulo, icono: R.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep', grupo: L.grupo });
-    const { sb } = ctx;
-    const hoy = fmt.hoy();
-    const f = { desde: `${hoy.slice(0, 4)}-01-01`, fecha: hoy, producto: '', contenido: R.tipo === 'SALDOS' || R.tipo === 'TERCERO' ? 'RESUMIDO' : 'RESUMIDO', graficas: true };
-    let productos = [], datos = null, cargado = '', cfg = null;
-    const prod = (pid) => productos.find((p) => p.id === pid);
+    const { sb, f } = env;
+    const prod = (pid) => env.productos().find((p) => p.id === pid);
     const etiqueta = (p) => `${p.nombre} — ${p.codigo_producto || p.codigo}`;
-    const empresa = () => { const e = ctx.localidad(ctx.sel.loc); return e ? `${e.codigo} · ${e.nombre_comercial}` : ''; };
-    const k = (d) => (ctx.moneda(d.moneda_id)?.iso && ctx.moneda(d.moneda_id).iso !== 'GTQ' ? Number(d.tipo_cambio) || 1 : 1);
+    const empresa = env.empresa;
+    const k = (d) => (env.moneda(d.moneda_id)?.iso && env.moneda(d.moneda_id).iso !== 'GTQ' ? Number(d.tipo_cambio) || 1 : 1);
     const conPeriodo = R.tipo !== 'SALDOS';
-
-    function pintarFiltros() {
-      const p = f.producto ? prod(Number(f.producto)) : null;
-      ctx.filtros(`${conPeriodo ? `<label class="campo"><span>Desde</span><input type="date" name="desde" value="${f.desde}" max="${f.fecha}"></label>` : ''}
-        <label class="campo"><span>${conPeriodo ? 'Al' : 'Saldo al'}</span><input type="date" name="fecha" value="${f.fecha}" max="${hoy}"></label>
-        <label class="campo cx-prov pr-prod"><span>Producto</span><input name="producto" list="rc-prods" value="${esc(p ? etiqueta(p) : '')}" placeholder="Todos los productos" autocomplete="off"></label>
-        ${R.tipo !== 'GRAFICA' ? `<label class="campo"><span>Contenido</span><select name="contenido">${[['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']].map(([x, t]) => `<option value="${x}" ${f.contenido === x ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
-        <label class="pc-check"><input type="checkbox" name="graficas" ${f.graficas ? 'checked' : ''}> Gráficas</label>
-        <datalist id="rc-prods">${productos.map((x) => `<option value="${esc(etiqueta(x))}"></option>`).join('')}</datalist>`,
-        `<button type="button" class="boton secundario-sm" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button>
-         <button type="button" class="boton secundario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>`);
-    }
-    async function iniciar() { if (!(await ctx.cargarBase())) return; await cargarLocalidad(); }
-    async function cargarLocalidad() {
-      const loc = ctx.sel.loc; f.producto = ''; cargado = '';
-      if (!loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', R.icono); return; }
-      productos = await leerTodo(() => sb.from('productos').select('id, codigo, codigo_producto, nombre').eq('localidad_id', loc).order('nombre')).catch(() => []);
-      pintarFiltros(); await consultar();
-    }
-
-    // Documentos del período (o con el producto: sus líneas) normalizados.
-    async function consultar() {
-      const clave = `${ctx.sel.loc}|${f.desde}|${f.fecha}|${f.producto}`;
-      if (clave !== cargado) {
-        ctx.pDet.innerHTML = `<p class="vacio">Leyendo ${R.tipo === 'SALDOS' ? 'los saldos' : 'los documentos'}…</p>`;
-        try { datos = R.tipo === 'SALDOS' ? await leerSaldos() : await leerPeriodo(); cargado = clave; }
-        catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
-      }
-      cfg = construir(); pintar();
-    }
     async function leerPeriodo() {
-      const loc = ctx.sel.loc, pid = f.producto ? Number(f.producto) : null;
+      const loc = env.loc(), pid = f.producto ? Number(f.producto) : null;
       const out = { regs: [], lineas: [] };
       if (pid || R.tipo === 'GRAFICA') {
         const ls = await leerTodo(() => L.lineas(sb, loc, f.desde, f.fecha, pid));
@@ -116,7 +85,7 @@
     }
     // Saldo a la fecha = saldo actual + lo cobrado/pagado después de la fecha (y notas posteriores en ventas).
     async function leerSaldos() {
-      const loc = ctx.sel.loc, al = f.fecha;
+      const loc = env.loc(), al = f.fecha;
       let docs, despues = new Map();
       const sumar = (id, v) => despues.set(id, (despues.get(id) || 0) + v);
       if (R.lado === 'VENTAS') {
@@ -151,9 +120,9 @@
     const top = (xs, n = 10) => [...xs].sort((a, b) => b.valor - a.valor).slice(0, n);
     const meses = () => { const out = []; let d = f.desde.slice(0, 7); const h = f.fecha.slice(0, 7); while (d <= h && out.length < 60) { out.push(d); const [y, m] = d.split('-').map(Number); d = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`; } return out; };
 
-    function construir() {
+    function construir(datos) {
       const regs = datos.regs, conProd = !!f.producto, det = f.contenido === 'DETALLADO';
-      const base = { titulo: R.titulo, orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: R.titulo.slice(0, 30), archivo: `${id}_${f.fecha}` };
+      const base = { titulo: R.titulo, orgId: env.org(), locId: env.loc(), hoja: R.titulo.slice(0, 30), archivo: `${id}_${f.fecha}` };
       const total = suma(regs, 'valor'), nDocs = new Set(regs.map((x) => x.id)).size;
       const colsDet = [col('Fecha', 'texto', 11), col('Documento', 'texto', 20), col(L.tercero, 'texto', 40), col('NIT', 'texto', 13), ...(conProd ? [col('Cantidad', 'numero', 11), col('Precio prom.', 'monto', 13)] : L.conIva ? [col('IVA Q', 'monto', 13)] : []), col('Valor Q', 'monto', 15)];
       const filaDet = (x) => ({ valores: [fmt.fechaDia(x.fecha), x.doc, x.tNom, x.nit, ...(conProd ? [r4(x.cantidad), r2(x.precio)] : L.conIva ? [r2(x.iva)] : []), r2(x.valor)] });
@@ -220,6 +189,52 @@
         graficas: [grafMeses(), grafTer(), ...(conProd ? [] : [G().barras('Productos principales (10)', porProd.slice(0, 10).map((p) => ({ ...p, texto: `Q ${fmt.monto(p.valor)} · ${cant(p.cantidad)} u.` })), G().COLORES.VERDE)])] };
     }
 
+    return { leer: () => (R.tipo === 'SALDOS' ? leerSaldos() : leerPeriodo()), construir };
+  }
+
+  function reporte(cont, id) {
+    const R = REPORTES[id], L = LADOS[R.lado];
+    const ctx = montar(cont, { titulo: R.titulo, icono: R.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep', grupo: L.grupo });
+    const { sb } = ctx;
+    const hoy = fmt.hoy();
+    const f = { desde: `${hoy.slice(0, 4)}-01-01`, fecha: hoy, producto: '', contenido: R.tipo === 'SALDOS' || R.tipo === 'TERCERO' ? 'RESUMIDO' : 'RESUMIDO', graficas: true };
+    let productos = [], datos = null, cargado = '', cfg = null;
+    const prod = (pid) => productos.find((p) => p.id === pid);
+    const etiqueta = (p) => `${p.nombre} — ${p.codigo_producto || p.codigo}`;
+    const empresa = () => { const e = ctx.localidad(ctx.sel.loc); return e ? `${e.codigo} · ${e.nombre_comercial}` : ''; };
+    const conPeriodo = R.tipo !== 'SALDOS';
+    const M = motor(id, { sb, f, productos: () => productos, loc: () => ctx.sel.loc, org: () => ctx.sel.org, moneda: (x) => ctx.moneda(x), empresa });
+
+    function pintarFiltros() {
+      const p = f.producto ? prod(Number(f.producto)) : null;
+      ctx.filtros(`${conPeriodo ? `<label class="campo"><span>Desde</span><input type="date" name="desde" value="${f.desde}" max="${f.fecha}"></label>` : ''}
+        <label class="campo"><span>${conPeriodo ? 'Al' : 'Saldo al'}</span><input type="date" name="fecha" value="${f.fecha}" max="${hoy}"></label>
+        <label class="campo cx-prov pr-prod"><span>Producto</span><input name="producto" list="rc-prods" value="${esc(p ? etiqueta(p) : '')}" placeholder="Todos los productos" autocomplete="off"></label>
+        ${R.tipo !== 'GRAFICA' ? `<label class="campo"><span>Contenido</span><select name="contenido">${[['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']].map(([x, t]) => `<option value="${x}" ${f.contenido === x ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
+        <label class="pc-check"><input type="checkbox" name="graficas" ${f.graficas ? 'checked' : ''}> Gráficas</label>
+        <datalist id="rc-prods">${productos.map((x) => `<option value="${esc(etiqueta(x))}"></option>`).join('')}</datalist>`,
+        `<button type="button" class="boton secundario-sm" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button>
+         <button type="button" class="boton secundario-sm" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>`);
+    }
+    async function iniciar() { if (!(await ctx.cargarBase())) return; await cargarLocalidad(); }
+    async function cargarLocalidad() {
+      const loc = ctx.sel.loc; f.producto = ''; cargado = '';
+      if (!loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', R.icono); return; }
+      productos = await leerTodo(() => sb.from('productos').select('id, codigo, codigo_producto, nombre').eq('localidad_id', loc).order('nombre')).catch(() => []);
+      pintarFiltros(); await consultar();
+    }
+
+    // Documentos del período (o con el producto: sus líneas) normalizados.
+    async function consultar() {
+      const clave = `${ctx.sel.loc}|${f.desde}|${f.fecha}|${f.producto}`;
+      if (clave !== cargado) {
+        ctx.pDet.innerHTML = `<p class="vacio">Leyendo ${R.tipo === 'SALDOS' ? 'los saldos' : 'los documentos'}…</p>`;
+        try { datos = await M.leer(); cargado = clave; }
+        catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
+      }
+      cfg = M.construir(datos); pintar();
+    }
+
     const graficasDe = (c) => (c.graficas || []).filter(Boolean);
     function celda(v, c) {
       if (v === '' || v == null) return '<td></td>';
@@ -254,7 +269,7 @@
       if (cambio === 'org' || cambio === 'loc') return cargarLocalidad();
       const n = e.target.name;
       if (n === 'desde' || n === 'fecha') { f[n] = e.target.value || (n === 'fecha' ? hoy : f.desde); if (f.desde > f.fecha) f.desde = `${f.fecha.slice(0, 4)}-01-01`; pintarFiltros(); return consultar(); }
-      if (n === 'contenido') { f.contenido = e.target.value; cfg = construir(); return pintar(); }
+      if (n === 'contenido') { f.contenido = e.target.value; cfg = M.construir(datos); return pintar(); }
       if (n === 'graficas') { f.graficas = e.target.checked; return pintar(); }
       if (n === 'producto') {
         const t = e.target.value.trim().toUpperCase();
@@ -269,4 +284,5 @@
   }
   Object.keys(REPORTES).forEach((id) => { window.PANTALLAS[id] = (cont) => reporte(cont, id); });
   window.REPORTES_COMERCIALES = REPORTES;
+  window.REPORTES_COMERCIALES_MOTOR = { motor, leerTodo };
 })();
