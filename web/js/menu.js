@@ -1032,6 +1032,35 @@ window.MODULOS = [
   if (c) c.subgrupos.procesos = [...(c.subgrupos.procesos || []), { subgrupo: 'Caja y cartera', icono: 'ti-file-invoice', pantallas: [FAC, GLO, INC, MAN] }];
 })();
 
+// Hospital y Clínicas médicas · reportería e integración (salud_reportes.js, script 163).
+(function () {
+  const mod = (id) => window.MODULOS.find((m) => m.id === id);
+  const p = (id, nombre, icono, descripcion) => ({ id, nombre, icono, descripcion });
+  const DEP = p('med-depositos', 'Depósito de cierres de caja', 'ti-building-bank', 'Depósito del efectivo y cheques de los cierres de caja en una cuenta bancaria de Caja y Bancos.');
+  const APO = p('med-rep-apoyo', 'Laboratorio e imagen', 'ti-microscope', 'Volumen por área y prueba, críticos, tiempo de entrega y estudios de imagen por modalidad. PDF y Excel.');
+  const REN = p('med-rep-rentabilidad', 'Rentabilidad por servicio', 'ti-chart-pie', 'Ingresos, costo directo (farmacia y honorarios) y contribución por línea de servicio. PDF y Excel.');
+  const ASE = p('med-rep-aseguradoras', 'Facturación y cartera por aseguradora', 'ti-shield-heart', 'Reclamado, aprobado, pagado, glosas y saldo por antigüedad de cada aseguradora. PDF y Excel.');
+  const RET = p('med-rep-retenciones', 'Retenciones de ISR a médicos', 'ti-receipt-tax', 'Honorarios liquidados y retención de ISR por médico y NIT para la SAT. PDF y Excel.');
+  const TAB = p('med-tablero', 'Tablero gerencial', 'ti-gauge', 'Ocupación, estancia, giro de cama, ingreso por paciente-día, consultas, ausentismo, ingresos y cartera.');
+  const h = mod('hospital');
+  if (h) {
+    h.subgrupos.procesos = [...(h.subgrupos.procesos || []), { subgrupo: 'Integración financiera', icono: 'ti-arrows-join', pantallas: [p('hos-contabilidad', 'Integración contable del hospital', 'ti-arrows-join', 'Partida diaria de ingresos, costo de farmacia, pagos, aseguradoras y honorarios por centro de costo.'), DEP] }];
+    h.subgrupos.reportes = [...(h.subgrupos.reportes || []),
+      { subgrupo: 'Reportes clínicos', icono: 'ti-report-medical', pantallas: [p('med-rep-egresos', 'Morbilidad de egresos y estancia', 'ti-report-medical', 'Egresos por diagnóstico con estancia, edad, sexo y fallecidos. PDF y Excel.'),
+        p('med-rep-mortalidad', 'Mortalidad hospitalaria', 'ti-heart-broken', 'Tasa bruta y neta por mes y por causa básica. PDF y Excel.'), p('med-rep-obstetricia', 'Partos y cesáreas', 'ti-baby-carriage', 'Nacimientos, % de cesárea, bajo peso, prematuros y APGAR bajo por mes. PDF y Excel.'),
+        p('med-rep-emergencia', 'Emergencia y triaje', 'ti-ambulance', 'Pacientes por prioridad, espera contra la meta y destino. PDF y Excel.')] },
+      { subgrupo: 'Reportes quirúrgicos y de apoyo', icono: 'ti-scalpel', pantallas: [p('med-rep-cirugias', 'Cirugías y uso de salas', 'ti-scalpel', 'Cirugías por cirujano, procedimiento, sala o anestesia con tiempos, complicaciones y lista OMS. PDF y Excel.'), APO,
+        p('med-rep-farmacia', 'Consumo de farmacia', 'ti-pill', 'Despachos a pacientes con venta, costo y margen por producto, paciente o mes. PDF y Excel.')] },
+      { subgrupo: 'Reportes financieros', icono: 'ti-report-money', pantallas: [REN, ASE, RET, p('hos-rep-personal', 'Personal por área y turno', 'ti-users-group', 'Personal por área, cargo y turno con su enlace a Nóminas. PDF y Excel.')] },
+      { subgrupo: 'Tablero', icono: 'ti-gauge', pantallas: [TAB] }];
+  }
+  const c = mod('clinicas');
+  if (c) {
+    c.subgrupos.procesos = [...(c.subgrupos.procesos || []), { subgrupo: 'Integración financiera', icono: 'ti-arrows-join', pantallas: [DEP] }];
+    c.subgrupos.reportes = [...(c.subgrupos.reportes || []), { subgrupo: 'Reportes financieros y gerenciales', icono: 'ti-report-money', pantallas: [APO, REN, ASE, RET, TAB] }];
+  }
+})();
+
 // Orden del menú principal de módulos y separadores (debajo de Presupuesto y Flujo, Importaciones y exportaciones,
 // Activos Fijos y Nóminas).
 (function () {

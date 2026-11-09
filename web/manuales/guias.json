@@ -3184,5 +3184,137 @@
    "Registra el equipo, su código de activo fijo, el tipo y la fecha programada.",
    "Al realizarlo registra la fecha, el proveedor, el costo, el trabajo y el próximo servicio."
   ]
+ },
+ "hos-contabilidad": {
+  "puntos": [
+   "Partida diaria del hospital por centro de costo."
+  ],
+  "pasos": [
+   "Configura en Contabilidad › Cuentas de integración las cuentas HOS_* , HONORARIOS_POR_PAGAR, ASEGURADORAS_CXC, INVENTARIO, IVA_DEBITO y RET_ISR.",
+   "Abre Hospital › Procesos › Integración contable del hospital y asigna el centro de costo de cada área.",
+   "Elige el día: revisa la vista previa (cargos, costo de farmacia, pagos, facturas a aseguradoras y honorarios).",
+   "Presiona «Generar partida del día»: queda aprobada y no se puede generar dos veces."
+  ]
+ },
+ "med-depositos": {
+  "puntos": [
+   "Depósito de los cierres de caja."
+  ],
+  "pasos": [
+   "Abre Procesos › Depósito de cierres de caja y elige la caja (hospital o clínica).",
+   "Marca los cierres que depositas, elige la cuenta bancaria, la fecha y el número de boleta.",
+   "Presiona «Registrar depósito»: se crea en Caja y Bancos, donde se procesa su partida y se concilia."
+  ]
+ },
+ "med-rep-egresos": {
+  "puntos": [
+   "Egresos por diagnóstico con estancia, edad, sexo y fallecidos."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-mortalidad": {
+  "puntos": [
+   "Tasa de mortalidad bruta y neta por mes y causa."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-obstetricia": {
+  "puntos": [
+   "Partos, cesáreas y condición del recién nacido por mes."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-emergencia": {
+  "puntos": [
+   "Emergencia por prioridad, espera contra la meta y destino."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-cirugias": {
+  "puntos": [
+   "Cirugías con tiempos, complicaciones y lista OMS."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Elige cómo agrupar: cirujano, procedimiento, sala o anestesia.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-apoyo": {
+  "puntos": [
+   "Laboratorio e imagen: volumen, críticos y tiempo de entrega."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-farmacia": {
+  "puntos": [
+   "Consumo de farmacia con venta, costo y margen."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Elige agrupar por producto, paciente o mes.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-rentabilidad": {
+  "puntos": [
+   "Contribución por línea de servicio del hospital y la clínica."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-aseguradoras": {
+  "puntos": [
+   "Reclamado, pagado, glosas y saldo por antigüedad de cada aseguradora."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-rep-retenciones": {
+  "puntos": [
+   "Retención de ISR a médicos por NIT para la SAT."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Revisa que cada médico tenga NIT (los que no lo tienen se resaltan).",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "hos-rep-personal": {
+  "puntos": [
+   "Personal por área, cargo y turno con enlace a Nóminas."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
+ },
+ "med-tablero": {
+  "puntos": [
+   "Indicadores de gestión hospitalaria y de la clínica."
+  ],
+  "pasos": [
+   "Abre el reporte desde Reportes del módulo y elige el período.",
+   "Activa o quita las gráficas e imprime en PDF o exporta a Excel."
+  ]
  }
 }
