@@ -875,14 +875,14 @@
         </header>
         <div class="ta-tabla cc-tabla">
           <table class="ccq-tabla oqc-tabla">
-            <thead><tr>${ordenTh('folio', 'Folio', 'num')}<th>Número de orden</th>${ordenTh('fecha', 'Fecha')}<th>Proveedor · NIT</th><th>Bodega</th><th class="num">Productos</th>${ordenTh('total', 'Total', 'num')}<th class="num">Por recibir</th><th>Estado</th><th>Usuario</th><th aria-label="Ver"></th></tr></thead>
+            <thead><tr>${ordenTh('folio', 'Folio', 'num')}<th>Número de orden</th>${ordenTh('fecha', 'Fecha')}<th>Proveedor · NIT</th><th>Bodega</th><th class="num">Productos</th>${ordenTh('total', 'Total', 'num')}<th class="num">Por recibir</th><th>Estado</th><th>Usuario</th><th class="oqc-acc-th"></th></tr></thead>
             <tbody>${filas.map((o) => { const p = prov(o.proveedor_id), b = bodega(o.bodega_id), sim = ctx.moneda(o.moneda_id)?.simbolo || 'Q'; return `<tr data-orden="${o.id}" class="${sel && sel.id === o.id ? 'actual' : ''} ${o.estado === 'ANULADA' ? 'pc-anulada' : ''}" tabindex="0">
               <td class="num fuerte">${o.folio}</td><td><b class="ccq-doc">${esc(o.numero || '')}</b></td><td>${esc(fmt.fechaDia(o.fecha))}</td>
               <td class="cc-nombre" title="${esc(p?.nombre_comercial || '')}"><b>${esc(p?.nombre_comercial || '')}</b><small>${esc([p?.codigo != null && `Cód. ${p.codigo}`, p?.nit && `NIT ${p.nit}`].filter(Boolean).join(' · '))}</small></td>
               <td>${esc(b ? `${b.codigo} · ${b.nombre}` : '')}</td><td class="num">${o.productos}</td>
               <td class="num"><b>${esc(sim)} ${fmt.monto(o.total)}</b></td><td class="num ${o.saldo > 0.004 ? 'cq-saldo' : ''}">${['AUTORIZADA', 'RECIBIDA PARCIAL'].includes(o.estado) ? fmt.monto(o.saldo) : '—'}</td>
               <td>${marca(o.estado)}</td><td>${esc(o.usuario || o.creado_por_nombre || '')}</td>
-              <td class="cq-acc"><button type="button" class="boton secundario-sm ccq-ver" data-ver="${o.id}" title="Abrir la orden en Solicitudes de compra"><i class="ti ti-eye" aria-hidden="true"></i></button></td></tr>`; }).join('')
+              <td class="cq-acc"><button type="button" class="boton secundario-sm ccq-ver" data-ver="${o.id}" title="Abrir la orden en Solicitudes de compra">Consultar</button></td></tr>`; }).join('')
               || `<tr><td colspan="11" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : 'No hay órdenes con estos parámetros.'}</td></tr>`}</tbody></table>
         </div>`;
     }
