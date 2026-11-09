@@ -75,8 +75,8 @@
       const loc = ctx.sel.loc || 0;
       locCargada = loc;
       const [c, v] = await Promise.all([
-        sb.from('clientes').select('id, codigo, nombre, documento, tipo_documento, direccion, vendedor_id, estado').eq('localidad_id', loc).order('nombre'),
-        sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo')
+        window.UI.todo(sb.from('clientes').select('id, codigo, nombre, documento, tipo_documento, direccion, vendedor_id, estado').eq('localidad_id', loc).order('nombre').order('id')),
+        window.UI.todo(sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo').order('id'))
       ]);
       clientes = c.data || []; vendedores = v.data || [];
       // Series de la clase (script 138); sin él, la serie se escribe libre.
@@ -165,7 +165,7 @@
                 <label class="campo"><span>Valor documento</span><input type="number" step="0.01" min="0" name="valor_documento" value="${esc(String(v.valor_documento ?? ''))}" ${dis}></label>
               </div>
               <datalist id="vr-series">${series.filter((x) => x.mostrar).map((x) => `<option value="${esc(x.serie)}"></option>`).join('')}</datalist>
-              <datalist id="vr-clientes">${clientes.filter((x) => x.estado !== 'INACTIVO').map((x) => `<option value="${esc(x.nombre)}${x.tipo_documento !== 'CF' && x.documento ? ` · NIT ${esc(x.documento)}` : ''} — ${x.codigo}"></option>`).join('')}</datalist>
+              <datalist id="vr-clientes">${clientes.map((x) => `<option ${x.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(x.nombre)}${x.tipo_documento !== 'CF' && x.documento ? ` · NIT ${esc(x.documento)}` : ''} — ${x.codigo}"></option>`).join('')}</datalist>
             </section>
             <aside class="vr-lado">
               <section class="vfb-card vfb-resumen vr-valor">

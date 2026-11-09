@@ -66,8 +66,8 @@
       const loc = ctx.sel.loc || 0;
       locCargada = loc;
       const [c, v, b, p] = await Promise.all([
-        sb.from('clientes').select('id, codigo, nombre, documento, tipo_documento, direccion, contacto, telefono, correo, vendedor_id, estado').eq('localidad_id', loc).order('nombre'),
-        sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
+        window.UI.todo(sb.from('clientes').select('id, codigo, nombre, documento, tipo_documento, direccion, contacto, telefono, correo, vendedor_id, estado').eq('localidad_id', loc).order('nombre').order('id')),
+        window.UI.todo(sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo').order('id')),
         sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo'),
         sb.from('productos').select('id, codigo, nombre, estado, lote').eq('localidad_id', loc).order('codigo')
       ]);
@@ -174,7 +174,7 @@
                   <label class="campo"><span>Dirección</span><input name="direccion" value="${esc(v.direccion || '')}" maxlength="300" ${dis}></label>
                   <label class="campo"><span>Dirección de envío</span><input name="direccion_envio" value="${esc(v.direccion_envio || '')}" maxlength="300" ${dis}></label>
                 </div>
-                <datalist id="vn-clientes">${clientes.filter((c) => c.estado !== 'INACTIVO').map((c) => `<option value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
+                <datalist id="vn-clientes">${clientes.map((c) => `<option ${c.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
               </section>
               <section class="vfb-card vfb-resumen vfa-resumen vn-resumen">
                 <div class="vfb-total"><span>Valor</span><b data-calc="total">${esc(sim(v.moneda_id))} ${fmt.monto(total)}</b></div>

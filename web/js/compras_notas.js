@@ -65,7 +65,7 @@
       const loc = ctx.sel.loc;
       const vacio = { data: [] };
       const [p, b, pr, md, cs, ct] = await Promise.all([
-        loc ? sb.from('proveedores').select('id, codigo, nit, nombre_comercial, nombre_fiscal, estado').eq('localidad_id', loc).order('nombre_comercial') : vacio,
+        loc ? window.UI.todo(sb.from('proveedores').select('id, codigo, nit, nombre_comercial, nombre_fiscal, estado').eq('localidad_id', loc).order('nombre_comercial').order('id')) : vacio,
         loc ? sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo') : vacio,
         loc ? sb.from('productos').select('id, codigo, codigo_producto, nombre, tipo_medida_id, precio_costo, estado').eq('localidad_id', loc).order('nombre') : vacio,
         loc ? sb.from('tipos_medida').select('id, nombre').eq('localidad_id', loc).order('nombre') : vacio,
@@ -226,7 +226,7 @@
               </table></div>
             </div>
           </section>
-          <datalist id="nq-proveedores">${proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
+          <datalist id="nq-proveedores">${proveedores.map((x) => `<option ${x.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
           <datalist id="nq-productos">${productos.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(prodTxt(x))}"></option>`).join('')}</datalist>
           <datalist id="nq-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
         </form>`;
@@ -263,7 +263,7 @@
     }
 
     async function elegirProveedor() {
-      const id = await window.LOV({ titulo: 'Proveedores', columnas: ['Código', 'Nombre', 'NIT'], filas: proveedores.filter((p) => p.estado === 'ACTIVO').map((p) => ({ id: p.id, celdas: [p.codigo, p.nombre_comercial, p.nit || ''] })) });
+      const id = await window.LOV({ titulo: 'Proveedores', columnas: ['Código', 'Nombre', 'NIT'], filas: proveedores.map((p) => ({ id: p.id, celdas: [p.codigo, p.estado === 'INACTIVO' ? `${p.nombre_comercial} (inactivo)` : p.nombre_comercial, p.nit || ''] })) });
       if (id) cambiarProveedor(prov(id));
     }
     function cambiarProveedor(p) {
@@ -483,7 +483,7 @@
       const loc = ctx.sel.loc;
       const vacio = { data: [] };
       const [p, b, pr, ex, tr] = await Promise.all([
-        loc ? sb.from('proveedores').select('id, codigo, nit, nombre_comercial, nombre_fiscal, estado').eq('localidad_id', loc).order('nombre_comercial') : vacio,
+        loc ? window.UI.todo(sb.from('proveedores').select('id, codigo, nit, nombre_comercial, nombre_fiscal, estado').eq('localidad_id', loc).order('nombre_comercial').order('id')) : vacio,
         loc ? sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo') : vacio,
         loc ? sb.from('productos').select('id, codigo, codigo_producto, codigo_barras, nombre, precio_costo, estado').eq('localidad_id', loc).order('nombre') : vacio,
         loc ? sb.from('existencias').select('producto_id, bodega_id, existencia').eq('localidad_id', loc) : vacio,
@@ -589,7 +589,7 @@
               </table></div>
             </div>
           </section>
-          <datalist id="kq-proveedores">${proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
+          <datalist id="kq-proveedores">${proveedores.map((x) => `<option ${x.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
           <datalist id="kq-productos">${productos.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(prodTxt(x))}">${esc(x.codigo_barras || '')}</option>`).join('')}</datalist>
         </form>`;
     }
@@ -621,7 +621,7 @@
       const ins = ctx.pDet.querySelectorAll('[data-c=cantidad]'); (ya ? ins[lineas.indexOf(ya)] : ins[ins.length - 1])?.select();
     }
     async function elegirProveedor() {
-      const id = await window.LOV({ titulo: 'Proveedores', columnas: ['Código', 'Nombre', 'NIT'], filas: proveedores.filter((p) => p.estado === 'ACTIVO').map((p) => ({ id: p.id, celdas: [p.codigo, p.nombre_comercial, p.nit || ''] })) });
+      const id = await window.LOV({ titulo: 'Proveedores', columnas: ['Código', 'Nombre', 'NIT'], filas: proveedores.map((p) => ({ id: p.id, celdas: [p.codigo, p.estado === 'INACTIVO' ? `${p.nombre_comercial} (inactivo)` : p.nombre_comercial, p.nit || ''] })) });
       if (id) { const p = prov(id); repintar({ proveedor_id: p.id, proveedor_nombre: p.nombre_fiscal || p.nombre_comercial }); }
     }
 

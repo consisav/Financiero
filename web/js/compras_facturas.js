@@ -115,7 +115,7 @@
       const loc = ctx.sel.loc;
       const C = window.COMPRAS_CAT;
       const [p, b, g] = await Promise.all([
-        loc ? sb.from('proveedores').select('*').eq('localidad_id', loc).order('nombre_comercial') : { data: [] },
+        loc ? window.UI.todo(sb.from('proveedores').select('*').eq('localidad_id', loc).order('nombre_comercial').order('id')) : { data: [] },
         loc ? sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo') : { data: [] },
         loc ? sb.from('parametros_generales').select('impuesto1, idp_super, idp_regular, idp_diesel').eq('localidad_id', loc).order('id').limit(1) : { data: [] }
       ]);
@@ -477,7 +477,7 @@
             </div>
             <div class="bm-panel bm-listado" data-panel="LISTADO" ${pestana === 'LISTADO' ? '' : 'hidden'}></div>
           </section>
-          <datalist id="cf-proveedores">${proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
+          <datalist id="cf-proveedores">${proveedores.map((x) => `<option ${x.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
           <datalist id="cf-productos">${productos.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(prodTxt(x))}"></option>`).join('')}</datalist>
           <datalist id="cf-cuentas">${contables.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>
           <datalist id="cf-centros">${centros.filter((x) => x.movimiento).map((x) => `<option value="${esc(x.codigo)}">${esc(x.nombre)}</option>`).join('')}</datalist>

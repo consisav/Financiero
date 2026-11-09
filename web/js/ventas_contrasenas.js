@@ -31,7 +31,7 @@
       if (ult?.length) { listado = ult; pestana = 'LISTADO'; return abrir(ult[0]); }
       abrir(null);
     }
-    async function cargarLocalidad() { const { data } = await sb.from('clientes').select('id, codigo, nombre, documento, tipo_documento, dias_credito, estado').eq('localidad_id', ctx.sel.loc || 0).order('nombre'); clientes = data || []; }
+    async function cargarLocalidad() { const { data } = await window.UI.todo(sb.from('clientes').select('id, codigo, nombre, documento, tipo_documento, dias_credito, estado').eq('localidad_id', ctx.sel.loc || 0).order('nombre').order('id')); clientes = data || []; }
     async function abrir(c) {
       actual = c; modificando = false; lineas = [];
       if (c) {
@@ -76,7 +76,7 @@
               <label class="campo"><span>Fecha estimada cobro</span><input type="date" name="fecha_cobro" value="${esc(v.fecha_cobro || '')}" ${dis}></label>
               <label class="campo vk-c3"><span>Observaciones</span><input name="observaciones" value="${esc(v.observaciones || '')}" maxlength="300" ${dis}></label>
             </div>
-            <datalist id="vk-clientes">${clientes.filter((x) => x.estado !== 'INACTIVO').map((x) => `<option value="${esc(x.nombre)}${x.tipo_documento !== 'CF' && x.documento ? ` · NIT ${esc(x.documento)}` : ''} — ${x.codigo}"></option>`).join('')}</datalist>
+            <datalist id="vk-clientes">${clientes.map((x) => `<option ${x.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(x.nombre)}${x.tipo_documento !== 'CF' && x.documento ? ` · NIT ${esc(x.documento)}` : ''} — ${x.codigo}"></option>`).join('')}</datalist>
           </section>
           <section class="bm-pestanas">
             <div class="bm-tabs-barra">

@@ -62,8 +62,8 @@
       const loc = ctx.sel.loc || 0;
       locCargada = loc;
       const [c, v, p, b, pr, pp] = await Promise.all([
-        sb.from('clientes').select('*').eq('localidad_id', loc).order('nombre'),
-        sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
+        window.UI.todo(sb.from('clientes').select('*').eq('localidad_id', loc).order('nombre').order('id')),
+        window.UI.todo(sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo').order('id')),
         sb.from('tipos_precio').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
         sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo'),
         sb.from('productos').select('id, codigo, nombre, estado, tipo_medida_id, lote, precio_costo').eq('localidad_id', loc).order('codigo'),
@@ -204,7 +204,7 @@
                   <label class="campo"><span>Lab. fab.</span><input name="lab_fab" value="${esc(v.lab_fab || '')}" maxlength="120" ${dis}></label>
                   <label class="pc-check vf-chk"><input type="checkbox" name="generico" ${v.generico ? 'checked' : ''} ${dis}> Genérico</label>
                 </div>
-                <datalist id="vf-clientes">${clientes.filter((c) => c.estado === 'ACTIVO').map((c) => `<option value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
+                <datalist id="vf-clientes">${clientes.map((c) => `<option ${c.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
               </section>
               <section class="vfb-card vfb-resumen vfa-resumen">
                 <div><span>Subtotal</span><b data-calc="subtotal">${fmt.monto(total - iva)}</b></div>

@@ -422,7 +422,7 @@
       const loc = ctx.sel.loc || 0;
       const q = (t, cols = '*') => sb.from(t).select(cols).eq('localidad_id', loc).order('codigo');
       const r = await Promise.all([q('clasificaciones_producto'), q('tipos_producto'), q('tipos_medida'), q('presentaciones_producto'), q('tipos_precio'),
-        sb.from('proveedores').select('id, codigo, nit, nombre_comercial, estado').eq('localidad_id', loc).order('nombre_comercial'), q('bodegas', 'id, codigo, nombre, estado, tipo, bodega_mayor_id')]);
+        window.UI.todo(sb.from('proveedores').select('id, codigo, nit, nombre_comercial, estado').eq('localidad_id', loc).order('nombre_comercial').order('id')), q('bodegas', 'id, codigo, nombre, estado, tipo, bodega_mayor_id')]);
       [clasificaciones, tipos, medidas, presentaciones, precios, proveedores, bodegas] = r.map((x) => x.data || []);
       if (f.clasificacion && !clas(Number(f.clasificacion))) f.clasificacion = '';
       pintarFiltros();
@@ -565,7 +565,7 @@
           </section>
           </div>
           ${p ? `<p class="cc-ingreso cpr-control"><i class="ti ti-user" aria-hidden="true"></i> Creó ${esc(p.creado_por_nombre || '')} · ${esc(fmt.fechaHora(p.creado_en))}${p.modificado_en ? ` · modificó ${esc(p.modificado_por_nombre || '')} ${esc(fmt.fechaHora(p.modificado_en))}` : ''}</p>` : ''}
-          <datalist id="cpr-proveedores">${proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
+          <datalist id="cpr-proveedores">${proveedores.map((x) => `<option ${x.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
         </form>`;
       mostrarImagen();
     }

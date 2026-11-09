@@ -94,7 +94,7 @@
       let q = sb.from('proveedores').select('*').eq('localidad_id', ctx.sel.loc).order('nombre_comercial');
       if (f.estado) q = q.eq('estado', f.estado);
       if (f.tipo) q = q.eq('tipo_proveedor_id', Number(f.tipo));
-      const { data, error } = await q;
+      const { data, error } = await window.UI.todo(q.order('id'));
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       lista = data || [];
       pintarLista();

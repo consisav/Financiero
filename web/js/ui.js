@@ -234,7 +234,20 @@
     if (p) p.hidden = !contextoAbierto[k];
   });
 
-  window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar };
+  // Todas las filas de una consulta, por páginas de 1,000 (el máximo que entrega Supabase por consulta).
+  // La consulta debe ir ordenada por una columna única al final (p. ej. .order('id')). Devuelve { data, error }.
+  async function todo(q) {
+    const out = [];
+    for (let i = 0; ; i += 1000) {
+      const r = await q.range(i, i + 999);
+      if (r.error) return { data: out.length ? out : null, error: r.error };
+      out.push(...(r.data || []));
+      if (!r.data || r.data.length < 1000) break;
+    }
+    return { data: out, error: null };
+  }
+
+  window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar, todo };
 })();
 
 // Ver u ocultar la clave: cada campo de contraseña (inicio de sesión, crear cuenta, cambiar clave y los

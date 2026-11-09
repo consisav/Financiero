@@ -249,7 +249,7 @@
             </div>
             <div class="bm-panel bm-listado" data-panel="ORDENES" ${pestana === 'ORDENES' ? '' : 'hidden'}></div>
           </section>
-          <datalist id="oq-proveedores">${cat.proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
+          <datalist id="oq-proveedores">${cat.proveedores.map((x) => `<option ${x.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
           <datalist id="oq-productos">${cat.productos.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(prodTxt(x))}"></option>`).join('')}</datalist>
         </form>`;
       ctx.pDet.querySelector('[data-panel=ORDENES]').appendChild(ctx.pMae);
@@ -477,7 +477,7 @@
     async function consultar() {
       const loc = ctx.sel.loc || 0;
       const [p, o] = await Promise.all([
-        sb.from('proveedores').select('id, codigo, nombre_comercial').eq('localidad_id', loc),
+        window.UI.todo(sb.from('proveedores').select('id, codigo, nombre_comercial').eq('localidad_id', loc).order('id')),
         sb.from('ordenes_compra').select('*, orden_compra_lineas(cantidad_solicitada, precio_unitario)').eq('localidad_id', loc).eq('estado', 'EN AUTORIZACIÓN').order('fecha', { ascending: false })
       ]);
       proveedores = p.data || [];

@@ -64,7 +64,7 @@
     async function cargarLocalidad() {
       const loc = ctx.sel.loc || 0;
       const [v, p, b] = await Promise.all([
-        sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
+        window.UI.todo(sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo').order('id')),
         sb.from('tipos_precio').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
         sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo')
       ]);
@@ -77,7 +77,7 @@
       let q = sb.from('clientes').select('*').eq('localidad_id', ctx.sel.loc).order('nombre');
       if (f.estado) q = q.eq('estado', f.estado);
       if (f.tipo) q = q.eq('tipo_cliente', f.tipo);
-      const { data, error } = await q;
+      const { data, error } = await window.UI.todo(q.order('id'));
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       lista = data || [];
       pintarLista();

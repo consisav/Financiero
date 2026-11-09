@@ -203,7 +203,7 @@
     }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc;
-      const { data } = loc ? await sb.from('proveedores').select('id, codigo, nit, nombre_comercial, nombre_fiscal, dias_credito, estado').eq('localidad_id', loc).order('nombre_comercial') : { data: [] };
+      const { data } = loc ? await window.UI.todo(sb.from('proveedores').select('id, codigo, nit, nombre_comercial, nombre_fiscal, dias_credito, estado').eq('localidad_id', loc).order('nombre_comercial').order('id')) : { data: [] };
       proveedores = data || [];
       actual = null; editando = false;
       await consultar();
@@ -331,7 +331,7 @@
             </div>
             <div class="bm-panel bm-listado" data-panel="LISTA" ${tab === 'LISTA' ? '' : 'hidden'}></div>
           </section>
-          <datalist id="ck-proveedores">${proveedores.filter((x) => x.estado === 'ACTIVO').map((x) => `<option value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
+          <datalist id="ck-proveedores">${proveedores.map((x) => `<option ${x.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(provTxt(x))}"></option>`).join('')}</datalist>
         </form>`;
       ctx.pDet.querySelector('[data-panel=LISTA]').appendChild(ctx.pMae);
     }

@@ -37,7 +37,7 @@
     async function cargarLocalidad() {
       const loc = ctx.sel.loc || 0; locCargada = loc;
       const [c, b, p, pr, pp] = await Promise.all([
-        sb.from('clientes').select('*').eq('localidad_id', loc).order('nombre'),
+        window.UI.todo(sb.from('clientes').select('*').eq('localidad_id', loc).order('nombre').order('id')),
         sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo'),
         sb.from('tipos_precio').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
         sb.from('productos').select('id, codigo, nombre, estado, lote').eq('localidad_id', loc).order('codigo'),
@@ -100,7 +100,7 @@
                   <label class="campo"><span>Fecha cobro</span><input type="date" name="fecha_cobro" value="${esc(v.fecha_cobro || '')}" ${dis}></label>
                   <label class="campo ve-c2"><span>Observaciones</span><input name="observaciones" value="${esc(v.observaciones || '')}" maxlength="300" ${dis}></label>
                 </div>
-                <datalist id="ve-clientes">${clientes.filter((c) => c.estado !== 'INACTIVO').map((c) => `<option value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
+                <datalist id="ve-clientes">${clientes.map((c) => `<option ${c.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
               </section>
               <section class="vfb-card vfb-resumen vfa-resumen">
                 <div class="vfb-total"><span>Total</span><b data-calc="total">Q ${fmt.monto(total)}</b></div>

@@ -56,7 +56,7 @@
       const loc = ctx.sel.loc;
       if (!clasificaciones.length) { const r = await sb.from('clasificaciones_compra').select('id, codigo, nombre, activo').order('codigo'); clasificaciones = r.data || []; }
       const [p, k] = await Promise.all([
-        loc ? sb.from('proveedores').select('id, codigo, nit, nombre_comercial').eq('localidad_id', loc).order('nombre_comercial') : { data: [] },
+        loc ? window.UI.todo(sb.from('proveedores').select('id, codigo, nit, nombre_comercial').eq('localidad_id', loc).order('nombre_comercial').order('id')) : { data: [] },
         loc ? sb.from('cierres_mes').select('anio, mes, cerrado').eq('localidad_id', loc).eq('cerrado', true) : { data: [] }
       ]);
       proveedores = p.data || [];
