@@ -49,8 +49,24 @@
       if (!(await ctx.cargarBase())) return;
       const prueba = await sb.from('facturas_venta').select('id').limit(1);
       if (prueba.error) { ctx.espacio.innerHTML = `<section class="panel"><p class="vacio">${/facturas_venta/.test(prueba.error.message) ? 'Falta instalar el script 130 (facturas de venta) en Supabase.' : esc(prueba.error.message)}</p></section>`; return; }
+      // Venta trasladada desde Ventas Inteligentes (factura preliminar aceptada): factura nueva ya llenada.
+      let vi = null;
+      if (extra === 'inteligente') {
+        try { vi = JSON.parse(sessionStorage.getItem('fin-venta-inteligente') || 'null'); sessionStorage.removeItem('fin-venta-inteligente'); } catch { /* sin almacenamiento */ }
+        vi = vi || window.VENTA_INTELIGENTE || null; window.VENTA_INTELIGENTE = null;
+        if (vi) { ctx.sel.org = vi.org; ctx.sel.loc = vi.loc; }
+      }
       pintarFiltros();
       await cargarLocalidad();
+      if (vi) {
+        await abrir(null);
+        const c = cliente(vi.cliente_id);
+        const fecha = new Date(`${vi.fecha}T${new Date().toTimeString().slice(0, 5)}:00`).toISOString();
+        lineas = vi.lineas.map((x) => ({ ...nuevaLinea(), ...x }));
+        pintar({ ...valoresNuevos(), fecha_emision: fecha, ...(c ? datosCliente(c, fecha) : {}) });
+        window.FIN.aviso('Venta trasladada desde Ventas Inteligentes: revisa la factura y guárdala');
+        return;
+      }
       if (extra && /^\d+$/.test(String(extra))) {
         const { data } = await sb.from('facturas_venta').select('*').eq('id', Number(extra)).maybeSingle();
         if (data) return abrir(data);
@@ -130,6 +146,13 @@
       pintar();
     }
 
+    // Datos de la factura que vienen del cliente.
+    function datosCliente(c, fecha) {
+      return { cliente_codigo: c.codigo, cliente_id: c.id, nombre: c.nombre, nit: c.tipo_documento === 'CF' ? 'CF' : c.documento, consumidor_final: c.tipo_documento === 'CF', contacto: c.contacto || '', telefono: c.telefono || '',
+        correo: c.correo || '', direccion: c.direccion || '', direccion_envio: c.direccion_envio || '', nit_externo: c.nit_externo || '', vendedor_id: c.vendedor_id, tipo_precio_id: c.tipo_precio_id, bodega_id: c.bodega_id,
+        forma_pago: c.forma_pago || 'CONTADO', dias_credito: c.dias_credito || 0, fecha_cobro: c.forma_pago === 'CRÉDITO' ? sumar(c.dias_credito, fecha) : '', modo_entrega: c.modo_entrega || 'OFICINA',
+        agente_retenedor: !!c.agente_retenedor };
+    }
     const valoresNuevos = () => {
       const gtq = ctx.monedaBase();
       return { tipo_factura: 'FACTURA NORMAL', tipo_dte: 'FACT', tipo_documento: '', serie: '', numero_dte: '', autorizacion: '', fecha_emision: new Date().toISOString(), moneda_id: gtq?.id, tipo_cambio: 7.7,
@@ -678,10 +701,7 @@
       leerTablas();
       if (n === 'cliente_codigo') {
         const c = clientes.find((x) => String(x.codigo) === e.target.value.trim());
-        if (c) return repintar({ cliente_codigo: c.codigo, cliente_id: c.id, nombre: c.nombre, nit: c.tipo_documento === 'CF' ? 'CF' : c.documento, consumidor_final: c.tipo_documento === 'CF', contacto: c.contacto || '', telefono: c.telefono || '',
-          correo: c.correo || '', direccion: c.direccion || '', direccion_envio: c.direccion_envio || '', nit_externo: c.nit_externo || '', vendedor_id: c.vendedor_id, tipo_precio_id: c.tipo_precio_id, bodega_id: c.bodega_id,
-          forma_pago: c.forma_pago || 'CONTADO', dias_credito: c.dias_credito || 0, fecha_cobro: c.forma_pago === 'CRÉDITO' ? sumar(c.dias_credito, actual?.fecha_emision) : '', modo_entrega: c.modo_entrega || 'OFICINA',
-          agente_retenedor: !!c.agente_retenedor });
+        if (c) return repintar(datosCliente(c, actual?.fecha_emision));
       }
       if (n === 'tipo_factura') return repintar({ tipo_dte: DTE_DE[e.target.value] || 'FACT' });
       if (n === 'forma_pago' || n === 'dias_credito') { const h = encabezado(form); return repintar({ fecha_cobro: h.forma_pago === 'CRÉDITO' ? sumar(h.dias_credito, actual?.fecha_emision) : '' }); }
