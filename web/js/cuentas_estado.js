@@ -289,8 +289,13 @@
 
     // ---------- Excel ----------
     function excel() {
-      const { lista, tot } = datos || calcular();
+      const { lista } = datos || calcular();
       if (!lista.length) return window.FIN.aviso(`No hay ${F.plural} con esos parámetros`);
+      return window.REPORTE_XLSX.generar(cfgExcel()).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
+    }
+    // Contenido del reporte (columnas y filas del Excel) con sus indicadores; lo usan el Excel y los Reportes gerenciales.
+    function cfgExcel() {
+      const { lista, tot } = datos || calcular();
       const base = { titulo: `${F.titulo} · ${f.contenido === 'RESUMIDO' ? 'Resumido' : 'Detallado'}`, parametros: parametros(), orgId: ctx.sel.org, locId: ctx.sel.loc, archivo: `${F.archivo}_${f.contenido.toLowerCase()}_${f.hasta}` };
       const agTxt = (x) => `Antigüedad del saldo al ${fmt.fechaDia(f.hasta)}:   ${ANT.map(([t], i) => `${t}${i ? ' días' : ''} Q ${m(x[i])}`).join('   ·   ')}`;
       let cfg;
@@ -322,11 +327,22 @@
         }
         cfg = { ...base, hoja: 'Detallado', columnas: [{ titulo: 'Fecha', ancho: 12, tipo: 'texto' }, { titulo: 'Tipo', ancho: 16, tipo: 'texto' }, { titulo: 'Documento', ancho: 20, tipo: 'texto' }, { titulo: 'Detalle', ancho: 40, tipo: 'texto' }, { titulo: 'Vence', ancho: 15, tipo: 'texto' }, { titulo: 'Cargos', ancho: 15, tipo: 'monto' }, { titulo: 'Abonos', ancho: 15, tipo: 'monto' }, { titulo: 'Saldo', ancho: 16, tipo: 'monto' }], filas };
       }
-      return window.REPORTE_XLSX.generar(cfg).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
+      const pct = tot.fin > 0.004 ? ` (${Math.round((tot.vencido / tot.fin) * 100)} %)` : '';
+      return { ...cfg, n: lista.length, kpis: [[titulo1(F.plural), lista.length], ['Saldo anterior', `Q ${m(tot.ant)}`], ['Cargos', `Q ${m(tot.cargos)}`], ['Abonos', `Q ${m(tot.abonos)}`], [`Saldo al ${fmt.fechaDia(f.hasta)}`, `Q ${m(tot.fin)}`], [`Vencido${pct}`, `Q ${m(tot.vencido)}`]] };
     }
 
     // Sin pantalla: lee los datos y genera el PDF o el Excel de uno o de todos los clientes o proveedores.
+    const leerDirecto = async () => {
+      terceros = await F.terceros(sb, ctx.sel.loc);
+      const r = await F.movimientos(sb, ctx.sel.loc, f.hasta, ctx);
+      movs = r.movs.sort((a, b) => a.fecha.localeCompare(b.fecha) || b.cargo - a.cargo);
+      const ya = new Set(terceros.map((x) => x.key));
+      r.extra.forEach((x) => { if (!ya.has(x.key)) terceros.push(x); });
+      datos = calcular();
+    };
     if (directo) return {
+      // Solo el contenido (sin imprimir ni descargar): para los Reportes gerenciales.
+      async cfg() { await leerDirecto(); return cfgExcel(); },
       async generar(formato) {
         try {
           window.FIN.aviso('Generando el estado de cuenta…');

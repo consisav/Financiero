@@ -50,11 +50,12 @@
     'rotacion-de-inventario': { titulo: 'Rotación de inventario', icono: 'ti-refresh', archivo: 'rotacion_inventario' }
   };
 
-  function reporte(cont, id) {
+  // directo: { ctx, f } arma el reporte sin pantalla (Reportes gerenciales): devuelve { cfg() }.
+  function reporte(cont, id, directo) {
     const R = REPORTES[id];
-    const ctx = montar(cont, { titulo: R.titulo, icono: R.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep', grupo: 'Inventarios · Reportes' });
+    const ctx = directo ? directo.ctx : montar(cont, { titulo: R.titulo, icono: R.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep', grupo: 'Inventarios · Reportes' });
     const { sb } = ctx;
-    const f = { fecha: fmt.hoy(), producto: '', ceros: false, graficas: true };
+    const f = { fecha: fmt.hoy(), producto: '', ceros: false, graficas: true, ...(directo?.f || {}) };
     let productos = [], bodegas = new Map(), movs = [], cargado = '', cfg = null;
     const prod = (pid) => productos.find((p) => p.id === pid);
     const etiqueta = (p) => `${p.nombre} — ${p.codigo_producto || p.codigo}`;
@@ -240,6 +241,17 @@
       Promise.all(gs.map((g) => G().png(g))).then((imagenes) => window.REPORTE_XLSX.generar({ ...salida, imagenes }))
         .catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
     }
+    if (directo) return {
+      async cfg() {
+        const loc = ctx.sel.loc;
+        const [p, b] = await Promise.all([leerTodo(() => sb.from('productos').select('id, codigo, codigo_producto, nombre, precio_costo').eq('localidad_id', loc).order('nombre')),
+          sb.from('bodegas').select('id, codigo, nombre').eq('localidad_id', loc)]);
+        productos = p; bodegas = new Map((b.data || []).map((x) => [x.id, x]));
+        movs = await leerTodo(() => sb.from('inventario_movimientos').select('id, producto_id, bodega_id, fecha, cantidad, costo_unitario, origen, tipo_movimiento, lote, fecha_vencimiento, documento_inventario_lineas(documentos_inventario(numero, tipo))')
+          .eq('localidad_id', loc).lte('fecha', f.fecha).order('fecha').order('id'));
+        return construir();
+      }
+    };
     cont.addEventListener('change', (e) => {
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') return cargarLocalidad();
@@ -259,4 +271,5 @@
     iniciar();
   }
   Object.keys(REPORTES).forEach((id) => { window.PANTALLAS[id] = (cont) => reporte(cont, id); });
+  window.INVENTARIO_REPORTES = { directo: (id, ctx, f) => reporte(null, id, { ctx, f }) };
 })();

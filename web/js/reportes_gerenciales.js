@@ -18,7 +18,27 @@
   const GT = 6 * 3600e3; // Guatemala: UTC-6, sin horario de verano.
 
   const motor = () => window.REPORTES_COMERCIALES_MOTOR;
-  const generable = (id) => !!(window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id] && motor());
+  // Reportes de otros segmentos que también entran en los Reportes gerenciales de cada módulo.
+  const EXTRA = {
+    facturacion: [
+      { id: 'cxc-estado', nombre: 'Estado de cuenta por cliente', icono: 'ti-file-invoice', segmento: 'Cuentas x Cobrar' },
+      { id: 'cxp-estado', nombre: 'Estado de cuenta por proveedor', icono: 'ti-file-invoice', segmento: 'Compras · Cuentas x Pagar' },
+      { id: 'existencias-inventario', nombre: 'Existencia de productos', icono: 'ti-packages', segmento: 'Inventarios · Reportes' }
+    ]
+  };
+  const ESTADOS = new Set(['cxc-estado', 'cxp-estado']);
+  const generable = (id) => (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id] && !!motor())
+    || (ESTADOS.has(id) && !!window.PANTALLAS[id]) || (id === 'existencias-inventario' && !!window.INVENTARIO_REPORTES);
+  // Contenido de un reporte sin su pantalla: { titulo, parametros, columnas, filas, kpis, graficas, n }.
+  async function construirCfg(id, e) {
+    if (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id]) {
+      const M = motor().motor(id, { sb: e.sb, f: { desde: e.desde, fecha: e.fecha, producto: '', contenido: e.contenido }, productos: e.productos, loc: () => e.ctx.sel.loc, org: () => e.ctx.sel.org, moneda: e.ctx.moneda, empresa: e.empresa });
+      return M.construir(await M.leer());
+    }
+    if (ESTADOS.has(id)) return window.PANTALLAS[id](null, null, { ctx: e.ctx, f: { desde: e.desde, hasta: e.fecha, contenido: e.contenido, mostrar: 'CON SALDO' } }).cfg();
+    if (id === 'existencias-inventario') return window.INVENTARIO_REPORTES.directo(id, e.ctx, { fecha: e.fecha, ceros: false }).cfg();
+    throw new Error('Este reporte se genera desde su pantalla');
+  }
   const fmt = () => window.BANCOS.fmt;
 
   // Reportes de todos los segmentos (subgrupos) del grupo Reportes del módulo, con el segmento al que pertenecen.
@@ -26,7 +46,7 @@
     const out = [];
     const recorrer = (ps, seg) => ps.forEach((p) => (p.pantallas ? recorrer(p.pantallas, `${seg} · ${p.subgrupo}`) : p.id !== 'reportes-gerenciales' && out.push({ ...p, segmento: seg })));
     ((m.subgrupos || {}).reportes || []).forEach((s) => recorrer(s.pantallas, s.subgrupo));
-    return out;
+    return [...out, ...(EXTRA[m.id] || [])];
   }
 
   // Fechas del período relativo al día de generación (aaaa-mm-dd, hora de Guatemala).
@@ -86,14 +106,15 @@
     const par = conf.parametros || {};
     const per = periodo(par.periodo || 'MES', F.hoy());
     let productos = [];
-    if (elegidos.some((r) => window.REPORTES_COMERCIALES[r.id].tipo === 'GRAFICA')) {
+    if (elegidos.some((r) => window.REPORTES_COMERCIALES?.[r.id]?.tipo === 'GRAFICA')) {
       productos = await motor().leerTodo(() => sb.from('productos').select('id, codigo, codigo_producto, nombre').eq('localidad_id', conf.localidad_id).order('id')).catch(() => []);
     }
     const resultados = [];
+    // Contexto mínimo de pantalla que esperan los reportes (empresa elegida, localidad y monedas).
+    const ctx = { sb, sel: { org: conf.organizacion_id, loc: conf.localidad_id }, localidad: (id) => (id === conf.localidad_id ? lo.data : null), moneda: (id) => monedas.find((x) => x.id === id) };
+    const env = { sb, ctx, ...per, contenido: par.contenido || 'RESUMIDO', productos: () => productos, empresa: () => empTxt };
     for (const r of elegidos) {
-      const f = { ...per, producto: '', contenido: par.contenido || 'RESUMIDO' };
-      const M = motor().motor(r.id, { sb, f, productos: () => productos, loc: () => conf.localidad_id, org: () => conf.organizacion_id, moneda: (id) => monedas.find((x) => x.id === id), empresa: () => empTxt });
-      try { resultados.push({ r, sal: conf.reportes[r.id], cfg: M.construir(await M.leer()) }); }
+      try { resultados.push({ r, sal: conf.reportes[r.id], cfg: await construirCfg(r.id, env) }); }
       catch (e) { resultados.push({ r, sal: conf.reportes[r.id], error: window.UI.traducirError ? window.UI.traducirError(e) : e.message }); }
     }
     const ok = resultados.filter((x) => x.cfg);
@@ -129,7 +150,7 @@
   }
 
   const ESTILO_PDF = 'table.cx td,table.cx th{font-size:10.5px;padding:3px 5px}tr.g td{background:#dfe7f2;color:#1f3a5f;font-weight:bold}tr.s td{font-weight:bold;background:#f1f4f9}tr.t td{font-weight:bold;background:#eaf0f7;border-top:2px solid #1f3a5f}'
-    + '.rgp{break-before:page}.rgp-par{font-size:11px;color:#444;margin:0 0 6px}.rgp-k{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}.rgp-k span{border:1px solid #bbb;padding:3px 8px;font-size:10.5px}.rgp-k b{color:#1f3a5f}'
+    + 'tr.nt td{font-style:italic;color:#555;font-size:10px}.rgp{break-before:page}.rgp-par{font-size:11px;color:#444;margin:0 0 6px}.rgp-k{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}.rgp-k span{border:1px solid #bbb;padding:3px 8px;font-size:10.5px}.rgp-k b{color:#1f3a5f}'
     + '.graf svg{display:block;width:100%;height:auto;break-inside:avoid;margin-top:12px}';
   function seccionPdf(c, graficas, salto) {
     const F = fmt();
@@ -139,7 +160,7 @@
       return `<td>${esc(String(v))}</td>`;
     };
     const n = c.columnas.length;
-    const filas = c.filas.map((f) => (f.tipo === 'grupo' ? `<tr class="g"><td colspan="${n}">${esc(String(f.valores[0] ?? ''))}</td></tr>`
+    const filas = c.filas.map((f) => (f.tipo === 'grupo' || f.combinar || f.tipo === 'nota' ? `<tr class="${f.tipo === 'grupo' ? 'g' : f.tipo === 'subtotal' ? 's' : 'nt'}"><td colspan="${n}">${esc(String(f.valores[0] ?? ''))}</td></tr>`
       : `<tr class="${f.tipo === 'subtotal' ? 's' : f.tipo === 'total' ? 't' : ''}">${c.columnas.map((col, i) => celda(f.valores[i], col)).join('')}</tr>`)).join('');
     const gs = graficas && c.n ? (c.graficas || []).filter(Boolean).join('') : '';
     return `<section class="${salto ? 'rgp' : ''}"><h3>${esc(c.titulo)}</h3><p class="rgp-par">${esc(c.parametros.join(' · '))}</p>
@@ -256,7 +277,7 @@
               <label class="campo"><span>Período</span><select data-par="periodo">${PERIODOS.map(([k, t]) => `<option value="${k}" ${par.periodo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
               <label class="campo"><span>Contenido</span><select data-par="contenido">${[['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']].map(([k, t]) => `<option value="${k}" ${par.contenido === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
               <label class="pc-check"><input type="checkbox" data-par="graficas" ${par.graficas !== false ? 'checked' : ''}> Con gráficas</label>
-              <span class="rg-nota">Hoy sería del ${fmt().fechaDia(per.desde)} al ${fmt().fechaDia(per.fecha)}; Cuentas por cobrar, el saldo al ${fmt().fechaDia(per.fecha)}.</span>
+              <span class="rg-nota">Hoy sería del ${fmt().fechaDia(per.desde)} al ${fmt().fechaDia(per.fecha)}; saldos y existencias al ${fmt().fechaDia(per.fecha)}.</span>
             </div>
           </section>
           <div class="rg-lado">
