@@ -972,6 +972,43 @@ window.MODULOS = [
   ];
 })();
 
+// Hospital y Clínicas médicas · catálogos y registros clínicos (salud.js, script 161).
+(function () {
+  const mod = (id) => window.MODULOS.find((m) => m.id === id);
+  const p = (id, nombre, icono, descripcion) => ({ id, nombre, icono, descripcion });
+  const PROC = p('med-procedimientos', 'Procedimientos, paquetes y kits', 'ti-scalpel', 'Procedimientos CIE-9-MC, paquetes quirúrgicos de precio cerrado y kits de insumos por procedimiento.');
+  const LAB = p('med-laboratorio', 'Pruebas de laboratorio e imagen', 'ti-microscope', 'Pruebas y perfiles con valores de referencia y críticos; estudios de imagen con preparación y plantilla.');
+  const CONV = p('med-convenios', 'Planes, convenios y referentes', 'ti-file-certificate', 'Planes de aseguradoras, empresas con convenio y médicos referentes con su comisión.');
+  const RLAB = p('med-resultados-lab', 'Resultados de laboratorio', 'ti-test-pipe', 'Órdenes con sus pruebas, resultados con alerta bajo, alto o crítico, validación e informe impreso.');
+  const RIMG = p('med-informes-imagen', 'Informes de imagen', 'ti-radioactive', 'Estudios realizados con hallazgos y conclusión del radiólogo; informe impreso.');
+  const CONS = p('med-consentimientos', 'Consentimientos informados', 'ti-signature', 'Consentimientos quirúrgicos, anestésicos, de transfusión u hospitalización para firma.');
+  const COT = p('med-cotizaciones', 'Cotizaciones', 'ti-file-dollar', 'Presupuestos al paciente por paquete o procedimiento con vigencia y conversión.');
+  const GAR = p('med-garantias', 'Cartas de garantía', 'ti-shield-check', 'Preautorizaciones de aseguradoras: solicitado, autorizado, número de autorización y vencimiento.');
+  const h = mod('hospital');
+  if (h) {
+    h.subgrupos.catalogos = [...(h.subgrupos.catalogos || []),
+      { subgrupo: 'Procedimientos y apoyo', icono: 'ti-scalpel', pantallas: [PROC, LAB, CONV] },
+      { subgrupo: 'Recursos del hospital', icono: 'ti-building-hospital', pantallas: [p('hos-recursos', 'Formulario, dietas, salas y personal', 'ti-building-hospital', 'Formulario terapéutico y controlados, dietas, salas de operaciones y partos, personal de enfermería y apoyo.')] }];
+    h.subgrupos.registros = [...(h.subgrupos.registros || []),
+      { subgrupo: 'Atención clínica', icono: 'ti-heartbeat', pantallas: [p('hos-triaje', 'Emergencia y triaje', 'ti-ambulance', 'Clasificación por prioridad, tiempos de espera, atención, diagnóstico y destino del paciente de emergencia.'),
+        p('hos-notas', 'Notas de evolución y enfermería', 'ti-notes', 'Notas por turno con signos vitales, ingesta y excreta, dieta e interconsultas.'), p('hos-kardex', 'Kardex de medicamentos', 'ti-pill', 'Dosis programadas y administradas por paciente con responsable; dosis vencidas resaltadas.')] },
+      { subgrupo: 'Apoyo diagnóstico', icono: 'ti-microscope', pantallas: [RLAB, RIMG] },
+      { subgrupo: 'Quirófano y obstetricia', icono: 'ti-scalpel', pantallas: [p('hos-hoja-quirurgica', 'Hoja quirúrgica', 'ti-scalpel', 'Equipo, anestesia, tiempos, lista de verificación de cirugía segura OMS, protocolo operatorio y conteo.'),
+        p('hos-partos', 'Partos y recién nacidos', 'ti-baby-carriage', 'Partos y cesáreas con datos del recién nacido y APGAR; constancia de nacimiento para el RENAP.')] },
+      { subgrupo: 'Documentos clínicos', icono: 'ti-file-text', pantallas: [CONS, p('hos-epicrisis', 'Epicrisis', 'ti-file-text', 'Resumen de egreso con diagnósticos, procedimientos, condición, tratamiento y recomendaciones.'),
+        p('hos-defunciones', 'Defunciones', 'ti-cross', 'Fallecimientos con su cadena de causas CIE-10, mortalidad antes y después de 48 horas y certificado.')] },
+      { subgrupo: 'Comercial', icono: 'ti-file-dollar', pantallas: [COT, GAR] }];
+  }
+  const c = mod('clinicas');
+  if (c) {
+    c.subgrupos.catalogos = [...(c.subgrupos.catalogos || []), { subgrupo: 'Procedimientos y apoyo', icono: 'ti-scalpel', pantallas: [PROC, LAB, CONV, p('cli-vacunas', 'Esquema de vacunación', 'ti-vaccine-bottle', 'Vacunas por edad con dosis, vía, producto y precio.')] }];
+    c.subgrupos.registros = [...(c.subgrupos.registros || []),
+      { subgrupo: 'Apoyo diagnóstico', icono: 'ti-microscope', pantallas: [RLAB, RIMG] },
+      { subgrupo: 'Programas y documentos', icono: 'ti-heart-handshake', pantallas: [p('cli-controles', 'Control prenatal y niño sano', 'ti-heart-handshake', 'Controles del embarazo, del niño sano y de crónicos con alertas y próximo control.'),
+        p('cli-vacunacion', 'Vacunación', 'ti-vaccine', 'Vacunas aplicadas con lote, responsable y próxima dosis.'), CONS, COT, GAR] }];
+  }
+})();
+
 // Orden del menú principal de módulos y separadores (debajo de Presupuesto y Flujo, Importaciones y exportaciones,
 // Activos Fijos y Nóminas).
 (function () {

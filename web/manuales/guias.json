@@ -2890,5 +2890,198 @@
   "pasos": [
    "Abre Reportes › Indicadores de la clínica con el período y compáralo mes a mes."
   ]
+ },
+ "med-procedimientos": {
+  "puntos": [
+   "Procedimientos CIE-9-MC, paquetes quirúrgicos y kits."
+  ],
+  "pasos": [
+   "Abre Catálogos › Procedimientos, paquetes y kits con {empresa}: la primera vez se cargan 30 procedimientos frecuentes.",
+   "Ajusta precios y tiempos de cada procedimiento.",
+   "En «Paquetes quirúrgicos» crea paquetes de precio cerrado (por ejemplo cesárea con 2 días de estancia) con lo que incluyen y excluyen.",
+   "En «Kits» y «Artículos de los kits» define los insumos estándar de cada procedimiento."
+  ]
+ },
+ "med-laboratorio": {
+  "puntos": [
+   "Pruebas con valores de referencia y críticos; estudios de imagen."
+  ],
+  "pasos": [
+   "Abre Catálogos › Pruebas de laboratorio e imagen.",
+   "Revisa unidad, valores de referencia y valores críticos de cada prueba.",
+   "En «Pruebas de cada perfil» arma los perfiles (hematología, lípidos…).",
+   "En «Estudios de imagen» registra la preparación y la plantilla de informe."
+  ]
+ },
+ "med-convenios": {
+  "puntos": [
+   "Planes de aseguradoras, empresas con convenio y referentes."
+  ],
+  "pasos": [
+   "Abre Catálogos › Planes, convenios y referentes.",
+   "Registra los planes de cada aseguradora con deducible, coaseguro, tope y copago.",
+   "Registra las empresas con convenio y su descuento; y los médicos referentes con su comisión."
+  ]
+ },
+ "hos-recursos": {
+  "puntos": [
+   "Formulario terapéutico, dietas, salas y personal."
+  ],
+  "pasos": [
+   "Abre Hospital › Catálogos › Formulario, dietas, salas y personal.",
+   "Marca los medicamentos controlados con su clase.",
+   "Revisa las dietas, las salas y registra el personal por cargo, área y turno."
+  ]
+ },
+ "cli-vacunas": {
+  "puntos": [
+   "Esquema de vacunación por edad."
+  ],
+  "pasos": [
+   "Abre Clínicas › Catálogos › Esquema de vacunación y ajústalo a la norma vigente del MSPAS."
+  ]
+ },
+ "hos-triaje": {
+  "puntos": [
+   "Clasificación de emergencia en 5 prioridades."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Emergencia y triaje y presiona «Nuevo» al llegar el paciente.",
+   "Elige al paciente (o escribe un nombre provisional), la prioridad, el motivo y los signos vitales.",
+   "Al atenderlo registra el médico, la hora de atención, el diagnóstico y el destino.",
+   "Si se hospitaliza usa «Abrir admisión»."
+  ]
+ },
+ "hos-notas": {
+  "puntos": [
+   "Notas por turno de evolución y enfermería."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Notas de evolución y enfermería y presiona «Nuevo».",
+   "Elige la admisión, el tipo y el turno; registra signos, ingesta, excreta y la nota.",
+   "Las fiebres de 38.5 °C o más y saturaciones menores de 92 % se resaltan."
+  ]
+ },
+ "hos-kardex": {
+  "puntos": [
+   "Programación y administración de medicamentos."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Kardex de medicamentos y programa la primera dosis.",
+   "Con «Programar siguientes» crea las dosis cada N horas.",
+   "Al aplicarla presiona «Administrada»: queda la hora y el responsable."
+  ]
+ },
+ "med-resultados-lab": {
+  "puntos": [
+   "Resultados con alerta automática."
+  ],
+  "pasos": [
+   "Abre Registros › Resultados de laboratorio y presiona «Nuevo».",
+   "Elige al paciente, el origen y el médico y presiona «Registrar».",
+   "Agrega las pruebas o perfiles y escribe cada valor: se marca normal, bajo, alto o crítico.",
+   "Valida, cambia el estado a «Entregado» e imprime el informe."
+  ]
+ },
+ "med-informes-imagen": {
+  "puntos": [
+   "Informe de cada estudio de imagen."
+  ],
+  "pasos": [
+   "Abre Registros › Informes de imagen y presiona «Nuevo».",
+   "Elige al paciente y el estudio: se carga su plantilla.",
+   "Escribe hallazgos y conclusión, marca «Informado» e imprime."
+  ]
+ },
+ "hos-hoja-quirurgica": {
+  "puntos": [
+   "Hoja quirúrgica con lista de verificación OMS."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Hoja quirúrgica y presiona «Nuevo».",
+   "Registra paciente, procedimiento, sala, equipo, anestesia y ASA.",
+   "Marca la lista de verificación en sus tres momentos y los tiempos.",
+   "Escribe hallazgos y protocolo; para «Terminada» la lista y el conteo deben estar completos.",
+   "Imprime la hoja."
+  ]
+ },
+ "hos-partos": {
+  "puntos": [
+   "Partos y recién nacidos."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Partos y recién nacidos y presiona «Nuevo».",
+   "Registra la madre, el tipo de parto, las semanas y los datos del recién nacido con su APGAR.",
+   "Imprime la constancia de nacimiento para el RENAP."
+  ]
+ },
+ "med-consentimientos": {
+  "puntos": [
+   "Consentimientos para firma."
+  ],
+  "pasos": [
+   "Abre Registros › Consentimientos informados y presiona «Nuevo».",
+   "Elige al paciente, el tipo y el procedimiento; escribe riesgos, alternativas y quién firma.",
+   "Imprime el documento para las firmas."
+  ]
+ },
+ "hos-epicrisis": {
+  "puntos": [
+   "Resumen de egreso."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Epicrisis y presiona «Nuevo».",
+   "Elige la admisión: se cargan el diagnóstico de ingreso y el médico.",
+   "Completa evolución, procedimientos, diagnóstico de egreso, tratamiento y recomendaciones e imprime."
+  ]
+ },
+ "hos-defunciones": {
+  "puntos": [
+   "Defunciones con causas CIE-10."
+  ],
+  "pasos": [
+   "Abre Hospital › Registros › Defunciones y presiona «Nuevo».",
+   "Registra la cadena de causas, si fue antes de 48 horas y el certificado; el paciente queda como fallecido."
+  ]
+ },
+ "med-cotizaciones": {
+  "puntos": [
+   "Presupuestos al paciente."
+  ],
+  "pasos": [
+   "Abre Registros › Cotizaciones y presiona «Nuevo».",
+   "Elige al paciente y el paquete: se proponen el detalle y el total.",
+   "Ajusta el detalle (concepto; valor), registra e imprime; marca después si fue aceptada."
+  ]
+ },
+ "med-garantias": {
+  "puntos": [
+   "Preautorizaciones de aseguradoras."
+  ],
+  "pasos": [
+   "Abre Registros › Cartas de garantía y presiona «Nuevo».",
+   "Registra paciente, aseguradora, plan, procedimiento y monto solicitado.",
+   "Al recibir respuesta registra la autorización, el monto autorizado, el vencimiento y el estado."
+  ]
+ },
+ "cli-controles": {
+  "puntos": [
+   "Control prenatal, niño sano y crónicos."
+  ],
+  "pasos": [
+   "Abre Clínicas › Registros › Control prenatal y niño sano y presiona «Nuevo».",
+   "Elige el programa y registra las medidas; las presiones de 140/90 o más y FCF fuera de 110-160 se resaltan.",
+   "Indica el próximo control."
+  ]
+ },
+ "cli-vacunacion": {
+  "puntos": [
+   "Vacunas aplicadas."
+  ],
+  "pasos": [
+   "Abre Clínicas › Registros › Vacunación y presiona «Nuevo».",
+   "Elige al paciente, la vacuna y la dosis, el lote y la próxima dosis.",
+   "Busca al paciente en el listado y exporta su historial en PDF como carné."
+  ]
  }
 }
