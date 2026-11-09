@@ -4191,7 +4191,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bmc-reportes .boton b { font-size: 12.5px; } .bmc-reportes .boton small { font-size: 10px; opacity: .85; font-weight: 500; }
 /* Detalle compacto de depósitos, notas y cheques: título y acciones en una sola fila, cabecera más baja y
    botones de reporte pequeños en la barra de la lista. */
-.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo):not(.cf-compras) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo):not(.cf-compras):not(.oq-ingresos) .ta-cuerpo { grid-template-rows: minmax(190px, 36%) minmax(0, 1fr) !important; gap: 8px; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo { display: flex; flex-wrap: nowrap; align-items: center; padding-bottom: 4px; margin-bottom: 4px; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto { min-width: 0; }
 .bk-movimientos:not(.bk-conc) .bm-form > .bm-titulo .tk-titulo-texto small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-size: 11px; }
@@ -4224,7 +4224,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-c3 { grid-column: span 3; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-check { grid-column: span 1; padding-bottom: 6px; white-space: nowrap; font-size: 12px; }
 .bk-movimientos:not(.bk-conc) .bm-tercero .bm-campos > .bm-radios { grid-column: 1 / -1; }
-.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo):not(.cf-compras) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
+.bk-espacio.bk-movimientos:not(.bk-conc):not(.bk-consultar):not(.dsp-proceso):not(.dc-def):not(.lq-cajas):not(.bm-solo):not(.cf-compras):not(.oq-ingresos) .ta-cuerpo { grid-template-rows: minmax(165px, 30%) minmax(0, 1fr) !important; }
 .bk-movimientos:not(.bk-conc) .tg-cab h2 { white-space: nowrap; }
 .bk-movimientos:not(.bk-conc) .tg-cab .ta-total { white-space: nowrap; }
 .bk-movimientos:not(.bk-conc) .bm-control .bm-comprobante { padding: 3px 8px; }
@@ -6207,3 +6207,19 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
 @media (max-width: 1100px) {
   .vi-pantalla .ta-filtros.bk-filtros:has(.vi-acciones), .vic-pantalla .ta-filtros.bk-filtros:has(.vic-acciones) { grid-template-columns: 1fr 1fr !important; }
 }
+
+/* Órdenes de compra · ingresos basados en órdenes: el formulario y sus pestañas ocupan todo el alto (el listado va en su pestaña). */
+.bk-espacio.oq-ingresos .ta-cuerpo { grid-template-rows: minmax(0, 1fr) !important; }
+.oq-ingresos .bk-maestro:empty { display: none; }
+.oq-ingresos .bm-form { overflow: auto; }
+.oq-ingresos .bm-pestanas { min-height: 300px; flex: 1 0 auto; }
+.oq-ingresos .bk-detalle { overflow: hidden; }
+@media (max-width: 1100px) { .oq-ingresos .bk-detalle, .oq-ingresos .oi-form { overflow: auto; } }
+/* Consulta de Órdenes */
+.oqc-consulta .oqc-tabla td small, .oqc-consulta .oqc-tabla td b { display: block; }
+.oqc-consulta .oqc-tabla td.num b, .oqc-consulta .oqc-tabla td b.ccq-doc { display: inline; }
+.oqc-quien { font-size: 12px; color: var(--suave); margin-right: 6px; }
+.oqc-consulta .cq-det { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) !important; }
+.oqc-consulta .cq-lineas .pc-lineas { overflow-x: auto; }
+.vi-pre-pie { flex-wrap: wrap; align-items: center; }
+.vi-pre-pregunta { flex: 1 1 100%; margin: 0 0 4px; font-weight: 600; color: var(--verde-t); display: flex; gap: 6px; align-items: center; }

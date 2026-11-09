@@ -44,7 +44,7 @@
       const acciones = [b('nueva', 'ti-plus', 'Nueva venta'), b('voz', 'ti-microphone', 'Por voz', 'secundario-sm vi-voz')];
       if (e === 'NUEVA' || e === 'GENERADA') acciones.push(b('guardar', 'ti-device-floppy', 'Guardar'), b('confirmar', 'ti-circle-check', 'Confirmar', 'primario-sm'));
       if (e === 'CONFIRMADA') acciones.push(b('modificar', 'ti-pencil', 'Modificar'), b('preliminar', 'ti-file-invoice', 'Factura preliminar', 'primario-sm'));
-      if (e === 'FACTURA PRELIMINAR') acciones.push(b('modificar', 'ti-pencil', 'Modificar'), b('preliminar', 'ti-file-invoice', 'Ver preliminar', 'primario-sm'));
+      if (e === 'FACTURA PRELIMINAR') acciones.push(b('modificar', 'ti-pencil', 'Modificar'), b('preliminar', 'ti-file-invoice', 'Ver preliminar'), b('trasladar', 'ti-file-export', 'Trasladar a factura', 'primario-sm'));
       if (e === 'FACTURADA' && est.venta?.factura_id) acciones.push(b('factura', 'ti-receipt', 'Ver factura', 'primario-sm'));
       if (est.venta && !['FACTURADA', 'ELIMINADA'].includes(e)) acciones.push(b('eliminar', 'ti-trash', 'Eliminar', 'secundario-sm vi-eliminar'));
       ctx.pFil.innerHTML = `
@@ -276,21 +276,43 @@
               <tfoot><tr><td colspan="5">Subtotal sin IVA</td><td class="num">${fmt.monto(tot - iva)}</td></tr><tr><td colspan="5">IVA (12 %)</td><td class="num">${fmt.monto(iva)}</td></tr><tr class="vi-doc-tot"><td colspan="5">Total</td><td class="num">Q ${fmt.monto(tot)}</td></tr></tfoot></table>
           </div>
         </div>
-        <footer class="modal-pie"><button type="button" class="boton secundario-sm" data-rechazar><i class="ti ti-x" aria-hidden="true"></i> Rechazar</button><button type="button" class="boton primario-sm" data-aceptar><i class="ti ti-check" aria-hidden="true"></i> Aceptar y pasar a la factura</button></footer></div>`;
+        <footer class="modal-pie vi-pre-pie">${pie()}</footer></div>`;
       document.body.appendChild(velo);
       const cerrar = () => { velo.remove(); pintarFiltros(); pintar(); };
       velo.querySelector('[data-cerrar]').addEventListener('click', cerrar);
       velo.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
-      velo.querySelector('[data-rechazar]').addEventListener('click', async () => { velo.remove(); if (await cambiarEstado('CONFIRMADA')) window.FIN.aviso('Factura preliminar rechazada: la venta queda confirmada'); pintarFiltros(); pintar(); });
-      velo.querySelector('[data-aceptar]').addEventListener('click', () => {
-        const datos = { venta_id: est.venta.id, org: ctx.sel.org, loc: ctx.sel.loc, cliente_id: est.venta.cliente_id, fecha: est.fecha,
-          lineas: conProd().map((l) => { const p = prod(l.producto_id); return { producto_id: p.id, producto_codigo: p.codigo, descripcion: p.nombre, cantidad: Number(l.cantidad), precio: Number(l.precio) }; }) };
-        try { sessionStorage.setItem(CLAVE, JSON.stringify(datos)); } catch { /* sin almacenamiento */ }
-        window.VENTA_INTELIGENTE = datos;
-        velo.remove();
-        location.hash = '#/facturacion/facturas-ventas/inteligente';
+      // Regresar: cierra la preliminar sin cambiar la venta. Aceptar: la venta queda en FACTURA PRELIMINAR y se pregunta
+      // si se traslada a la factura o se deja pendiente. Trasladar a factura: pasa a Facturas Ventas.
+      velo.querySelector('.vi-pre-pie').addEventListener('click', async (e) => {
+        const a = e.target.closest('[data-pre]')?.dataset.pre;
+        if (a === 'regresar') return cerrar();
+        if (a === 'pendiente') { cerrar(); return window.FIN.aviso(`Venta No. ${est.venta.numero}: factura preliminar aceptada y pendiente de trasladar a la factura`); }
+        if (a === 'trasladar') { velo.remove(); return trasladar(); }
+        if (a === 'aceptar') {
+          e.target.closest('button').disabled = true;
+          if (!(await cambiarEstado('FACTURA PRELIMINAR'))) { e.target.closest('button').disabled = false; return; }
+          pintarFiltros(); pintar();
+          const pie = velo.querySelector('.vi-pre-pie');
+          pie.innerHTML = `<p class="vi-pre-pregunta"><i class="ti ti-circle-check" aria-hidden="true"></i> Factura preliminar aceptada. ¿Desea trasladarla a la factura o dejarla pendiente?</p>
+            <button type="button" class="boton secundario-sm" data-pre="pendiente"><i class="ti ti-clock-pause" aria-hidden="true"></i> Dejar pendiente</button>
+            <button type="button" class="boton primario-sm" data-pre="trasladar"><i class="ti ti-file-export" aria-hidden="true"></i> Trasladar a factura</button>`;
+          pie.querySelector('[data-pre=trasladar]').focus();
+        }
       });
-      velo.querySelector('[data-aceptar]').focus();
+      velo.querySelector('.vi-pre-pie [data-pre]:last-child').focus();
+    }
+    function pie() {
+      return estado() === 'FACTURA PRELIMINAR'
+        ? '<button type="button" class="boton secundario-sm" data-pre="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button><button type="button" class="boton primario-sm" data-pre="trasladar"><i class="ti ti-file-export" aria-hidden="true"></i> Trasladar a factura</button>'
+        : '<button type="button" class="boton secundario-sm" data-pre="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button><button type="button" class="boton primario-sm" data-pre="aceptar"><i class="ti ti-check" aria-hidden="true"></i> Aceptar</button>';
+    }
+    // Pasa la venta a Facturas Ventas como factura nueva ya llenada (al registrarla, la venta queda FACTURADA).
+    function trasladar() {
+      const datos = { venta_id: est.venta.id, org: ctx.sel.org, loc: ctx.sel.loc, cliente_id: est.venta.cliente_id, fecha: est.fecha,
+        lineas: conProd().map((l) => { const p = prod(l.producto_id); return { producto_id: p.id, producto_codigo: p.codigo, descripcion: p.nombre, cantidad: Number(l.cantidad), precio: Number(l.precio) }; }) };
+      try { sessionStorage.setItem(CLAVE, JSON.stringify(datos)); } catch { /* sin almacenamiento */ }
+      window.VENTA_INTELIGENTE = datos;
+      location.hash = '#/facturacion/facturas-ventas/inteligente';
     }
 
     // Nueva venta por voz: cliente, productos y cantidades; al final la guarda o la confirma.
@@ -383,7 +405,8 @@
           if (a === 'guardar' && validar(false) && (await guardar('GENERADA'))) { est.lineas = est.lineas.filter((l) => l.producto_id); est.lineas.push(nuevaLinea()); window.FIN.aviso(`Venta No. ${est.venta.numero} guardada (generada)`); }
           if (a === 'confirmar' && validar(true) && (await guardar('CONFIRMADA'))) { est.lineas = conProd(); window.FIN.aviso(`Venta No. ${est.venta.numero} confirmada: genera su factura preliminar`); }
           if (a === 'modificar' && (await cambiarEstado('GENERADA'))) { est.lineas.push(nuevaLinea()); window.FIN.aviso('La venta vuelve a generada para modificarla'); }
-          if (a === 'preliminar') { if (estado() !== 'FACTURA PRELIMINAR' && !(await cambiarEstado('FACTURA PRELIMINAR'))) return; pintarFiltros(); pintar(); return preliminar(); }
+          if (a === 'preliminar') return preliminar();
+          if (a === 'trasladar') return trasladar();
           if (a === 'eliminar') {
             const motivo = prompt(`¿Eliminar la venta No. ${est.venta.numero}? Escribe el motivo:`);
             if (motivo === null) return;

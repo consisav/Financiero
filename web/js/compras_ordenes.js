@@ -11,6 +11,7 @@
 //   Aprobación órdenes: las órdenes en autorización con su botón Ver.
 //   Órdenes de compra (ingresos basados en órdenes): se recibe lo autorizado por lote y vencimiento,
 //   «Aplicar inventario» lo carga a la bodega y genera la factura de compra; Revertir y Anular.
+//   Consulta de Órdenes: las órdenes con sus totales, productos (solicitado, aprobado, recibido, saldo) e ingresos.
 (function () {
   const { esc } = window.UI;
   const { montar, fmt, imprimir } = window.BANCOS;
@@ -26,10 +27,10 @@
   async function catalogos(sb, loc) {
     const q = (t, c = '*') => sb.from(t).select(c).eq('localidad_id', loc || 0);
     const [p, b, pr, pp, tp] = await Promise.all([
-      q('proveedores', 'id, codigo, nit, nombre_comercial, nombre_fiscal, dias_credito, moneda_id, tipo_proveedor_id, estado').order('nombre_comercial'),
+      window.UI.todo(q('proveedores', 'id, codigo, nit, nombre_comercial, nombre_fiscal, dias_credito, moneda_id, tipo_proveedor_id, estado').order('nombre_comercial').order('id')),
       q('bodegas', 'id, codigo, nombre, siglas, estado').order('codigo'),
-      q('productos', 'id, codigo, nombre, codigo_producto, proveedor_id, punto_minimo, minimo, maximo, precio_costo, estado').order('nombre'),
-      sb.from('producto_proveedores').select('producto_id, proveedor_id, ultimo_costo'),
+      window.UI.todo(q('productos', 'id, codigo, nombre, codigo_producto, proveedor_id, punto_minimo, minimo, maximo, precio_costo, estado').order('nombre').order('id')),
+      window.UI.todo(sb.from('producto_proveedores').select('producto_id, proveedor_id, ultimo_costo').order('producto_id').order('proveedor_id')),
       sb.from('tipos_proveedor').select('id, codigo, nombre').order('codigo')
     ]);
     return { proveedores: p.data || [], bodegas: b.data || [], productos: pr.data || [], prodProv: pp.data || [], tiposProv: tp.data || [] };
@@ -750,6 +751,254 @@
       if (['APLICAR', 'REVERTIR', 'ANULAR'].includes(a)) return procesar(a);
     });
     cont.addEventListener('submit', (e) => { if (e.target.matches('#oi-form')) { e.preventDefault(); guardar(e.target); } });
+    iniciar();
+  };
+
+  // ===================== Consulta de Órdenes =====================
+  // Mismo diseño de Consultar Compras: arriba las órdenes de la empresa (proveedor, fechas, estado y orden) con sus
+  // totales, y abajo la orden elegida con sus productos (solicitado, aprobado, recibido y saldo) y sus ingresos.
+  // «Ver orden» la abre en Solicitudes de compra. Reportes en PDF y Excel (resumido o con productos).
+  window.PANTALLAS['consulta-de-ordenes'] = function (cont) {
+    const ctx = montar(cont, { titulo: 'Consulta de Órdenes', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-compras oqc-consulta', grupo: 'Compras · Órdenes de compra' });
+    const { sb } = ctx;
+    const [anio] = fmt.hoy().split('-');
+    const ESTADOS = ['TODAS', 'INGRESADA', 'EN AUTORIZACIÓN', 'AUTORIZADA', 'RECHAZADA', 'RECIBIDA PARCIAL', 'RECIBIDA', 'ANULADA', 'POR RECIBIR'];
+    const ORDENES = [['folio:desc', 'Folio ↓'], ['folio:asc', 'Folio ↑'], ['fecha:desc', 'Fecha ↓'], ['fecha:asc', 'Fecha ↑'], ['total:desc', 'Total ↓'], ['total:asc', 'Total ↑']];
+    const f = { proveedor: '', bodega: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'folio', dir: 'desc' };
+    let cat = { proveedores: [], bodegas: [], productos: [] }, ordenes = [], sel = null, consulta = 0;
+    let detalle = { lineas: [], ingresos: [] };
+    const prov = (id) => cat.proveedores.find((p) => p.id === id);
+    const provTxt = (p) => `${p.codigo} · ${p.nombre_comercial}${p.nit ? ` · ${p.nit}` : ''}`;
+    const bodega = (id) => cat.bodegas.find((b) => b.id === id);
+    const prod = (id) => cat.productos.find((p) => p.id === id);
+    const cant = (n) => Number(n || 0).toLocaleString('es-GT', { maximumFractionDigits: 4 });
+    // En quetzales: solo lo que está en otra moneda se multiplica por su tipo de cambio.
+    const tc = (o) => (o.moneda_id === ctx.monedaBase()?.id ? 1 : Number(o.tipo_cambio || 1));
+    const enQ = (o) => Number(o.total || 0) * tc(o);
+
+    function pintarFiltros() {
+      ctx.filtros(`
+        <label class="campo cq-prov"><span>Proveedor</span><input list="oqc-proveedores" name="proveedor" value="${esc(f.proveedor)}" placeholder="Todos (código, NIT o nombre)"></label>
+        <label class="campo"><span>Bodega</span><select name="bodega"><option value="">Todas</option>${cat.bodegas.map((b) => `<option value="${b.id}" ${String(b.id) === f.bodega ? 'selected' : ''}>${esc(`${b.codigo} · ${b.nombre}`)}</option>`).join('')}</select></label>
+        <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
+        <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
+        <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
+        <datalist id="oqc-proveedores">${cat.proveedores.map((p) => `<option ${p.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(provTxt(p))}"></option>`).join('')}</datalist>`,
+        `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Resumido o con productos</small></span></button>
+         <button type="button" class="boton cqc-excel" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Resumido o con productos</small></span></button></div>`);
+    }
+    async function iniciar() {
+      if (!(await ctx.cargarBase())) return;
+      const prueba = await sb.from('ordenes_compra').select('id').limit(1);
+      if (prueba.error) { ctx.espacio.innerHTML = `<section class="panel"><p class="vacio">${/ordenes_compra/.test(prueba.error.message) ? AVISO : esc(prueba.error.message)}</p></section>`; return; }
+      await cargarLocalidad();
+    }
+    async function cargarLocalidad() {
+      const loc = ctx.sel.loc;
+      cat = await catalogos(sb, loc);
+      // Fecha inicial por omisión: la de la primera orden de la empresa.
+      const pr = loc ? await sb.from('ordenes_compra').select('fecha').eq('localidad_id', loc).order('fecha').limit(1) : { data: [] };
+      f.desde = pr.data?.[0]?.fecha || `${anio}-01-01`; f.hasta = fmt.hoy(); f.bodega = ''; sel = null;
+      pintarFiltros();
+      await consultar();
+    }
+    function proveedorFiltro() {
+      const t = f.proveedor.trim().toUpperCase();
+      if (!t) return null;
+      return cat.proveedores.find((p) => provTxt(p).toUpperCase() === t) || cat.proveedores.find((p) => String(p.codigo) === t || (p.nit || '').toUpperCase() === t)
+        || cat.proveedores.find((p) => p.nombre_comercial.toUpperCase().includes(t)) || { id: -1 };
+    }
+    async function consultar(id = sel?.id) {
+      const loc = ctx.sel.loc;
+      if (!loc) { ordenes = []; return pintar(); }
+      const yo = ++consulta;
+      const pv = proveedorFiltro();
+      let q = sb.from('ordenes_compra').select('*, orden_compra_lineas(cantidad_solicitada, cantidad_aprobada, aprueba, precio_unitario)').eq('localidad_id', loc).gte('fecha', f.desde).lte('fecha', f.hasta);
+      if (pv) q = q.eq('proveedor_id', pv.id);
+      if (f.bodega) q = q.eq('bodega_id', Number(f.bodega));
+      if (f.estado === 'POR RECIBIR') q = q.in('estado', ['AUTORIZADA', 'RECIBIDA PARCIAL']);
+      else if (f.estado !== 'TODAS') q = q.eq('estado', f.estado);
+      const r = await window.UI.todo(q.order('folio', { ascending: false }).order('id', { ascending: false }));
+      if (yo !== consulta) return;
+      if (r.error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(r.error.message)}</p>`; return; }
+      const lista = r.data || [];
+      // Recibido y saldo por orden (vista orden_lineas_saldo), por partes.
+      const rec = new Map();
+      for (let i = 0; i < lista.length; i += 200) {
+        const { data } = await sb.from('orden_lineas_saldo').select('orden_id, recibido, saldo, precio_unitario').in('orden_id', lista.slice(i, i + 200).map((o) => o.id));
+        (data || []).forEach((x) => { const a = rec.get(x.orden_id) || { recibido: 0, saldo: 0 }; a.recibido += Number(x.recibido || 0) * Number(x.precio_unitario || 0); a.saldo += Number(x.saldo || 0) * Number(x.precio_unitario || 0); rec.set(x.orden_id, a); });
+      }
+      if (yo !== consulta) return;
+      ordenes = lista.map((o) => ({ ...o,
+        total: o.orden_compra_lineas.reduce((t, l) => t + Number(['INGRESADA', 'EN AUTORIZACIÓN', 'RECHAZADA'].includes(o.estado) ? l.cantidad_solicitada : (l.aprueba === false ? 0 : l.cantidad_aprobada)) * Number(l.precio_unitario), 0),
+        productos: o.orden_compra_lineas.length, recibido: rec.get(o.id)?.recibido || 0, saldo: rec.get(o.id)?.saldo || 0 }));
+      sel = ordenes.find((o) => o.id === id) || null;
+      pintar();
+      if (!sel && visibles()[0]) await elegir(visibles()[0]);
+    }
+    const visibles = () => {
+      const q = f.buscar.trim().toLowerCase();
+      return ordenes.filter((o) => !q || [o.folio, o.numero, prov(o.proveedor_id)?.nombre_comercial, o.usuario, o.observaciones].some((v) => String(v || '').toLowerCase().includes(q)))
+        .sort((a, b) => { const va = f.orden === 'total' ? enQ(a) : f.orden === 'fecha' ? a.fecha : a.folio; const vb = f.orden === 'total' ? enQ(b) : f.orden === 'fecha' ? b.fecha : b.folio; const d = va < vb ? -1 : va > vb ? 1 : a.folio - b.folio; return f.dir === 'asc' ? d : -d; });
+    };
+    const ordenTh = (campo, texto, clase = '') => `<th class="${clase} cq-orden ${f.orden === campo ? 'activo' : ''}" data-ordenar="${campo}" title="Ordenar por ${texto.toLowerCase()}">${texto} <i class="ti ${f.orden === campo ? (f.dir === 'asc' ? 'ti-sort-ascending' : 'ti-sort-descending') : 'ti-arrows-sort'}" aria-hidden="true"></i></th>`;
+
+    async function elegir(o) {
+      sel = o; detalle = { lineas: [], ingresos: [] };
+      if (o) ctx.pDet.innerHTML = ctx.vacio('Cargando el detalle de la orden…', 'ti-loader-2');
+      if (o) {
+        const [l, i] = await Promise.all([
+          sb.from('orden_lineas_saldo').select('*').eq('orden_id', o.id).order('linea'),
+          sb.from('ingresos_compra').select('id, numero, fecha_ingreso, serie, documento, estado, compra_id, valor_descuento, ingreso_lineas(cantidad, costo_unitario)').eq('orden_id', o.id).order('numero')
+        ]);
+        if (sel !== o) return;
+        detalle = { lineas: l.data || [], ingresos: (i.data || []).map((x) => ({ ...x, total: x.ingreso_lineas.reduce((t, y) => t + Number(y.cantidad) * Number(y.costo_unitario), 0) - Number(x.valor_descuento || 0) })) };
+      }
+      pintarDetalle();
+      ctx.pMae.querySelectorAll('tr[data-orden]').forEach((tr) => tr.classList.toggle('actual', !!o && tr.dataset.orden === String(o.id)));
+    }
+    function pintar() { pintarMaestro(); pintarDetalle(); }
+    function pintarMaestro() {
+      const filas = visibles();
+      const vivas = filas.filter((o) => !['ANULADA', 'RECHAZADA'].includes(o.estado));
+      ctx.pMae.innerHTML = `
+        <header class="tk-bandeja-cab cc-cab">
+          <h2>Órdenes <small>${filas.length}</small></h2>
+          <div class="ta-totales pc-resumen">
+            <span class="ta-total"><b>Q ${fmt.monto(vivas.reduce((t, o) => t + enQ(o), 0))}</b> total</span>
+            <span class="ta-total"><b>Q ${fmt.monto(vivas.reduce((t, o) => t + o.recibido * tc(o), 0))}</b> recibido</span>
+            <span class="ta-total sin"><b>Q ${fmt.monto(vivas.reduce((t, o) => t + o.saldo * tc(o), 0))}</b> por recibir</span>
+            <span class="ta-total"><b>${filas.filter((o) => o.estado === 'EN AUTORIZACIÓN').length}</b> en autorización</span>
+          </div>
+          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Folio, número, proveedor, usuario…" value="${esc(f.buscar)}" aria-label="Buscar órdenes"></label>
+        </header>
+        <div class="ta-tabla cc-tabla">
+          <table class="ccq-tabla oqc-tabla">
+            <thead><tr>${ordenTh('folio', 'Folio', 'num')}<th>Número de orden</th>${ordenTh('fecha', 'Fecha')}<th>Proveedor · NIT</th><th>Bodega</th><th class="num">Productos</th>${ordenTh('total', 'Total', 'num')}<th class="num">Por recibir</th><th>Estado</th><th>Usuario</th><th aria-label="Ver"></th></tr></thead>
+            <tbody>${filas.map((o) => { const p = prov(o.proveedor_id), b = bodega(o.bodega_id), sim = ctx.moneda(o.moneda_id)?.simbolo || 'Q'; return `<tr data-orden="${o.id}" class="${sel && sel.id === o.id ? 'actual' : ''} ${o.estado === 'ANULADA' ? 'pc-anulada' : ''}" tabindex="0">
+              <td class="num fuerte">${o.folio}</td><td><b class="ccq-doc">${esc(o.numero || '')}</b></td><td>${esc(fmt.fechaDia(o.fecha))}</td>
+              <td class="cc-nombre" title="${esc(p?.nombre_comercial || '')}"><b>${esc(p?.nombre_comercial || '')}</b><small>${esc([p?.codigo != null && `Cód. ${p.codigo}`, p?.nit && `NIT ${p.nit}`].filter(Boolean).join(' · '))}</small></td>
+              <td>${esc(b ? `${b.codigo} · ${b.nombre}` : '')}</td><td class="num">${o.productos}</td>
+              <td class="num"><b>${esc(sim)} ${fmt.monto(o.total)}</b></td><td class="num ${o.saldo > 0.004 ? 'cq-saldo' : ''}">${['AUTORIZADA', 'RECIBIDA PARCIAL'].includes(o.estado) ? fmt.monto(o.saldo) : '—'}</td>
+              <td>${marca(o.estado)}</td><td>${esc(o.usuario || o.creado_por_nombre || '')}</td>
+              <td class="cq-acc"><button type="button" class="boton secundario-sm ccq-ver" data-ver="${o.id}" title="Abrir la orden en Solicitudes de compra"><i class="ti ti-eye" aria-hidden="true"></i></button></td></tr>`; }).join('')
+              || `<tr><td colspan="11" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : 'No hay órdenes con estos parámetros.'}</td></tr>`}</tbody></table>
+        </div>`;
+    }
+    function pintarDetalle() {
+      const o = sel;
+      if (!o) { ctx.pDet.innerHTML = ctx.vacio(ctx.sel.loc ? 'Elige una orden para ver su detalle.' : 'Elige la empresa.', 'ti-file-search'); return; }
+      const { lineas, ingresos } = detalle;
+      const p = prov(o.proveedor_id), b = bodega(o.bodega_id), sim = ctx.moneda(o.moneda_id)?.simbolo || 'Q';
+      const suma = (k) => lineas.reduce((t, l) => t + Number(l[k] || 0), 0);
+      ctx.pDet.innerHTML = `
+        <div class="tk-form cq-ficha">
+          <header class="tk-titulo cb-titulo">
+            <span class="tk-icono"><i class="ti ti-clipboard-list" aria-hidden="true"></i></span>
+            <div class="tk-titulo-texto"><small>Orden ${o.folio}${o.numero ? ` · ${esc(o.numero)}` : ''}</small><h2>${esc(p?.nombre_comercial || '')}</h2></div>
+            <dl class="cq-datos">
+              <div><dt>Fecha</dt><dd>${esc(fmt.fechaDia(o.fecha))}</dd></div>
+              <div><dt>Bodega</dt><dd>${esc(b ? b.nombre : '—')}</dd></div>
+              <div><dt>Pago</dt><dd>${esc(o.forma_pago || '')}${o.forma_pago === 'CRÉDITO' ? ` · ${o.dias_credito || 0} d` : ''}</dd></div>
+              <div><dt>Total</dt><dd>${esc(sim)} ${fmt.monto(o.total)}</dd></div>
+              <div><dt>Por recibir</dt><dd>${esc(sim)} ${fmt.monto(o.saldo)}</dd></div>
+              <div><dt>Estado</dt><dd>${marca(o.estado)}</dd></div>
+            </dl>
+            <div class="tk-titulo-acciones">
+              ${o.aprobado_por ? `<span class="oqc-quien" title="Aprobada">Aprobó ${esc(o.aprobado_por)}</span>` : ''}
+              <button type="button" class="boton secundario-sm" data-ver="${o.id}"><i class="ti ti-eye" aria-hidden="true"></i> Ver orden</button>
+              ${['AUTORIZADA', 'RECIBIDA PARCIAL'].includes(o.estado) && ctx.admin ? '<a class="boton primario-sm" href="#/compras/ordenes-de-compra"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Recibir</a>' : ''}
+            </div>
+          </header>
+          ${o.motivo_rechazo || o.motivo_anulacion ? `<p class="tk-aviso bm-anulado"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(o.motivo_anulacion ? `Anulada: ${o.motivo_anulacion}` : `Rechazada: ${o.motivo_rechazo}`)}</p>` : ''}
+          <div class="cq-det">
+            <section class="cb-bloque cq-lineas">
+              <h3 class="ta-col-titulo"><i class="ti ti-package" aria-hidden="true"></i> Productos <small>${lineas.length}</small></h3>
+              <div class="pc-lineas"><table>
+                <thead><tr><th class="pc-n">Línea</th><th>Código</th><th>Producto</th><th class="num">Solicitado</th><th class="num">Aprobado</th><th class="num">Recibido</th><th class="num">Saldo</th><th class="num">Precio</th><th class="num">Total</th></tr></thead>
+                <tbody>${lineas.map((l) => { const pd = prod(l.producto_id); const q = ['INGRESADA', 'EN AUTORIZACIÓN', 'RECHAZADA'].includes(o.estado) ? l.cantidad_solicitada : (l.aprueba === false ? 0 : l.cantidad_aprobada); return `<tr class="${l.aprueba === false ? 'pc-anulada' : ''}">
+                  <td class="pc-n">${l.linea}</td><td class="fuerte">${esc(pd?.codigo_producto || String(pd?.codigo ?? ''))}</td><td class="cc-nombre" title="${esc(pd?.nombre || '')}">${esc(pd?.nombre || `Producto ${l.producto_id}`)}</td>
+                  <td class="num">${cant(l.cantidad_solicitada)}</td><td class="num">${l.aprueba === false ? 'No' : cant(l.cantidad_aprobada)}</td><td class="num">${cant(l.recibido)}</td><td class="num ${Number(l.saldo) > 0 ? 'cq-saldo' : ''}">${cant(l.saldo)}</td>
+                  <td class="num">${fmt.monto(l.precio_unitario)}</td><td class="num fuerte">${fmt.monto(Number(q) * Number(l.precio_unitario))}</td></tr>`; }).join('') || '<tr><td colspan="9" class="tk-vacio">La orden no tiene productos.</td></tr>'}</tbody>
+                <tfoot><tr><td colspan="3">Totales</td><td class="num">${cant(suma('cantidad_solicitada'))}</td><td class="num">${cant(suma('cantidad_aprobada'))}</td><td class="num">${cant(suma('recibido'))}</td><td class="num">${cant(suma('saldo'))}</td><td></td><td class="num">${esc(sim)} ${fmt.monto(o.total)}</td></tr></tfoot>
+              </table></div>
+            </section>
+            <section class="cb-bloque cq-conta">
+              <h3 class="ta-col-titulo"><i class="ti ti-truck-delivery" aria-hidden="true"></i> Ingresos de la orden <small>${ingresos.length}</small></h3>
+              <div class="pc-lineas"><table><thead><tr><th class="num">Ingreso</th><th>Fecha</th><th>Documento</th><th class="num">Valor</th><th>Estado</th><th>Compra</th></tr></thead>
+                <tbody>${ingresos.map((x) => `<tr><td class="num fuerte">${x.numero}</td><td>${esc(fmt.fechaDia(x.fecha_ingreso))}</td><td>${esc([x.serie, x.documento].filter(Boolean).join('-'))}</td><td class="num">${fmt.monto(x.total)}</td>
+                  <td><span class="pc-marca ${x.estado === 'APLICADO' ? 'definitiva' : x.estado === 'ANULADO' ? 'anulada' : 'pendiente'}">${esc(x.estado)}</span></td><td>${x.compra_id ? `<a href="#/compras/facturas-compra/${x.compra_id}" class="pc-tipo">Ver compra</a>` : '—'}</td></tr>`).join('') || '<tr><td colspan="6" class="tk-vacio">Sin ingresos todavía.</td></tr>'}</tbody>
+                <tfoot><tr><td colspan="3">Total recibido</td><td class="num">${fmt.monto(ingresos.filter((x) => x.estado !== 'ANULADO').reduce((t, x) => t + x.total, 0))}</td><td colspan="2"></td></tr></tfoot></table></div>
+            </section>
+          </div>
+        </div>`;
+    }
+
+    // ---------- Reportes ----------
+    function parametros() {
+      const emp = ctx.localidad(ctx.sel.loc), b = bodega(Number(f.bodega));
+      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Proveedor: ${f.proveedor.trim() || 'Todos'}`,
+        `Bodega: ${b ? b.nombre : 'Todas'}`, `Estado: ${f.estado}`, `Orden: ${ORDENES.find(([x]) => x === `${f.orden}:${f.dir}`)?.[1] || ''}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
+    }
+    async function reporte(formato) {
+      const filas = visibles();
+      if (!filas.length) return window.FIN.aviso('No hay órdenes con estos parámetros');
+      const tipo = await new Promise((ok) => {
+        let formRef = null;
+        window.UI.formulario({ titulo: `Reporte de órdenes en ${formato === 'PDF' ? 'PDF' : 'Excel'}`, campos: [],
+          alPreparar: (form) => { formRef = form; form.querySelector('.modal-cuerpo').innerHTML = `<fieldset class="cqc-tipos"><legend>Tipo de reporte</legend>
+            <label class="cqc-tipo"><input type="radio" name="tipo" value="RESUMIDO" checked><i class="ti ti-list" aria-hidden="true"></i><span><b>1. Resumido</b><small>El listado de las ${filas.length} órdenes.</small></span></label>
+            <label class="cqc-tipo"><input type="radio" name="tipo" value="PRODUCTOS"><i class="ti ti-package" aria-hidden="true"></i><span><b>2. Con productos</b><small>Cada orden con sus productos: solicitado, aprobado, recibido y saldo.</small></span></label></fieldset>`;
+            form.querySelector('[type=submit]').innerHTML = formato === 'PDF' ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'; },
+          alGuardar: async () => ok(formRef?.elements.tipo?.value || 'RESUMIDO') });
+      });
+      const conProd = tipo === 'PRODUCTOS';
+      const det = new Map();
+      if (conProd) for (let i = 0; i < filas.length; i += 150) {
+        const { data } = await sb.from('orden_lineas_saldo').select('*').in('orden_id', filas.slice(i, i + 150).map((o) => o.id)).order('linea');
+        (data || []).forEach((l) => { if (!det.has(l.orden_id)) det.set(l.orden_id, []); det.get(l.orden_id).push(l); });
+      }
+      const out = [];
+      filas.forEach((o) => {
+        const p = prov(o.proveedor_id), b = bodega(o.bodega_id);
+        out.push({ valores: [o.folio, o.numero || '', fmt.fechaDia(o.fecha), p?.nombre_comercial || '', b?.nombre || '', o.productos, fmt.redondear(o.total), fmt.redondear(o.saldo), o.estado], tipo: conProd ? 'grupo' : undefined, combinar: false });
+        if (conProd) (det.get(o.id) || []).forEach((l) => { const pd = prod(l.producto_id); out.push({ valores: ['', pd?.codigo_producto || String(pd?.codigo ?? ''), '', pd?.nombre || '', `Sol. ${cant(l.cantidad_solicitada)} · Apr. ${l.aprueba === false ? 'No' : cant(l.cantidad_aprobada)}`, Number(l.recibido || 0), fmt.redondear(Number(l.cantidad_aprobada || l.cantidad_solicitada) * Number(l.precio_unitario)), Number(l.saldo || 0), ''] }); });
+      });
+      const vivas = filas.filter((o) => !['ANULADA', 'RECHAZADA'].includes(o.estado));
+      out.push({ valores: [`${filas.length} orden(es)`, '', '', '', '', '', fmt.redondear(vivas.reduce((t, o) => t + o.total, 0)), fmt.redondear(vivas.reduce((t, o) => t + o.saldo, 0)), ''], tipo: 'total' });
+      const cfg = { titulo: `Consulta de Órdenes de compra · ${conProd ? 'Con productos' : 'Resumido'}`, parametros: parametros(), orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Órdenes', archivo: `ordenes_compra_${f.hasta}`,
+        columnas: [{ titulo: 'Folio', tipo: 'texto', ancho: 9 }, { titulo: conProd ? 'Número · código' : 'Número de orden', tipo: 'texto', ancho: 18 }, { titulo: 'Fecha', tipo: 'texto', ancho: 11 }, { titulo: conProd ? 'Proveedor · producto' : 'Proveedor', tipo: 'texto', ancho: 40 },
+          { titulo: conProd ? 'Bodega · cantidades' : 'Bodega', tipo: 'texto', ancho: 22 }, { titulo: conProd ? 'Productos · recibido' : 'Productos', tipo: 'numero', ancho: 12 }, { titulo: 'Total', tipo: 'monto', ancho: 15 }, { titulo: 'Por recibir', tipo: 'monto', ancho: 15 }, { titulo: 'Estado', tipo: 'texto', ancho: 16 }],
+        filas: out };
+      if (formato === 'PDF') return window.CUENTAS_XLSX.pdf(cfg);
+      return window.REPORTE_XLSX.generar(cfg);
+    }
+
+    cont.addEventListener('change', (e) => {
+      const cambio = ctx.cambioOrgLoc(e);
+      if (cambio === 'org' || cambio === 'loc') return cargarLocalidad();
+      const n = e.target.name;
+      if (n === 'orden') { [f.orden, f.dir] = e.target.value.split(':'); return pintar(); }
+      if (!(n in f) || n === 'buscar') return;
+      f[n] = e.target.value;
+      if (n === 'desde' && f.hasta < f.desde) f.hasta = f.desde;
+      if (n === 'hasta' && f.desde > f.hasta) f.desde = f.hasta;
+      sel = null; pintarFiltros(); consultar();
+    });
+    cont.addEventListener('input', (e) => { if (e.target.matches('[data-buscar]')) { f.buscar = e.target.value; const pos = e.target.selectionStart; pintarMaestro(); const b = ctx.pMae.querySelector('[data-buscar]'); b.focus(); b.setSelectionRange(pos, pos); } });
+    cont.addEventListener('click', (e) => {
+      const v = e.target.closest('[data-ver]');
+      if (v) { guardarSesion('fin.orden.ver', v.dataset.ver); location.hash = '#/compras/solicitudes-de-compra'; return; }
+      const th = e.target.closest('[data-ordenar]');
+      if (th) { const c = th.dataset.ordenar; if (f.orden === c) f.dir = f.dir === 'asc' ? 'desc' : 'asc'; else { f.orden = c; f.dir = c === 'total' || c === 'folio' ? 'desc' : 'asc'; } pintarFiltros(); return pintar(); }
+      const tr = e.target.closest('tr[data-orden]');
+      if (tr) return elegir(ordenes.find((o) => String(o.id) === tr.dataset.orden));
+      const a = e.target.closest('[data-accion]')?.dataset.accion;
+      if (a === 'pdf') return reporte('PDF');
+      if (a === 'excel') return reporte('EXCEL');
+    });
+    cont.addEventListener('keydown', (e) => { const tr = e.target.closest?.('tr[data-orden]'); if (tr && e.key === 'Enter') tr.click(); if (e.key === 'Enter' && e.target.matches('[data-buscar]')) e.preventDefault(); });
     iniciar();
   };
 })();
