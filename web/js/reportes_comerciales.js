@@ -168,7 +168,7 @@
       if (R.tipo === 'TERCERO') {
         if (det) {
           const filas = [];
-          porTer.forEach((t) => { filas.push({ valores: [`${t.cod ? `${t.cod} · ` : ''}${t.nom}${t.nit ? ` · NIT ${t.nit}` : ''}`], tipo: 'grupo', combinar: true }); t.xs.forEach((x) => filas.push(filaDet(x))); filas.push(subDet(`Total ${L.tercero.toLowerCase()} (${t.xs.length})`, t.xs)); });
+          porTer.forEach((t) => { filas.push({ valores: [`${t.cod ? `${t.cod} · ` : ''}${t.nom}${t.nit ? ` · NIT ${t.nit}` : ''}`], tipo: 'grupo', combinar: true }); [...t.xs].sort((x1, x2) => x2.fecha.localeCompare(x1.fecha) || String(x2.doc).localeCompare(String(x1.doc))).forEach((x) => filas.push(filaDet(x))); filas.push(subDet(`Total ${L.tercero.toLowerCase()} (${t.xs.length})`, t.xs)); });
           filas.push({ ...subDet(`Total general (${regs.length})`, regs), tipo: 'total' });
           return { ...base, parametros: parametros(['Detallado']), columnas: colsDet, filas, n: regs.length, kpis: [[L.terceros, porTer.length], ...kpisBase], graficas: [grafTer()] };
         }
