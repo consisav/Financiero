@@ -60,7 +60,8 @@
         <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
         <datalist id="cx-clientes">${clientes.map((x) => `<option value="${esc(x.nombre)} — ${x.codigo}"></option>`).join('')}</datalist>
         ${c || !f.cliente ? '' : '<small class="cx-aviso pc-rojo">Cliente no encontrado</small>'}`,
-        `<button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato.startsWith('PDF') ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
+        `<button type="button" class="boton secundario-sm cqc-excel" data-accion="excel-vista" title="Descargar en Excel (.xlsx) lo que se ve en pantalla, con los parámetros elegidos"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>
+         <button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato.startsWith('PDF') ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
          ${modo === 'PERIODO' ? `<button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>` : ''}
          <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del cliente elegido o, si está en TODOS, de todos los clientes (en PDF o Excel según el formato)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
@@ -201,6 +202,30 @@
     }
 
     function titulo() { return `${TITULOS[modo][0]} · ${modo === 'MENSUAL' ? `${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `saldo al ${fmt.fechaDia(f.hasta)}`}`; }
+    const parametrosVista = () => [`Empresa: ${empresaTxt(ctx)}`, modo === 'MENSUAL' ? `Mes: ${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `Año venta: ${f.anio} · saldo al ${fmt.fechaDia(f.hasta)}`,
+      `Cliente: ${cliDe(f.cliente)?.nombre || 'TODOS'}`, `Saldo: ${f.saldo}`, `Tipo cliente: ${f.tipo || 'TODOS'}`, ...(modo !== 'PERIODO' ? [`Tipo fecha: ${f.fecha === 'ESTIMADA' ? 'ESTIMADA COBRO' : 'EMISIÓN'}`] : []), X.textoOrden(ord(), 'FECHA COBRO')];
+    // Excel de la vista en pantalla: el listado de facturas o, con «Resumen», el resumen por cliente.
+    function excelVista() {
+      if (!filas.length) return window.FIN.aviso('No hay facturas con esos filtros');
+      if (!window.REPORTE_XLSX) return window.FIN.aviso('No se pudo generar el Excel');
+      const r2 = (n) => Math.round(Number(n || 0) * 100) / 100;
+      const base = { titulo: resumen ? `${titulo()} · Resumen por cliente` : titulo(), parametros: parametrosVista(), orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: TITULOS[modo][0].slice(0, 30), autofiltro: true,
+        archivo: `cxc_${modo.toLowerCase()}_${resumen ? 'resumen_' : ''}${modo === 'MENSUAL' ? `${f.anio}_${String(f.mes).padStart(2, '0')}` : f.hasta}` };
+      let p;
+      if (resumen) {
+        const g = agrupar(filas);
+        p = window.REPORTE_XLSX.generar({ ...base,
+          columnas: [{ titulo: 'Cliente', ancho: 10 }, { titulo: 'Nombre cliente', ancho: 46 }, { titulo: 'NIT', ancho: 14 }, { titulo: 'Facturas', ancho: 10, tipo: 'entero' }, { titulo: 'Mayor mora', ancho: 11, tipo: 'entero' }, { titulo: 'Valor total Q', ancho: 16, tipo: 'monto' }, { titulo: 'Saldo Q', ancho: 16, tipo: 'monto' }],
+          filas: [...g.map((x) => ({ valores: [String(x.codigo ?? ''), x.nombre || '', x.nit || '', x.docs, x.mora, r2(x.valor), r2(x.saldo)] })),
+            { tipo: 'total', valores: [`${g.length} cliente(s)`, '', '', filas.length, '', r2(g.reduce((t, x) => t + x.valor, 0)), r2(g.reduce((t, x) => t + x.saldo, 0))] }] });
+      } else {
+        p = window.REPORTE_XLSX.generar({ ...base,
+          columnas: [{ titulo: 'Factura', ancho: 12 }, { titulo: 'Serie', ancho: 12 }, { titulo: 'Número DTE', ancho: 16 }, { titulo: 'Emisión', ancho: 12 }, { titulo: 'Se estima cobro', ancho: 14 }, { titulo: 'Días mora', ancho: 10, tipo: 'entero' }, { titulo: 'Contraseña', ancho: 14 }, { titulo: 'Cliente', ancho: 9 }, { titulo: 'Nombre cliente', ancho: 44 }, { titulo: 'Valor total Q', ancho: 15, tipo: 'monto' }, { titulo: 'Saldo Q', ancho: 15, tipo: 'monto' }],
+          filas: [...filas.map((x) => ({ valores: [String(x.no_interno || x.numero), x.serie || '', x.numero_dte || '', fmt.fechaDia(x.emision), fmt.fechaDia(x.fc), x.mora, x.contrasena || '', String(x.codigo ?? ''), x.nombreCli, r2(x.valor), r2(x.saldoQ)] })),
+            { tipo: 'total', valores: [`${filas.length} factura(s) · Total`, '', '', '', '', '', '', '', '', r2(filas.reduce((t, x) => t + x.valor, 0)), r2(filas.reduce((t, x) => t + x.saldoQ, 0))] }] });
+      }
+      return Promise.resolve(p).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
+    }
     // Excel: resumido, detallado o por periodo (según el parámetro del encabezado).
     function excelRep() {
       const periodo = modo === 'MENSUAL' ? `Mes: ${MESES[f.mes - 1]} ${f.anio}` : modo === 'GENERAL' ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}` : `Saldo al ${fmt.fechaDia(f.hasta)}`;
@@ -233,9 +258,9 @@
     // Estado de cuenta: las facturas del cliente con sus cobros y notas, y el saldo acumulado.
     // Estado de cuenta del cliente elegido o, en TODOS, de todos (PDF o Excel según «Formato»), con el periodo del encabezado:
     // lo anterior a la fecha inicial queda como saldo anterior.
-    async function estadoCuentaRep() {
-      const t = cliDe(f.cliente);
-      if (f.cliente && !t) return window.FIN.aviso('Cliente no encontrado: elígelo de la lista o deja TODOS');
+    async function estadoCuentaRep(clienteId) {
+      const t = clienteId ? cli(clienteId) : cliDe(f.cliente);
+      if (!clienteId && f.cliente && !t) return window.FIN.aviso('Cliente no encontrado: elígelo de la lista o deja TODOS');
       const ini = modo === 'MENSUAL' ? `${f.anio}-${String(f.mes).padStart(2, '0')}-01` : modo === 'PERIODO' ? `${f.anio}-01-01` : f.desde;
       const fin = modo === 'MENSUAL' ? new Date(f.anio, f.mes, 0).toLocaleDateString('en-CA') : f.hasta;
       // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
@@ -297,9 +322,10 @@
       const col = e.target.closest('th[data-orden]');
       if (col) return ordenarCol(col.dataset.orden);
       const rc = e.target.closest('tr[data-cliente]');
-      if (rc && rc.dataset.cliente) return estadoCuenta(Number(rc.dataset.cliente));
+      if (rc && rc.dataset.cliente) return estadoCuentaRep(Number(rc.dataset.cliente));
       const a = e.target.closest('[data-accion]')?.dataset.accion;
       if (a === 'imprimir') return imprimirRep();
+      if (a === 'excel-vista') return excelVista();
       if (a === 'resumen') { resumen = !resumen; pintarFiltros(); return pintar(); }
       if (a === 'sugerencia') { const s = sugerencia(); if (s) { s.aplicar(); pintarFiltros(); } return pintar(); }
       if (a === 'estado-cuenta') return estadoCuentaRep();
