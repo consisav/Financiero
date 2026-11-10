@@ -57,16 +57,18 @@
       const partes = k.split('{*}');
       const ini = partes[0].trim(), fin = partes[partes.length - 1].trim();
       if (!ini && !fin) continue;
-      const x = { re: new RegExp(`^${partes.map(escRe).join('(.+?)')}$`), v };
+      const x = { re: new RegExp(`^${partes.map(escRe).join('(.+?)')}$`), v, fijo: partes.join('').length };
       const mapa = ini ? indice.ini : indice.fin;
       const w = ini ? ini.split(' ')[0] : fin.split(' ').pop();
       if (!mapa.has(w)) mapa.set(w, []);
       mapa.get(w).push(x);
     }
+    // La plantilla con más texto fijo (la más específica) se prueba primero.
+    for (const m of [indice.ini, indice.fin]) for (const l of m.values()) l.sort((a, b) => b.fijo - a.fijo);
   }
   function plantilla(k) {
     if (!indice) prepararIndice();
-    const cand = [...(indice.ini.get(k.split(' ')[0]) || []), ...(indice.fin.get(k.split(' ').pop()) || [])];
+    const cand = [...(indice.ini.get(k.split(' ')[0]) || []), ...(indice.fin.get(k.split(' ').pop()) || [])].sort((a, b) => b.fijo - a.fijo);
     for (const { re, v } of cand) {
       const m = k.match(re);
       if (!m) continue;
