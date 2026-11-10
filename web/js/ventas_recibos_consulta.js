@@ -18,10 +18,12 @@
     // Fecha inicial por omisión: el primer día del mes en curso (cada vez que se abre la pantalla).
     const primeroDelMes = () => `${fmt.hoy().slice(0, 7)}-01`;
     const f = { cliente: '', vendedor: '', forma: '', periodo: 'RANGO', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
-    let recibos = [], aplicado = new Map(), vendedores = [], sel = null, consulta = 0, rango = null, pagos = [];
+    let recibos = [], aplicado = new Map(), vendedores = [], clientes = [], sel = null, consulta = 0, rango = null, pagos = [];
 
     const nombre = (x) => [x.serie, x.recibo_fisico].filter((v) => v != null && v !== '').join('-') || `Interno ${x.numero}`;
     const vendedor = (id) => vendedores.find((v) => v.id === id);
+    const etiquetaCli = (c) => `${c.codigo} · ${c.nombre}`;
+    const clienteElegido = () => clientes.find((c) => etiquetaCli(c) === f.cliente.trim());
     const asignado = (x) => x.estado !== 'ANULADO' && x.situacion !== 'LIQUIDADO' && (aplicado.get(x.id) || 0) > 0.005;
     const estadoDe = (x) => x.estado === 'ANULADO' ? ['anulada', 'Anulado'] : x.situacion === 'LIQUIDADO' ? ['aprobada', 'Liquidado'] : asignado(x) ? ['pendiente', 'Asignado'] : ['definitiva', 'Emitido'];
     const historia = () => f.periodo === 'HISTORIA';
@@ -30,7 +32,7 @@
 
     function pintarFiltros() {
       ctx.filtros(`
-        <label class="campo cq-prov"><span>Cliente</span><input name="cliente" value="${esc(f.cliente)}" placeholder="Todos (nombre o código)"></label>
+        <label class="campo cq-prov"><span>Cliente</span><input type="search" name="cliente" list="vrc-clientes" autocomplete="off" value="${esc(f.cliente)}" placeholder="Todos · escribe o elige de la lista (${clientes.length.toLocaleString('es-GT')} clientes)"><datalist id="vrc-clientes">${clientes.map((c) => `<option value="${esc(etiquetaCli(c))}">${esc(c.documento || '')}</option>`).join('')}</datalist></label>
         <label class="campo"><span>Vendedor</span><select name="vendedor"><option value="">Todos</option>${vendedores.map((v) => `<option value="${v.id}" ${String(f.vendedor) === String(v.id) ? 'selected' : ''}>${v.codigo} · ${esc(v.nombre)}</option>`).join('')}</select></label>
         <label class="campo"><span>Forma de pago</span><select name="forma"><option value="">Todas</option>${FORMAS.map((x) => `<option ${f.forma === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
         <label class="campo"><span>Fechas</span><select name="periodo">${PERIODOS.map(([k, t]) => `<option value="${k}" ${f.periodo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
@@ -50,8 +52,11 @@
     }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc || 0;
-      const v = await sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo');
+      const [v, cl] = await Promise.all([sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo'),
+        window.UI.todo(sb.from('clientes').select('id, codigo, nombre, documento').eq('localidad_id', loc).order('nombre').order('id')).catch(() => [])]);
       vendedores = v.data || [];
+      clientes = Array.isArray(cl) ? cl : (cl && cl.data) || [];
+      f.cliente = '';
       f.desde = primeroDelMes(); f.hasta = fmt.hoy(); f.periodo = 'RANGO';
       f.vendedor = '';
       pintarFiltros();
@@ -94,10 +99,11 @@
     const visibles = () => {
       const q = f.buscar.trim().toLowerCase();
       const c = f.cliente.trim().toLowerCase();
+      const ce = clienteElegido();
       return recibos.filter((x) => (f.estado === 'TODOS' || (f.estado === 'VIGENTES' && x.estado !== 'ANULADO') || (f.estado === 'ANULADOS' && x.estado === 'ANULADO')
         || (f.estado === 'EMITIDOS' && x.estado !== 'ANULADO' && x.situacion !== 'LIQUIDADO' && !asignado(x)) || (f.estado === 'ASIGNADOS' && asignado(x)) || (f.estado === 'LIQUIDADOS' && x.estado !== 'ANULADO' && x.situacion === 'LIQUIDADO')
         || (f.estado === 'CON SALDO DISPONIBLE' && disponible(x) > 0.005))
-        && (!c || [x.nombre, x.cliente_codigo_anterior].some((v) => String(v ?? '').toLowerCase().includes(c)))
+        && (!c || (ce ? x.cliente_id === ce.id : [x.nombre, x.cliente_codigo_anterior].some((v) => String(v ?? '').toLowerCase().includes(c))))
         && (!q || [x.numero, x.serie, x.recibo_fisico, x.nombre, x.documento, x.banco, x.descripcion, x.observaciones].some((v) => String(v ?? '').toLowerCase().includes(q))))
         .sort((a, b) => {
           const va = f.orden === 'numero' ? a.numero : f.orden === 'valor' ? Number(a.valor) : a.fecha;
