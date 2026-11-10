@@ -6384,3 +6384,18 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
   .dpc-consulta .bk-detalle { order: 1 !important; }
 }
 @media (max-width: 760px) { .dpc-consulta .dpc-tabla { min-width: 1120px !important; } }
+
+/* ---------- Cajas: síntesis de cajas y subcajas con información ---------- */
+.cs-sintesis { flex-wrap: wrap; }
+.cs-con-info { color: var(--verde-t); }
+.cd5-sub .ta-col-titulo { flex-wrap: wrap; }
+.cd5-info { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--borde); background: var(--panel); color: var(--suave); border-radius: 999px; padding: 2px 9px; font: inherit; font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.cd5-info:hover { border-color: var(--acento); color: var(--acento); }
+.cd5-info.activo { background: var(--acento-fondo); border-color: var(--acento); color: var(--acento); }
+.cd5-tabla tr.cd5-vacia td { color: var(--tenue); }
+.cd5-lin { display: inline-block; min-width: 26px; padding: 0 6px; border-radius: 999px; background: var(--azul-f); color: var(--azul-t); font-size: 11.5px; font-weight: 700; }
+.cc-en-detalle .cc-docs.cc-solo-contable, .cc-docs.cc-solo-contable { grid-template-columns: minmax(0, 1fr) !important; }
+.cc-solo-contable .cc-docs-lista { border-right: 0; }
+/* El detalle contable muestra todas sus columnas (la regla de arriba oculta el NIT de los documentos, no el Debe). */
+.cc-en-detalle .cc-solo-contable .cc-docs-tabla th:nth-child(6), .cc-en-detalle .cc-solo-contable .cc-docs-tabla td:nth-child(6) { display: table-cell !important; }
+.cc-en-detalle .cc-solo-contable .cc-docs-tabla th:nth-child(2), .cc-en-detalle .cc-solo-contable .cc-docs-tabla td:nth-child(2) { max-width: none; }

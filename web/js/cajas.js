@@ -46,6 +46,11 @@
     let buscar = '';
     let paginaSub = 0;            // página de la lista de subcajas (5 por página)
     let paginaFijada = false;     // true cuando el usuario cambió de página
+    // Síntesis: detalle contable de cada subcaja (vista caja_periodos_contable, script 185) y resumen de cada caja.
+    let contablePer = new Map();  // periodo_id → { lineas, debe, haber }
+    let resumenCaja = new Map();  // caja_id → { subcajas, conDocs, conLineas, sinInfo, lineas, documentos }
+    let soloInfo = false;         // lista de subcajas: solo las que tienen documentos o detalle contable
+    const conInfo = (x) => Number(x.documentos || 0) > 0 || Number(contablePer.get(x.id)?.lineas || 0) > 0;
 
     const contable = (id) => contables.find((x) => x.id === id);
     const centro = (id) => centros.find((x) => x.id === id);
@@ -114,9 +119,24 @@
       cajas = data || [];
       await asegurarCuentas(cajas.flatMap((c) => [c.cuenta_id, c.cuenta_caja_id, c.cuenta_iva_id, c.cuenta_retencion_id, c.cuenta_anticipo_id]));
       const ids = cajas.map((c) => c.id);
-      const { data: ps } = ids.length ? await sb.from('caja_periodos_resumen').select('id, caja_id, numero, anio, mes, estado, liquidado, anticipo_valor, adelanto_valor, disponible, documentos').in('caja_id', ids).order('numero', { ascending: false }) : { data: [] };
+      const [{ data: ps }, cn] = ids.length ? await Promise.all([
+        window.UI.todo(sb.from('caja_periodos_resumen').select('id, caja_id, numero, anio, mes, estado, liquidado, anticipo_valor, adelanto_valor, disponible, documentos').in('caja_id', ids).order('numero', { ascending: false })),
+        window.UI.todo(sb.from('caja_periodos_contable').select('id, caja_id, lineas, debe, haber').in('caja_id', ids).order('id'))
+      ]) : [{ data: [] }, { data: [] }];
       ultimo = new Map();
       (ps || []).forEach((p) => { if (!ultimo.has(p.caja_id)) ultimo.set(p.caja_id, p); });
+      // Síntesis por caja: subcajas, cuántas tienen documentos o detalle contable, y sus líneas (sin el script 185, solo documentos).
+      contablePer = new Map((cn.error ? [] : cn.data || []).map((x) => [x.id, x]));
+      resumenCaja = new Map();
+      (ps || []).forEach((p) => {
+        const r = resumenCaja.get(p.caja_id) || { subcajas: 0, conDocs: 0, conLineas: 0, sinInfo: 0, lineas: 0, documentos: 0 };
+        const l = Number(contablePer.get(p.id)?.lineas || 0), d = Number(p.documentos || 0);
+        r.subcajas += 1; r.documentos += d; r.lineas += l;
+        if (d) r.conDocs += 1;
+        if (l) r.conLineas += 1;
+        if (!d && !l) r.sinInfo += 1;
+        resumenCaja.set(p.caja_id, r);
+      });
       const guardada = Number(leerSesion('fin.caja'));
       caja = cajas.find((c) => c.id === (caja?.id || guardada)) || cajas[0] || null;
       pintarFiltros();
@@ -127,24 +147,35 @@
     function pintarCajas() {
       const q = buscar.trim().toLowerCase();
       const filas = cajas.filter((c) => !q || [c.codigo, c.nombre, c.responsable, c.tipo_caja, contable(c.cuenta_id)?.codigo].some((v) => String(v || '').toLowerCase().includes(q)));
+      const tot = [...resumenCaja.values()].reduce((a, r) => ({ subcajas: a.subcajas + r.subcajas, conDocs: a.conDocs + r.conDocs, conLineas: a.conLineas + r.conLineas, sinInfo: a.sinInfo + r.sinInfo, lineas: a.lineas + r.lineas }), { subcajas: 0, conDocs: 0, conLineas: 0, sinInfo: 0, lineas: 0 });
+      const cajasConInfo = cajas.filter((c) => { const r = resumenCaja.get(c.id); return r && (r.conDocs || r.conLineas); }).length;
+      const info = (c) => { const r = resumenCaja.get(c.id); if (!r) return '<span class="tk-tenue">Sin subcajas</span>';
+        return `<b class="${r.conDocs || r.conLineas ? 'cs-con-info' : 'tk-tenue'}">${r.subcajas} subcaja${r.subcajas === 1 ? '' : 's'}</b><small>${[r.conDocs ? `${r.conDocs} con documentos` : '', r.conLineas ? `${r.conLineas} con contable (${r.lineas.toLocaleString('es-GT')} líneas)` : '', r.sinInfo ? `${r.sinInfo} vacías` : ''].filter(Boolean).join(' · ')}</small>`; };
       ctx.pMae.innerHTML = `
         <header class="tk-bandeja-cab cc-cab">
           <h2>Selección de caja a operar <small>${cajas.length}</small></h2>
-          <span class="cc-ayuda"><i class="ti ti-hand-click" aria-hidden="true"></i> Elige la caja y presiona «Ir a detalle» (o doble clic en la fila).</span>
+          <div class="ta-totales pc-resumen cs-sintesis" title="Síntesis de la información de las cajas de la empresa">
+            <span class="ta-total"><b>${cajasConInfo}</b> de ${cajas.length} cajas con información</span>
+            <span class="ta-total"><b>${tot.subcajas.toLocaleString('es-GT')}</b> subcajas</span>
+            <span class="ta-total"><b>${tot.conDocs.toLocaleString('es-GT')}</b> con documentos</span>
+            <span class="ta-total"><b>${tot.conLineas.toLocaleString('es-GT')}</b> con detalle contable · ${tot.lineas.toLocaleString('es-GT')} líneas</span>
+            <span class="ta-total sin"><b>${tot.sinInfo.toLocaleString('es-GT')}</b> vacías</span>
+          </div>
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Buscar caja, responsable, cuenta…" value="${esc(buscar)}" aria-label="Buscar cajas"></label>
         </header>
         <div class="ta-tabla cc-tabla">
-          <table class="bmc-tabla cs-tabla"><colgroup><col style="width:58px"><col><col style="width:15%"><col style="width:24%"><col style="width:130px"><col style="width:150px"><col style="width:120px"><col style="width:96px"></colgroup>
-            <thead><tr><th class="num">Caja</th><th>Nombre</th><th>Responsable</th><th>Cuenta contable asociada</th><th class="num">Fondo</th><th>Subcaja actual</th><th class="num">Disponible</th><th>Estado</th></tr></thead>
+          <table class="bmc-tabla cs-tabla"><colgroup><col style="width:52px"><col><col style="width:11%"><col style="width:15%"><col style="width:96px"><col style="width:19%"><col style="width:128px"><col style="width:92px"><col style="width:86px"></colgroup>
+            <thead><tr><th class="num">Caja</th><th>Nombre</th><th>Responsable</th><th>Cuenta contable asociada</th><th class="num">Fondo</th><th title="Subcajas con documentos y con detalle contable">Información</th><th>Subcaja actual</th><th class="num">Disponible</th><th>Estado</th></tr></thead>
             <tbody>
               ${filas.map((c) => { const u = ultimo.get(c.id); const k = contable(c.cuenta_id); return `<tr data-caja="${c.id}" class="${caja && caja.id === c.id ? 'actual' : ''} ${c.activa ? '' : 'pc-anulada'}" tabindex="0">
                 <td class="num fuerte">${c.codigo}</td><td title="${esc(c.nombre)}"><b>${esc(c.nombre)}</b><small>${esc(c.tipo_caja)} · ${c.modalidad === 'NORMAL' ? 'normal' : 'liquidación'}</small></td><td>${esc(c.responsable || '')}</td>
                 <td title="${esc(k ? `${k.codigo} · ${k.nombre}` : '')}"><b class="bmc-n">${esc(k?.codigo || '—')}</b><small>${esc(k?.nombre || 'Sin cuenta: defínela en Definición de Cajas')}</small></td>
                 <td class="num">${esc(simbolo(c.moneda_id))} ${fmt.monto(c.monto_fondo)}</td>
+                <td title="${esc((() => { const r = resumenCaja.get(c.id); return r ? `${r.subcajas} subcajas: ${r.conDocs} con documentos, ${r.conLineas} con detalle contable (${r.lineas} líneas), ${r.sinInfo} vacías` : 'Sin subcajas'; })())}">${info(c)}</td>
                 <td>${u ? `<b>Subcaja ${u.numero}</b><small>${esc(mesTxt(u).toLowerCase())} · ${u.documentos || 0} doc.</small>` : '<span class="tk-tenue">Sin subcajas</span>'}</td>
                 <td class="num ${u && Number(u.disponible) < 0 ? 'pc-rojo' : ''}">${u ? fmt.monto(u.disponible) : '—'}</td>
                 <td>${!c.activa ? '<span class="pc-marca anulada">Inactiva</span>' : u ? `<span class="pc-marca ${u.estado === 'ABIERTA' ? 'pendiente' : 'definitiva'}">${u.estado === 'ABIERTA' ? 'Abierta' : 'Liquidada'}</span>` : '<span class="pc-marca aprobada">Activa</span>'}</td></tr>`; }).join('')
-                || `<tr><td colspan="8" class="tk-vacio"><i class="ti ti-cash-register" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : cajas.length ? 'Ninguna caja coincide con la búsqueda.' : `La empresa no tiene cajas${ctx.admin ? ': créala en Cajas · Definición de Cajas («Nueva caja»).' : '.'}`}</td></tr>`}
+                || `<tr><td colspan="9" class="tk-vacio"><i class="ti ti-cash-register" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : cajas.length ? 'Ninguna caja coincide con la búsqueda.' : `La empresa no tiene cajas${ctx.admin ? ': créala en Cajas · Definición de Cajas («Nueva caja»).' : '.'}`}</td></tr>`}
             </tbody>
           </table>
         </div>`;
@@ -236,9 +267,13 @@
     }
 
     async function cargarPeriodos(id = periodo?.id) {
-      const { data, error } = await sb.from('caja_periodos_resumen').select('*').eq('caja_id', caja.id).order('numero', { ascending: false });
+      const [{ data, error }, cn] = await Promise.all([
+        window.UI.todo(sb.from('caja_periodos_resumen').select('*').eq('caja_id', caja.id).order('numero', { ascending: false })),
+        window.UI.todo(sb.from('caja_periodos_contable').select('id, caja_id, lineas, debe, haber').eq('caja_id', caja.id).order('id'))
+      ]);
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       periodos = data || [];
+      if (!cn.error) (cn.data || []).forEach((x) => contablePer.set(x.id, x));
       await abrirPeriodo(periodos.find((p) => p.id === id) || periodos[0] || null);
     }
 
@@ -252,6 +287,8 @@
         ]);
         documentos = d.data || [];
         lineas = l.data || [];
+        // Subcaja migrada sin documentos: se abre directo en su detalle contable.
+        if (!documentos.length && lineas.length) verContable = true;
         await asegurarCuentas([...documentos.flatMap((x) => [x.cuenta_gasto_id, x.cuenta_no_deducible_id]), ...lineas.map((x) => x.cuenta_id)]);
       }
       doc = documentos.find((x) => x.id === docId) || (abierta() && ctx.admin ? null : documentos[0] || null);
@@ -283,22 +320,27 @@
       const reembolso = p ? Number(p.liquidacion_valor || 0) : 0;
       const pendReem = p && p.estado === 'ABIERTA' ? Math.max(0, pendLiq - reembolso) : 0;
       const porPag = 5;
-      const paginas = Math.max(1, Math.ceil(periodos.length / porPag));
-      if (p && !paginaFijada) { const i = periodos.findIndex((x) => x.id === p.id); if (i >= 0) paginaSub = Math.floor(i / porPag); }
+      const lista = soloInfo ? periodos.filter(conInfo) : periodos;
+      const conAlgo = periodos.filter(conInfo).length;
+      const paginas = Math.max(1, Math.ceil(lista.length / porPag));
+      if (p && !paginaFijada) { const i = lista.findIndex((x) => x.id === p.id); if (i >= 0) paginaSub = Math.floor(i / porPag); }
       paginaFijada = false;
       paginaSub = Math.min(Math.max(paginaSub, 0), paginas - 1);
-      const vis = periodos.slice(paginaSub * porPag, paginaSub * porPag + porPag);
+      const vis = lista.slice(paginaSub * porPag, paginaSub * porPag + porPag);
+      const lin = (x) => Number(contablePer.get(x.id)?.lineas || 0);
       const fila = (t, v, clase = '') => `<div class="cd5-fila ${clase}"><span>${t}</span><b>${esc(sim)} ${fmt.monto(v)}</b></div>`;
       const dato = (t, v) => `<div class="cd5-dato"><span>${t}</span><b>${v}</b></div>`;
       ctx.pMae.innerHTML = `
         <div class="cd-cinco">
           <section class="bm-bloque cd5-sub">
-            <h3 class="ta-col-titulo"><i class="ti ti-folders" aria-hidden="true"></i> Subcajas <small>${periodos.length}</small>
+            <h3 class="ta-col-titulo"><i class="ti ti-folders" aria-hidden="true"></i> Subcajas <small title="${conAlgo} con documentos o detalle contable">${periodos.length}${conAlgo !== periodos.length ? ` · ${conAlgo} con info.` : ''}</small>
+              <button type="button" class="cd5-info ${soloInfo ? 'activo' : ''}" data-accion="solo-info" aria-pressed="${soloInfo}" title="${soloInfo ? 'Ver todas las subcajas' : 'Ver solo las subcajas con documentos o detalle contable'}"><i class="ti ti-filter" aria-hidden="true"></i> Con info.</button>
               ${paginas > 1 ? `<span class="cd5-pag"><button type="button" class="icono-boton" data-pag-sub="-1" ${paginaSub ? '' : 'disabled'} aria-label="Subcajas más recientes"><i class="ti ti-chevron-left" aria-hidden="true"></i></button><small>${paginaSub + 1} de ${paginas}</small><button type="button" class="icono-boton" data-pag-sub="1" ${paginaSub < paginas - 1 ? '' : 'disabled'} aria-label="Subcajas anteriores"><i class="ti ti-chevron-right" aria-hidden="true"></i></button></span>` : ''}</h3>
-            <table class="cd5-tabla"><thead><tr><th class="num">Subcaja</th><th class="num">Año</th><th>Mes</th><th class="num">Gastos</th><th></th></tr></thead>
-              <tbody>${vis.map((x) => `<tr data-periodo="${x.id}" class="${p && p.id === x.id ? 'actual' : ''}" tabindex="0"><td class="num fuerte">${x.numero}</td><td class="num">${x.anio}</td><td>${MESES[x.mes - 1]}</td><td class="num">${fmt.monto(x.liquidado)}</td>
+            <table class="cd5-tabla"><thead><tr><th class="num">Subcaja</th><th class="num">Año</th><th>Mes</th><th class="num" title="Total de los documentos">Gastos</th><th class="num" title="Líneas del detalle contable">Contable</th><th></th></tr></thead>
+              <tbody>${vis.map((x) => `<tr data-periodo="${x.id}" class="${p && p.id === x.id ? 'actual' : ''} ${conInfo(x) ? '' : 'cd5-vacia'}" tabindex="0" title="${Number(x.documentos || 0)} documentos · ${lin(x)} líneas contables"><td class="num fuerte">${x.numero}</td><td class="num">${x.anio}</td><td>${MESES[x.mes - 1]}</td><td class="num">${Number(x.documentos || 0) ? fmt.monto(x.liquidado) : '<span class="tk-tenue">—</span>'}</td>
+                <td class="num">${lin(x) ? `<span class="cd5-lin">${lin(x).toLocaleString('es-GT')}</span>` : '<span class="tk-tenue">—</span>'}</td>
                 <td>${x.estado === 'LIQUIDADA' ? '<i class="ti ti-lock cc-si" title="Liquidada" aria-label="Liquidada"></i>' : '<i class="ti ti-circle-dot cd-abierta" title="Abierta" aria-label="Abierta"></i>'}</td></tr>`).join('')
-                || `<tr><td colspan="5" class="tk-vacio">${ctx.admin ? 'Sin subcajas: créala a la derecha.' : 'La caja no tiene subcajas.'}</td></tr>`}</tbody></table>
+                || `<tr><td colspan="6" class="tk-vacio">${soloInfo && periodos.length ? 'Ninguna subcaja tiene documentos ni detalle contable.' : ctx.admin ? 'Sin subcajas: créala a la derecha.' : 'La caja no tiene subcajas.'}</td></tr>`}</tbody></table>
           </section>
           <section class="bm-bloque cd5-crear">
             <h3 class="ta-col-titulo"><i class="ti ti-folder-plus" aria-hidden="true"></i> Crear nueva subcaja</h3>
@@ -370,7 +412,7 @@
       const tabs = `<div class="cd-tabs" role="tablist">${[['DOCUMENTOS', 'ti-receipt', 'Documentos', documentos.length], ['LIQUIDACION', 'ti-building-bank', 'Liquidación', null]].map(([k, ic, t, n]) => `<button type="button" role="tab" class="${pestanaDet === k ? 'activa' : ''}" aria-selected="${pestanaDet === k}" data-tab-caja="${k}"><i class="ti ${ic}" aria-hidden="true"></i> ${t}${n != null ? ` <b>${n}</b>` : ''}</button>`).join('')}</div>`;
       if (pestanaDet === 'LIQUIDACION') { ctx.pDet.innerHTML = `${tabs}${panelLiquidacion()}`; return; }
       ctx.pDet.innerHTML = `${tabs}
-        <div class="cc-docs">
+        <div class="cc-docs ${verContable ? 'cc-solo-contable' : ''}">
           <section class="cc-docs-lista">
             <header class="tk-bandeja-cab cc-cab">
               <h2>${verContable ? 'Detalle contable de la subcaja' : 'Documentos de la subcaja'} <small>${verContable ? lineas.length : documentos.length}</small></h2>
@@ -400,7 +442,7 @@
               <span class="cc-total"><small>Total liquidado</small><b>${esc(sim)} ${fmt.monto(liquidado())}</b></span>
             </footer>
           </section>
-          ${formDocumento(v0)}
+          ${verContable ? '' : formDocumento(v0)}
         </div>`;
     }
 
@@ -993,6 +1035,7 @@
       if (a === 'reconstruir') return procesar('RECONSTRUIR');
       if (a === 'marcar') return marcarTodos();
       if (a === 'ver-contable') { verContable = !verContable; return pintarDocumentos(); }
+      if (a === 'solo-info') { soloInfo = !soloInfo; paginaSub = 0; paginaFijada = true; return pintarSubcajas(); }
       if (a === 'nuevo-doc') { doc = null; ctx.pDet.querySelectorAll('tr.actual').forEach((tr) => tr.classList.remove('actual')); ctx.pDet.querySelector('.cc-doc-form').outerHTML = formDocumento(); return ctx.pDet.querySelector('.cc-doc-form [name=serie]')?.focus(); }
       if (a === 'quitar-doc') {
         if (!confirm(`¿Quitar el documento ${docTxt(doc)} de ${doc.proveedor_nombre}?`)) return;
