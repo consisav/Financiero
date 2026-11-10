@@ -4612,6 +4612,10 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 .dpb-control .dpb-pend { color: #a3610b; }
 .dpb-control .dpb-ok { color: #1f7a45; }
 .dpb-adjunto { margin-left: auto; }
+.dpb-imagen .bm-comprobante { margin-top: 4px; }
+.dpb-imagen .bm-adjuntar { width: 100%; justify-content: flex-start; }
+.dpb-imagen .bm-miniatura img { max-height: 120px; }
+.dpb-imagen-nota { margin: 6px 0 0; font-size: 12px; color: var(--tenue); display: flex; gap: 6px; align-items: center; }
 .dpb-adjunto > * { margin: 0 !important; padding: 3px 10px !important; min-height: 0 !important; background: none !important; border: 0 !important; }
 .dpb-adjunto small, .dpb-adjunto p { display: none; }
 .dpb .bm-bloque { grid-column: auto !important; margin: 0; padding: 9px 14px 11px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }

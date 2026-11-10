@@ -346,7 +346,6 @@
               ${cfg.cheque && d?.impreso ? `<span><small>Impreso</small><b>${esc(d.impreso_por || '')}</b><em>${esc(fmt.fechaHora(d.impreso_en))}</em></span>` : ''}
               ${d?.modificado_en ? `<span><small>Actualiza</small><b>${esc(d.modificado_por_nombre || '')}</b><em>${esc(fmt.fechaHora(d.modificado_en))}</em></span>` : ''}
               ${d?.anulado_en ? `<span title="${esc(d.motivo_anulacion || '')}"><small>Anuló</small><b>${esc(d.anulado_por || '')}</b><em>${esc(fmt.fechaHora(d.anulado_en))}</em></span>` : ''}
-              <div class="dpb-adjunto">${window.BANCOS.adjunto.html(adjuntoActual({ ed, puede }))}</div>
             </div>
             <section class="bm-bloque dpb-banda dpb-deposito">
               <div class="dpb-campos">
@@ -387,6 +386,11 @@
                   : `<label class="pc-check"><input type="checkbox" name="caja_chica" ${v.caja_chica ? 'checked' : ''} ${dis}> Caja chica</label>`}
                 ${cfg.varios ? `<label class="pc-check"><input type="checkbox" name="clientes_varios" ${v.clientes_varios || v.tipo_tercero === 'CLIENTES VARIOS' ? 'checked' : ''} ${dis}> Clientes varios</label>` : ''}
               </div>
+            </section>
+            <section class="bm-bloque dpb-banda dpb-imagen">
+              <h3 class="ta-col-titulo"><i class="ti ti-photo" aria-hidden="true"></i> Imagen de la operación bancaria</h3>
+              ${window.BANCOS.adjunto.html(adjuntoActual({ ed: ed || puede, puede }))}
+              ${puede && !ed ? '<p class="dpb-imagen-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> La imagen que adjuntes o quites aquí se guarda de inmediato en el documento.</p>' : ''}
             </section>
           </div>`;
       ctx.pDet.innerHTML = `
@@ -504,6 +508,17 @@
     const adjuntoActual = (extra = {}) => ({ nuevo: comprobanteNuevo, ruta: actual?.comprobante_ruta, nombre: actual?.comprobante_nombre, tipo: actual?.comprobante_tipo, quitar: quitarComprobante, que: cfg.queImagen, ayuda: cfg.ayudaImagen, ...extra });
     const miniatura = () => window.BANCOS.adjunto.miniatura(ctx.pDet, adjuntoActual());
     const verComprobante = () => window.BANCOS.adjunto.ver(adjuntoActual());
+    // Sube o quita la imagen de un documento ya guardado sin pasar por «Modificar».
+    async function comprobanteDirecto() {
+      const id = actual.id;
+      window.FIN.aviso(comprobanteNuevo ? 'Subiendo la imagen…' : 'Quitando la imagen…');
+      const subio = !!comprobanteNuevo;
+      const ok = await guardarComprobante(id, actual.comprobante_ruta);
+      comprobanteNuevo = null; quitarComprobante = false;
+      window.FIN.aviso(ok ? (subio ? 'Imagen de la operación guardada' : 'Imagen quitada') : 'No se pudo guardar la imagen (revisa que tu rol pueda editar y que sea imagen o PDF de hasta 10 MB)');
+      actual = { id };
+      await consultar();
+    }
     const guardarComprobante = (id, anterior) => window.BANCOS.adjunto.guardar({ tabla: 'movimientos_bancarios', id, carpeta: `${ctx.sel.loc}/${id}`, nuevo: comprobanteNuevo, quitar: quitarComprobante, anterior });
 
     // Columnas de cada tipo de documento aplicado.
@@ -878,6 +893,7 @@
         if (malo) return window.FIN.aviso(malo);
         comprobanteNuevo = archivo;
         quitarComprobante = false;
+        if (!editable() && actual?.id) return comprobanteDirecto();
         return repintar();
       }
       if (e.target.name === 'modo_cheque') { modoCheque = e.target.value; return; }
@@ -1040,7 +1056,10 @@
         if (a === 'modificar') { modificando = true; repintar(); return ctx.pDet.querySelector('[name=numero_documento]')?.focus(); }
         if (a === 'cancelar') return abrir(actual);
         if (a === 'ver-comprobante') return verComprobante();
-        if (a === 'quitar-comprobante') { if (comprobanteNuevo) comprobanteNuevo = null; else quitarComprobante = true; return repintar(); }
+        if (a === 'quitar-comprobante') {
+          if (!editable() && actual?.id) { if (!confirm('¿Quitar la imagen de la operación bancaria de este documento?')) return; quitarComprobante = true; return comprobanteDirecto(); }
+          if (comprobanteNuevo) comprobanteNuevo = null; else quitarComprobante = true; return repintar();
+        }
         if (a === 'imprimir') return imprimirDocumento();
         if (a === 'doc-pdf') return actual ? imprimirDocumento() : window.FIN.aviso(`Registra primero ${cfg.tipo.startsWith('NOTA') ? 'la' : 'el'} ${cfg.nombre.toLowerCase()}`);
         if (a === 'doc-excel') return excelDocumento();
