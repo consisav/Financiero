@@ -147,12 +147,27 @@
   }
 
   // Mensajes del navegador (confirmaciones y alertas): cada línea por separado.
-  const lineas = (s) => String(s ?? '').split('\n').map((l) => { const t = traducir(l); return t != null ? conEspacios(l, t) : l; }).join('\n');
+  // Primero el mensaje completo (el diccionario guarda los mensajes de varias líneas unidos); si no, línea por línea.
+  const lineas = (s) => traducir(s) ?? String(s ?? '').split('\n').map((l) => { const t = traducir(l); return t != null ? conEspacios(l, t) : l; }).join('\n');
   if (en) {
     const c = window.confirm.bind(window), a = window.alert.bind(window), p = window.prompt.bind(window);
     window.confirm = (s) => c(lineas(s));
     window.alert = (s) => a(lineas(s));
     window.prompt = (s, v) => p(lineas(s), v);
+    // Lectura en voz (reportes gerenciales, asistente): se traduce el texto y se lee con una voz en inglés.
+    if (window.speechSynthesis && window.SpeechSynthesisUtterance) {
+      const hablar = speechSynthesis.speak.bind(speechSynthesis);
+      speechSynthesis.speak = (u) => {
+        try {
+          const t = lineas(u.text);
+          if (t) u.text = t;
+          u.lang = 'en-US';
+          const voz = speechSynthesis.getVoices().find((x) => /^en/i.test(x.lang));
+          u.voice = voz || null;
+        } catch { /* se lee como venga */ }
+        return hablar(u);
+      };
+    }
   }
 
   // Botones de idioma: arriba del inicio de sesión y en la barra superior, a la par de la fecha.
