@@ -8,7 +8,8 @@
   window.PANTALLAS = window.PANTALLAS || {};
 
   const ORDENES = [['fecha:desc', 'Fecha ↓'], ['fecha:asc', 'Fecha ↑'], ['numero:desc', 'Número ↓'], ['numero:asc', 'Número ↑'], ['valor:desc', 'Valor ↓'], ['valor:asc', 'Valor ↑']];
-  const ESTADOS = ['TODOS', 'VIGENTES', 'EMITIDOS', 'LIQUIDADOS', 'ANULADOS', 'CON SALDO DISPONIBLE'];
+  const ESTADOS = ['TODOS', 'VIGENTES', 'EMITIDOS', 'ASIGNADOS', 'LIQUIDADOS', 'ANULADOS', 'CON SALDO DISPONIBLE'];
+  const PERIODOS = [['RANGO', 'Rango de fechas'], ['HISTORIA', 'Toda la historia']];
   const FORMAS = ['EFECTIVO', 'CHEQUE', 'DEPÓSITO', 'TRANSFERENCIA', 'TARJETA', 'NOTA DE CRÉDITO'];
 
   window.PANTALLAS['consulta-de-recibos'] = function (cont) {
@@ -16,12 +17,14 @@
     const { sb } = ctx;
     // Fecha inicial por omisión: el primer día del mes en curso (cada vez que se abre la pantalla).
     const primeroDelMes = () => `${fmt.hoy().slice(0, 7)}-01`;
-    const f = { cliente: '', vendedor: '', forma: '', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
+    const f = { cliente: '', vendedor: '', forma: '', periodo: 'RANGO', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
     let recibos = [], aplicado = new Map(), vendedores = [], sel = null, consulta = 0, rango = null, pagos = [];
 
     const nombre = (x) => [x.serie, x.recibo_fisico].filter((v) => v != null && v !== '').join('-') || `Interno ${x.numero}`;
     const vendedor = (id) => vendedores.find((v) => v.id === id);
-    const estadoDe = (x) => x.estado === 'ANULADO' ? ['anulada', 'Anulado'] : x.situacion === 'LIQUIDADO' ? ['aprobada', 'Liquidado'] : ['definitiva', 'Emitido'];
+    const asignado = (x) => x.estado !== 'ANULADO' && x.situacion !== 'LIQUIDADO' && (aplicado.get(x.id) || 0) > 0.005;
+    const estadoDe = (x) => x.estado === 'ANULADO' ? ['anulada', 'Anulado'] : x.situacion === 'LIQUIDADO' ? ['aprobada', 'Liquidado'] : asignado(x) ? ['pendiente', 'Asignado'] : ['definitiva', 'Emitido'];
+    const historia = () => f.periodo === 'HISTORIA';
     const disponible = (x) => x.estado === 'ANULADO' ? 0 : fmt.redondear(Number(x.valor || 0) - (aplicado.get(x.id) || 0) - Number(x.gasto_valor || 0));
     const nombreFac = (v) => v ? (v.serie ? `${v.serie}-${v.numero_dte || ''}` : `Interna ${v.numero}`) : '';
 
@@ -30,8 +33,9 @@
         <label class="campo cq-prov"><span>Cliente</span><input name="cliente" value="${esc(f.cliente)}" placeholder="Todos (nombre o código)"></label>
         <label class="campo"><span>Vendedor</span><select name="vendedor"><option value="">Todos</option>${vendedores.map((v) => `<option value="${v.id}" ${String(f.vendedor) === String(v.id) ? 'selected' : ''}>${v.codigo} · ${esc(v.nombre)}</option>`).join('')}</select></label>
         <label class="campo"><span>Forma de pago</span><select name="forma"><option value="">Todas</option>${FORMAS.map((x) => `<option ${f.forma === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-        <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
-        <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
+        <label class="campo"><span>Fechas</span><select name="periodo">${PERIODOS.map(([k, t]) => `<option value="${k}" ${f.periodo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}" ${historia() ? 'disabled' : ''}></label>
+        <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}" ${historia() ? 'disabled' : ''}></label>
         <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
         `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Resumido o detallado</small></span></button>
@@ -48,7 +52,7 @@
       const loc = ctx.sel.loc || 0;
       const v = await sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo');
       vendedores = v.data || [];
-      f.desde = primeroDelMes(); f.hasta = fmt.hoy();
+      f.desde = primeroDelMes(); f.hasta = fmt.hoy(); f.periodo = 'RANGO';
       f.vendedor = '';
       pintarFiltros();
       await consultar();
@@ -58,9 +62,10 @@
       if (!loc) { recibos = []; pintar(); return; }
       const yo = ++consulta;
       const lista = [];
-      for (let p = 0; p < 30000; p += 1000) {
-        let q = sb.from('recibos_venta').select('*').eq('localidad_id', loc).gte('fecha', f.desde).lte('fecha', f.hasta)
-          .order('fecha', { ascending: false }).order('numero', { ascending: false }).range(p, p + 999);
+      for (let p = 0; p < 200000; p += 1000) {
+        let q = sb.from('recibos_venta').select('*').eq('localidad_id', loc);
+        if (!historia()) q = q.gte('fecha', f.desde).lte('fecha', f.hasta);
+        q = q.order('fecha', { ascending: false }).order('numero', { ascending: false }).order('id', { ascending: false }).range(p, p + 999);
         if (f.vendedor) q = q.eq('vendedor_id', Number(f.vendedor));
         if (f.forma) q = q.eq('forma', f.forma);
         const r = await q;
@@ -78,7 +83,7 @@
       }
       recibos = lista; aplicado = ap;
       rango = null;
-      if (!lista.length) {
+      if (!lista.length && !historia()) {
         const a = await sb.from('recibos_venta').select('fecha', { count: 'exact' }).eq('localidad_id', loc).not('fecha', 'is', null).order('fecha').limit(1);
         if (a.count) rango = { n: a.count, desde: String(a.data[0].fecha).slice(0, 10) };
       }
@@ -90,7 +95,7 @@
       const q = f.buscar.trim().toLowerCase();
       const c = f.cliente.trim().toLowerCase();
       return recibos.filter((x) => (f.estado === 'TODOS' || (f.estado === 'VIGENTES' && x.estado !== 'ANULADO') || (f.estado === 'ANULADOS' && x.estado === 'ANULADO')
-        || (f.estado === 'EMITIDOS' && x.estado !== 'ANULADO' && x.situacion !== 'LIQUIDADO') || (f.estado === 'LIQUIDADOS' && x.estado !== 'ANULADO' && x.situacion === 'LIQUIDADO')
+        || (f.estado === 'EMITIDOS' && x.estado !== 'ANULADO' && x.situacion !== 'LIQUIDADO' && !asignado(x)) || (f.estado === 'ASIGNADOS' && asignado(x)) || (f.estado === 'LIQUIDADOS' && x.estado !== 'ANULADO' && x.situacion === 'LIQUIDADO')
         || (f.estado === 'CON SALDO DISPONIBLE' && disponible(x) > 0.005))
         && (!c || [x.nombre, x.cliente_codigo_anterior].some((v) => String(v ?? '').toLowerCase().includes(c)))
         && (!q || [x.numero, x.serie, x.recibo_fisico, x.nombre, x.documento, x.banco, x.descripcion, x.observaciones].some((v) => String(v ?? '').toLowerCase().includes(q))))
@@ -127,6 +132,7 @@
             <span class="ta-total"><b>Q ${fmt.monto(vivos.reduce((t, x) => t + (aplicado.get(x.id) || 0), 0))}</b> aplicados a facturas</span>
             <span class="ta-total sin"><b>Q ${fmt.monto(vivos.reduce((t, x) => t + Math.max(0, disponible(x)), 0))}</b> disponible</span>
             <span class="ta-total"><b>${filas.length - vivos.length}</b> anulados</span>
+            <span class="ta-total"><b>${vivos.filter(asignado).length}</b> asignados</span>
             <span class="ta-total sin"><b>${vivos.filter((x) => x.situacion !== 'LIQUIDADO').length}</b> sin liquidar</span>
           </div>
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Número, serie, cliente, documento…" value="${esc(f.buscar)}" aria-label="Buscar recibos"></label>
@@ -181,7 +187,7 @@
     function parametros() {
       const emp = ctx.localidad(ctx.sel.loc);
       const v = vendedor(Number(f.vendedor));
-      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Cliente: ${f.cliente.trim() || 'Todos'}`, `Vendedor: ${v ? v.nombre : 'Todos'}`,
+      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, historia() ? 'Fechas: toda la historia' : `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Cliente: ${f.cliente.trim() || 'Todos'}`, `Vendedor: ${v ? v.nombre : 'Todos'}`,
         `Forma de pago: ${f.forma || 'Todas'}`, `Estado: ${f.estado}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
     }
     function dialogo(formato) {
@@ -231,7 +237,7 @@
       datos.push({ tipo: 'total', valores: ['', '', '', `Total de ${vivos.length} recibos vigentes (de ${filas.length})`, '', '', total, disp, ''] });
       const emp = ctx.localidad(ctx.sel.loc);
       window.REPORTE_XLSX.generar({ titulo: `Consulta de Recibos · ${modo === 'DETALLADO' ? 'Detallado' : 'Resumido'}`, parametros: parametros(), orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Recibos',
-        archivo: `recibos_${modo.toLowerCase()}_${emp?.codigo || ''}_${f.desde}_${f.hasta}`, autofiltro: modo !== 'DETALLADO',
+        archivo: `recibos_${modo.toLowerCase()}_${emp?.codigo || ''}_${historia() ? 'historia' : `${f.desde}_${f.hasta}`}`, autofiltro: modo !== 'DETALLADO',
         columnas: [{ titulo: 'Recibo', ancho: 14 }, { titulo: modo === 'DETALLADO' ? 'Interno · factura' : 'Interno', ancho: 10 }, { titulo: 'Fecha', ancho: 12 }, { titulo: modo === 'DETALLADO' ? 'Cliente · factura' : 'Cliente', ancho: 44 },
           { titulo: 'Forma', ancho: 15 }, { titulo: 'Tipo', ancho: 13 }, { titulo: modo === 'DETALLADO' ? 'Valor · abono' : 'Valor', ancho: 15, tipo: 'monto' }, { titulo: 'Disponible', ancho: 15, tipo: 'monto' }, { titulo: 'Estado', ancho: 12 }],
         filas: datos });
@@ -244,6 +250,7 @@
         const n = e.target.name;
         if (n === 'estado' || n === 'cliente') { f[n] = e.target.value; pintarMaestro(); return elegir(visibles().find((x) => x.id === sel?.id) || visibles()[0] || null); }
         if (n === 'orden') { [f.orden, f.dir] = e.target.value.split(':'); return pintarMaestro(); }
+        if (n === 'periodo') { f.periodo = e.target.value; sel = null; pintarFiltros(); return consultar(); }
         if (['vendedor', 'forma', 'desde', 'hasta'].includes(n)) { f[n] = e.target.value; sel = null; return consultar(); }
       }
     });
@@ -261,7 +268,7 @@
     cont.addEventListener('click', (e) => {
       const q = e.target.closest('[data-consultar]');
       if (q) { location.hash = `#/facturacion/recibos/${q.dataset.consultar}`; return; }
-      if (e.target.closest('[data-ver-todos]') && rango) { f.desde = rango.desde; f.hasta = fmt.hoy(); sel = null; pintarFiltros(); return consultar(); }
+      if (e.target.closest('[data-ver-todos]') && rango) { f.periodo = 'HISTORIA'; sel = null; pintarFiltros(); return consultar(); }
       const th = e.target.closest('[data-ordenar]');
       if (th) { const campo = th.dataset.ordenar; f.dir = f.orden === campo && f.dir === 'desc' ? 'asc' : 'desc'; f.orden = campo; const o = ctx.pFil.querySelector('[name=orden]'); if (o) o.value = `${f.orden}:${f.dir}`; return pintarMaestro(); }
       const tr = e.target.closest('tr[data-recibo]');

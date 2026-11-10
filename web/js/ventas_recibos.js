@@ -119,7 +119,7 @@
       const tc = Number(v.tipo_cambio || 1) || 1;
       const abonos = fmt.redondear(lineas.reduce((t, x) => t + Number(x.abono || 0), 0));
       const disponible = fmt.redondear(Number(v.valor || 0) - abonos - Number(v.gasto_valor || 0));
-      const [cls, txt] = estadoDe(r);
+      const [cls, txt] = r && r.estado !== 'ANULADO' && r.situacion !== 'LIQUIDADO' && lineas.some((x) => x.id && Number(x.abono) > 0) ? ['pendiente', 'ASIGNADO'] : estadoDe(r);
       const c = cliente(v.cliente_id);
       const puede = ctx.admin && r && r.estado !== 'ANULADO' && !modificando;
       ctx.pDet.innerHTML = `
