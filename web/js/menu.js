@@ -56,7 +56,8 @@ window.MODULOS = [
       // «plano»: sus pantallas van sueltas al inicio del grupo, sin título de subgrupo.
       registros: [
         { subgrupo: 'Personas', plano: true, icono: 'ti-id', pantallas: [
-          { id: 'datos-personas', nombre: 'Datos Personas', icono: 'ti-id', descripcion: 'Ficha general de datos de una persona (empleado, cliente, paciente, proveedor o médico): generales, identificación con DPI validado, dirección, teléfonos, información laboral, crédito y contactos. La usan otras pantallas.' }
+          { id: 'datos-personas', nombre: 'Datos Personas', icono: 'ti-id', descripcion: 'Ficha general de datos de una persona (empleado, cliente, paciente, proveedor o médico): generales, identificación con DPI validado, dirección, teléfonos, información laboral, crédito y contactos. La usan otras pantallas.' },
+          { id: 'consulta-personas', nombre: 'Consulta Personas', icono: 'ti-users', descripcion: 'Resumen de las personas de la organización por tipo, estado, documento y empresa, con búsqueda, posibles duplicados, clientes asociados y reporte en Excel.' }
         ] }
       ],
       procesos: [

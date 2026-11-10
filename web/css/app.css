@@ -6341,3 +6341,46 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
   .dp-card { gap: 3px; }
 }
 .dp-sellos small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 330px; }
+
+/* ---------- Administración · Consulta Personas ---------- */
+.dpc-consulta .dpc-tabla td.cq-acc { overflow: visible; text-align: right; padding-right: 10px; }
+.dpc-consulta .dpc-ver { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 700; padding: 5px 12px; white-space: nowrap; }
+.dpc-dup { color: var(--ambar-t); font-weight: 700; }
+.dpc-av { font-size: 15px; font-weight: 800; color: var(--acento); }
+.dpc-datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; margin: 0; padding: 4px 2px; }
+.dpc-dato { min-width: 0; border-bottom: 1px dashed var(--borde); padding-bottom: 4px; }
+.dpc-dato dt { font-size: 11px; font-weight: 700; color: var(--tenue); text-transform: uppercase; letter-spacing: .03em; }
+.dpc-dato dd { margin: 1px 0 0; font-size: 13px; color: var(--texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dpc-ir { border: 0; background: none; cursor: pointer; color: var(--acento); }
+@media (max-width: 760px) { .dpc-datos { grid-template-columns: 1fr; } }
+.dpc-consulta .dpc-datos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 12px; }
+.dpc-consulta .dpc-dato { padding-bottom: 2px; }
+.dpc-consulta .dpc-dato dd { font-size: 12.5px; }
+.dpc-consulta .bk-detalle { overflow: auto; }
+@media (max-width: 1250px) { .dpc-consulta .dpc-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .dpc-consulta .dpc-datos { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .dpc-consulta .bk-filtros { display: grid !important; grid-template-columns: 1fr 1fr !important; grid-template-rows: none !important; gap: 8px !important; }
+  .dpc-consulta .bk-filtros > * { grid-column: auto !important; grid-row: auto !important; }
+  .dpc-consulta .bk-filtros > .ta-titulo, .dpc-consulta .bk-filtros > .bk-empresa, .dpc-consulta .bk-filtros > .oc-extra { grid-column: 1 / -1 !important; }
+  .dpc-consulta .bk-filtros > .oc-extra { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dpc-consulta .bk-filtros > .oc-extra .boton { justify-content: center; min-height: 44px; }
+  .dpc-consulta .ta-cuerpo { display: flex !important; flex-direction: column; height: auto !important; gap: 10px; }
+  .dpc-consulta .bk-maestro { display: flex !important; flex-direction: column; max-height: 62vh; min-height: 320px; }
+  .dpc-consulta .cc-cab { flex-wrap: wrap; gap: 6px; }
+  .dpc-consulta .cc-cab .tk-buscar { width: 100%; }
+  .dpc-consulta .cc-tabla { overflow: auto; }
+  .dpc-consulta .dpc-tabla { min-width: 900px; }
+  .dpc-consulta .cq-det { grid-template-columns: 1fr !important; }
+  .dpc-consulta .cb-titulo { flex-wrap: wrap; }
+  .dpc-consulta .cb-titulo .tk-titulo-acciones { width: 100%; }
+  .dpc-consulta .cb-titulo .tk-titulo-acciones .boton { width: 100%; justify-content: center; min-height: 44px; }
+}
+@media (max-width: 760px) {
+  .ta-espacio.dpc-consulta { grid-template-columns: minmax(0, 1fr) !important; }
+  .dpc-consulta .ta-cuerpo, .dpc-consulta .bk-filtros, .dpc-consulta .bk-maestro, .dpc-consulta .bk-detalle { min-width: 0; max-width: 100%; }
+  .dpc-consulta .bk-filtros { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  .dpc-consulta .bk-maestro { order: 0 !important; }
+  .dpc-consulta .bk-detalle { order: 1 !important; }
+}
+@media (max-width: 760px) { .dpc-consulta .dpc-tabla { min-width: 1120px !important; } }

@@ -366,4 +366,263 @@
 
     iniciar();
   };
+
+  // ===================== Consulta Personas =====================
+  // Resumen de las personas de la organización (la de la empresa elegida), como Consulta de Depósitos y de Notas: filtros
+  // (tipo, estado, documento, empresa del registro y orden), el listado con sus totales y búsqueda, y abajo el detalle de
+  // la persona elegida con sus posibles duplicados y los clientes con su mismo NIT o DPI. «Ver ficha» la abre en Datos
+  // Personas. Reporte en Excel.
+  const ORDENES_P = [['codigo:asc', 'Código ↑'], ['codigo:desc', 'Código ↓'], ['nombre:asc', 'Nombre A-Z'], ['nombre:desc', 'Nombre Z-A'], ['ingreso:desc', 'Ingreso ↓'], ['nacimiento:asc', 'Nacimiento ↑']];
+  const DOCS = [['TODOS', 'Todos'], ['CON DPI', 'Con DPI'], ['SIN DPI', 'Sin DPI'], ['CON NIT', 'Con NIT'], ['SIN NIT', 'Sin NIT'], ['DUPLICADOS', 'Posibles duplicados']];
+  const nombreCompleto = (p) => [p.nombres, p.apellidos].filter(Boolean).join(' ');
+  const normal = (t) => String(t || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+  const telDe = (p) => (p.telefonos || []).map((t) => t.numero).filter(Boolean).join(' · ');
+
+  window.PANTALLAS['consulta-personas'] = function (cont) {
+    const ctx = montar(cont, { titulo: 'Consulta Personas', icono: 'ti-users', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques dpc-consulta', grupo: 'Registros' });
+    const { sb } = ctx;
+    const f = { tipo: '', estado: 'ACTIVAS', doc: 'TODOS', empresa: 'TODAS', orden: 'codigo', dir: 'asc', buscar: '' };
+    let personas = [], cat = [], sel = null, detalle = { clientes: [] }, consulta = 0;
+    const org = () => ctx.localidad(ctx.sel.loc)?.organizacion_id || ctx.sel.org;
+    const tipoDe = (id) => cat.find((c) => c.id === id);
+    const repetidos = new Map();
+
+    function pintarFiltros() {
+      const tipos = cat.filter((c) => c.tipo === 'TIPO');
+      ctx.filtros(`
+        <label class="campo"><span>Tipo de persona</span><select name="tipo"><option value="">Todos</option>${tipos.map((t) => `<option value="${t.id}" ${String(f.tipo) === String(t.id) ? 'selected' : ''}>${esc(`${t.codigo} · ${t.nombre}`)}</option>`).join('')}</select></label>
+        <label class="campo"><span>Estado</span><select name="estado">${['TODAS', 'ACTIVAS', 'INACTIVAS'].map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>
+        <label class="campo"><span>Documento</span><select name="doc">${DOCS.map(([k, t]) => `<option value="${k}" ${f.doc === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label class="campo"><span>Registradas en</span><select name="empresa"><option value="TODAS" ${f.empresa === 'TODAS' ? 'selected' : ''}>Toda la organización</option><option value="ESTA" ${f.empresa === 'ESTA' ? 'selected' : ''}>Esta empresa</option></select></label>
+        <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES_P.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`,
+        '<a class="boton secundario-sm" href="#/administracion/datos-personas"><i class="ti ti-user-plus" aria-hidden="true"></i> Nueva persona</a><button type="button" class="boton cqc-excel" data-accion="excel" title="Reporte en Excel (.xlsx) con el encabezado de la empresa"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Listado de personas</small></span></button>');
+    }
+
+    async function iniciar() {
+      if (!(await ctx.cargarBase())) return;
+      await consultar();
+    }
+
+    async function consultar(id = sel?.id) {
+      const o = org();
+      const yo = ++consulta;
+      const [c, p] = await Promise.all([
+        sb.from('personas_catalogos').select('*').eq('organizacion_id', o).order('tipo').order('codigo'),
+        window.UI.todo(sb.from('personas').select('id, codigo, localidad_id, tipo_id, nombres, apellidos, dpi, nit, telefonos, correo, fecha_nacimiento, sexo, activo, persona_anterior, creado_en, fecha_ingreso_anterior, municipio_id, direccion').eq('organizacion_id', o).order('codigo'))
+      ]);
+      if (yo !== consulta) return;
+      if (c.error || p.error) {
+        pintarFiltros();
+        ctx.pMae.innerHTML = `<p class="vacio">${esc(sinTabla(c.error || p.error) ? AVISO : window.UI.traducirError(c.error || p.error))}</p>`;
+        ctx.pDet.innerHTML = '';
+        return;
+      }
+      cat = c.data || []; personas = p.data || [];
+      if (f.tipo && !tipoDe(Number(f.tipo))) f.tipo = '';
+      // Posibles duplicados: mismo nombre completo, mismo DPI o mismo NIT (sin CF).
+      repetidos.clear();
+      const cuenta = new Map();
+      const llaves = (x) => [`N${normal(nombreCompleto(x))}`, x.dpi ? `D${x.dpi}` : null, x.nit && !['CF', 'C/F'].includes(String(x.nit).toUpperCase()) ? `T${String(x.nit).toUpperCase()}` : null].filter(Boolean);
+      personas.forEach((x) => llaves(x).forEach((k) => cuenta.set(k, (cuenta.get(k) || 0) + 1)));
+      personas.forEach((x) => { const n = Math.max(...llaves(x).map((k) => cuenta.get(k))); if (n > 1) repetidos.set(x.id, n); });
+      pintarFiltros();
+      sel = personas.find((x) => x.id === id) || null;
+      pintarMaestro();
+      if (sel) await elegir(sel); else if (visibles()[0]) await elegir(visibles()[0]); else pintarDetalle();
+    }
+
+    const fechaIngreso = (p) => p.fecha_ingreso_anterior || p.creado_en || '';
+    const visibles = () => {
+      const q = normal(f.buscar);
+      return personas.filter((p) => (!f.tipo || p.tipo_id === Number(f.tipo))
+        && (f.estado === 'TODAS' || (f.estado === 'ACTIVAS') === !!p.activo)
+        && (f.empresa === 'TODAS' || p.localidad_id === ctx.sel.loc)
+        && (f.doc === 'TODOS' || (f.doc === 'CON DPI' && p.dpi) || (f.doc === 'SIN DPI' && !p.dpi) || (f.doc === 'CON NIT' && p.nit && !['CF', 'C/F'].includes(String(p.nit).toUpperCase()))
+          || (f.doc === 'SIN NIT' && (!p.nit || ['CF', 'C/F'].includes(String(p.nit).toUpperCase()))) || (f.doc === 'DUPLICADOS' && repetidos.has(p.id)))
+        && (!q || [nombreCompleto(p), p.dpi, p.nit, String(p.codigo), telDe(p), p.correo, p.persona_anterior].some((v) => normal(v).includes(q))))
+        .sort((a, b) => {
+          const v = (p) => (f.orden === 'nombre' ? normal(nombreCompleto(p)) : f.orden === 'ingreso' ? String(fechaIngreso(p)) : f.orden === 'nacimiento' ? (p.fecha_nacimiento || '9999') : p.codigo);
+          const va = v(a), vb = v(b);
+          const d = va < vb ? -1 : va > vb ? 1 : a.codigo - b.codigo;
+          return f.dir === 'asc' ? d : -d;
+        });
+    };
+    const ordenTh = (campo, texto, clase = '') => `<th class="${clase} cq-orden ${f.orden === campo ? 'activo' : ''}" data-ordenar="${campo}" title="Ordenar por ${texto.toLowerCase()}">${texto} <i class="ti ${f.orden === campo ? (f.dir === 'asc' ? 'ti-sort-ascending' : 'ti-sort-descending') : 'ti-arrows-sort'}" aria-hidden="true"></i></th>`;
+
+    function pintarMaestro() {
+      const filas = visibles();
+      const MAX = 600;
+      ctx.pMae.innerHTML = `
+        <header class="tk-bandeja-cab cc-cab">
+          <h2>Personas <small>${filas.length.toLocaleString('es-GT')}</small></h2>
+          <div class="ta-totales pc-resumen">
+            <span class="ta-total"><b>${filas.filter((p) => p.activo).length.toLocaleString('es-GT')}</b> activas</span>
+            <span class="ta-total"><b>${filas.filter((p) => !p.activo).length}</b> inactivas</span>
+            <span class="ta-total"><b>${filas.filter((p) => p.dpi).length.toLocaleString('es-GT')}</b> con DPI</span>
+            <span class="ta-total sin"><b>${filas.filter((p) => !p.dpi).length.toLocaleString('es-GT')}</b> sin DPI</span>
+            <span class="ta-total sin"><b>${filas.filter((p) => repetidos.has(p.id)).length}</b> posibles duplicados</span>
+          </div>
+          <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Nombre, DPI, NIT, código, teléfono…" value="${esc(f.buscar)}" aria-label="Buscar personas"></label>
+        </header>
+        <div class="ta-tabla cc-tabla">
+          <table class="cqc-tabla dpc-tabla"><colgroup><col style="width:74px"><col><col style="width:150px"><col style="width:160px"><col style="width:120px"><col style="width:150px"><col style="width:110px"><col style="width:116px"></colgroup>
+            <thead><tr>${ordenTh('codigo', 'Código', 'num')}${ordenTh('nombre', 'Nombre · tipo')}<th>DPI · NIT</th><th>Teléfono · correo</th>${ordenTh('nacimiento', 'Nacimiento')}<th>Sistema anterior</th>${ordenTh('ingreso', 'Estado')}<th aria-label="Ver ficha"></th></tr></thead>
+            <tbody>${filas.slice(0, MAX).map((p) => { const t = tipoDe(p.tipo_id); const edad = edadDe(p.fecha_nacimiento); return `<tr data-persona="${p.id}" class="${sel && sel.id === p.id ? 'actual' : ''} ${p.activo ? '' : 'pc-anulada'}" tabindex="0">
+              <td class="num fuerte">${p.codigo}</td>
+              <td class="cqc-quien" title="${esc(nombreCompleto(p))}"><b>${esc(nombreCompleto(p))}</b><small>${esc(t ? t.nombre : 'Sin tipo')}${repetidos.has(p.id) ? ` · <span class="dpc-dup">posible duplicado (${repetidos.get(p.id)})</span>` : ''}</small></td>
+              <td>${esc(p.dpi || '—')}<small>${esc(p.nit ? `NIT ${p.nit}` : 'Sin NIT')}</small></td>
+              <td title="${esc(telDe(p))}">${esc(telDe(p) || '—')}<small>${esc(p.correo || '')}</small></td>
+              <td>${p.fecha_nacimiento ? esc(window.BANCOS.fmt.fechaDia(p.fecha_nacimiento)) : '—'}<small>${edad !== '' ? `${edad} años` : ''}</small></td>
+              <td title="${esc(p.persona_anterior || '')}">${esc(p.persona_anterior || '—')}<small>${esc(ctx.localidad(p.localidad_id)?.codigo || '')}</small></td>
+              <td class="cqc-estado"><span class="pc-marca ${p.activo ? 'aprobada' : 'anulada'}">${p.activo ? 'Activa' : 'Inactiva'}</span><small>${fechaIngreso(p) ? `Ingreso ${esc(window.BANCOS.fmt.fechaDia(String(fechaIngreso(p)).slice(0, 10)))}` : ''}</small></td>
+              <td class="cq-acc"><button type="button" class="boton secundario-sm cqc-ver dpc-ver" data-ficha="${p.id}" title="Abrir la ficha en Datos Personas"><i class="ti ti-id" aria-hidden="true"></i> Ver ficha</button></td></tr>`; }).join('')
+              || `<tr><td colspan="8" class="tk-vacio"><i class="ti ti-users" aria-hidden="true"></i>${personas.length ? 'No hay personas con estos parámetros.' : 'La organización aún no tiene personas: créalas en Datos Personas.'}</td></tr>`}
+              ${filas.length > MAX ? `<tr><td colspan="8" class="tk-vacio">Se muestran las primeras ${MAX} de ${filas.length.toLocaleString('es-GT')}: usa la búsqueda o los filtros (el Excel lleva todas).</td></tr>` : ''}</tbody></table>
+        </div>`;
+    }
+
+    async function elegir(p) {
+      sel = p;
+      detalle = { clientes: [], ficha: null };
+      ctx.pMae.querySelectorAll('tr[data-persona]').forEach((tr) => tr.classList.toggle('actual', !!p && tr.dataset.persona === String(p.id)));
+      if (!p) return pintarDetalle();
+      ctx.pDet.innerHTML = ctx.vacio('Cargando la persona…', 'ti-loader-2');
+      const docs = [p.nit && !['CF', 'C/F'].includes(String(p.nit).toUpperCase()) ? String(p.nit).toUpperCase() : null, p.dpi].filter(Boolean);
+      const [fi, cl] = await Promise.all([
+        sb.from('personas').select('*').eq('id', p.id).maybeSingle(),
+        docs.length ? sb.from('clientes').select('id, codigo, nombre, documento, localidad_id').eq('organizacion_id', org()).in('documento', docs).limit(20) : Promise.resolve({ data: [] })
+      ]);
+      if (sel !== p) return;
+      detalle = { ficha: fi.data || p, clientes: cl.data || [] };
+      pintarDetalle();
+    }
+
+    function pintarDetalle() {
+      const p = sel;
+      if (!p) { ctx.pDet.innerHTML = ctx.vacio(personas.length ? 'Elige una persona para ver su detalle.' : 'Sin personas en la organización.', 'ti-users'); return; }
+      const x = detalle.ficha || p;
+      const t = tipoDe(x.tipo_id);
+      const edad = edadDe(x.fecha_nacimiento);
+      const cat2 = (id) => cat.find((c) => c.id === id)?.nombre;
+      const nom = normal(nombreCompleto(x));
+      const iguales = personas.filter((o) => o.id !== x.id && ((x.dpi && o.dpi === x.dpi) || (x.nit && !['CF', 'C/F'].includes(String(x.nit).toUpperCase()) && String(o.nit || '').toUpperCase() === String(x.nit).toUpperCase()) || normal(nombreCompleto(o)) === nom));
+      const dato = (k, v) => `<div class="dpc-dato"><dt>${k}</dt><dd>${v ? esc(v) : '<span class="tk-tenue">—</span>'}</dd></div>`;
+      ctx.pDet.innerHTML = `
+        <div class="tk-form cq-ficha">
+          <header class="tk-titulo cb-titulo">
+            <span class="tk-icono dpc-av">${esc(iniciales(x))}</span>
+            <div class="tk-titulo-texto"><small>Persona ${x.codigo} · ${esc(t ? t.nombre : 'Sin tipo')}${x.persona_anterior ? ` · sistema anterior ${esc(x.persona_anterior)}` : ''}</small><h2>${esc(nombreCompleto(x))}</h2></div>
+            <dl class="cq-datos">
+              <div><dt>DPI</dt><dd>${esc(x.dpi || '—')}</dd></div>
+              <div><dt>NIT</dt><dd>${esc(x.nit || '—')}</dd></div>
+              <div><dt>Nacimiento</dt><dd>${x.fecha_nacimiento ? `${esc(window.BANCOS.fmt.fechaDia(x.fecha_nacimiento))}${edad !== '' ? ` · ${edad} años` : ''}` : '—'}</dd></div>
+              <div><dt>Estado</dt><dd>${x.activo ? 'Activa' : 'Inactiva'}</dd></div>
+            </dl>
+            <div class="tk-titulo-acciones"><a class="boton primario-sm" href="#/administracion/datos-personas/${x.id}"><i class="ti ti-id" aria-hidden="true"></i> Ver en Datos Personas</a></div>
+          </header>
+          <div class="cq-det">
+            <section class="cb-bloque">
+              <h3 class="ta-col-titulo"><i class="ti ti-user" aria-hidden="true"></i> Datos de la ficha</h3>
+              <dl class="dpc-datos">
+                ${dato('Facturar a', x.facturar_a)}${dato('Teléfonos', telDe(x))}${dato('Correo', x.correo)}${dato('Sexo · estado civil', [x.sexo, x.estado_civil].filter(Boolean).join(' · '))}
+                ${dato('Dirección', x.direccion || x.direccion_casa)}${dato('Dirección factura', x.direccion_facturacion)}${dato('Nacionalidad', x.nacionalidad)}${dato('Escolaridad · profesión', [cat2(x.escolaridad_id), cat2(x.profesion_id)].filter(Boolean).join(' · ') || [x.escolaridad_anterior && `esc. ${x.escolaridad_anterior}`, x.profesion_anterior && `prof. ${x.profesion_anterior}`].filter(Boolean).join(' · '))}
+                ${dato('Empresa · puesto', [x.empresa_labora, x.puesto].filter(Boolean).join(' · '))}${dato('Crédito', x.dias_credito || x.limite_credito ? `${x.dias_credito || 0} días · Q ${window.BANCOS.fmt.monto(x.limite_credito || 0)}` : '')}${dato('Cuenta contable', x.cuenta_codigo)}${dato('Registrada en', ctx.localidad(x.localidad_id) ? `${ctx.localidad(x.localidad_id).codigo} · ${ctx.localidad(x.localidad_id).nombre_comercial}` : '')}
+              </dl>
+            </section>
+            <section class="cb-bloque">
+              <h3 class="ta-col-titulo"><i class="ti ti-copy" aria-hidden="true"></i> Posibles duplicados y clientes asociados <small>${iguales.length + detalle.clientes.length}</small></h3>
+              <div class="pc-lineas"><table><thead><tr><th>Tipo</th><th>Código</th><th>Nombre</th><th>DPI · NIT</th><th>Coincide en</th><th></th></tr></thead>
+                <tbody>${[...iguales.map((o) => `<tr><td><span class="pc-tipo">persona</span></td><td class="fuerte">${o.codigo}</td><td class="cc-nombre">${esc(nombreCompleto(o))}</td><td>${esc(o.dpi || o.nit || '')}</td><td>${[x.dpi && o.dpi === x.dpi ? 'DPI' : '', x.nit && String(o.nit || '').toUpperCase() === String(x.nit).toUpperCase() ? 'NIT' : '', normal(nombreCompleto(o)) === nom ? 'nombre' : ''].filter(Boolean).join(', ')}</td><td><button type="button" class="rp-enlace dpc-ir" data-ir="${o.id}" title="Ver esta persona"><i class="ti ti-arrow-right" aria-hidden="true"></i></button></td></tr>`),
+                  ...detalle.clientes.map((c) => `<tr><td><span class="pc-tipo">cliente</span></td><td class="fuerte">${esc(c.codigo)}</td><td class="cc-nombre">${esc(c.nombre)}</td><td>${esc(c.documento || '')}</td><td>${esc(ctx.localidad(c.localidad_id)?.codigo || '')}</td><td></td></tr>`)].join('') || '<tr><td colspan="6" class="tk-vacio">Sin duplicados ni clientes con el mismo NIT o DPI.</td></tr>'}</tbody></table></div>
+            </section>
+          </div>
+        </div>`;
+    }
+
+    // ---------- Reporte en Excel (con el encabezado de la empresa) ----------
+    function parametros() {
+      const emp = ctx.localidad(ctx.sel.loc);
+      const t = tipoDe(Number(f.tipo));
+      return [`Organización de: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Registradas en: ${f.empresa === 'TODAS' ? 'toda la organización' : 'esta empresa'}`, `Tipo: ${t ? t.nombre : 'Todos'}`,
+        `Estado: ${f.estado}`, `Documento: ${DOCS.find(([k]) => k === f.doc)?.[1]}`, `Orden: ${ORDENES_P.find(([k]) => k === `${f.orden}:${f.dir}`)?.[1] || ''}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
+    }
+    async function excel() {
+      const filas = visibles();
+      if (!filas.length) return window.FIN.aviso('No hay personas con estos parámetros');
+      const cargar = () => window.ExcelJS ? Promise.resolve(window.ExcelJS) : new Promise((ok, mal) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'; s.onload = () => ok(window.ExcelJS); s.onerror = () => mal(new Error('No se pudo cargar la librería de Excel')); document.head.appendChild(s); });
+      const emp = ctx.localidad(ctx.sel.loc);
+      const COLS = [['Código', 9], ['Nombres', 26], ['Apellidos', 26], ['Tipo', 16], ['DPI', 16], ['NIT', 13], ['Teléfonos', 22], ['Correo', 28], ['Nacimiento', 12], ['Edad', 7], ['Sexo', 11], ['Sistema anterior', 24], ['Empresa', 9], ['Estado', 10]];
+      const datos = filas.map((p) => [p.codigo, p.nombres, p.apellidos || '', tipoDe(p.tipo_id)?.nombre || '', p.dpi || '', p.nit || '', telDe(p), p.correo || '', p.fecha_nacimiento ? window.BANCOS.fmt.fechaDia(p.fecha_nacimiento) : '', edadDe(p.fecha_nacimiento), p.sexo || '', p.persona_anterior || '', ctx.localidad(p.localidad_id)?.codigo || '', p.activo ? 'Activa' : 'Inactiva']);
+      let ExcelJS;
+      try { ExcelJS = await cargar(); } catch (err) { window.FIN.aviso(`${err.message}: se descarga en CSV`); return window.COMPRAS_CAT.descargarCsv(`personas_${emp?.codigo || ''}.csv`, [COLS.map((c) => c[0]), ...datos]); }
+      window.FIN.aviso('Generando el reporte…');
+      const yo = window.FIN.perfil();
+      const ahora = new Date().toLocaleString('es-GT', { timeZone: 'America/Guatemala', hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', '');
+      const { data: o } = await sb.from('organizaciones').select('nombre').eq('id', org()).maybeSingle();
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'Financiero CONSISAV';
+      const ws = wb.addWorksheet('Personas', { views: [{ state: 'frozen', ySplit: 7, showGridLines: false }], pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+      ws.columns = COLS.map(([, ancho]) => ({ width: ancho }));
+      const azul = 'FF1F3A5F', ultima = COLS.length;
+      ws.mergeCells(1, 1, 1, 3); ws.getCell(1, 1).value = o?.nombre || ''; ws.getCell(1, 1).font = { bold: true, size: 13, color: { argb: azul } };
+      ws.mergeCells(2, 1, 2, 3); ws.getCell(2, 1).value = emp ? `${emp.codigo} · ${emp.nombre_comercial}` : ''; ws.getCell(2, 1).font = { size: 10, color: { argb: 'FF555555' } };
+      const par = parametros();
+      ws.mergeCells(1, 4, 1, 10); ws.getCell(1, 4).value = 'Consulta Personas'; ws.getCell(1, 4).font = { bold: true, size: 14, color: { argb: azul } };
+      [par.slice(0, 2).join('   ·   '), par.slice(2, 5).join('   ·   '), par.slice(5).join('   ·   ')].forEach((tx, i) => { ws.mergeCells(2 + i, 4, 2 + i, 10); ws.getCell(2 + i, 4).value = tx; ws.getCell(2 + i, 4).font = { size: 9.5, color: { argb: 'FF444444' } }; });
+      for (let r = 1; r <= 4; r += 1) ws.getCell(r, 4).alignment = { horizontal: 'center' };
+      ws.mergeCells(1, 11, 1, ultima); ws.getCell(1, 11).value = `Fecha: ${ahora}`;
+      ws.mergeCells(2, 11, 2, ultima); ws.getCell(2, 11).value = `Usuario: ${(yo.usuario || '').toUpperCase()}${yo.nombre ? ` · ${yo.nombre}` : ''}`;
+      [1, 2].forEach((r) => { ws.getCell(r, 11).alignment = { horizontal: 'right' }; ws.getCell(r, 11).font = { size: 9.5, color: { argb: 'FF444444' } }; });
+      for (let c = 1; c <= ultima; c += 1) ws.getCell(5, c).border = { bottom: { style: 'medium', color: { argb: azul } } };
+      ws.getRow(5).height = 6;
+      const cab = ws.getRow(7);
+      COLS.forEach(([tx], i) => { const c = cab.getCell(i + 1); c.value = tx; c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: azul } }; });
+      datos.forEach((d, i) => { const r = ws.getRow(8 + i); r.values = d; if (d[13] === 'Inactiva') r.font = { color: { argb: 'FF999999' } }; });
+      const tg = ws.getRow(9 + datos.length);
+      tg.getCell(2).value = `Total: ${datos.length.toLocaleString('es-GT')} personas (${filas.filter((p) => p.activo).length.toLocaleString('es-GT')} activas)`; tg.font = { bold: true };
+      ws.autoFilter = { from: { row: 7, column: 1 }, to: { row: 7, column: ultima } };
+      const buf = await wb.xlsx.writeBuffer();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      a.download = `personas_${emp?.codigo || ''}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+      window.FIN.aviso(`Reporte generado: ${datos.length.toLocaleString('es-GT')} personas`);
+    }
+
+    cont.addEventListener('change', (e) => {
+      const cambio = ctx.cambioOrgLoc(e);
+      if (cambio === 'org') { sel = null; f.tipo = ''; return consultar(); }
+      if (cambio === 'loc') { if (f.empresa === 'ESTA') { pintarMaestro(); return elegir(visibles()[0] || null); } return; }
+      if (cambio === 'otro') {
+        const n = e.target.name;
+        if (['tipo', 'estado', 'doc', 'empresa'].includes(n)) { f[n] = e.target.value; pintarMaestro(); return elegir(visibles().find((p) => p.id === sel?.id) || visibles()[0] || null); }
+        if (n === 'orden') { [f.orden, f.dir] = e.target.value.split(':'); return pintarMaestro(); }
+      }
+    });
+    cont.addEventListener('input', (e) => {
+      if (!e.target.matches('[data-buscar]')) return;
+      f.buscar = e.target.value;
+      const pos = e.target.selectionStart;
+      pintarMaestro();
+      const b = ctx.pMae.querySelector('[data-buscar]'); b.focus(); b.setSelectionRange(pos, pos);
+    });
+    cont.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.matches('[data-buscar]')) e.preventDefault();
+      if (e.key === 'Enter' && e.target.matches('tr[data-persona]')) e.target.click();
+    });
+    cont.addEventListener('click', (e) => {
+      const v = e.target.closest('[data-ficha]');
+      if (v) { location.hash = `#/administracion/datos-personas/${v.dataset.ficha}`; return; }
+      const ir = e.target.closest('[data-ir]');
+      if (ir) { const p = personas.find((x) => String(x.id) === ir.dataset.ir); if (p) { if (!visibles().includes(p)) { f.buscar = ''; f.doc = 'TODOS'; f.estado = 'TODAS'; f.tipo = ''; pintarFiltros(); } pintarMaestro(); return elegir(p); } }
+      const th = e.target.closest('[data-ordenar]');
+      if (th) { const campo = th.dataset.ordenar; f.dir = f.orden === campo && f.dir === 'asc' ? 'desc' : 'asc'; f.orden = campo; const o = ctx.pFil.querySelector('[name=orden]'); if (o) o.value = `${f.orden}:${f.dir}`; return pintarMaestro(); }
+      const tr = e.target.closest('tr[data-persona]');
+      if (tr && ctx.pMae.contains(tr)) return elegir(personas.find((p) => String(p.id) === tr.dataset.persona));
+      if (e.target.closest('[data-accion]')?.dataset.accion === 'excel') return excel();
+    });
+
+    iniciar();
+  };
 })();
