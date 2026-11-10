@@ -28,3 +28,7 @@ supabase/migrations/20261109000176_parametros_organizacion_2.sql
 
 # Cuentas bancarias de la organizacion 2 (numeros de cuenta y saldos): solo local.
 supabase/migrations/20261109000178_cuentas_bancarias_organizacion_2.sql
+
+# Cheques de la organizacion 2 (beneficiarios y cuentas bancarias): solo local.
+supabase/migrations/20261109000179_cheques_organizacion_2.sql
+supabase/pendientes/179_cheques_parte_*.sql
