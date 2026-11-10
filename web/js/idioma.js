@@ -11,6 +11,10 @@
   try { idioma = localStorage.getItem(CLAVE) === 'en' ? 'en' : 'es'; } catch { /* sin almacenamiento */ }
   const en = idioma === 'en';
   document.documentElement.lang = idioma;
+  // El traductor del navegador (Edge, Chrome) no debe traducir encima de esta capa: los dos se peleaban el
+  // mismo texto sin fin y la página dejaba de responder.
+  document.documentElement.setAttribute('translate', 'no');
+  document.documentElement.classList.add('notranslate');
   // El diccionario solo se descarga en inglés (este archivo se carga en <head>, antes del resto).
   // Misma carpeta y versión que este archivo («js/idioma.js?v=…» → «js/i18n_en.js?v=…»).
   if (en) document.write(`<script src="${(document.currentScript?.src || 'js/idioma.js').replace(/idioma\.js/, 'i18n_en.js')}"><\/script>`);
@@ -108,6 +112,10 @@
   const SALTAR = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'CODE', 'PRE', 'NOSCRIPT', 'svg']);
   const ATRIBUTOS = ['placeholder', 'title', 'aria-label', 'data-titulo'];
   const hechos = new WeakSet();
+  // Freno contra ciclos: el texto que puso esta capa no se vuelve a procesar, y un nodo que otro programa
+  // cambia una y otra vez se deja de traducir después de unas cuantas veces.
+  const puesto = new WeakMap(), veces = new WeakMap();
+  const MAX_VECES = 4;
   const excluido = (e) => SALTAR.has(e.tagName) || e.isContentEditable || e.classList?.contains('notranslate') || e.hasAttribute?.('data-no-traducir');
   function saltar(el) {
     for (let e = el; e && e !== document.body; e = e.parentElement) if (excluido(e)) return true;
@@ -115,8 +123,16 @@
   }
   function textoNodo(n, revisar = true) {
     if (hechos.has(n) || !n.nodeValue || !n.parentElement || (revisar && saltar(n.parentElement))) return;
+    if (puesto.get(n) === n.nodeValue) return;
+    const k = (veces.get(n) || 0) + 1;
+    if (k > MAX_VECES) return;
     const t = traducir(n.nodeValue);
-    if (t != null && t !== norm(n.nodeValue)) { hechos.add(n); n.nodeValue = conEspacios(n.nodeValue, t); }
+    if (t != null && t !== norm(n.nodeValue)) {
+      veces.set(n, k);
+      hechos.add(n);
+      n.nodeValue = conEspacios(n.nodeValue, t);
+      puesto.set(n, n.nodeValue);
+    }
   }
   function atributos(el, revisar = true) {
     if (revisar && saltar(el)) return;
@@ -142,7 +158,7 @@
     new MutationObserver((cambios) => {
       for (const c of cambios) {
         if (c.type === 'childList') c.addedNodes.forEach(recorrer);
-        else if (c.type === 'characterData') { hechos.delete(c.target); textoNodo(c.target); }
+        else if (c.type === 'characterData') { if (puesto.get(c.target) === c.target.nodeValue) continue; hechos.delete(c.target); textoNodo(c.target); }
         else if (c.type === 'attributes') atributos(c.target);
       }
     }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATRIBUTOS });

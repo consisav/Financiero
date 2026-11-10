@@ -84,5 +84,18 @@
  "{*} registro(s) en el sistema · {*}": "{*} record(s) in the system · {*}",
  "{*}: opciones en desarrollo": "{*}: options in development",
  "¡Listo para operar!": "Ready to operate!",
- "¿Generar el manual de {*} con IA (Claude)? Se envían la estructura del menú y unos pocos registros de ejemplo (sin correos ni teléfonos). Cada generación consume la API de Anthropic configurada en Supabase y tarda uno o dos minutos.": "Generate the {*} manual with AI (Claude)? The menu structure and a few sample records are sent (no emails or phones). Each generation uses the Anthropic API configured in Supabase and takes one or two minutes."
+ "¿Generar el manual de {*} con IA (Claude)? Se envían la estructura del menú y unos pocos registros de ejemplo (sin correos ni teléfonos). Cada generación consume la API de Anthropic configurada en Supabase y tarda uno o dos minutos.": "Generate the {*} manual with AI (Claude)? The menu structure and a few sample records are sent (no emails or phones). Each generation uses the Anthropic API configured in Supabase and takes one or two minutes.",
+ "Administrador": "Administrator",
+ "Super Administrador": "Super Administrator",
+ "Usuario general": "General user",
+ "Consulta (solo lectura)": "Inquiry (read only)",
+ "Cajero(a)": "Cashier",
+ "Vendedor(a)": "Salesperson",
+ "Bodeguero": "Warehouse clerk",
+ "Auditor interno": "Internal auditor",
+ "Gerente": "Manager",
+ "Gerente general": "General manager",
+ "Asistente contable": "Accounting assistant",
+ "Recepcionista": "Receptionist",
+ "Enfermero(a)": "Nurse"
 }
