@@ -3,8 +3,8 @@
 //   (de crédito y de débito). Resumen de los documentos de una empresa (organización y localidad) en un rango
 //   de fechas, como Consultar Compras: arriba el maestro con sus totales y abajo el detalle del documento
 //   elegido (detalle contable y las compras, facturas o recibos que tiene).
-// Filtros: cuenta bancaria, tipo (solo en notas), beneficiario/cliente/proveedor, fechas (la inicial, por
-// omisión, la del primer documento de la empresa), estado (vigentes, anulados, conciliados, sin conciliar,
+// Filtros: cuenta bancaria, tipo (solo en notas), beneficiario/cliente/proveedor, fechas (por omisión: en cheques
+// del 1 del mes anterior a hoy; en depósitos y notas desde el primer documento de la empresa), estado (vigentes, anulados, conciliados, sin conciliar,
 // sin partida) y orden (número, fecha o valor; también con clic en el encabezado). «Consultar» abre el
 // documento en su pantalla de registro.
 (function () {
@@ -75,10 +75,17 @@
     async function cargarLocalidad() {
       cuentas = await ctx.cuentasBancarias();
       if (f.cuenta && !cuenta(Number(f.cuenta))) f.cuenta = '';
-      // Fecha inicial por omisión: la del primer documento de la empresa (sin documentos, el 1 de enero).
-      const pr = ctx.sel.loc ? await sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', ctx.sel.loc).in('tipo', cfg.tipos).order('fecha').limit(1) : { data: [] };
-      f.desde = pr.data?.[0]?.fecha || `${anio}-01-01`;
-      if (f.hasta < f.desde) f.hasta = fmt.hoy();
+      if (cfg.tipos[0] === 'CHEQUE') {
+        // Cheques: del 1 del mes anterior a hoy (p. ej. el 9/11/2026, del 01/10/2026 al 09/11/2026).
+        const [a, m] = fmt.hoy().split('-').map(Number);
+        f.desde = m === 1 ? `${a - 1}-12-01` : `${a}-${String(m - 1).padStart(2, '0')}-01`;
+        f.hasta = fmt.hoy();
+      } else {
+        // Fecha inicial por omisión: la del primer documento de la empresa (sin documentos, el 1 de enero).
+        const pr = ctx.sel.loc ? await sb.from('movimientos_bancarios').select('fecha').eq('localidad_id', ctx.sel.loc).in('tipo', cfg.tipos).order('fecha').limit(1) : { data: [] };
+        f.desde = pr.data?.[0]?.fecha || `${anio}-01-01`;
+        if (f.hasta < f.desde) f.hasta = fmt.hoy();
+      }
       pintarFiltros();
       await consultar();
     }
