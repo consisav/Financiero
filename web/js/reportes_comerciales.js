@@ -63,6 +63,17 @@
   // Motor de un reporte: lee los documentos y arma el reporte (columnas, filas, KPIs y gráficas) sin pantalla.
   // env: { sb, f: { desde, fecha, producto, contenido }, productos(), loc(), org(), moneda(id), empresa() }.
   // Lo usan la pantalla de cada reporte y los Reportes gerenciales.
+  // Orden de clientes o proveedores (filtro y renglones): por código (por omisión ascendente), nombre o valor.
+  const ORDEN_TER = [['codigo:asc', 'Código ↑'], ['codigo:desc', 'Código ↓'], ['nombre:asc', 'Nombre ↑'], ['nombre:desc', 'Nombre ↓'], ['valor:desc', 'Valor ↓'], ['valor:asc', 'Valor ↑']];
+  function ordenarTerceros(xs, orden = 'codigo:asc') {
+    const [c, dir] = (orden || 'codigo:asc').split(':'), s = dir === 'desc' ? -1 : 1;
+    const num = (v) => (v === '' || v == null || Number.isNaN(Number(v)) ? Infinity : Number(v));
+    return [...xs].sort((a, b) => {
+      let d = c === 'valor' ? (a.valor || 0) - (b.valor || 0) : c === 'nombre' ? String(a.nom || '').localeCompare(String(b.nom || ''), 'es') : num(a.cod) - num(b.cod) || String(a.cod ?? '').localeCompare(String(b.cod ?? ''));
+      if (!d) d = String(a.nom || '').localeCompare(String(b.nom || ''), 'es');
+      return d * s;
+    });
+  }
   function motor(id, env) {
     const R = REPORTES[id], L = LADOS[R.lado];
     const { sb, f } = env;
@@ -115,17 +126,18 @@
     }
 
     const parametros = (extra = []) => [`Empresa: ${empresa()}`, conPeriodo ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.fecha)}` : `Saldo al ${fmt.fechaDia(f.fecha)}`,
-      `Producto: ${f.producto ? etiqueta(prod(Number(f.producto))) : 'Todos'}`,
+      `Producto: ${f.producto ? etiqueta(prod(Number(f.producto))) : 'Todos'}`, ...parametrosTer(),
       ...(R.lado === 'VENTAS' ? [`Vendedor: ${vend() ? ((env.vendedores ? env.vendedores() : []).find((v) => v.id === vend())?.nombre || vend()) : 'Todos'}`] : []), ...extra];
     const agrupar = (xs, key) => { const m = new Map(); xs.forEach((x) => { const kk = key(x); const a = m.get(kk) || []; a.push(x); m.set(kk, a); }); return m; };
     const suma = (xs, c) => xs.reduce((t, x) => t + (Number(x[c]) || 0), 0);
     const mesDe = (x) => x.fecha.slice(0, 7);
     const mesTxt = (ym) => `${MES[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
     const top = (xs, n = 10) => [...xs].sort((a, b) => b.valor - a.valor).slice(0, n);
+    const parametrosTer = () => (R.tipo === 'TERCERO' && f.ordenTer ? [`${L.tercero}: ${f.tercero ? (env.terceroTxt ? env.terceroTxt() : f.tercero) : 'Todos'}`, `Orden: ${(ORDEN_TER.find(([k]) => k === (f.ordenTer || 'codigo:asc')) || ORDEN_TER[0])[1]}`] : []);
     const meses = () => { const out = []; let d = f.desde.slice(0, 7); const h = f.fecha.slice(0, 7); while (d <= h && out.length < 240) { out.push(d); const [y, m] = d.split('-').map(Number); d = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`; } return out; };
 
     function construir(datos) {
-      const regs = datos.regs, conProd = !!f.producto, det = f.contenido === 'DETALLADO';
+      const regs = R.tipo === 'TERCERO' && f.tercero ? datos.regs.filter((x) => String(x.tId) === f.tercero) : datos.regs, conProd = !!f.producto, det = f.contenido === 'DETALLADO';
       const base = { titulo: R.titulo, orgId: env.org(), locId: env.loc(), hoja: R.titulo.slice(0, 30), archivo: `${id}_${f.fecha}` };
       const total = suma(regs, 'valor'), nDocs = new Set(regs.map((x) => x.id)).size;
       const colsDet = [col('Fecha', 'texto', 11), col('Documento', 'texto', 20), col(L.tercero, 'texto', 40), col('NIT', 'texto', 13), ...(conProd ? [col('Cantidad', 'numero', 11), col('Precio prom.', 'monto', 13)] : L.conIva ? [col('IVA Q', 'monto', 13)] : []), col('Valor Q', 'monto', 15)];
@@ -134,8 +146,8 @@
       const kpisBase = [[L.doc, nDocs], [`Total ${L.verbo.toLowerCase()}`, `Q ${fmt.monto(total)}`, 'ec-fin'], ...(conProd ? [['Cantidad', cant(suma(regs, 'cantidad'))]] : L.conIva ? [['IVA', `Q ${fmt.monto(suma(regs, 'iva'))}`]] : []), ['Promedio por documento', `Q ${fmt.monto(nDocs ? total / nDocs : 0)}`]];
       const porMes = agrupar(regs, mesDe), ms = meses();
       const grafMeses = () => G().columnas(`${L.verbo} por mes (Q)`, ms.map((m) => MES[Number(m.slice(5, 7)) - 1].slice(0, 3) + (ms.length > 12 ? ` ${m.slice(2, 4)}` : '')), [{ nombre: L.verbo, color: G().COLORES.AZUL, valores: ms.map((m) => suma(porMes.get(m) || [], 'valor')) }], (v) => fmt.monto(v).replace(/\.00$/, ''));
-      const porTer = [...agrupar(regs, (x) => x.tId)].map(([, xs]) => ({ cod: xs[0].tCod, nom: xs[0].tNom, nit: xs[0].nit, xs, valor: suma(xs, 'valor') })).sort((a, b) => b.valor - a.valor);
-      const grafTer = () => G().barras(`${L.terceros} principales (10)`, porTer.slice(0, 10).map((t) => ({ etiqueta: t.nom, valor: t.valor, texto: `Q ${fmt.monto(t.valor)} · ${total ? ((t.valor / total) * 100).toFixed(1) : 0} %` })));
+      const porTer = ordenarTerceros([...agrupar(regs, (x) => x.tId)].map(([, xs]) => ({ cod: xs[0].tCod, nom: xs[0].tNom, nit: xs[0].nit, xs, valor: suma(xs, 'valor') })), f.ordenTer || 'valor:desc');
+      const grafTer = () => G().barras(`${L.terceros} principales (10)`, top(porTer).map((t) => ({ etiqueta: t.nom, valor: t.valor, texto: `Q ${fmt.monto(t.valor)} · ${total ? ((t.valor / total) * 100).toFixed(1) : 0} %` })));
 
       if (R.tipo === 'PERIODO') {
         if (det) {
@@ -201,19 +213,24 @@
     const ctx = montar(cont, { titulo: R.titulo, icono: R.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep', grupo: L.grupo });
     const { sb } = ctx;
     const hoy = fmt.hoy();
-    const f = { desde: `${hoy.slice(0, 4)}-01-01`, fecha: hoy, producto: '', contenido: R.tipo === 'SALDOS' || R.tipo === 'TERCERO' ? 'RESUMIDO' : 'RESUMIDO', graficas: true };
+    const f = { desde: `${hoy.slice(0, 4)}-01-01`, fecha: hoy, producto: '', tercero: '', ordenTer: 'codigo:asc', contenido: R.tipo === 'SALDOS' || R.tipo === 'TERCERO' ? 'RESUMIDO' : 'RESUMIDO', graficas: true };
     let productos = [], datos = null, cargado = '', cfg = null;
     const prod = (pid) => productos.find((p) => p.id === pid);
     const etiqueta = (p) => `${p.nombre} — ${p.codigo_producto || p.codigo}`;
     const empresa = () => { const e = ctx.localidad(ctx.sel.loc); return e ? `${e.codigo} · ${e.nombre_comercial}` : ''; };
     const conPeriodo = R.tipo !== 'SALDOS';
-    const M = motor(id, { sb, f, productos: () => productos, loc: () => ctx.sel.loc, org: () => ctx.sel.org, moneda: (x) => ctx.moneda(x), empresa });
+    // Clientes (o proveedores) con documentos en el período, para el filtro.
+    const terceros = () => ordenarTerceros([...new Map((datos?.regs || []).map((x) => [String(x.tId), { id: String(x.tId), cod: x.tCod, nom: x.tNom }])).values()], f.ordenTer);
+    const terceroTxt = () => { const t = terceros().find((x) => x.id === f.tercero); return t ? `${t.cod ? `${t.cod} · ` : ''}${t.nom}` : f.tercero; };
+    const M = motor(id, { sb, f, productos: () => productos, loc: () => ctx.sel.loc, org: () => ctx.sel.org, moneda: (x) => ctx.moneda(x), empresa, terceroTxt });
 
     function pintarFiltros() {
       const p = f.producto ? prod(Number(f.producto)) : null;
       ctx.filtros(`${conPeriodo ? `<label class="campo"><span>Desde</span><input type="date" name="desde" value="${f.desde}" max="${f.fecha}"></label>` : ''}
         <label class="campo"><span>${conPeriodo ? 'Al' : 'Saldo al'}</span><input type="date" name="fecha" value="${f.fecha}" max="${hoy}"></label>
         <label class="campo cx-prov pr-prod"><span>Producto</span><input name="producto" list="rc-prods" value="${esc(p ? etiqueta(p) : '')}" placeholder="Todos los productos" autocomplete="off"></label>
+        ${R.tipo === 'TERCERO' ? `<label class="campo cx-prov rc-ter"><span>${esc(L.tercero)}</span><select name="tercero"><option value="">Todos (${terceros().length})</option>${terceros().map((t) => `<option value="${esc(t.id)}" ${f.tercero === t.id ? 'selected' : ''}>${esc(`${t.cod ? `${t.cod} · ` : ''}${t.nom}`)}</option>`).join('')}</select></label>
+          <label class="campo"><span>Ordenar ${esc(L.terceros.toLowerCase())}</span><select name="ordenTer">${ORDEN_TER.map(([k, t]) => `<option value="${k}" ${f.ordenTer === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
         ${R.tipo !== 'GRAFICA' ? `<label class="campo"><span>Contenido</span><select name="contenido">${[['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']].map(([x, t]) => `<option value="${x}" ${f.contenido === x ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
         <label class="pc-check"><input type="checkbox" name="graficas" ${f.graficas ? 'checked' : ''}> Gráficas</label>
         <datalist id="rc-prods">${productos.map((x) => `<option value="${esc(etiqueta(x))}"></option>`).join('')}</datalist>`,
@@ -222,7 +239,7 @@
     }
     async function iniciar() { if (!(await ctx.cargarBase())) return; await cargarLocalidad(); }
     async function cargarLocalidad() {
-      const loc = ctx.sel.loc; f.producto = ''; cargado = '';
+      const loc = ctx.sel.loc; f.producto = ''; f.tercero = ''; cargado = '';
       if (!loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', R.icono); return; }
       productos = await leerTodo(() => sb.from('productos').select('id, codigo, codigo_producto, nombre').eq('localidad_id', loc).order('nombre')).catch(() => []);
       pintarFiltros(); await consultar();
@@ -233,7 +250,7 @@
       const clave = `${ctx.sel.loc}|${f.desde}|${f.fecha}|${f.producto}`;
       if (clave !== cargado) {
         ctx.pDet.innerHTML = `<p class="vacio">Leyendo ${R.tipo === 'SALDOS' ? 'los saldos' : 'los documentos'}…</p>`;
-        try { datos = await M.leer(); cargado = clave; }
+        try { datos = await M.leer(); cargado = clave; if (R.tipo === 'TERCERO') { if (f.tercero && !terceros().some((t) => t.id === f.tercero)) f.tercero = ''; pintarFiltros(); } }
         catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
       }
       cfg = M.construir(datos); pintar();
@@ -274,6 +291,7 @@
       const n = e.target.name;
       if (n === 'desde' || n === 'fecha') { f[n] = e.target.value || (n === 'fecha' ? hoy : f.desde); if (f.desde > f.fecha) f.desde = `${f.fecha.slice(0, 4)}-01-01`; pintarFiltros(); return consultar(); }
       if (n === 'contenido') { f.contenido = e.target.value; cfg = M.construir(datos); return pintar(); }
+      if (n === 'tercero' || n === 'ordenTer') { f[n] = e.target.value; if (n === 'ordenTer') pintarFiltros(); cfg = M.construir(datos); return pintar(); }
       if (n === 'graficas') { f.graficas = e.target.checked; return pintar(); }
       if (n === 'producto') {
         const t = e.target.value.trim().toUpperCase();
