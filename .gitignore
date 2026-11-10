@@ -22,3 +22,6 @@ supabase/migrations/164_fel_bloques/
 
 # Órdenes de compra de la organización 3 (proveedores con su NIT): solo local.
 supabase/migrations/20261109000175_ordenes_compra_organizacion_3.sql
+
+# Parametros de la organizacion 2 (nombres de usuarios y datos de las empresas): solo local.
+supabase/migrations/20261109000176_parametros_organizacion_2.sql
