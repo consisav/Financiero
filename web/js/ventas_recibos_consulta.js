@@ -33,7 +33,7 @@
 
     function pintarFiltros() {
       ctx.filtros(`
-        <label class="campo cq-prov"><span>Cliente</span><input type="search" name="cliente" list="vrc-clientes" autocomplete="off" value="${esc(f.cliente)}" placeholder="Todos · escribe o elige de la lista (${clientes.length.toLocaleString('es-GT')} clientes)"><datalist id="vrc-clientes">${clientes.map((c) => `<option value="${esc(etiquetaCli(c))}">${esc(c.documento || '')}</option>`).join('')}</datalist></label>
+        <label class="campo cq-prov"><span>Cliente</span><input type="search" name="cliente" autocomplete="off" value="${esc(f.cliente)}" placeholder="Todos · escribe o elige de la lista (${clientes.length.toLocaleString('es-GT')} clientes)"></label>
         <label class="campo"><span>Vendedor</span><select name="vendedor"><option value="">Todos</option>${vendedores.map((v) => `<option value="${v.id}" ${String(f.vendedor) === String(v.id) ? 'selected' : ''}>${v.codigo} · ${esc(v.nombre)}</option>`).join('')}</select></label>
         <label class="campo"><span>Forma de pago</span><select name="forma"><option value="">Todas</option>${FORMAS.map((x) => `<option ${f.forma === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
         <label class="campo"><span>Fechas</span><select name="periodo">${PERIODOS.map(([k, t]) => `<option value="${k}" ${f.periodo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
@@ -43,6 +43,7 @@
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
         `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Resumido o detallado</small></span></button>
          <button type="button" class="boton cqc-excel" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Resumido o detallado</small></span></button></div>`);
+      window.UI.autocompletar(ctx.pFil.querySelector('[name=cliente]'), () => clientes.map((c) => ({ valor: etiquetaCli(c), texto: etiquetaCli(c), detalle: c.documento ? `NIT ${c.documento}` : '' })));
     }
 
     async function iniciar() {

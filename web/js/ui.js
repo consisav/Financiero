@@ -247,7 +247,43 @@
     return { data: out, error: null };
   }
 
-  window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar, todo };
+  // Lista de valores bajo un campo de texto con el nombre completo de cada opción (varias líneas si hace falta).
+  // opciones(): [{ valor, texto, detalle }]. Al elegir, escribe «valor» en el campo y dispara «change».
+  // Busca por todas las palabras escritas (sin acentos) en el texto y el detalle.
+  function autocompletar(input, opciones, max = 60) {
+    if (!input || input.dataset.ac) return;
+    input.dataset.ac = '1';
+    input.removeAttribute('list');
+    input.setAttribute('autocomplete', 'off');
+    const caja = input.parentElement; caja.classList.add('ac-caja');
+    const lista = document.createElement('div'); lista.className = 'ac-lista'; lista.hidden = true; lista.setAttribute('role', 'listbox');
+    caja.appendChild(lista);
+    const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    let vistos = [], activo = -1;
+    const pintar = () => {
+      const ps = norm(input.value).split(/\s+/).filter(Boolean);
+      vistos = opciones().filter((o) => { const t = norm(`${o.texto} ${o.detalle || ''}`); return ps.every((p) => t.includes(p)); });
+      const total = vistos.length; vistos = vistos.slice(0, max); activo = -1;
+      lista.innerHTML = vistos.length ? vistos.map((o, i) => `<div class="ac-op" role="option" data-i="${i}"><b>${esc(o.texto)}</b>${o.detalle ? `<small>${esc(o.detalle)}</small>` : ''}</div>`).join('')
+        + (total > max ? `<div class="ac-mas">${total - max} más: sigue escribiendo para afinar</div>` : '') : '<div class="ac-mas">Sin coincidencias</div>';
+      lista.hidden = false;
+    };
+    const elegir = (i) => { const o = vistos[i]; if (!o) return; input.value = o.valor; lista.hidden = true; input.dispatchEvent(new Event('change', { bubbles: true })); };
+    const marcar = (i) => { activo = Math.max(0, Math.min(vistos.length - 1, i)); lista.querySelectorAll('.ac-op').forEach((el, k) => el.classList.toggle('activa', k === activo)); lista.querySelector('.ac-op.activa')?.scrollIntoView({ block: 'nearest' }); };
+    input.addEventListener('focus', pintar);
+    input.addEventListener('input', pintar);
+    input.addEventListener('blur', () => setTimeout(() => { lista.hidden = true; }, 150));
+    input.addEventListener('keydown', (e) => {
+      if (lista.hidden) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); marcar(activo + 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); marcar(activo - 1); }
+      else if (e.key === 'Enter' && activo >= 0) { e.preventDefault(); elegir(activo); }
+      else if (e.key === 'Escape') lista.hidden = true;
+    });
+    lista.addEventListener('mousedown', (e) => { const op = e.target.closest('.ac-op'); if (op) { e.preventDefault(); elegir(Number(op.dataset.i)); } });
+  }
+
+  window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar, todo, autocompletar };
 })();
 
 // Ver u ocultar la clave: cada campo de contraseña (inicio de sesión, crear cuenta, cambiar clave y los
