@@ -2,7 +2,9 @@
 //   Generar Ventas: parámetros organización, localidad, cliente y fecha; en el detalle los productos y cantidades con el
 //   precio del tipo de precio del cliente (y el último que pagó), su existencia y el botón de existencias por bodega y
 //   lote; sugiere lo que más compra el cliente y avisa su saldo vencido. «Nueva venta» limpia la pantalla; «Por voz»
-//   pregunta el cliente, los productos y las cantidades. Cada venta se guarda con su estado:
+//   pregunta el cliente, los productos y las cantidades; «Dictado voz» recibe instrucciones libres (vender, verificar
+//   existencias, saldo y facturas vencidas del cliente, quitar, guardar, confirmar) y responde en voz, avisando si no hay
+//   existencia. Cada venta se guarda con su estado:
 //   GENERADA → CONFIRMADA → FACTURA PRELIMINAR → FACTURADA (al guardar la factura real), o ELIMINADA.
 //   Al aceptar la factura preliminar la venta pasa a Facturas Ventas como factura nueva ya llenada.
 //   Consulta de Ventas: las ventas por organización, localidad, fechas, cliente y estado, con sus totales y productos;
@@ -41,7 +43,7 @@
       const orgs = ctx.organizaciones, locs = ctx.localidades.filter((x) => x.organizacion_id === ctx.sel.org);
       const dis = editable() ? '' : 'disabled', e = estado();
       const b = (accion, icono, texto, clase = 'secundario-sm') => `<button type="button" class="boton ${clase}" data-accion="${accion}"><i class="ti ${icono}" aria-hidden="true"></i> ${texto}</button>`;
-      const acciones = [b('nueva', 'ti-plus', 'Nueva venta'), b('voz', 'ti-microphone', 'Por voz', 'secundario-sm vi-voz')];
+      const acciones = [b('nueva', 'ti-plus', 'Nueva venta'), b('voz', 'ti-microphone', 'Por voz', 'secundario-sm vi-voz'), b('dictado', 'ti-message-chatbot', 'Dictado voz', 'secundario-sm vi-voz')];
       if (e === 'NUEVA' || e === 'GENERADA') acciones.push(b('guardar', 'ti-device-floppy', 'Guardar'), b('confirmar', 'ti-circle-check', 'Confirmar', 'primario-sm'));
       if (e === 'CONFIRMADA') acciones.push(b('modificar', 'ti-pencil', 'Modificar'), b('preliminar', 'ti-file-invoice', 'Factura preliminar', 'primario-sm'));
       if (e === 'FACTURA PRELIMINAR') acciones.push(b('modificar', 'ti-pencil', 'Modificar'), b('preliminar', 'ti-file-invoice', 'Ver preliminar'), b('trasladar', 'ti-file-export', 'Trasladar a factura', 'primario-sm'));
@@ -428,6 +430,177 @@
       } catch (e) { conv.cerrar(); if (e.message !== 'cancelado') window.FIN.aviso(e.message); pintarFiltros(); pintar(); }
     }
 
+    // ===== Dictado voz: instrucciones libres que llenan la pantalla =====
+    // «Deseo venderle al cliente Axel Juárez 30 unidades del producto Citrato de cafeína 20 mg/ml»
+    // «Verificar la existencia del producto Citrato de cafeína 20 mg/ml» · «Guardar» · «Confirmar» · «Quitar …» · «Terminar»
+    const NUM = 'un|una|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|dieciseis|diecisiete|dieciocho|diecinueve|veinte|veinti\\w+|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien|ciento|doscientos|trescientos|quinientos|mil|media';
+    const UNID = 'unidades?|cajas?|frascos?|piezas?|tabletas?|ampollas?|ampolletas?|viales?|sobres?|blisters?|docenas?|paquetes?|botes?';
+    // Productos que coinciden con lo dicho: por código, por nombre contenido o por parecido (los mejores primero).
+    function buscarProducto(dicho) {
+      const V = window.VOZ, d = V.norm(dicho).replace(/^(el|la|los|las|del|de)\s+/, '');
+      const activos = est.productos.filter((x) => x.estado !== 'INACTIVO');
+      if (!d) return [];
+      const cod = activos.find((x) => V.norm(String(x.codigo_producto || '')) === d || String(x.codigo) === d);
+      if (cod) return [cod];
+      const conNota = activos.map((x) => { const n = V.norm(x.nombre); let v = V.parecido(d, n); if (d.length >= 4 && n.includes(d)) v = Math.max(v, 0.75 + d.length / (n.length * 4)); if (n === d) v = 2; return { x, v }; })
+        .filter((a) => a.v >= 0.5).sort((a, b) => b.v - a.v || existencia(b.x.id) - existencia(a.x.id));
+      if (!conNota.length) return [];
+      if (conNota[0].v >= 2 || (conNota[1] ? conNota[0].v - conNota[1].v >= 0.12 : true)) return [conNota[0].x];
+      return conNota.filter((a) => conNota[0].v - a.v < 0.12).slice(0, 6).map((a) => a.x);
+    }
+    async function elegirProducto(conv, dicho) {
+      const V = window.VOZ, l = buscarProducto(dicho);
+      if (l.length <= 1) return l[0] || null;
+      return conv.preguntar(`Hay ${l.length} productos parecidos a «${dicho}». ¿Cuál?`,
+        (t) => { const n = V.numero(t); return (n && l[n - 1]) || V.mejor(t, l, (x) => x.nombre, 0.34) || undefined; },
+        l.map((x, i) => `${i + 1}. ${x.nombre} (${cant(existencia(x.id))})`));
+    }
+    // Texto del producto dentro de una instrucción: después de «producto», o de «30 unidades de…», o sin la cantidad inicial.
+    function textoProducto(seg) {
+      let m = seg.match(/\bproductos?\b[\s:]*(.+)$/);
+      if (m) return m[1].trim();
+      m = seg.match(new RegExp(`\\b(?:${UNID})\\b\\s+(?:del?\\s+)?(.+)$`));
+      if (m) return m[1].trim();
+      return seg.replace(new RegExp(`^\\s*(?:\\d+(?:[.,]\\d+)?|(?:${NUM})(?:\\s+y\\s+(?:${NUM}))?)\\s+(?:del?\\s+)?`), '').trim();
+    }
+    function cantidadDe(seg) {
+      const V = window.VOZ;
+      const i = seg.search(/\bproductos?\b/);
+      const antes = i >= 0 ? seg.slice(0, i) : (seg.match(new RegExp(`^.*?\\b(?:${UNID})\\b`)) || [seg.split(' ').slice(0, 3).join(' ')])[0];
+      return V.numero(antes);
+    }
+    const hablarYDecir = async (conv, t) => { conv.decir(t); await conv.hablar(t); };
+    async function existenciaDicha(conv, dicho) {
+      const l = buscarProducto(dicho);
+      if (!l.length) return hablarYDecir(conv, `No encontré el producto «${dicho}» en el catálogo de la localidad.`);
+      if (l.length === 1) {
+        const p = l[0], ex = existencia(p.id), ya = Number(est.lineas.find((x) => x.producto_id === p.id)?.cantidad || 0);
+        return hablarYDecir(conv, ex > 0 ? `De ${p.nombre} hay ${cant(ex)} unidades en existencia${ya ? `; en esta venta lleva ${cant(ya)}` : ''}.` : `No hay existencia de ${p.nombre}.`);
+      }
+      return hablarYDecir(conv, `Encontré ${l.length} productos parecidos: ${l.map((p) => `${p.nombre}, ${existencia(p.id) > 0 ? `${cant(existencia(p.id))} unidades` : 'sin existencia'}`).join('; ')}.`);
+    }
+    // Agrega un producto revisando la existencia; si no alcanza, avisa y pregunta qué hacer.
+    async function agregarDictado(conv, p, q) {
+      const V = window.VOZ, ex = existencia(p.id), ya = Number(est.lineas.find((x) => x.producto_id === p.id)?.cantidad || 0);
+      if (!(q > 0)) q = await conv.preguntar(`¿Cuántas unidades de ${p.nombre}? Hay ${cant(ex)} en existencia.`, (t) => { const n = V.numero(t); return n > 0 ? n : undefined; }, ['1', '5', '10', '12']);
+      const libre = Math.max(0, ex - ya);
+      if (q > libre) {
+        const ops = libre > 0 ? [`Agregar ${cant(libre)}`, `Agregar ${cant(q)} de todos modos`, 'No agregar'] : [`Agregar ${cant(q)} de todos modos`, 'No agregar'];
+        const msj = libre > 0 ? `No hay existencia suficiente de ${p.nombre}: solo hay ${cant(libre)}${ya ? ' disponibles además de lo que ya lleva' : ''} y pidió ${cant(q)}. ¿Agrego ${cant(libre)}, agrego ${cant(q)} de todos modos o no lo agrego?`
+          : `No hay existencia de ${p.nombre}${ya ? ' adicional a lo que ya lleva' : ''}. ¿Lo agrego de todos modos o no lo agrego?`;
+        const r = await conv.preguntar(msj, (t) => { const s = V.norm(t); if (/\bno\b|ningun|cancel|quit/.test(s) && !/todos modos|igual/.test(s)) return 'NO'; if (/todos modos|igual|de todas formas|si\b/.test(s)) return 'TODO'; if (libre > 0 && (/solo|hay|disponible/.test(s) || V.numero(s) === libre)) return 'LIBRE'; return undefined; }, ops);
+        if (r === 'NO') return hablarYDecir(conv, `No agregué ${p.nombre}.`);
+        if (r === 'LIBRE') q = libre;
+      }
+      agregarProducto(p, q); pintar();
+      const precio = est.lineas.find((l) => l.producto_id === p.id)?.precio || 0;
+      return hablarYDecir(conv, `Agregué ${cant(q)} de ${p.nombre}${precio ? ` a ${fmt.monto(precio)} quetzales` : ' sin precio en su tipo de precio'}. Quedan ${cant(Math.max(0, ex - ya - q))} en existencia.`);
+    }
+    // Saldo del cliente: total pendiente, facturas vencidas y su saldo (responde en voz; el detalle queda escrito).
+    async function saldoDicho(conv, c) {
+      const r = await window.UI.todo(sb.from('facturas_venta').select('id, saldo, fecha_emision, fecha_cobro, dias_credito').eq('cliente_id', c.id).neq('estado', 'ANULADA').gt('saldo', 0).order('fecha_emision'));
+      if (r.error) return hablarYDecir(conv, 'No pude consultar el saldo: ' + window.UI.traducirError(r.error));
+      const hoy = fmt.hoy(), fs = r.data || [];
+      const venc = (f) => f.fecha_cobro || new Date(new Date(f.fecha_emision).getTime() + Number(f.dias_credito || 0) * 864e5).toISOString().slice(0, 10);
+      const dias = (f) => Math.round((new Date(hoy + 'T12:00:00') - new Date(venc(f) + 'T12:00:00')) / 864e5);
+      const vencidas = fs.filter((f) => venc(f) < hoy);
+      const tot = fs.reduce((t, f) => t + Number(f.saldo), 0), totV = vencidas.reduce((t, f) => t + Number(f.saldo), 0);
+      if (!fs.length) return hablarYDecir(conv, `${c.nombre} no tiene saldo pendiente.`);
+      const n = (k, s, p) => `${k} ${k === 1 ? s : p}`;
+      let msj = `${c.nombre} tiene un saldo pendiente de ${fmt.monto(tot)} quetzales en ${n(fs.length, 'factura', 'facturas')}. `;
+      msj += vencidas.length ? `Tiene ${n(vencidas.length, 'factura vencida', 'facturas vencidas')} con un saldo de ${fmt.monto(totV)} quetzales; la más antigua lleva ${n(Math.max(...vencidas.map(dias)), 'día', 'días')} vencida.` : 'Ninguna factura está vencida.';
+      await hablarYDecir(conv, msj);
+      if (vencidas.length) conv.decir('Facturas vencidas: ' + vencidas.map((f) => `emitida ${fmt.fechaDia(String(f.fecha_emision).slice(0, 10))}, venció ${fmt.fechaDia(venc(f))} (${dias(f)} días), saldo Q ${fmt.monto(f.saldo)}`).join(' · '));
+    }
+    async function dictado() {
+      const V = window.VOZ;
+      if (!V) return window.FIN.aviso('Falta cargar el asistente por voz');
+      if (!ctx.sel.loc) return window.FIN.aviso('Elige la localidad');
+      if (!editable()) nueva();
+      const loc = ctx.localidad(ctx.sel.loc);
+      const conv = V.conversacion({ titulo: 'Dictado voz', subtitulo: loc ? `${loc.codigo} · ${loc.nombre_comercial}` : '' });
+      const AYUDA = ['Deseo venderle al cliente … 30 unidades del producto …', 'Verificar la existencia del producto …', 'Saldo del cliente … y facturas vencidas', 'Resumen', 'Guardar', 'Confirmar', 'Terminar'];
+      let pregunta = 'Dígame la instrucción. Por ejemplo: deseo venderle al cliente Axel Juárez 30 unidades del producto citrato de cafeína.';
+      try {
+        for (;;) {
+          const dicho = await conv.preguntar(pregunta, (t) => t, AYUDA);
+          pregunta = '¿Algo más? Puede vender otro producto, verificar una existencia, consultar el saldo de un cliente, guardar, confirmar o terminar.';
+          const s = V.norm(dicho);
+          // Comandos de cierre
+          if (/^(terminar|termina|listo|ya|nada|nada mas|eso es todo|fin)\b/.test(s)) { await hablarYDecir(conv, 'Listo: revise la venta en pantalla.'); break; }
+          if (/^(nueva venta|limpiar|empezar de nuevo)/.test(s)) { nueva(); await hablarYDecir(conv, 'Empezamos una venta nueva.'); continue; }
+          if (/^(resumen|total|como va|cuanto (va|lleva))/.test(s)) {
+            await hablarYDecir(conv, conProd().length ? `Venta para ${est.cliente ? est.cliente.nombre : 'cliente sin elegir'}: ${conProd().map((l) => `${cant(l.cantidad)} de ${prod(l.producto_id).nombre}`).join('; ')}. Total ${fmt.monto(total())} quetzales.` : 'Aún no hay productos en la venta.');
+            continue;
+          }
+          if (/^(guardar|guarda|guardala|confirmar|confirma|confirmala)\b/.test(s)) {
+            const confirmando = /^confirm/.test(s);
+            est.origen = 'VOZ';
+            if (!est.cliente || !conProd().length) { await hablarYDecir(conv, !est.cliente ? 'Primero indique el cliente.' : 'Primero agregue al menos un producto.'); continue; }
+            const ok = validar(confirmando) && (await guardar(confirmando ? 'CONFIRMADA' : 'GENERADA'));
+            await hablarYDecir(conv, ok ? `Venta número ${est.venta.numero} ${confirmando ? 'confirmada' : 'guardada'}.` : 'No se pudo guardar: revise la venta en pantalla.');
+            if (ok) { if (editable()) est.lineas.push(nuevaLinea()); else est.lineas = conProd(); pintarFiltros(); pintar(); }
+            if (ok && confirmando) { conv.cerrar(); return preliminar({ voz: true }); }
+            continue;
+          }
+          const mq = s.match(/^(quitar|quita|eliminar|elimina|borrar|borra|sacar|saca)\s+(?:el\s+producto\s+|el\s+|la\s+)?(.+)$/);
+          if (mq) {
+            const p = buscarProducto(mq[2]).find((x) => est.lineas.some((l) => l.producto_id === x.id));
+            if (!p) { await hablarYDecir(conv, `«${mq[2]}» no está en la venta.`); continue; }
+            est.lineas = est.lineas.filter((l) => l.producto_id !== p.id); if (!est.lineas.length) est.lineas.push(nuevaLinea()); pintar();
+            await hablarYDecir(conv, `Quité ${p.nombre} de la venta.`); continue;
+          }
+          // Saldo y facturas vencidas del cliente
+          if (/\b(saldos?|debe|deuda|adeuda|vencid\w*|estado de cuenta|cuentas? por cobrar|pendiente de pago)\b/.test(s) && !/\b(vend\w*|venta)\b/.test(s)) {
+            const mn = s.match(/\bclientes?\b[\s:]*(.+?)(?=\s+y\s+(?:la|las|el|los|cuant\w*|sus?)\b|\s*,|$)/) || s.match(/\b(?:saldos?|deuda|debe|adeuda|estado de cuenta)\s+(?:del?\s+|tiene\s+)?(?:la\s+|el\s+)?(.+?)(?=\s+y\s+|\s*,|$)/);
+            const nom = mn ? mn[1].replace(/^(el|la|don|dona|senor|senora|sr|sra)\s+/, '').trim() : '';
+            const c = (nom && (V.mejor(nom, est.clientes, (x) => x.nombre, 0.5) || est.clientes.find((x) => String(x.codigo) === nom))) || (!nom || /^(cliente|este|esta|actual)$/.test(nom) ? est.cliente : null);
+            if (!c) { await hablarYDecir(conv, nom ? `No encontré al cliente «${nom}» en la localidad.` : '¿De qué cliente? Diga, por ejemplo: saldo del cliente Axel Juárez.'); continue; }
+            await saldoDicho(conv, c); continue;
+          }
+          // Consulta de existencia
+          if (/\b(existencia|existencias|inventario|stock|disponible|disponibilidad|quedan|cuant[oa]s? (hay|tenemos))\b/.test(s) && !/\b(vend\w*|venta)\b/.test(s)) {
+            const m = s.match(/\bproductos?\b\s*(.+)$/) || s.match(/\b(?:existencias?|inventario|stock|disponibilidad|quedan|hay|tenemos)\s+(?:del?\s+|para\s+)?(.+)$/);
+            const t = m ? m[1].replace(/^(el|la|del|de)\s+/, '') : '';
+            if (!t) { await hablarYDecir(conv, '¿De qué producto? Diga, por ejemplo: verificar la existencia del producto citrato de cafeína.'); continue; }
+            await existenciaDicha(conv, t); continue;
+          }
+          // Venta: cliente y uno o más productos con su cantidad
+          let resto = s;
+          const mc = s.match(new RegExp(`\\bclientes?\\b[\\s:]*(.+?)(?=\\s+(?:\\d|(?:${NUM})\\s+(?:${UNID}|(?:y\\s+\\w+\\s+)?(?:${UNID})))|\\s+(?:del?\\s+|el\\s+)?productos?\\b|\\s*,|$)`));
+          if (mc) {
+            const nom = mc[1].replace(/^(el|la|don|dona|senor|senora|sr|sra)\s+/, '').trim();
+            const c = V.mejor(nom, est.clientes, (x) => x.nombre, 0.5) || est.clientes.find((x) => String(x.codigo) === nom || V.norm(String(x.documento || '')) === nom.replace(/\s/g, ''));
+            if (!c) { await hablarYDecir(conv, `No encontré al cliente «${nom}» en la localidad.`); continue; }
+            if (est.cliente?.id !== c.id) { await elegirCliente(c); await hablarYDecir(conv, `Cliente: ${c.nombre}.${est.saldo?.vencido > 0 ? ` Tiene saldo vencido de ${fmt.monto(est.saldo.vencido)} quetzales.` : ''}`); }
+            resto = s.slice(mc.index + mc[0].length);
+          }
+          const hayProductos = /\bproductos?\b/.test(resto) || new RegExp(`(?:\\d|\\b(?:${NUM})\\b)[^,]*\\b(?:${UNID})\\b`).test(resto);
+          if (!hayProductos) {
+            if (mc) continue;
+            await hablarYDecir(conv, 'No le entendí. Diga, por ejemplo: venderle al cliente … 30 unidades del producto …, o verificar la existencia del producto ….'); continue;
+          }
+          if (!est.cliente) {
+            const c = await conv.preguntar('¿Para qué cliente es la venta?', (t) => V.mejor(t, est.clientes, (x) => x.nombre, 0.5) || est.clientes.find((x) => String(x.codigo) === V.norm(t)) || undefined);
+            await elegirCliente(c); conv.decir(`Cliente: ${c.nombre}.`);
+          }
+          // Varios productos: «30 unidades de A y 10 cajas de B»
+          const quitar = /^.*?\b(?:vend\w*|venta|agreg\w*|anad\w*|factur\w*|despach\w*|quiero|deseo|necesito)\b\s*(?:le\s+|al?\s+)?/;
+          const segs = resto.replace(quitar, '').split(new RegExp(`\\s*(?:,|;|(?<!\\b(?:veinte|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa))\\s+y\\s+(?:tambien\\s+)?|\\btambien\\b|\\bademas\\b)\\s*(?=(?:\\d|(?:${NUM})\\b)[^,]*?\\b(?:${UNID}|productos?)\\b)`)).map((x) => x.trim()).filter(Boolean);
+          for (const seg of segs) {
+            const tp = textoProducto(seg);
+            if (!tp) continue;
+            const p = await elegirProducto(conv, tp);
+            if (!p) { await hablarYDecir(conv, `No encontré el producto «${tp}» en el catálogo de la localidad.`); continue; }
+            await agregarDictado(conv, p, cantidadDe(seg));
+          }
+        }
+        est.origen = 'VOZ';
+        pintarFiltros(); pintar();
+        setTimeout(() => conv.cerrar(), 1200);
+      } catch (e) { conv.cerrar(); if (e.message !== 'cancelado') window.FIN.aviso(e.message); pintarFiltros(); pintar(); }
+    }
+
     cont.addEventListener('change', async (e) => {
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') { await cargarLocalidad(); return nueva(); }
@@ -460,6 +633,7 @@
         if (a === 'agregar') { leer(); est.lineas.push(nuevaLinea()); pintar(); ctx.pDet.querySelector('tr[data-i]:last-child [data-l=producto]')?.focus(); return; }
         if (a === 'nueva') return nueva();
         if (a === 'voz') return porVoz();
+        if (a === 'dictado') return dictado();
         if (a === 'factura') { location.hash = `#/facturacion/facturas-ventas/${est.venta.factura_id}`; return; }
         b.disabled = true;
         try {
