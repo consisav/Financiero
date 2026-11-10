@@ -46,7 +46,7 @@
     let buscar = '';
     let paginaSub = 0;            // página de la lista de subcajas (5 por página)
     let paginaFijada = false;     // true cuando el usuario cambió de página
-    // Síntesis: detalle contable de cada subcaja (vista caja_periodos_contable, script 185) y resumen de cada caja.
+    // Síntesis: detalle contable de cada subcaja (función caja_resumen_contable, script 186) y resumen de cada caja.
     let contablePer = new Map();  // periodo_id → { lineas, debe, haber }
     let resumenCaja = new Map();  // caja_id → { subcajas, conDocs, conLineas, sinInfo, lineas, documentos }
     let soloInfo = false;         // lista de subcajas: solo las que tienen documentos o detalle contable
@@ -121,7 +121,7 @@
       const ids = cajas.map((c) => c.id);
       const [{ data: ps }, cn] = ids.length ? await Promise.all([
         window.UI.todo(sb.from('caja_periodos_resumen').select('id, caja_id, numero, anio, mes, estado, liquidado, anticipo_valor, adelanto_valor, disponible, documentos').in('caja_id', ids).order('numero', { ascending: false })),
-        window.UI.todo(sb.from('caja_periodos_contable').select('id, caja_id, lineas, debe, haber').in('caja_id', ids).order('id'))
+        sb.rpc('caja_resumen_contable', { p_cajas: ids })
       ]) : [{ data: [] }, { data: [] }];
       ultimo = new Map();
       (ps || []).forEach((p) => { if (!ultimo.has(p.caja_id)) ultimo.set(p.caja_id, p); });
@@ -269,7 +269,7 @@
     async function cargarPeriodos(id = periodo?.id) {
       const [{ data, error }, cn] = await Promise.all([
         window.UI.todo(sb.from('caja_periodos_resumen').select('*').eq('caja_id', caja.id).order('numero', { ascending: false })),
-        window.UI.todo(sb.from('caja_periodos_contable').select('id, caja_id, lineas, debe, haber').eq('caja_id', caja.id).order('id'))
+        sb.rpc('caja_resumen_contable', { p_cajas: [caja.id] })
       ]);
       if (error) { ctx.pMae.innerHTML = `<p class="vacio">${esc(error.message)}</p>`; return; }
       periodos = data || [];
@@ -282,9 +282,11 @@
       documentos = []; lineas = [];
       if (p) {
         const [d, l] = await Promise.all([
-          sb.from('caja_documentos').select('*').eq('periodo_id', p.id).order('linea', { ascending: false }),
-          sb.from('caja_lineas').select('*').eq('periodo_id', p.id).order('linea')
+          // Por páginas: una subcaja migrada puede tener más de 1,000 líneas o documentos.
+          window.UI.todo(sb.from('caja_documentos').select('*').eq('periodo_id', p.id).order('linea', { ascending: false })),
+          window.UI.todo(sb.from('caja_lineas').select('*').eq('periodo_id', p.id).order('linea'))
         ]);
+        if (periodo !== p) return;
         documentos = d.data || [];
         lineas = l.data || [];
         // Subcaja migrada sin documentos: se abre directo en su detalle contable.
