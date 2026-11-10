@@ -25,3 +25,6 @@ supabase/migrations/20261109000175_ordenes_compra_organizacion_3.sql
 
 # Parametros de la organizacion 2 (nombres de usuarios y datos de las empresas): solo local.
 supabase/migrations/20261109000176_parametros_organizacion_2.sql
+
+# Cuentas bancarias de la organizacion 2 (numeros de cuenta y saldos): solo local.
+supabase/migrations/20261109000178_cuentas_bancarias_organizacion_2.sql
