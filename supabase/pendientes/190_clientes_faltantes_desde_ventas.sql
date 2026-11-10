@@ -9,6 +9,7 @@
 --   Se puede ejecutar varias veces: solo agrega lo que falta.
 --   ¿Ya se procesó? Si el PASO 1 no devuelve filas y el resultado final da 0 facturas sin cliente, ya está aplicado.
 --   Si el PASO 2 falla, no queda nada a medias (todo va en una transacción): corrige y vuelve a ejecutarlo.
+--   Versión 3: también liga facturas anuladas (corrige «La factura N está anulada: ya no se modifica»).
 --   Versión 2: un solo cliente por NIT (corrige «duplicate key value violates unique constraint clientes_documento_key»).
 
 -- =====================  PASO 1 · DIAGNÓSTICO  =====================
@@ -30,6 +31,9 @@ order by l.codigo, v.cliente_codigo;
 -- =====================  PASO 2 · CORRECCIÓN  =====================
 -- (Selecciona desde aquí hasta el final y ejecútalo después de revisar el paso 1.)
 begin;
+-- Solo se liga el cliente (cliente_id): se permite en facturas anuladas y en períodos fiscales cerrados, sin recalcular nada.
+set local fin.factura = 'si';
+set local fin.migracion = 'si';
 
 -- 2.1 Clientes faltantes, con los datos de su factura más reciente.
 --     Varios códigos con el mismo NIT: se crea solo el de código menor (el catálogo no admite dos clientes con el
@@ -88,7 +92,7 @@ from (
   group by p.recibo_id
   having count(distinct f.cliente_id) = 1
 ) x
-where r.id = x.recibo_id and r.cliente_id is null;
+where r.id = x.recibo_id and r.cliente_id is null and r.estado <> 'ANULADO';
 
 commit;
 
