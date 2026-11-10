@@ -33,3 +33,8 @@ supabase/migrations/20261109000178_cuentas_bancarias_organizacion_2.sql
 supabase/migrations/20261109000179_cheques_organizacion_2.sql
 supabase/pendientes/179_cheques_parte_*.sql
 supabase/migrations/179_cheques_partes/
+
+# Depositos de la organizacion 2 (depositantes y cuentas bancarias): solo local.
+supabase/migrations/20261109000180_depositos_organizacion_2.sql
+supabase/migrations/180_depositos_partes/
+supabase/pendientes/180_depositos_parte_*.sql
