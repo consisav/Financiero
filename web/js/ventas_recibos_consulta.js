@@ -22,7 +22,8 @@
 
     const nombre = (x) => [x.serie, x.recibo_fisico].filter((v) => v != null && v !== '').join('-') || `Interno ${x.numero}`;
     const vendedor = (id) => vendedores.find((v) => v.id === id);
-    const etiquetaCli = (c) => `${c.codigo} · ${c.nombre}`;
+    const etiquetaCli = (c) => (c.codigo ? `${c.codigo} · ${c.nombre}` : c.nombre);
+    const normNom = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
     const clienteElegido = () => clientes.find((c) => etiquetaCli(c) === f.cliente.trim());
     const asignado = (x) => x.estado !== 'ANULADO' && x.situacion !== 'LIQUIDADO' && (aplicado.get(x.id) || 0) > 0.005;
     const estadoDe = (x) => x.estado === 'ANULADO' ? ['anulada', 'Anulado'] : x.situacion === 'LIQUIDADO' ? ['aprobada', 'Liquidado'] : asignado(x) ? ['pendiente', 'Asignado'] : ['definitiva', 'Emitido'];
@@ -52,10 +53,22 @@
     }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc || 0;
-      const [v, cl] = await Promise.all([sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo'),
-        window.UI.todo(sb.from('clientes').select('id, codigo, nombre, documento').eq('localidad_id', loc).order('nombre').order('id')).catch(() => [])]);
+      // Lista de clientes: el catálogo y, además, los que aparecen en facturas y recibos de la empresa aunque
+      // no estén en el catálogo (ventas migradas), para que ninguno falte en la lista.
+      const [v, cl, fv, rv] = await Promise.all([sb.from('vendedores').select('id, codigo, nombre').eq('localidad_id', loc).order('codigo'),
+        window.UI.todo(sb.from('clientes').select('id, codigo, nombre, documento').eq('localidad_id', loc).order('nombre').order('id')),
+        window.UI.todo(sb.from('facturas_venta').select('id, cliente_id, cliente_codigo, nombre, nit').eq('localidad_id', loc).order('id')),
+        window.UI.todo(sb.from('recibos_venta').select('id, cliente_id, nombre').eq('localidad_id', loc).order('id'))]);
       vendedores = v.data || [];
-      clientes = Array.isArray(cl) ? cl : (cl && cl.data) || [];
+      clientes = (cl.data || []).slice();
+      const yaId = new Set(clientes.map((c) => c.id)), yaCod = new Set(clientes.map((c) => c.codigo)), yaNom = new Set(clientes.map((c) => normNom(c.nombre)));
+      [...(fv.data || []), ...(rv.data || [])].forEach((x) => {
+        const n = normNom(x.nombre);
+        if (!n || (x.cliente_id && yaId.has(x.cliente_id)) || (x.cliente_codigo && yaCod.has(x.cliente_codigo)) || yaNom.has(n)) return;
+        clientes.push({ id: x.cliente_id || null, codigo: x.cliente_codigo || null, nombre: String(x.nombre).trim(), documento: x.nit || '' });
+        if (x.cliente_id) yaId.add(x.cliente_id); if (x.cliente_codigo) yaCod.add(x.cliente_codigo); yaNom.add(n);
+      });
+      clientes.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
       f.cliente = '';
       f.desde = primeroDelMes(); f.hasta = fmt.hoy(); f.periodo = 'RANGO';
       f.vendedor = '';
@@ -103,7 +116,7 @@
       return recibos.filter((x) => (f.estado === 'TODOS' || (f.estado === 'VIGENTES' && x.estado !== 'ANULADO') || (f.estado === 'ANULADOS' && x.estado === 'ANULADO')
         || (f.estado === 'EMITIDOS' && x.estado !== 'ANULADO' && x.situacion !== 'LIQUIDADO' && !asignado(x)) || (f.estado === 'ASIGNADOS' && asignado(x)) || (f.estado === 'LIQUIDADOS' && x.estado !== 'ANULADO' && x.situacion === 'LIQUIDADO')
         || (f.estado === 'CON SALDO DISPONIBLE' && disponible(x) > 0.005))
-        && (!c || (ce ? x.cliente_id === ce.id : [x.nombre, x.cliente_codigo_anterior].some((v) => String(v ?? '').toLowerCase().includes(c))))
+        && (!c || (ce ? ((ce.id && x.cliente_id === ce.id) || normNom(x.nombre) === normNom(ce.nombre)) : [x.nombre, x.cliente_codigo_anterior].some((v) => String(v ?? '').toLowerCase().includes(c))))
         && (!q || [x.numero, x.serie, x.recibo_fisico, x.nombre, x.documento, x.banco, x.descripcion, x.observaciones].some((v) => String(v ?? '').toLowerCase().includes(q))))
         .sort((a, b) => {
           const va = f.orden === 'numero' ? a.numero : f.orden === 'valor' ? Number(a.valor) : a.fecha;
