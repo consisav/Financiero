@@ -39,13 +39,82 @@
     puedeEditarCatalogos: () => !!perfil && perfil.activo && ['superadministrador', 'administrador'].includes(perfil.rol_id)
   };
 
-  // Indicadores del panel; se conectarán a sus tablas cuando existan.
+  // Indicadores del panel: datos reales de la empresa conectada; se recalculan cada minuto mientras el panel está abierto.
   const INDICADORES = [
-    { nombre: 'Ventas del mes', valor: 'Q 0.00', nota: 'Facturación y ventas', icono: 'ti-trending-up', color: 'verde' },
-    { nombre: 'Cuentas por cobrar', valor: 'Q 0.00', nota: 'Saldo pendiente', icono: 'ti-cash', color: 'azul' },
-    { nombre: 'DTE emitidos', valor: '0', nota: 'Integraciones SAT', icono: 'ti-file-certificate', color: 'violeta' },
-    { nombre: 'Empleados activos', valor: '0', nota: 'Nóminas y planillas', icono: 'ti-users', color: 'coral' }
+    { id: 'ventas', nombre: 'Ventas del mes', icono: 'ti-trending-up', color: 'verde' },
+    { id: 'cobros', nombre: 'Cobros del mes', icono: 'ti-receipt-2', color: 'turquesa' },
+    { id: 'cxc', nombre: 'Cuentas por cobrar', icono: 'ti-cash', color: 'azul' },
+    { id: 'vencido', nombre: 'Saldo vencido', icono: 'ti-alert-triangle', color: 'ambar' },
+    { id: 'dte', nombre: 'DTE emitidos del mes', icono: 'ti-file-certificate', color: 'violeta' },
+    { id: 'empleados', nombre: 'Empleados activos', icono: 'ti-users', color: 'coral' }
   ];
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const qtz = (n) => `Q ${(Math.round((Number(n) || 0) * 100) / 100).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const entero = (n) => Number(n || 0).toLocaleString('es-GT');
+  const pl = (n, uno, varios) => `${entero(n)} ${Number(n) === 1 ? uno : varios}`;
+  const diaGT = (x) => (x ? new Date(new Date(x).getTime() - 6 * 3600000).toISOString().slice(0, 10) : ''); // fecha en Guatemala (UTC-6)
+  const masDias = (d, n) => { const t = new Date(`${d}T12:00:00Z`); t.setUTCDate(t.getUTCDate() + (Number(n) || 0)); return t.toISOString().slice(0, 10); };
+  // Lee todas las filas (de 1000 en 1000); si la tabla no existe o el rol no tiene acceso devuelve null.
+  async function filas(hacer) {
+    const out = [];
+    for (let i = 0; ; i += 1000) {
+      const { data, error } = await hacer().range(i, i + 999);
+      if (error) return null;
+      out.push(...(data || []));
+      if (!data || data.length < 1000) return out;
+    }
+  }
+  let relojPanel = null, monedasPanel = null;
+  async function cargarIndicadores() {
+    const caja = vista.querySelector('[data-indicadores]');
+    const loc = perfil && perfil.localidad_id;
+    if (!caja || !loc) return;
+    const hoy = diaGT(new Date()), ini = `${hoy.slice(0, 8)}01`;
+    const desde = `${ini}T00:00:00-06:00`, hasta = `${hoy}T23:59:59.999-06:00`;
+    if (!monedasPanel) { const m = await sb.from('monedas').select('id, iso'); monedasPanel = m.error ? [] : m.data || []; }
+    const iso = (id) => (monedasPanel.find((m) => m.id === id) || {}).iso;
+    const k = (d) => (d.moneda_id && iso(d.moneda_id) && iso(d.moneda_id) !== 'GTQ' ? Number(d.tipo_cambio) || 1 : 1);
+    const suma = (ls, campo) => (ls || []).reduce((s, d) => s + (Number(d[campo]) || 0) * k(d), 0);
+    const [fac, notas, rec, cxc, emp] = await Promise.all([
+      filas(() => sb.from('facturas_venta').select('id, fecha_emision, total, moneda_id, tipo_cambio, autorizacion').eq('localidad_id', loc).neq('estado', 'ANULADA').gte('fecha_emision', desde).lte('fecha_emision', hasta).order('id')),
+      filas(() => sb.from('notas_venta').select('id, autorizacion').eq('localidad_id', loc).neq('estado', 'ANULADA').gte('fecha_emision', desde).lte('fecha_emision', hasta).order('id')),
+      filas(() => sb.from('recibos_venta').select('id, fecha, valor, clase, moneda_id, tipo_cambio').eq('localidad_id', loc).neq('estado', 'ANULADO').gte('fecha', ini).lte('fecha', hoy).order('id')),
+      filas(() => sb.from('facturas_venta').select('id, saldo, fecha_emision, fecha_cobro, dias_credito, moneda_id, tipo_cambio').eq('localidad_id', loc).neq('estado', 'ANULADA').gt('saldo', 0).order('id')),
+      sb.from('nom_empleados').select('id', { count: 'exact', head: true }).eq('localidad_id', loc).eq('estado', 'ACTIVO')
+    ]);
+    if (!caja.isConnected) return;
+    const recibos = rec && rec.filter((r) => !r.clase || r.clase === 'RECIBO');
+    const vencidas = cxc && cxc.filter((f) => (f.fecha_cobro || masDias(diaGT(f.fecha_emision), f.dias_credito)) < hoy);
+    const dtes = fac && [...fac, ...(notas || [])];
+    const pend = dtes ? dtes.filter((d) => !d.autorizacion).length : 0;
+    const vHoy = fac ? suma(fac.filter((f) => diaGT(f.fecha_emision) === hoy), 'total') : 0;
+    const mes = `${MESES[Number(hoy.slice(5, 7)) - 1]} ${hoy.slice(0, 4)}`;
+    const v = {
+      ventas: fac && [qtz(suma(fac, 'total')), `${pl(fac.length,"factura","facturas")} en ${mes} · hoy ${qtz(vHoy)}`],
+      cobros: recibos && [qtz(suma(recibos, 'valor')), `${pl(recibos.length,"recibo","recibos")} en ${mes}`],
+      cxc: cxc && [qtz(suma(cxc, 'saldo')), `${pl(cxc.length,"factura","facturas")} con saldo`],
+      vencido: vencidas && [qtz(suma(vencidas, 'saldo')), vencidas.length ? `${pl(vencidas.length,"factura vencida","facturas vencidas")}` : 'Sin facturas vencidas'],
+      dte: dtes && [entero(dtes.length - pend), pend ? `${pl(pend,"pendiente","pendientes")} de certificar` : 'Todos certificados'],
+      empleados: !emp.error && [entero(emp.count), 'Nóminas y planillas']
+    };
+    INDICADORES.forEach((x) => {
+      const el = caja.querySelector(`[data-ind="${x.id}"]`); if (!el) return;
+      const r = v[x.id];
+      el.querySelector('b').textContent = r ? r[0] : '—';
+      el.querySelector('small').textContent = r ? r[1] : 'Sin acceso o sin datos';
+      el.classList.remove('cargando');
+      el.classList.toggle('alerta', x.id === 'vencido' && !!(vencidas && vencidas.length));
+    });
+    const pie = vista.querySelector('[data-ind-pie]');
+    if (pie) pie.innerHTML = `<span class="ind-vivo"></span> En línea · actualizado a las ${new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  function vigilarIndicadores() {
+    clearInterval(relojPanel);
+    const ir = () => { if (!vista.querySelector('[data-indicadores]')) return clearInterval(relojPanel); if (!document.hidden) cargarIndicadores().catch(() => {}); };
+    ir();
+    relojPanel = setInterval(ir, 60000);
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && vista.querySelector('[data-indicadores]')) cargarIndicadores().catch(() => {}); });
 
   // ---------- Avisos ----------
   let temporizador;
@@ -455,6 +524,7 @@
     migas.innerHTML = '<span>Panel ejecutivo</span>';
     const lista = visibles();
     setTimeout(pintarConexion, 0); // después de pintar el panel
+    setTimeout(vigilarIndicadores, 0);
     vista.innerHTML = `
       <div class="titulo">
         <div>
@@ -464,14 +534,15 @@
       </div>
       <section class="conexion" data-conexion hidden></section>
 
-      <div class="indicadores">
+      <div class="indicadores" data-indicadores>
         ${INDICADORES.map((k) => `
-          <div class="indicador" data-color="${k.color}">
+          <div class="indicador cargando" data-color="${k.color}" data-ind="${k.id}">
             <div class="indicador-cab"><span>${esc(k.nombre)}</span><i class="ti ${k.icono}" aria-hidden="true"></i></div>
-            <b>${esc(k.valor)}</b>
-            <small>${esc(k.nota)}</small>
+            <b>…</b>
+            <small>Leyendo datos…</small>
           </div>`).join('')}
       </div>
+      <p class="ind-pie" data-ind-pie></p>
 
       <h2 class="seccion">Módulos</h2>
       ${lista.length ? '' : '<p>Tu rol no tiene módulos asignados. Pide acceso a un administrador.</p>'}

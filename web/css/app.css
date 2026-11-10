@@ -178,7 +178,11 @@ a { color: var(--acento); text-decoration: none; }
 .seccion { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); margin: 32px 0 12px; }
 
 /* ---------- Indicadores ---------- */
-.indicadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.indicadores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.indicador.cargando b, .indicador.cargando small { opacity: .45; }
+.indicador.alerta b { color: var(--ambar-t); }
+.ind-pie { margin: 8px 2px 0; font-size: 12px; color: var(--tenue); display: flex; align-items: center; gap: 6px; min-height: 16px; }
+.ind-vivo { width: 8px; height: 8px; border-radius: 50%; background: var(--verde-t); box-shadow: 0 0 0 3px var(--verde-f); }
 .indicador {
   background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio);
   padding: 18px 20px; box-shadow: var(--sombra);
