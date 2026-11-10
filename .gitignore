@@ -53,3 +53,8 @@ supabase/pendientes/183_personas_parte_*.sql
 supabase/migrations/20261109000184_cajas_chicas_organizacion_2.sql
 supabase/migrations/184_cajas_partes/
 supabase/pendientes/184_cajas_parte_*.sql
+
+# Documentos de cajas de la organizacion 2 (nombres y NIT de proveedores): solo local.
+supabase/migrations/20261109000187_documentos_cajas_organizacion_2.sql
+supabase/migrations/187_documentos_cajas_partes/
+supabase/pendientes/187_documentos_cajas_parte_*.sql
