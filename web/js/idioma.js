@@ -3,12 +3,17 @@
 // (placeholder, title, aria-label) y mensaje (confirm/alert) con su traducción del diccionario
 // js/i18n_en.js. Los datos que registran los usuarios (nombres, descripciones) no están en el diccionario
 // y se quedan como se escribieron. Los textos con partes variables usan plantillas con {*}
-// («{*} usuarios», «Se envió a {*} el enlace…»). La preferencia se guarda en el navegador; al cambiarla
-// se recarga la página.
+// («{*} usuarios», «Se envió a {*} el enlace…»).
+// El inicio de sesión siempre está en español y no tiene selector: el idioma se cambia dentro del sistema
+// (barra superior) y dura solo esa sesión de la pestaña (sessionStorage). Al volver a la pantalla de inicio de
+// sesión (salir, sesión vencida o nueva conexión) regresa a español.
 (function () {
   const CLAVE = 'fin-idioma';
   let idioma = 'es';
-  try { idioma = localStorage.getItem(CLAVE) === 'en' ? 'en' : 'es'; } catch { /* sin almacenamiento */ }
+  try {
+    localStorage.removeItem(CLAVE); // preferencia permanente de la versión anterior: ya no se usa
+    idioma = sessionStorage.getItem(CLAVE) === 'en' ? 'en' : 'es';
+  } catch { /* sin almacenamiento */ }
   const en = idioma === 'en';
   document.documentElement.lang = idioma;
   // El traductor del navegador (Edge, Chrome) no debe traducir encima de esta capa: los dos se peleaban el
@@ -27,7 +32,7 @@
     </div>`;
   function cambiar(nuevo) {
     if (nuevo === idioma) return;
-    try { localStorage.setItem(CLAVE, nuevo); } catch { /* sin almacenamiento */ }
+    try { sessionStorage.setItem(CLAVE, nuevo); } catch { /* sin almacenamiento */ }
     location.reload();
   }
 
@@ -188,15 +193,26 @@
     }
   }
 
-  // Botones de idioma: arriba del inicio de sesión y en la barra superior, a la par de la fecha.
+  // Botones de idioma: solo en la barra superior del sistema, a la par de la fecha.
   function ponerSelectores() {
-    const panel = document.querySelector('.acceso-panel');
-    if (panel && !panel.querySelector('.idiomas')) panel.insertAdjacentHTML('afterbegin', selector().replace('class="idiomas', 'class="idiomas idiomas-acceso'));
     const f = document.getElementById('fecha');
     if (f && !f.parentElement.querySelector('.idiomas')) f.insertAdjacentHTML('afterend', selector());
     document.addEventListener('click', (e) => { const b = e.target.closest('[data-idioma]'); if (b) cambiar(b.dataset.idioma); });
   }
-  document.addEventListener('DOMContentLoaded', () => { ponerSelectores(); if (en) iniciar(); });
+  // Cuando aparece el formulario de inicio de sesión (salir, sesión vencida, nueva conexión) el idioma vuelve a
+  // español: en inglés se recarga la página en español.
+  function vigilarAcceso() {
+    const acceso = document.getElementById('acceso'), entrar = document.getElementById('f-entrar');
+    if (!acceso || !entrar) return;
+    const revisar = () => {
+      if (acceso.hidden || entrar.hidden) return;
+      try { sessionStorage.removeItem(CLAVE); } catch { /* sin almacenamiento */ }
+      if (en) location.reload();
+    };
+    new MutationObserver(revisar).observe(acceso, { attributes: true, subtree: true, attributeFilter: ['hidden'] });
+    revisar();
+  }
+  document.addEventListener('DOMContentLoaded', () => { ponerSelectores(); vigilarAcceso(); if (en) iniciar(); });
 
   window.IDIOMA = { actual: () => idioma, ingles: en, cambiar, t: (s) => (en ? (traducir(s) ?? s) : s) };
 })();
