@@ -29,11 +29,13 @@
     return out;
   }
 
-  window.PANTALLAS['cxc-antiguedad'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Antigüedad de Saldos', icono: 'ti-hourglass', clase: 'bk-movimientos bm-solo cx-rep cx-antiguedad', grupo: 'Ventas · Procesos' });
+  window.PANTALLAS['cxc-antiguedad'] = function (cont, m, directo) {
+    const sinPantalla = !cont && directo && directo.ctx;
+    const ctx = sinPantalla ? directo.ctx : montar(cont, { titulo: 'Antigüedad de Saldos', icono: 'ti-hourglass', clase: 'bk-movimientos bm-solo cx-rep cx-antiguedad', grupo: 'Ventas · Procesos' });
     const { sb } = ctx;
     const hoy = fmt.hoy();
-    const f = { corte: hoy, cliente: '', tipo: '', fecha: 'ESTIMADA', periodo: 'TODOS', contenido: 'DETALLADO', orden: 'codigo', dir: 'ASC' };
+    const f = { corte: hoy, cliente: '', terceroKey: '', tipo: '', fecha: 'ESTIMADA', periodo: 'TODOS', contenido: 'DETALLADO', orden: 'codigo', dir: 'ASC', ...((sinPantalla && directo.f) || {}) };
+    const mostrar = (html) => { if (!sinPantalla) ctx.pDet.innerHTML = html; };
     let clientes = [], tipos = [], facturas = [], despues = new Map(), cargado = '', turno = 0;
     const cli = (id) => clientes.find((c) => c.id === id);
     const etiquetaCli = (c) => (c.codigo !== '' && c.codigo != null ? `${c.codigo} · ${c.nombre}` : c.nombre);
@@ -71,11 +73,11 @@
     // Facturas emitidas hasta el corte con saldo hoy o con cobros/notas después del corte.
     async function consultar() {
       const loc = ctx.sel.loc;
-      if (!loc) { ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-hourglass'); return; }
+      if (!loc) { mostrar(ctx.vacio ? ctx.vacio('Elige la empresa.', 'ti-hourglass') : ''); return; }
       const clave = `${loc}|${f.corte}`;
-      if (clave === cargado) return pintar();
+      if (clave === cargado) return sinPantalla ? null : pintar();
       const t = ++turno;
-      ctx.pDet.innerHTML = '<p class="vacio">Calculando la antigüedad de saldos…</p>';
+      mostrar('<p class="vacio">Calculando la antigüedad de saldos…</p>');
       try {
         const fin = `${f.corte}T23:59:59.999-06:00`;
         const m = new Map();
@@ -95,13 +97,14 @@
         for (let i = 0; i < faltan.length; i += 300) extra.push(...await leerTodo(() => sb.from('facturas_venta').select(campos).in('id', faltan.slice(i, i + 300)).neq('estado', 'ANULADA').lte('fecha_emision', fin).order('id')));
         if (t !== turno) return;
         facturas = [...conSaldo, ...extra]; despues = m; cargado = clave;
-      } catch (e) { if (t === turno) ctx.pDet.innerHTML = `<p class="vacio">${esc(window.UI.traducirError(e))}</p>`; return; }
-      pintar();
+      } catch (e) { if (sinPantalla) throw e; if (t === turno) mostrar(`<p class="vacio">${esc(window.UI.traducirError(e))}</p>`); return; }
+      if (!sinPantalla) pintar();
     }
 
     // Documentos con saldo al corte, su mora y su banda; agrupados por cliente.
     function calcular() {
-      const c = cliDe();
+      const c = f.terceroKey ? (f.terceroKey.startsWith('C') ? cli(Number(f.terceroKey.slice(1))) || null : null) : cliDe();
+      const nitKey = f.terceroKey && f.terceroKey.startsWith('N') ? f.terceroKey.slice(1) : '';
       const docs = facturas.map((x) => {
         const cl = cli(x.cliente_id) || (x.cliente_codigo != null ? clientes.find((k) => k.id && String(k.codigo) === String(x.cliente_codigo)) : null);
         const saldo = r2((Number(x.saldo || 0) + (despues.get(x.id) || 0)) * enQ(x));
@@ -110,7 +113,9 @@
         const mora = Math.max(0, diasEntre(vence, f.corte));
         return { id: x.id, doc: docTxt(x), emision, vence, mora, banda: banda(mora), saldo, cliente_id: x.cliente_id || cl?.id || null, codigo: cl?.codigo ?? x.cliente_codigo ?? '', nombre: cl?.nombre || x.nombre || '', correo: cl?.correo || '', dias: cl?.dias_credito ?? x.dias_credito ?? 0, tipo: cl?.tipo_cliente || '', nit: cl?.documento || x.nit || '' };
       }).filter((d) => d.saldo > 0.004
-        && (!f.cliente.trim() || (c ? window.UI.esDelCliente(c, { cliente_id: d.cliente_id, cliente_codigo: d.codigo, nombre: d.nombre }) : `${d.codigo} ${d.nombre}`.toLowerCase().includes(f.cliente.trim().toLowerCase())))
+        && (!nitKey || (!d.cliente_id && String(d.nit || 'CF').toUpperCase() === nitKey))
+        && (!f.terceroKey || nitKey || !c || window.UI.esDelCliente(c, { cliente_id: d.cliente_id, cliente_codigo: d.codigo, nombre: d.nombre }))
+        && (f.terceroKey || !f.cliente.trim() || (c ? window.UI.esDelCliente(c, { cliente_id: d.cliente_id, cliente_codigo: d.codigo, nombre: d.nombre }) : `${d.codigo} ${d.nombre}`.toLowerCase().includes(f.cliente.trim().toLowerCase())))
         && (!f.tipo || d.tipo === f.tipo)
         && (f.periodo === 'TODOS' || (f.periodo === 'VENCIDO' ? d.mora > 0 : d.banda === f.periodo)));
       const g = new Map();
@@ -125,7 +130,7 @@
     }
     const celdasBandas = (b) => BANDAS.map(([k]) => `<td class="num">${fmt.monto(b[k])}</td>`).join('');
     const bandasDoc = (d) => BANDAS.map(([k]) => (d.banda === k ? d.saldo : 0));
-    const parametros = () => [`Empresa: ${empresaTxt()}`, `Saldo al ${fmt.fechaDia(f.corte)}`, `Cliente: ${f.cliente.trim() || 'TODOS'}`, `Tipo cliente: ${f.tipo || 'TODOS'}`, `Vence según: ${f.fecha === 'EMISION' ? 'EMISIÓN' : 'ESTIMADA COBRO'}`, `Vencimiento: ${txt(PERIODOS, f.periodo)}`, `Orden: ${txt(ORDENES, f.orden)} ${f.dir === 'DESC' ? '↓' : '↑'}`];
+    const parametros = () => [`Empresa: ${empresaTxt()}`, `Saldo al ${fmt.fechaDia(f.corte)}`, `Cliente: ${f.terceroKey ? (f.terceroNombre || f.terceroKey) : f.cliente.trim() || 'TODOS'}`, `Tipo cliente: ${f.tipo || 'TODOS'}`, `Vence según: ${f.fecha === 'EMISION' ? 'EMISIÓN' : 'ESTIMADA COBRO'}`, `Vencimiento: ${txt(PERIODOS, f.periodo)}`, `Orden: ${txt(ORDENES, f.orden)} ${f.dir === 'DESC' ? '↓' : '↑'}`];
     const tituloRep = () => `Antigüedad de saldos de clientes (${f.contenido === 'RESUMIDO' ? 'Resumido' : 'Detallado'})`;
 
     function pintar() {
@@ -166,10 +171,8 @@
         <tfoot><tr><td colspan="4">Total general · ${R.grupos.length} cliente(s) · ${R.docs.length} documento(s)</td>${BANDAS.map(([k]) => n(R.tot[k])).join('')}${n(R.total)}</tr></tfoot></table>`, { locId: ctx.sel.loc, horizontal: true });
     }
 
-    function excel() {
-      const R = calcular(), det = f.contenido === 'DETALLADO';
-      if (!R.docs.length) return window.FIN.aviso('No hay saldos con esos parámetros');
-      if (!window.REPORTE_XLSX) return window.FIN.aviso('No se pudo generar el Excel');
+    function tabla(R) {
+      const det = f.contenido === 'DETALLADO';
       const bandasCol = BANDAS.map(([, t]) => ({ titulo: t, ancho: 14, tipo: 'monto' }));
       const columnas = det
         ? [{ titulo: 'Documento', ancho: 26 }, { titulo: 'Fecha', ancho: 12 }, { titulo: 'Vence', ancho: 12 }, { titulo: 'Días mora', ancho: 10, tipo: 'entero' }, ...bandasCol, { titulo: 'Total', ancho: 15, tipo: 'monto' }]
@@ -184,11 +187,32 @@
         } else filas.push({ valores: [String(g.codigo), g.nombre, g.docs.length, g.mora, ...BANDAS.map(([k]) => r2(g.b[k])), r2(g.total)] });
       });
       filas.push({ tipo: 'total', valores: [`Total general · ${R.grupos.length} cliente(s) · ${R.docs.length} documento(s)`, '', '', '', ...BANDAS.map(([k]) => r2(R.tot[k])), r2(R.total)] });
+      return { columnas, filas };
+    }
+    function excel() {
+      const R = calcular(), det = f.contenido === 'DETALLADO';
+      if (!R.docs.length) return window.FIN.aviso('No hay saldos con esos parámetros');
+      if (!window.REPORTE_XLSX) return window.FIN.aviso('No se pudo generar el Excel');
+      const { columnas, filas } = tabla(R);
       const e = ctx.localidad(ctx.sel.loc);
       return Promise.resolve(window.REPORTE_XLSX.generar({ titulo: tituloRep(), parametros: parametros(), orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Antigüedad de saldos', autofiltro: !det,
         archivo: `antiguedad_saldos_${f.contenido.toLowerCase()}_${e?.codigo || ''}_${f.corte}`, columnas, filas })).catch((er) => window.FIN.aviso(er.message || 'No se pudo generar el Excel'));
     }
 
+    // Reporte gerencial: lee los clientes y los saldos de la empresa del reporte y devuelve el contenido (PDF / Excel / voz).
+    if (sinPantalla) {
+      return {
+        async cfg() {
+          clientes = await window.UI.clientesConVentas(sb, ctx.sel.loc, 'id, codigo, nombre, documento, correo, dias_credito, tipo_cliente').catch(() => []);
+          if (f.terceroKey && f.terceroKey.startsWith('C')) { const c = cli(Number(f.terceroKey.slice(1))); if (c) f.terceroNombre = etiquetaCli(c); }
+          await consultar();
+          const R = calcular(), { columnas, filas } = tabla(R), e = ctx.localidad(ctx.sel.loc);
+          return { titulo: tituloRep(), parametros: parametros(), columnas, filas, n: R.docs.length, orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Antigüedad de saldos', autofiltro: f.contenido !== 'DETALLADO',
+            archivo: `antiguedad_saldos_${f.contenido.toLowerCase()}_${e?.codigo || ''}_${f.corte}`,
+            kpis: [['Clientes', R.grupos.length], ...BANDAS.map(([k, t]) => [t, `Q ${fmt.monto(R.tot[k])}`, k === 'B91' && R.tot[k] > 0 ? 'ec-alerta' : '']), ['Total por cobrar', `Q ${fmt.monto(R.total)}`, 'ec-fin']], graficas: [] };
+        }
+      };
+    }
     cont.addEventListener('change', (e) => {
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') return cargarLocalidad();

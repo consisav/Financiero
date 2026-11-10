@@ -23,6 +23,7 @@
   const EXTRA = {
     facturacion: [
       { id: 'cxc-estado', nombre: 'Estado de cuenta por cliente', icono: 'ti-file-invoice', segmento: 'Cuentas x Cobrar' },
+      { id: 'cxc-antiguedad', nombre: 'Antigüedad de saldos', icono: 'ti-hourglass', segmento: 'Cuentas x Cobrar', despuesDe: 'reporte-cuentas-por-cobrar' },
       { id: 'cxp-estado', nombre: 'Estado de cuenta por proveedor', icono: 'ti-file-invoice', segmento: 'Compras · Cuentas x Pagar' },
       { id: 'existencias-inventario', nombre: 'Existencia de productos', icono: 'ti-packages', segmento: 'Inventarios · Reportes' },
       { id: 'disponibilidad-bancaria', nombre: 'Disponibilidad bancaria', icono: 'ti-chart-line', segmento: 'Caja y Bancos · Bancos' }
@@ -30,7 +31,7 @@
   };
   const ESTADOS = new Set(['cxc-estado', 'cxp-estado']);
   const generable = (id) => (window.REPORTES_COMERCIALES && window.REPORTES_COMERCIALES[id] && !!motor())
-    || (ESTADOS.has(id) && !!window.PANTALLAS[id]) || (id === 'existencias-inventario' && !!window.INVENTARIO_REPORTES)
+    || ((ESTADOS.has(id) || id === 'cxc-antiguedad') && !!window.PANTALLAS[id]) || (id === 'existencias-inventario' && !!window.INVENTARIO_REPORTES)
     || (id === 'disponibilidad-bancaria' && !!window.DISPONIBILIDAD);
   const fmt = () => window.BANCOS.fmt;
 
@@ -88,6 +89,7 @@
       return M.construir(await M.leer());
     }
     if (ESTADOS.has(id)) return window.PANTALLAS[id](null, null, { ctx: e.ctx, f: { desde: p.desde, hasta: p.fecha, contenido: p.contenido, mostrar: p.mostrar || 'CON SALDO', terceroKey: p.tercero || '', tercero: '' } }).cfg();
+    if (id === 'cxc-antiguedad') return window.PANTALLAS[id](null, null, { ctx: e.ctx, f: { corte: p.fecha, contenido: p.contenido || 'RESUMIDO', periodo: p.vencimiento || 'TODOS', terceroKey: p.tercero || '' } }).cfg();
     if (id === 'existencias-inventario') return window.INVENTARIO_REPORTES.directo(id, e.ctx, { fecha: p.fecha, ceros: !!p.ceros, producto: p.producto ? String(p.producto) : '' }).cfg();
     // La disponibilidad se genera (y queda en su histórico) a la fecha de corte.
     if (id === 'disponibilidad-bancaria') return window.DISPONIBILIDAD.cfg(e.sb, e.ctx.sel.loc, p.fecha, e.empresa(), p.contenido, { banco: p.banco, cuenta: p.cuenta, nivel: p.nivel });
@@ -103,6 +105,7 @@
     if (R) return R.tipo === 'SALDOS' ? ['empresa', 'fecha:Saldo al', 'producto', ...vend, 'contenido'] : ['empresa', 'desde', 'fecha:Fecha final', 'producto', ...vend, ...(R.tipo === 'GRAFICA' ? [] : ['contenido'])];
     if (id === 'cxc-estado') return ['empresa', 'desde', 'fecha:Fecha final', 'cliente', 'mostrar', 'contenido'];
     if (id === 'cxp-estado') return ['empresa', 'desde', 'fecha:Fecha final', 'proveedor', 'mostrar', 'contenido'];
+    if (id === 'cxc-antiguedad') return ['empresa', 'fecha:Saldo al', 'cliente', 'vencimiento', 'contenido'];
     if (id === 'existencias-inventario') return ['empresa', 'fecha:A la fecha', 'producto', 'ceros'];
     if (id === 'disponibilidad-bancaria') return ['empresa', 'fecha:Fecha de corte', 'cuenta', 'banco', 'nivel'];
     return ['empresa', 'desde', 'fecha:Fecha final'];
@@ -186,6 +189,7 @@
           if (c === 'producto') { const x = prods.find((y) => String(y.id) === String(p.producto)); return `<label class="campo rg-p-ancho"><span>Producto</span><input data-p="producto" data-r="${r.id}" list="rg-dl-p-${r.id}" value="${esc(x ? etqProd(x) : '')}" placeholder="Todos los productos" autocomplete="off"><datalist id="rg-dl-p-${r.id}">${prods.map((y) => `<option value="${esc(etqProd(y))}"></option>`).join('')}</datalist></label>`; }
           if (c === 'cliente' || c === 'proveedor') { const x = ters.find((y) => y.key === p.tercero); return `<label class="campo rg-p-ancho"><span>${c === 'cliente' ? 'Nombre del cliente' : 'Nombre del proveedor'}</span><input data-p="tercero" data-r="${r.id}" list="rg-dl-t-${r.id}" value="${esc(x ? x.t : '')}" placeholder="${c === 'cliente' ? 'Todos los clientes' : 'Todos los proveedores'}" autocomplete="off"><datalist id="rg-dl-t-${r.id}">${ters.map((y) => `<option value="${esc(y.t)}"></option>`).join('')}</datalist></label>`; }
           if (c === 'mostrar') return `<label class="campo"><span>Mostrar</span>${sel('mostrar', [['CON SALDO', 'Con saldo'], ['CON MOVIMIENTO', 'Con movimiento o saldo'], ['VENCIDOS', 'Con saldo vencido'], ['TODOS', 'Todos']], p.mostrar, r.id)}</label>`;
+          if (c === 'vencimiento') return `<label class="campo"><span>Período de vencimiento</span>${sel('vencimiento', [['TODOS', 'Todos'], ['VENCIDO', 'Todo lo vencido'], ['VIGENTE', 'Vigente (sin mora)'], ['B30', '1 - 30 días'], ['B60', '31 - 60 días'], ['B90', '61 - 90 días'], ['B91', '91 o más días']], p.vencimiento || 'TODOS', r.id)}</label>`;
           if (c === 'contenido') return `<label class="campo"><span>Contenido</span>${sel('contenido', [['RESUMIDO', 'Resumido'], ['DETALLADO', 'Detallado']], p.contenido, r.id)}</label>`;
           if (c === 'nivel') return `<label class="campo"><span>Nivel</span>${sel('nivel', [['RESUMIDA', 'Resumida'], ['DETALLADA', 'Detallada'], ['TOTAL', 'Total']], p.nivel, r.id)}</label>`;
           if (c === 'vendedor') return `<label class="campo rg-p-ancho"><span>Nombre del vendedor</span>${sel('vendedor', [['', 'Todos los vendedores'], ...vends.map((v) => [v.id, `${v.nombre}${v.codigo != null ? ` — ${v.codigo}` : ''}${v.activo === false ? ' (inactivo)' : ''}`])], p.vendedor, r.id)}</label>`;
@@ -573,7 +577,8 @@
   // Prioridad de cada reporte (1 … n): la lista y la generación van en ese orden.
   function ordenados(reps, conf) {
     const pos = new Map(reps.map((r, i) => [r.id, i]));
-    return [...reps].sort((a, b) => (Number(conf.reportes?.[a.id]?.prioridad) || 999) - (Number(conf.reportes?.[b.id]?.prioridad) || 999) || pos.get(a.id) - pos.get(b.id));
+    const pri = (r, n = 0) => Number(conf.reportes?.[r.id]?.prioridad) || (r.despuesDe && n < 5 && reps.find((x) => x.id === r.despuesDe) ? pri(reps.find((x) => x.id === r.despuesDe), n + 1) + 0.5 : 999);
+    return [...reps].sort((a, b) => pri(a) - pri(b) || pos.get(a.id) - pos.get(b.id));
   }
   function renumerar(reps, conf, id, nueva) {
     const lista = ordenados(reps, conf).filter((r) => r.id !== id);
@@ -592,7 +597,7 @@
     const nuevaConf = () => ({
       organizacion_id: ctx.sel.org, localidad_id: ctx.sel.loc, modulo: m.id,
       usuarios: est.usuarios.some((u) => u.id === yo.id) ? [yo.id] : [],
-      reportes: Object.fromEntries(reps.map((r, i) => [r.id, { pdf: true, excel: false, voz: false, whatsapp: false, correo: false, prioridad: i + 1 }])),
+      reportes: Object.fromEntries(reps.map((r, i) => [r.id, { pdf: true, excel: false, voz: false, whatsapp: false, correo: false, prioridad: r.despuesDe ? null : i + 1 }])),
       parametros: { periodo: 'MES', contenido: 'RESUMIDO', graficas: true },
       whatsapp: '', correos: yo.correo || '', modo: 'MANUAL', frecuencia: 'DIARIA', hora: '07:00', dia_semana: 1, dia_mes: 1, activo: true, ejecuciones: {}
     });
@@ -634,7 +639,7 @@
       const { data, error } = await sb.from('reportes_gerenciales').select('*').eq('localidad_id', ctx.sel.loc).eq('modulo', m.id).maybeSingle();
       if (error) { ctx.pDet.innerHTML = ctx.vacio(/reportes_gerenciales|usuarios|ejecuciones|multiple/.test(error.message) ? 'Falta ejecutar los scripts 171 y 172 (Reportes gerenciales) en Supabase.' : esc(error.message), 'ti-report-analytics'); est.conf = undefined; return; }
       const base = nuevaConf();
-      const repDe = (d) => Object.fromEntries(reps.map((r) => [r.id, { ...base.reportes[r.id], ...(d?.[r.id] || {}) }]));
+      const repDe = (d) => Object.fromEntries(reps.map((r) => [r.id, { ...base.reportes[r.id], ...(d?.[r.id] || {}), ...(d && !d[r.id] ? { pdf: false } : {}) }]));
       est.conf = data ? { ...base, ...data, hora: String(data.hora).slice(0, 5), reportes: repDe(data.reportes), parametros: { ...base.parametros, ...data.parametros }, usuarios: data.usuarios || [] } : base;
       // Configuración nueva: los destinos por omisión son el teléfono y el correo de los usuarios marcados.
       if (!data) { base.correos = ''; aplicarContactos(est.conf, est.usuarios.filter((u) => est.conf.usuarios.includes(u.id)), true); }
