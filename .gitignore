@@ -38,3 +38,8 @@ supabase/migrations/179_cheques_partes/
 supabase/migrations/20261109000180_depositos_organizacion_2.sql
 supabase/migrations/180_depositos_partes/
 supabase/pendientes/180_depositos_parte_*.sql
+
+# Notas de credito y debito de la organizacion 2 (clientes, proveedores y cuentas bancarias): solo local.
+supabase/migrations/20261109000181_notas_credito_debito_organizacion_2.sql
+supabase/migrations/181_notas_partes/
+supabase/pendientes/181_notas_parte_*.sql
