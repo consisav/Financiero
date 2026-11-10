@@ -26,6 +26,8 @@
     // El Super Administrador Global modifica a todos; los demás administradores, a los usuarios de su
     // organización que no son Super Administrador (y a sí mismos). Solo los Super Administradores cambian roles.
     const puedeModificar = (u) => admin && (global || ((u.rol_id !== 'superadministrador' || u.id === yo.id) && (!u.organizacion_id || u.organizacion_id === yo.organizacion_id)));
+    // Eliminar usuarios: únicamente el Super Administrador Global (script 189), nunca a sí mismo ni a otro Global.
+    const puedeEliminar = (u) => global && !!u && u.id !== yo.id && !u.es_global;
     const estado = { filas: [], sel: null, orgs: [], locs: [], filtroOrg: '', filtroLoc: '', buscar: '', firma: null, migrados: [], claveNueva: null };
 
     const [o, l] = await Promise.all([
@@ -135,7 +137,7 @@
                   <td>${empresa(x.organizacion_id, x.localidad_id)}${mas(x.localidades_adicionales)}</td>
                   <td class="tk-tenue" title="Creado en el sistema anterior">Desde ${fechaCorta(x.fecha_creacion_anterior) || '—'}</td>
                   <td><span class="estado us-estado-pend">Por crear</span></td>
-                  <td class="acciones"><button type="button" class="boton primario-sm" data-accion="crear-migrado">Crear</button></td>
+                  <td class="acciones"><span class="us-acc-migrado"><button type="button" class="boton primario-sm" data-accion="crear-migrado">Crear</button>${global ? '<button type="button" class="icono-editar us-eliminar" data-accion="eliminar-migrado" title="Eliminar" aria-label="Eliminar"><i class="ti ti-trash" aria-hidden="true"></i></button>' : ''}</span></td>
                 </tr>`).join('')}
               ${!lista.length && !pendientes.length ? '<tr><td colspan="7" class="vacio">No hay usuarios con estos filtros.</td></tr>' : ''}
             </tbody>
@@ -163,6 +165,7 @@
               ${puedeModificar(u) ? '<button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
               ${puedeModificar(u) ? '<button type="button" class="boton secundario-sm" data-accion="generar"><i class="ti ti-key" aria-hidden="true"></i> Generar usuario</button>' : ''}
               ${puedeModificar(u) ? '<button type="button" class="boton secundario-sm" data-accion="clave"><i class="ti ti-mail" aria-hidden="true"></i> Enviar cambio de clave</button>' : ''}
+              ${puedeEliminar(u) ? '<button type="button" class="boton secundario-sm us-eliminar" data-accion="eliminar"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>' : ''}
               <button type="button" class="icono-boton" data-accion="actualizar" title="Actualizar" aria-label="Actualizar"><i class="ti ti-refresh" aria-hidden="true"></i></button>
             </div>
           </div>` : ''}`;
@@ -354,6 +357,35 @@
           estado.claveNueva = { nombre: x.nombre, correo, clave: data };
           const nuevo = await sb.from('perfiles').select('id').eq('correo', correo.toLowerCase()).maybeSingle();
           await cargar(nuevo.data?.id);
+          return;
+        }
+        if (a === 'eliminar') {
+          const u = estado.sel;
+          if (!puedeEliminar(u)) return;
+          if (!confirm(`¿Eliminar al usuario ${u.usuario ? `${u.usuario} · ` : ''}${u.nombre || u.correo} (${u.correo})?\n\nSe borra su cuenta, sus empresas y roles. No se puede deshacer.\nSi ya tiene movimientos (tickets, partidas, firmas) no se elimina: desactívalo con «Modificar».`)) return;
+          accion.disabled = true;
+          const { data, error } = await sb.rpc('eliminar_usuario', { p_usuario: u.id });
+          if (error) {
+            accion.disabled = false;
+            window.FIN.aviso(error.code === 'PGRST202' ? 'Falta ejecutar en Supabase el script 189 (eliminar usuarios).' : window.UI.traducirError(error));
+            return;
+          }
+          if (u.firma_ruta) sb.storage.from(BUCKET).remove([u.firma_ruta]).catch(() => {});
+          window.FIN.aviso(`Usuario ${data || u.nombre || u.correo} eliminado`);
+          estado.sel = null;
+          await cargar();
+          return;
+        }
+        if (a === 'eliminar-migrado') {
+          if (!global) return;
+          const tr = accion.closest('tr[data-migrado]');
+          const x = estado.migrados.find((y) => String(y.id) === tr.dataset.migrado);
+          if (!x || !confirm(`¿Eliminar el usuario por crear ${x.usuario_anterior} · ${x.nombre}? No se puede deshacer.`)) return;
+          accion.disabled = true;
+          const { error } = await sb.rpc('eliminar_usuario_migrado', { p_migrado: x.id });
+          if (error) { accion.disabled = false; window.FIN.aviso(error.code === 'PGRST202' ? 'Falta ejecutar en Supabase el script 189 (eliminar usuarios).' : window.UI.traducirError(error)); return; }
+          window.FIN.aviso(`Usuario por crear ${x.nombre} eliminado`);
+          await cargar();
           return;
         }
         if (a === 'generar') location.hash = `#/${m.id}/generar-usuario/${estado.sel.id}`;
