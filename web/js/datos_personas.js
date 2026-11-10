@@ -111,6 +111,12 @@
 
     async function abrir(id) {
       const r = await sb.from('personas').select('*').eq('id', id).maybeSingle();
+      // Persona de otra organización (enlace desde otra pantalla): se cambia a su organización.
+      if (r.data && r.data.organizacion_id !== ctx.sel.org && ctx.organizaciones.some((o) => o.id === r.data.organizacion_id)) {
+        ctx.sel.org = r.data.organizacion_id;
+        ctx.sel.loc = ctx.localidades.find((x) => x.id === r.data.localidad_id)?.id || ctx.localidades.find((x) => x.organizacion_id === ctx.sel.org)?.id || null;
+        return cargarOrg(id);
+      }
       if (r.error || !r.data) { window.FIN.aviso(r.error ? window.UI.traducirError(r.error) : 'No se encontró la persona.'); est.p = vacia(); }
       else est.p = { ...r.data, telefonos: (r.data.telefonos || []).length ? r.data.telefonos : [{ numero: '', tipo: 'CELULAR', ext: '', area: '' }], contactos: r.data.contactos || [] };
       est.cambios = false;
@@ -160,7 +166,7 @@
               ${tipo ? `<span class="dp-sello azul">${esc(tipo.nombre)}</span>` : ''}
               <span class="dp-sello ${p.activo ? 'verde' : 'gris'}">${p.activo ? 'Activa' : 'Inactiva'}</span>
               ${edad !== '' ? `<span class="dp-sello">${edad} años</span>` : ''}
-              ${p.creado_en ? `<small>Ingreso ${esc(window.UI.fecha(p.creado_en))} ${esc(p.creado_por_nombre || '')}${p.modificado_en ? ` · Actualización ${esc(window.UI.fecha(p.modificado_en))} ${esc(p.modificado_por_nombre || '')}` : ''}</small>` : ''}
+              ${p.creado_en || p.persona_anterior ? `<small>${[p.persona_anterior ? `<span title="Empresa y código en el sistema anterior">Anterior ${esc(p.persona_anterior.length > 34 ? `${p.persona_anterior.slice(0, 34)}…` : p.persona_anterior)}</span>` : '', p.creado_en ? `Ingreso ${esc(window.UI.fecha(p.creado_en))} ${esc(p.creado_por_nombre || '')}${p.modificado_en ? ` · Actualización ${esc(window.UI.fecha(p.modificado_en))} ${esc(p.modificado_por_nombre || '')}` : ''}` : ''].filter(Boolean).join(' · ')}</small>` : ''}
             </div>
           </section>
           ${dup.length ? `<div class="dp-aviso"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Ya existe ${dup.map((x) => `<button type="button" class="dp-link" data-abrir="${x.p.id}">${esc(etiqueta(x.p))}</button> <em>(mismo ${x.por})</em>`).join(', ')}.</div>` : ''}
@@ -294,8 +300,12 @@
       const d = validarDpi(p.dpi);
       if (!d.ok) return window.FIN.aviso(d.msg);
       if (p.nit && !validarNit(p.nit) && !confirm(`El NIT ${p.nit} no pasa la validación. ¿Guardarlo de todos modos?`)) return;
-      const dup = duplicados().filter((x) => x.por !== 'nombre');
-      if (dup.length) return window.FIN.aviso(`Ya existe ${etiqueta(dup[0].p)} con el mismo ${dup[0].por}.`);
+      // El DPI no se repite; el NIT puede compartirse (familias, empresas): solo se confirma.
+      const dup = duplicados();
+      const porDpi = dup.find((x) => x.por === 'DPI');
+      if (porDpi) return window.FIN.aviso(`Ya existe ${etiqueta(porDpi.p)} con el mismo DPI.`);
+      const porNit = dup.find((x) => x.por === 'NIT');
+      if (porNit && !confirm(`${etiqueta(porNit.p)} ya tiene el NIT ${p.nit}. ¿Guardar de todos modos?`)) return;
       const datos = { ...p };
       ['id', 'codigo', 'creado_por', 'creado_por_nombre', 'creado_en', 'modificado_por', 'modificado_por_nombre', 'modificado_en'].forEach((k) => delete datos[k]);
       datos.organizacion_id = ctx.sel.org;

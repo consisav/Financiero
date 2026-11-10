@@ -6340,3 +6340,4 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
   .dp-cab { grid-template-columns: 46px minmax(0, 1fr) auto; }
   .dp-card { gap: 3px; }
 }
+.dp-sellos small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 330px; }

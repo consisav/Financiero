@@ -43,3 +43,8 @@ supabase/pendientes/180_depositos_parte_*.sql
 supabase/migrations/20261109000181_notas_credito_debito_organizacion_2.sql
 supabase/migrations/181_notas_partes/
 supabase/pendientes/181_notas_parte_*.sql
+
+# Personas de la organizacion 2 (datos personales): solo local.
+supabase/migrations/20261109000183_personas_organizacion_2.sql
+supabase/migrations/183_personas_partes/
+supabase/pendientes/183_personas_parte_*.sql
