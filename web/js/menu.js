@@ -320,7 +320,8 @@ window.MODULOS = [
             { id: 'cxc-mensual', nombre: 'Consolidado CXC mensual', icono: 'ti-calendar-month', descripcion: 'Cuentas por cobrar de un mes de todas las ventas: cliente, tipo de fecha, saldo, tipo de cliente y días de mora.' },
             { id: 'cxc-general', nombre: 'Consolidado general', icono: 'ti-report-money', descripcion: 'Cuentas por cobrar de todas las ventas en un rango de fechas, con su valor y saldo en quetzales.' },
             { id: 'cxc-periodo', nombre: 'CXC por periodo', icono: 'ti-calendar-dollar', descripcion: 'Saldo de las ventas a una fecha, con resumen por cliente y estado de cuenta.' },
-            { id: 'cxc-estado', nombre: 'Estado de cuenta clientes', icono: 'ti-file-invoice', descripcion: 'Estado de cuenta de uno o todos los clientes en un rango de fechas: saldo anterior, facturas, notas, retenciones, cobros, saldo final y antigüedad, en PDF o Excel.' }
+            { id: 'cxc-estado', nombre: 'Estado de cuenta clientes', icono: 'ti-file-invoice', descripcion: 'Estado de cuenta de uno o todos los clientes en un rango de fechas: saldo anterior, facturas, notas, retenciones, cobros, saldo final y antigüedad, en PDF o Excel.' },
+            { id: 'cxc-antiguedad', nombre: 'Antigüedad de Saldos', icono: 'ti-hourglass', descripcion: 'Saldo de los clientes a una fecha por días de mora (vigente, 1-30, 31-60, 61-90 y 91 o más), detallado por factura o resumido por cliente. PDF y Excel.' }
           ]
         }
       ],
