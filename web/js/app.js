@@ -503,7 +503,7 @@
               <span class="menu-icono"><i class="ti ${g.icono}" aria-hidden="true"></i></span>${esc(g.nombre)}<i class="ti ti-chevron-down flecha" aria-hidden="true"></i>
             </button>
             <div class="menu-panel" data-panel="${g.id}" hidden>
-              ${subgruposDe(m, g.id).map((s) => `
+              ${subgruposDe(m, g.id).map((s) => s.plano ? `<div class="subgrupo-plano">${listaOpciones(m, s.pantallas, actual)}</div>` : `
                 <details class="subgrupo" name="sub-${m.id}-${g.id}" ${contiene(s, actual) || (!subgruposDe(m, g.id).some((x) => contiene(x, actual)) && (subgruposDe(m, g.id).length === 1 || s.abierto)) ? 'open' : ''}>
                   <summary class="subgrupo-titulo"><span><i class="ti ${s.icono}" aria-hidden="true"></i> ${esc(s.subgrupo)}</span><i class="ti ti-chevron-down flecha" aria-hidden="true"></i></summary>
                   ${listaOpciones(m, s.pantallas, actual)}

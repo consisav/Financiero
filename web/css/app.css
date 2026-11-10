@@ -6241,3 +6241,102 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
 .oqc-consulta .ccq-ver { font-size: 12.5px; font-weight: 700; padding: 5px 12px; white-space: nowrap; }
 .oqc-consulta .cq-acc { width: 1%; white-space: nowrap; }
 .oqc-consulta .oqc-ver { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ---------- Menú: pantallas sueltas al inicio de un grupo (plano) ---------- */
+.menu-panel .subgrupo-plano { margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid var(--borde); }
+
+/* ---------- Administración · Datos Personas ---------- */
+.ta-filtros.bk-filtros:has(.dp-acciones) { grid-template-columns: auto minmax(0, .9fr) minmax(0, .9fr) minmax(0, 1.5fr) auto !important; }
+.dp-acciones { gap: 8px; }
+.dp-pantalla .bk-detalle { padding: 12px 14px; overflow: auto; }
+.dp { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.dp-cab { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 14px; border: 1px solid var(--borde); border-radius: 12px; background: linear-gradient(90deg, var(--acento-fondo), var(--panel) 55%); }
+.dp-avatar { width: 54px; height: 54px; border-radius: 50%; background: var(--acento); color: #fff; display: grid; place-items: center; font-size: 19px; font-weight: 700; letter-spacing: .02em; }
+.dp-cab-campos { display: grid; grid-template-columns: minmax(150px, 1.1fr) 82px minmax(100px, .7fr) minmax(0, 1.6fr) minmax(0, 1.6fr); gap: 8px 10px; }
+.dp-cab .dp-f > span { font-size: 11.5px; }
+.dp-cab .dp-nom input, .dp-cab .dp-ape input { font-size: 16px; font-weight: 700; color: var(--cl-rojo); }
+.dp-cab .dp-cod input { text-align: center; font-weight: 700; }
+.dp-sellos { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 260px; }
+.dp-sellos small { font-size: 11px; color: var(--tenue); text-align: right; line-height: 1.3; }
+.dp-sello { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--fondo); color: var(--suave); white-space: nowrap; }
+.dp-sello.azul { background: var(--azul-f); color: var(--azul-t); }
+.dp-sello.verde { background: var(--verde-f); color: var(--verde-t); }
+.dp-sello.gris { background: var(--pizarra-f); color: var(--pizarra-t); }
+.dp-aviso { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 12px; border-radius: 10px; background: var(--ambar-f); color: var(--ambar-t); font-size: 13px; }
+.dp-link { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--acento); text-decoration: underline; cursor: pointer; }
+.dp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.dp-card { border: 1px solid var(--borde); border-radius: 12px; padding: 8px 12px 10px; background: var(--panel); display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.dp-card h3 { margin: 0 0 2px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--acento); display: flex; align-items: center; gap: 6px; }
+.dp-card h3.dp-sub { margin-top: 6px; padding-top: 7px; border-top: 1px dashed var(--borde); }
+.dp-f { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
+.dp-f > span { font-size: 12px; font-weight: 600; color: var(--suave); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; line-height: 1.15; }
+.dp-cab .dp-f, .dp-2 .dp-f { grid-template-columns: 1fr; gap: 2px; }
+.dp-f input, .dp-f select, .dp-tels input, .dp-tels select, .dp-contacto input { width: 100%; min-width: 0; height: 30px; padding: 3px 8px; border: 1px solid var(--borde); border-radius: 7px; background: var(--panel); color: var(--texto); font: inherit; font-size: 13px; }
+.dp-f input[readonly] { background: var(--fondo); color: var(--suave); }
+.dp-f input:focus, .dp-f select:focus, .dp-tels input:focus, .dp-tels select:focus, .dp-contacto input:focus { outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-fondo); }
+.dp-f input.num { text-align: right; font-variant-numeric: tabular-nums; }
+.dp-f.dp-error input { border-color: var(--error); background: color-mix(in srgb, var(--error) 5%, var(--panel)); }
+.dp-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 8px; }
+.dp-2.dp-2b { grid-template-columns: minmax(0, 1fr) 76px; }
+.dp-bien { color: var(--verde-t); font-size: 11px; display: inline-flex; align-items: center; gap: 2px; }
+.dp-mal { color: var(--error); font-size: 11px; }
+.dp-nota { margin: 0; font-size: 11.5px; }
+.dp-nota.mal { color: var(--error); }
+.dp-check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--suave); font-weight: 600; margin-top: 2px; }
+.dp-mas { margin-left: auto; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--borde); background: var(--panel); color: var(--acento); display: grid; place-items: center; cursor: pointer; font-size: 14px; }
+.dp-mas:hover { background: var(--acento-fondo); }
+.dp-tels { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dp-tels th { font-size: 10.5px; font-weight: 700; color: var(--tenue); text-transform: uppercase; text-align: left; padding: 0 3px 2px; }
+.dp-tels td { padding: 2px 3px; }
+.dp-tels td:first-child { width: 18px; color: var(--tenue); text-align: center; }
+.dp-tels td:nth-child(3) { width: 104px; }
+.dp-tels td:nth-child(4) { width: 52px; }
+.dp-tels td:nth-child(5) { width: 58px; }
+.dp-tels td:last-child { width: 24px; }
+.dp-quitar { width: 22px; height: 22px; border: 0; background: none; color: var(--tenue); cursor: pointer; border-radius: 6px; display: grid; place-items: center; }
+.dp-quitar:hover { background: color-mix(in srgb, var(--error) 10%, transparent); color: var(--error); }
+.dp-contacto { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .9fr) minmax(0, 1fr) 24px; gap: 5px; align-items: center; }
+.dp-asociados { display: flex; flex-wrap: wrap; gap: 5px; }
+.dp-asociados small { font-size: 11.5px; color: var(--tenue); }
+@media (max-width: 1500px) {
+  .dp-f { grid-template-columns: 96px minmax(0, 1fr); }
+}
+@media (max-width: 1250px) {
+  .dp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dp-cab-campos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .dp-pantalla .ta-filtros.bk-filtros { grid-template-columns: 1fr 1fr !important; }
+  .dp-pantalla .ta-filtros .ta-titulo, .dp-pantalla .dp-buscar, .dp-pantalla .dp-acciones { grid-column: 1 / -1; }
+  .dp-pantalla .dp-acciones { display: grid !important; grid-template-columns: 1fr 1fr; }
+  .dp-pantalla .dp-acciones .boton { justify-content: center; height: 44px; }
+  .dp-pantalla .dp-acciones .primario-sm { grid-column: 1 / -1; order: -1; }
+  .dp-pantalla .bk-detalle { padding: 8px; }
+  .dp-cab { grid-template-columns: 46px minmax(0, 1fr); padding: 10px; }
+  .dp-avatar { width: 46px; height: 46px; font-size: 16px; }
+  .dp-cab-campos { grid-template-columns: 1fr 1fr; grid-column: 1 / -1; }
+  .dp-cab-campos .dp-tipo, .dp-cab-campos .dp-nom, .dp-cab-campos .dp-ape { grid-column: 1 / -1; }
+  .dp-sellos { grid-column: 2; grid-row: 1; align-items: flex-start; flex-direction: row; flex-wrap: wrap; max-width: none; }
+  .dp-sellos small { text-align: left; }
+  .dp-grid { grid-template-columns: 1fr; }
+  .dp-f { grid-template-columns: 1fr; gap: 2px; }
+  .dp-f input, .dp-f select, .dp-tels input, .dp-tels select, .dp-contacto input { height: 40px; font-size: 15px; }
+  .dp-tels td:nth-child(4), .dp-tels th:nth-child(4), .dp-tels td:nth-child(5), .dp-tels th:nth-child(5) { display: none; }
+  .dp-contacto { grid-template-columns: 1fr 1fr; }
+  .dp-contacto input[name=con-nombre] { grid-column: 1 / -1; }
+}
+.dp-2.dp-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-height: 960px) and (min-width: 761px) {
+  .dp { gap: 8px; }
+  .dp-cab { padding: 8px 12px; }
+  .dp-card { gap: 4px; padding: 7px 11px 9px; }
+  .dp-f input, .dp-f select, .dp-tels input, .dp-tels select, .dp-contacto input { height: 28px; }
+  .dp-card h3.dp-sub { margin-top: 4px; padding-top: 5px; }
+}
+@media (max-width: 760px) { .dp-2.dp-4 { grid-template-columns: 1fr 1fr; } }
+@media (max-height: 960px) and (min-width: 761px) {
+  .dp-pantalla .bk-detalle { padding: 8px 12px; }
+  .dp-avatar { width: 46px; height: 46px; font-size: 17px; }
+  .dp-cab { grid-template-columns: 46px minmax(0, 1fr) auto; }
+  .dp-card { gap: 3px; }
+}

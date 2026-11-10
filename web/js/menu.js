@@ -53,6 +53,12 @@ window.MODULOS = [
     // Tickets va como grupo propio, después de Catálogos y antes de Registros.
     grupos: [window.GRUPOS[0], { id: 'tickets', nombre: 'Tickets', icono: 'ti-ticket' }, ...window.GRUPOS.slice(1)],
     subgrupos: {
+      // «plano»: sus pantallas van sueltas al inicio del grupo, sin título de subgrupo.
+      registros: [
+        { subgrupo: 'Personas', plano: true, icono: 'ti-id', pantallas: [
+          { id: 'datos-personas', nombre: 'Datos Personas', icono: 'ti-id', descripcion: 'Ficha general de datos de una persona (empleado, cliente, paciente, proveedor o médico): generales, identificación con DPI validado, dirección, teléfonos, información laboral, crédito y contactos. La usan otras pantallas.' }
+        ] }
+      ],
       procesos: [
         {
           subgrupo: 'Procesos',
