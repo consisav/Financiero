@@ -51,20 +51,20 @@
       ctx.filtros(`
         ${modo === 'GENERAL' ? `<label class="campo"><span>Fecha inicio</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label><label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>` : ''}
         ${modo === 'PERIODO' ? `<label class="campo cx-anio"><span>Año venta</span><input type="number" name="anio" min="2000" max="2999" value="${f.anio}"></label><label class="campo"><span>Saldo al</span><input type="date" name="hasta" value="${f.hasta}"></label>` : ''}
-        <label class="campo cx-prov"><span>Cliente</span><input list="cx-clientes" name="cliente" autocomplete="off" value="${esc(f.cliente)}" placeholder="TODOS"></label>
+        <label class="campo cx-prov"><span>Cliente</span><input type="search" name="cliente" autocomplete="off" value="${esc(f.cliente)}" placeholder="TODOS · escribe o elige (${clientes.length.toLocaleString('es-GT')})"></label>
         ${modo !== 'PERIODO' ? `<label class="campo"><span>Tipo fecha</span>${sl('fecha', [['ESTIMADA', 'ESTIMADA COBRO'], ['EMISION', 'EMISIÓN']], f.fecha)}</label>` : ''}
         <label class="campo"><span>Saldo?</span>${sl('saldo', [['CON SALDO', 'CON SALDO'], ['SIN SALDO', 'SIN SALDO'], ['TODAS', 'TODAS']], f.saldo)}</label>
         <label class="campo"><span>Tipo cliente</span>${sl('tipo', [['', 'TODOS'], ...tipos.map((t) => [t, t])], f.tipo)}</label>
         <label class="campo cx-orden"><span>Ordenar por</span>${sl('orden', X.opcionesOrden('FECHA COBRO'), f.orden)}</label>
         <label class="campo cx-dir"><span>Orden</span>${sl('dir', [['ASC', 'ASCENDENTE'], ['DESC', 'DESCENDENTE']], f.dir)}</label>
         <label class="campo cx-formato"><span>Formato</span>${sl('formato', window.CUENTAS_XLSX.OPCIONES, f.formato)}</label>
-        <datalist id="cx-clientes">${clientes.map((x) => `<option value="${esc(x.nombre)} — ${x.codigo}"></option>`).join('')}</datalist>
         ${c || !f.cliente ? '' : '<small class="cx-aviso pc-rojo">Cliente no encontrado</small>'}`,
         `<button type="button" class="boton secundario-sm cqc-excel" data-accion="excel-vista" title="Descargar en Excel (.xlsx) lo que se ve en pantalla, con los parámetros elegidos"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>
          <button type="button" class="boton primario-sm" data-accion="imprimir">${f.formato.startsWith('PDF') ? '<i class="ti ti-printer" aria-hidden="true"></i> Imprimir' : '<i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Generar Excel'}</button>
          ${modo === 'PERIODO' ? `<button type="button" class="boton secundario-sm ${resumen ? 'activo' : ''}" data-accion="resumen" aria-pressed="${resumen}"><i class="ti ti-list-numbers" aria-hidden="true"></i> Resumen</button>` : ''}
          <button type="button" class="boton secundario-sm" data-accion="estado-cuenta" title="Estado de cuenta del cliente elegido o, si está en TODOS, de todos los clientes (en PDF o Excel según el formato)"><i class="ti ti-file-text" aria-hidden="true"></i> Est. cuenta</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
+      window.UI.autocompletar(ctx.pFil.querySelector('[name=cliente]'), () => clientes.map((x) => { const v = x.codigo !== '' && x.codigo != null ? `${x.nombre} — ${x.codigo}` : x.nombre; return { valor: v, texto: x.codigo !== '' && x.codigo != null ? `${x.codigo} · ${x.nombre}` : x.nombre, detalle: [x.documento ? `NIT ${x.documento}` : '', x.tipo_cliente || ''].filter(Boolean).join(' · ') }; }));
     }
     async function iniciar() {
       if (!(await ctx.cargarBase())) return;
@@ -72,7 +72,7 @@
     }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc;
-      clientes = loc ? await leerTodo(() => sb.from('clientes').select('id, codigo, documento, nombre, tipo_cliente, dias_credito').eq('localidad_id', loc).order('nombre')) : [];
+      clientes = loc ? await window.UI.clientesConVentas(sb, loc, 'id, codigo, documento, nombre, tipo_cliente, dias_credito') : [];
       tipos = [...new Set(clientes.map((c) => c.tipo_cliente).filter(Boolean))].sort();
       primera = true;
       pintarFiltros();
@@ -157,7 +157,7 @@
         const cl = cli(x.cliente_id);
         return { ...x, k, saldo, valor: Number(x.total), saldoQ: saldo, mora, fc, emision: diaLocal(x.fecha_emision), codigo: cl?.codigo ?? x.cliente_codigo, nombreCli: x.nombre || cl?.nombre || '', tipoCli: cl?.tipo_cliente || '' };
       }).filter((x) => {
-        if (c && x.cliente_id !== c.id) return false;
+        if (c && !window.UI.esDelCliente(c, x)) return false;
         if (f.tipo && x.tipoCli !== f.tipo) return false;
         if (f.saldo === 'CON SALDO' && !(x.saldo > 0.004)) return false;
         if (f.saldo === 'SIN SALDO' && x.saldo > 0.004) return false;
@@ -266,7 +266,7 @@
       // Antes de imprimir se confirma si es resumido o detallado (y PDF o Excel).
       const op = await window.ESTADO_CUENTA.elegir({ tipo: 'Cliente', todos: !t, periodo: `Del ${fmt.fechaDia(ini)} al ${fmt.fechaDia(fin)}`, tercero: t ? t.nombre : 'Todos los clientes', contenido: f.formato.includes('RESUMIDO') ? 'RESUMIDO' : 'DETALLADO', formato: f.formato.startsWith('PDF') ? 'PDF' : 'EXCEL' });
       if (!op) return;
-      return window.ESTADO_CUENTA.generar('CXC', ctx, { desde: ini, hasta: fin, terceroKey: t ? `C${t.id}` : '', tipo: f.tipo || '', mostrar: f.saldo === 'CON SALDO' ? 'CON SALDO' : 'CON MOVIMIENTO', contenido: op.contenido }, op.formato);
+      return window.ESTADO_CUENTA.generar('CXC', ctx, { desde: ini, hasta: fin, terceroKey: t ? (t.id ? `C${t.id}` : `N${(t.documento || 'CF').toUpperCase()}`) : '', tipo: f.tipo || '', mostrar: f.saldo === 'CON SALDO' ? 'CON SALDO' : 'CON MOVIMIENTO', contenido: op.contenido }, op.formato);
     }
     async function estadoCuenta(clienteId) {
       const c = cli(clienteId) || cliDe(f.cliente) || cli(facturas.find((x) => x.id === sel)?.cliente_id);

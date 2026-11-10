@@ -39,7 +39,8 @@
       },
       async movimientos(sb, loc, hasta) {
         const fin = `${hasta}T23:59:59.999-06:00`;
-        const fac = await leerTodo(() => sb.from('facturas_venta').select('id, numero, no_interno, serie, numero_dte, fecha_emision, fecha_cobro, dias_credito, cliente_id, nombre, nit, total, monto_retencion_iva, monto_retencion_isr, contrasena')
+        const porCod = new Map((await leerTodo(() => sb.from('clientes').select('id, codigo').eq('localidad_id', loc).order('id'))).map((c) => [String(c.codigo), c.id]));
+        const fac = await leerTodo(() => sb.from('facturas_venta').select('id, numero, no_interno, serie, numero_dte, fecha_emision, fecha_cobro, dias_credito, cliente_id, cliente_codigo, nombre, nit, total, monto_retencion_iva, monto_retencion_isr, contrasena')
           .eq('localidad_id', loc).neq('estado', 'ANULADA').lte('fecha_emision', fin).order('fecha_emision').order('numero'));
         const ids = fac.map((x) => x.id);
         const [pagos, notas] = await Promise.all([
@@ -48,11 +49,12 @@
         ]);
         const doc = (x) => x.no_interno || (x.serie ? `${x.serie}-${x.numero_dte || ''}` : `Interna ${x.numero}`);
         const porId = new Map(fac.map((x) => [x.id, x]));
+        fac.forEach((x) => { if (!x.cliente_id && x.cliente_codigo != null && porCod.has(String(x.cliente_codigo))) x.cliente_id = porCod.get(String(x.cliente_codigo)); });
         const key = (x) => (x.cliente_id ? `C${x.cliente_id}` : `N${(x.nit || 'CF').toUpperCase()}`);
         const extra = new Map();
         const movs = [];
         fac.forEach((x) => {
-          if (!x.cliente_id) extra.set(key(x), { key: key(x), codigo: '', nombre: x.nombre || 'CONSUMIDOR FINAL', nit: x.nit || 'CF', tipo: '', dias: null });
+          if (!x.cliente_id) extra.set(key(x), { key: key(x), codigo: x.cliente_codigo ?? '', nombre: x.nombre || 'CONSUMIDOR FINAL', nit: x.nit || 'CF', tipo: '', dias: null });
           const f = dia(x.fecha_emision), v = x.fecha_cobro || sumar(f, x.dias_credito || 0);
           movs.push({ tercero: key(x), doc: x.id, fecha: f, tipo: 'Factura', documento: doc(x), detalle: x.contrasena ? `Contraseña ${x.contrasena}` : '', vence: v, cargo: Number(x.total), abono: 0 });
           const ret = Number(x.monto_retencion_iva || 0) + Number(x.monto_retencion_isr || 0);
@@ -115,16 +117,16 @@
       ctx.filtros(`
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
-        <label class="campo cx-prov"><span>${F.tercero}</span><input list="ec-terceros" name="tercero" autocomplete="off" value="${esc(f.tercero)}" placeholder="TODOS"></label>
+        <label class="campo cx-prov"><span>${F.tercero}</span><input type="search" name="tercero" autocomplete="off" value="${esc(f.tercero)}" placeholder="TODOS · escribe o elige"></label>
         <label class="campo"><span>Tipo ${F.tercero.toLowerCase()}</span>${sl('tipo', [['', 'TODOS'], ...tipos().map((x) => [x, x])], f.tipo)}</label>
         <label class="campo"><span>Mostrar</span>${sl('mostrar', [['CON SALDO', 'CON SALDO'], ['CON MOVIMIENTO', 'CON MOVIMIENTO O SALDO'], ['VENCIDOS', 'CON SALDO VENCIDO'], ['TODOS', 'TODOS']], f.mostrar)}</label>
         <label class="campo"><span>Ordenar ${F.plural}</span>${sl('orden', [['NOMBRE', 'NOMBRE'], ['CÓDIGO', 'CÓDIGO'], ['SALDO', 'MAYOR SALDO'], ['VENCIDO', 'MAYOR VENCIDO'], ['MORA', 'MAYOR MORA']], f.orden)}</label>
         <label class="campo"><span>Contenido</span>${sl('contenido', [['DETALLADO', 'DETALLADO (MOVIMIENTOS)'], ['RESUMIDO', 'RESUMIDO (SALDOS)']], f.contenido)}</label>
-        <datalist id="ec-terceros">${terceros.map((x) => `<option value="${esc(x.nombre)}${x.codigo !== '' ? ` — ${esc(String(x.codigo))}` : ''}"></option>`).join('')}</datalist>
         ${t || !f.tercero ? '' : `<small class="cx-aviso pc-rojo">${F.tercero} no encontrado</small>`}`,
         `<button type="button" class="boton primario-sm" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button>
          <button type="button" class="boton primario-sm ec-xls" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>
          <button type="button" class="boton secundario-sm" data-accion="regresar"><i class="ti ti-arrow-left" aria-hidden="true"></i> Regresar</button>`);
+      window.UI.autocompletar(ctx.pFil.querySelector('[name=tercero]'), () => terceros.map((x) => ({ valor: `${x.nombre}${x.codigo !== '' && x.codigo != null ? ` — ${x.codigo}` : ''}`, texto: `${x.codigo !== '' && x.codigo != null ? `${x.codigo} · ` : ''}${x.nombre}`, detalle: [x.nit ? `NIT ${x.nit}` : '', x.tipo || ''].filter(Boolean).join(' · ') })));
     }
 
     async function iniciar() { if (!(await ctx.cargarBase())) return; await cargarLocalidad(); }

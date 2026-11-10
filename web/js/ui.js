@@ -283,7 +283,32 @@
     lista.addEventListener('mousedown', (e) => { const op = e.target.closest('.ac-op'); if (op) { e.preventDefault(); elegir(Number(op.dataset.i)); } });
   }
 
-  window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar, todo, autocompletar };
+  const normNombre = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+  async function clientesConVentas(sb, loc, campos = 'id, codigo, nombre, documento, tipo_cliente, dias_credito') {
+    if (!loc) return [];
+    const [c, f] = await Promise.all([
+      todo(sb.from('clientes').select(campos).eq('localidad_id', loc).order('nombre').order('id')),
+      todo(sb.from('facturas_venta').select('id, cliente_id, cliente_codigo, nombre, nit').eq('localidad_id', loc).neq('estado', 'ANULADA').order('id'))
+    ]);
+    const lista = (c.data || []).slice();
+    const ids = new Set(lista.map((x) => x.id)), cods = new Set(lista.map((x) => String(x.codigo))), noms = new Set(lista.map((x) => normNombre(x.nombre)));
+    (f.data || []).forEach((x) => {
+      const n = normNombre(x.nombre);
+      if (!n || (x.cliente_id && ids.has(x.cliente_id)) || (x.cliente_codigo != null && cods.has(String(x.cliente_codigo))) || noms.has(n)) return;
+      lista.push({ id: x.cliente_id || null, codigo: x.cliente_codigo ?? '', nombre: String(x.nombre).trim(), documento: x.nit || '', tipo_cliente: '', dias_credito: null, correo: '', soloVentas: true });
+      if (x.cliente_id) ids.add(x.cliente_id); if (x.cliente_codigo != null) cods.add(String(x.cliente_codigo)); noms.add(n);
+    });
+    return lista.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  }
+  // ¿La factura (cliente_id, cliente_codigo, nombre) es del cliente c?
+  function esDelCliente(c, x) {
+    if (!c) return true;
+    if (c.id && x.cliente_id) return x.cliente_id === c.id;
+    if (c.codigo !== '' && c.codigo != null && x.cliente_codigo != null && x.cliente_codigo !== '') return String(c.codigo) === String(x.cliente_codigo);
+    return normNombre(c.nombre) === normNombre(x.nombre);
+  }
+
+  window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar, todo, autocompletar, clientesConVentas, esDelCliente, normNombre };
 })();
 
 // Ver u ocultar la clave: cada campo de contraseña (inicio de sesión, crear cuenta, cambiar clave y los

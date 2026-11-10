@@ -36,7 +36,7 @@
     const f = { corte: hoy, cliente: '', tipo: '', fecha: 'ESTIMADA', periodo: 'TODOS', contenido: 'DETALLADO', orden: 'codigo', dir: 'ASC' };
     let clientes = [], tipos = [], facturas = [], despues = new Map(), cargado = '', turno = 0;
     const cli = (id) => clientes.find((c) => c.id === id);
-    const etiquetaCli = (c) => `${c.codigo} · ${c.nombre}`;
+    const etiquetaCli = (c) => (c.codigo !== '' && c.codigo != null ? `${c.codigo} · ${c.nombre}` : c.nombre);
     const cliDe = () => clientes.find((c) => etiquetaCli(c) === f.cliente.trim()) || null;
     const empresaTxt = () => { const e = ctx.localidad(ctx.sel.loc); return e ? `${e.codigo} · ${e.nombre_comercial}` : ''; };
     const enQ = (x) => (ctx.moneda(x.moneda_id)?.iso && ctx.moneda(x.moneda_id).iso !== 'GTQ' ? Number(x.tipo_cambio) || 1 : 1);
@@ -62,7 +62,7 @@
     async function cargarLocalidad() {
       const loc = ctx.sel.loc;
       f.cliente = ''; f.tipo = ''; cargado = '';
-      clientes = loc ? await leerTodo(() => sb.from('clientes').select('id, codigo, nombre, documento, correo, dias_credito, tipo_cliente').eq('localidad_id', loc).order('codigo').order('id')).catch(() => []) : [];
+      clientes = loc ? await window.UI.clientesConVentas(sb, loc, 'id, codigo, nombre, documento, correo, dias_credito, tipo_cliente').catch(() => []) : [];
       tipos = [...new Set(clientes.map((c) => c.tipo_cliente).filter(Boolean))].sort();
       pintarFiltros();
       await consultar();
@@ -103,14 +103,14 @@
     function calcular() {
       const c = cliDe();
       const docs = facturas.map((x) => {
-        const cl = cli(x.cliente_id);
+        const cl = cli(x.cliente_id) || (x.cliente_codigo != null ? clientes.find((k) => k.id && String(k.codigo) === String(x.cliente_codigo)) : null);
         const saldo = r2((Number(x.saldo || 0) + (despues.get(x.id) || 0)) * enQ(x));
         const emision = diaLocal(x.fecha_emision);
         const vence = f.fecha === 'EMISION' ? emision : x.fecha_cobro || sumar(emision, x.dias_credito ?? cl?.dias_credito ?? 0);
         const mora = Math.max(0, diasEntre(vence, f.corte));
-        return { id: x.id, doc: docTxt(x), emision, vence, mora, banda: banda(mora), saldo, cliente_id: x.cliente_id, codigo: cl?.codigo ?? x.cliente_codigo ?? '', nombre: cl?.nombre || x.nombre || '', correo: cl?.correo || '', dias: cl?.dias_credito ?? x.dias_credito ?? 0, tipo: cl?.tipo_cliente || '', nit: cl?.documento || x.nit || '' };
+        return { id: x.id, doc: docTxt(x), emision, vence, mora, banda: banda(mora), saldo, cliente_id: x.cliente_id || cl?.id || null, codigo: cl?.codigo ?? x.cliente_codigo ?? '', nombre: cl?.nombre || x.nombre || '', correo: cl?.correo || '', dias: cl?.dias_credito ?? x.dias_credito ?? 0, tipo: cl?.tipo_cliente || '', nit: cl?.documento || x.nit || '' };
       }).filter((d) => d.saldo > 0.004
-        && (!f.cliente.trim() || (c ? d.cliente_id === c.id : `${d.codigo} ${d.nombre}`.toLowerCase().includes(f.cliente.trim().toLowerCase())))
+        && (!f.cliente.trim() || (c ? window.UI.esDelCliente(c, { cliente_id: d.cliente_id, cliente_codigo: d.codigo, nombre: d.nombre }) : `${d.codigo} ${d.nombre}`.toLowerCase().includes(f.cliente.trim().toLowerCase())))
         && (!f.tipo || d.tipo === f.tipo)
         && (f.periodo === 'TODOS' || (f.periodo === 'VENCIDO' ? d.mora > 0 : d.banda === f.periodo)));
       const g = new Map();
