@@ -37,8 +37,10 @@
   Object.entries(CONSULTAS).forEach(([id, cfg]) => { window.PANTALLAS[id] = (cont) => pantallaConsulta(cont, cfg); });
 
   function pantallaConsulta(cont, cfg) {
-    const ctx = montar(cont, { titulo: cfg.titulo, icono: 'ti-file-search', clase: `bk-movimientos bk-consultar cb-apilado bk-consulta-cheques ${cfg.conTipo ? 'cqc-con-tipo' : ''}`, grupo: cfg.grupo });
+    const ctx = montar(cont, { titulo: cfg.titulo, icono: 'ti-file-search', clase: `bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cq-fila ${cfg.conTipo ? 'cqc-con-tipo' : ''}`, grupo: cfg.grupo });
     const { sb } = ctx;
+    // Parámetros en una fila: empresa, cuenta, (tipo), fechas, (beneficiario), orden y estado.
+    ctx.pFil.closest('.bk-espacio').style.setProperty('--cq-n', cfg.conTipo || cfg.tipos[0] === 'CHEQUE' ? 7 : 6);
     const [anio] = fmt.hoy().split('-');
     const f = { cuenta: '', tercero: '', desde: `${anio}-01-01`, hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
     let cuentas = [], cheques = [], sel = null, partidas = {}, compras = new Map();
@@ -59,10 +61,10 @@
     function pintarFiltros() {
       ctx.filtros(`
         <label class="campo"><span>Cuenta bancaria</span><select name="cuenta"><option value="">Todas</option>${cuentas.map((c) => `<option value="${c.id}" ${String(f.cuenta) === String(c.id) ? 'selected' : ''}>${esc(ctx.nombreCuentaBancaria(c))}</option>`).join('')}</select></label>
-        ${cfg.conTipo ? `<label class="campo"><span>Tipo de nota</span><select name="tipo">${[['TODOS', 'Crédito y débito'], ['NOTA_CREDITO', 'Notas de crédito'], ['NOTA_DEBITO', 'Notas de débito']].map(([k, t]) => `<option value="${k}" ${f.tipo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
-        <label class="campo cq-prov"><span>${esc(cfg.etqTercero)}</span><input name="tercero" value="${esc(f.tercero)}" placeholder="Todos (nombre o código)"></label>
+        ${cfg.conTipo ? `<label class="campo"><span>Tipo de nota</span><select name="tipo">${[['TODOS', 'Todas'], ['NOTA_CREDITO', 'Notas de crédito'], ['NOTA_DEBITO', 'Notas de débito']].map(([k, t]) => `<option value="${k}" ${f.tipo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
+        ${cfg.tipos[0] === 'CHEQUE' ? `<label class="campo cq-prov"><span>${esc(cfg.etqTercero)}</span><input name="tercero" value="${esc(f.tercero)}" placeholder="Todos (nombre o código)"></label>` : ''}
         <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
         '<button type="button" class="boton cqc-excel" data-accion="excel" title="Reporte en Excel (.xlsx): resumido o detallado, con el encabezado de la empresa"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Resumido o detallado</small></span></button>');
@@ -75,7 +77,12 @@
     async function cargarLocalidad() {
       cuentas = await ctx.cuentasBancarias();
       if (f.cuenta && !cuenta(Number(f.cuenta))) f.cuenta = '';
-      if (cfg.tipos[0] === 'CHEQUE') {
+      const org = ctx.organizaciones.find((o) => o.id === (ctx.localidad(ctx.sel.loc)?.organizacion_id ?? ctx.sel.org));
+      if (String(org?.codigo) === '2') {
+        // Organización 2: del 1 de dos meses atrás a hoy (p. ej. el 10/11/2026, del 01/09/2026 al 10/11/2026).
+        const [a, m] = fmt.hoy().split('-').map(Number); const k = a * 12 + (m - 1) - 2;
+        f.desde = `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`; f.hasta = fmt.hoy();
+      } else if (cfg.tipos[0] === 'CHEQUE') {
         // Cheques: del 1 del mes anterior a hoy (p. ej. el 9/11/2026, del 01/10/2026 al 09/11/2026).
         const [a, m] = fmt.hoy().split('-').map(Number);
         f.desde = m === 1 ? `${a - 1}-12-01` : `${a}-${String(m - 1).padStart(2, '0')}-01`;
@@ -290,7 +297,7 @@
       const cb = cuenta(Number(f.cuenta));
       const orden = ORDENES.find(([k]) => k === `${f.orden}:${f.dir}`)?.[1] || '';
       return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`,
-        `Cuenta: ${cb ? `${cb.numero} · ${cb.nombre}` : 'Todas'}`, ...(cfg.conTipo ? [`Tipo: ${f.tipo === 'TODOS' ? 'Crédito y débito' : TIPOS_NOTA[f.tipo].nombre}`] : []), `${cfg.etqTercero}: ${f.tercero.trim() || 'Todos'}`, `Estado: ${f.estado}`, `Orden: ${orden}`,
+        `Cuenta: ${cb ? `${cb.numero} · ${cb.nombre}` : 'Todas'}`, ...(cfg.conTipo ? [`Tipo: ${f.tipo === 'TODOS' ? 'Todas' : TIPOS_NOTA[f.tipo].nombre}`] : []), ...(cfg.tipos[0] === 'CHEQUE' ? [`${cfg.etqTercero}: ${f.tercero.trim() || 'Todos'}`] : []), `Estado: ${f.estado}`, `Orden: ${orden}`,
         ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
     }
 

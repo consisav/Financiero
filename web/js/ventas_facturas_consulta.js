@@ -14,9 +14,15 @@
   const ESTADOS = ['TODAS', 'FACTURADAS', 'ANULADAS', 'CON SALDO', 'PAGADAS', 'SIN CERTIFICAR', 'CERTIFICADAS'];
 
   window.PANTALLAS['consulta-de-facturas'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Consulta de Facturas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta', grupo: 'Ventas · Registros' });
+    const ctx = montar(cont, { titulo: 'Consulta de Facturas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta cq-fila', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
-    const primeroDelMes = () => `${fmt.hoy().slice(0, 7)}-01`;
+    ctx.pFil.closest('.bk-espacio').style.setProperty('--cq-n', 6);
+    // Fecha inicial por omisión: el primer día del mes en curso; en la organización 2, el de dos meses atrás.
+    const primeroDelMes = () => {
+      const org = ctx.organizaciones.find((o) => o.id === (ctx.localidad(ctx.sel.loc)?.organizacion_id ?? ctx.sel.org));
+      const [y, m] = fmt.hoy().split('-').map(Number); const k = y * 12 + (m - 1) - (String(org?.codigo) === '2' ? 2 : 0);
+      return `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`;
+    };
     const f = { cliente: '', vendedor: '', pago: '', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
     let facturas = [], vendedores = [], sel = null, consulta = 0, rango = null;
     let detalle = { lineas: [], conta: [], pagos: [] };
@@ -27,8 +33,6 @@
 
     function pintarFiltros() {
       ctx.filtros(`
-        <label class="campo cq-prov"><span>Cliente</span><input name="cliente" value="${esc(f.cliente)}" placeholder="Todos (nombre, NIT o código)"></label>
-        <label class="campo"><span>Vendedor</span><select name="vendedor"><option value="">Todos</option>${vendedores.map((v) => `<option value="${v.id}" ${String(f.vendedor) === String(v.id) ? 'selected' : ''}>${v.codigo} · ${esc(v.nombre)}</option>`).join('')}</select></label>
         <label class="campo"><span>Forma de pago</span><select name="pago"><option value="">Todas</option>${['CONTADO', 'CRÉDITO'].map((x) => `<option ${f.pago === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
@@ -194,8 +198,7 @@
     // ---------- Reportes ----------
     function parametros() {
       const emp = ctx.localidad(ctx.sel.loc);
-      const v = vendedor(Number(f.vendedor));
-      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Cliente: ${f.cliente.trim() || 'Todos'}`, `Vendedor: ${v ? v.nombre : 'Todos'}`,
+      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`,
         `Forma de pago: ${f.pago || 'Todas'}`, `Estado: ${f.estado}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
     }
     function dialogo(formato) {

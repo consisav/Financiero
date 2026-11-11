@@ -13,10 +13,16 @@
   const FORMAS = ['EFECTIVO', 'CHEQUE', 'DEPÓSITO', 'TRANSFERENCIA', 'TARJETA', 'NOTA DE CRÉDITO'];
 
   window.PANTALLAS['consulta-de-recibos'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Consulta de Recibos', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta vrc-consulta', grupo: 'Ventas · Registros' });
+    const ctx = montar(cont, { titulo: 'Consulta de Recibos', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta vrc-consulta cq-fila', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
+    ctx.pFil.closest('.bk-espacio').style.setProperty('--cq-n', 7);
     // Fecha inicial por omisión: el primer día del mes en curso (cada vez que se abre la pantalla).
-    const primeroDelMes = () => `${fmt.hoy().slice(0, 7)}-01`;
+    // Fecha inicial por omisión: el primer día del mes en curso; en la organización 2, el de dos meses atrás.
+    const primeroDelMes = () => {
+      const org = ctx.organizaciones.find((o) => o.id === (ctx.localidad(ctx.sel.loc)?.organizacion_id ?? ctx.sel.org));
+      const [y, m] = fmt.hoy().split('-').map(Number); const k = y * 12 + (m - 1) - (String(org?.codigo) === '2' ? 2 : 0);
+      return `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`;
+    };
     const f = { cliente: '', vendedor: '', forma: '', periodo: 'RANGO', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODOS', buscar: '', orden: 'fecha', dir: 'desc' };
     let recibos = [], aplicado = new Map(), vendedores = [], clientes = [], sel = null, consulta = 0, rango = null, pagos = [];
 
@@ -33,8 +39,6 @@
 
     function pintarFiltros() {
       ctx.filtros(`
-        <label class="campo cq-prov"><span>Cliente</span><input type="search" name="cliente" autocomplete="off" value="${esc(f.cliente)}" placeholder="Todos · escribe o elige de la lista (${clientes.length.toLocaleString('es-GT')} clientes)"></label>
-        <label class="campo"><span>Vendedor</span><select name="vendedor"><option value="">Todos</option>${vendedores.map((v) => `<option value="${v.id}" ${String(f.vendedor) === String(v.id) ? 'selected' : ''}>${v.codigo} · ${esc(v.nombre)}</option>`).join('')}</select></label>
         <label class="campo"><span>Forma de pago</span><select name="forma"><option value="">Todas</option>${FORMAS.map((x) => `<option ${f.forma === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
         <label class="campo"><span>Fechas</span><select name="periodo">${PERIODOS.map(([k, t]) => `<option value="${k}" ${f.periodo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}" ${historia() ? 'disabled' : ''}></label>
@@ -43,7 +47,7 @@
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
         `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Resumido o detallado</small></span></button>
          <button type="button" class="boton cqc-excel" data-accion="excel"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i><span><b>Generar Excel</b><small>Resumido o detallado</small></span></button></div>`);
-      window.UI.autocompletar(ctx.pFil.querySelector('[name=cliente]'), () => clientes.map((c) => ({ valor: etiquetaCli(c), texto: etiquetaCli(c), detalle: c.documento ? `NIT ${c.documento}` : '' })));
+      if (ctx.pFil.querySelector('[name=cliente]')) window.UI.autocompletar(ctx.pFil.querySelector('[name=cliente]'), () => clientes.map((c) => ({ valor: etiquetaCli(c), texto: etiquetaCli(c), detalle: c.documento ? `NIT ${c.documento}` : '' })));
     }
 
     async function iniciar() {
@@ -206,8 +210,7 @@
     // ---------- Reportes ----------
     function parametros() {
       const emp = ctx.localidad(ctx.sel.loc);
-      const v = vendedor(Number(f.vendedor));
-      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, historia() ? 'Fechas: toda la historia' : `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Cliente: ${f.cliente.trim() || 'Todos'}`, `Vendedor: ${v ? v.nombre : 'Todos'}`,
+      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, historia() ? 'Fechas: toda la historia' : `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`,
         `Forma de pago: ${f.forma || 'Todas'}`, `Estado: ${f.estado}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
     }
     function dialogo(formato) {

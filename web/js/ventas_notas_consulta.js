@@ -1,5 +1,5 @@
 // Facturación/Ventas · Registros · Consulta de Notas: el mismo diseño de la Consulta de Facturas.
-//   Arriba los parámetros (empresa, tipo de nota —todas, crédito, débito o abono—, tipo de ajuste, fechas, cliente, fechas
+//   Arriba los parámetros (empresa, tipo de nota —todas, crédito, débito o abono—, fechas, fechas
 //   —la inicial, por omisión, el primer día del mes en curso—, orden y estado) y la lista con sus totales; abajo la
 //   nota elegida con sus productos, su detalle contable y su factura de referencia. «Consultar» abre la nota en su
 //   pantalla. Reportes en PDF y Excel, resumidos o detallados.
@@ -17,8 +17,9 @@
 
   // Con el módulo en la clave: Caja y Bancos tiene su propia Consulta de Notas (bancarias) con el mismo id.
   window.PANTALLAS['facturacion/consulta-de-notas'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Consulta de Notas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta vnc-consulta', grupo: 'Ventas · Registros' });
+    const ctx = montar(cont, { titulo: 'Consulta de Notas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta vnc-consulta cq-fila', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
+    ctx.pFil.closest('.bk-espacio').style.setProperty('--cq-n', 6);
     // Fecha inicial por omisión: el primer día del mes en curso; en la organización 2, el de dos meses atrás (hoy, el 1 de septiembre).
     const primeroDelMes = () => {
       const org = ctx.organizaciones.find((o) => o.id === (ctx.localidad(ctx.sel.loc)?.organizacion_id ?? ctx.sel.org));
@@ -41,10 +42,8 @@
     function pintarFiltros() {
       ctx.filtros(`
         <label class="campo vnc-tipo"><span>Tipo de nota</span><select name="tipo"><option value="TODAS" ${f.tipo === 'TODAS' ? 'selected' : ''}>Todas</option>${TIPOS.map(([k, t]) => `<option value="${k}" ${f.tipo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-        <label class="campo"><span>Tipo de ajuste</span><select name="ajuste"><option value="">Todos</option>${AJUSTES.map((x) => `<option ${f.ajuste === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
-        <label class="campo cq-prov"><span>Cliente</span><input name="cliente" value="${esc(f.cliente)}" placeholder="Todos (nombre, NIT o código)"></label>
         <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
         `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Resumido o detallado</small></span></button>
@@ -202,8 +201,8 @@
     // ---------- Reportes ----------
     function parametros() {
       const emp = ctx.localidad(ctx.sel.loc);
-      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Tipo: ${tipoF()[1]}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Cliente: ${f.cliente.trim() || 'Todos'}`,
-        `Ajuste: ${f.ajuste || 'Todos'}`, `Estado: ${f.estado}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
+      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Tipo: ${tipoF()[1]}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`,
+        `Estado: ${f.estado}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
     }
     function dialogo(formato) {
       const filas = visibles();

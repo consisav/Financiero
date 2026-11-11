@@ -6454,17 +6454,14 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
   .idiomas-acceso { position: static; align-self: flex-end; margin-bottom: 12px; }
 }
 
-/* Facturación · Consulta de Notas: tipo, ajuste, orden y estado en la fila 1; fecha inicial, fecha final y cliente en la fila 2. */
-.bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(2) { grid-column: 2; grid-row: 1; }
-.bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(3) { grid-column: 3; grid-row: 1; }
-.bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(4) { grid-column: 4; grid-row: 1; }
-.bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(8) { grid-column: 5; grid-row: 1; }
-.bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(9) { grid-column: 6; grid-row: 1; }
-.bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(5) { grid-column: 2; grid-row: 2; }
-.bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(6) { grid-column: 3; grid-row: 2; }
-.bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(7) { grid-column: 4 / span 3; grid-row: 2; }
+/* Consultas de notas, facturas, recibos, cheques y depósitos: parámetros en una fila (empresa, …, fecha inicial, fecha final, orden y estado);
+   el título arriba y los reportes debajo, en la primera columna. --cq-n = número de parámetros (lo pone cada pantalla). */
+.bk-espacio.bk-consulta-cheques.cq-fila .bk-filtros { grid-template-columns: auto repeat(var(--cq-n, 6), minmax(0, 1fr)); grid-template-rows: auto auto; }
+.bk-espacio.bk-consulta-cheques.cq-fila .bk-filtros > :nth-child(n) { grid-column: auto; grid-row: 1; }
+.bk-espacio.bk-consulta-cheques.cq-fila .bk-filtros > .ta-titulo:nth-child(n) { grid-column: 1; grid-row: 1; }
+.bk-espacio.bk-consulta-cheques.cq-fila .bk-filtros > .oc-extra:nth-child(n) { grid-column: 1; grid-row: 2; }
 @media (max-width: 900px) {
-  .bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(n) { grid-column: auto; grid-row: auto; }
-  .bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(1), .bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(4), .bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(7), .bk-consulta-cheques.cqc-con-tipo.vnc-consulta .bk-filtros > :nth-child(10) { grid-column: 1 / -1; }
+  .bk-espacio.bk-consulta-cheques.cq-fila .bk-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; }
+  .bk-espacio.bk-consulta-cheques.cq-fila .bk-filtros > :nth-child(n) { grid-column: auto; grid-row: auto; }
+  .bk-espacio.bk-consulta-cheques.cq-fila .bk-filtros > .ta-titulo:nth-child(n), .bk-espacio.bk-consulta-cheques.cq-fila .bk-filtros > .oc-extra:nth-child(n) { grid-column: 1 / -1; grid-row: auto; }
 }
