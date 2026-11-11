@@ -15,7 +15,8 @@
   const ORDENES = [['fecha:desc', 'Fecha ↓'], ['fecha:asc', 'Fecha ↑'], ['numero:desc', 'Número ↓'], ['numero:asc', 'Número ↑'], ['valor:desc', 'Valor ↓'], ['valor:asc', 'Valor ↑']];
   const ESTADOS = ['TODAS', 'VIGENTES', 'EMITIDAS', 'CERTIFICADAS', 'ANULADAS'];
 
-  window.PANTALLAS['consulta-de-notas'] = function (cont) {
+  // Con el módulo en la clave: Caja y Bancos tiene su propia Consulta de Notas (bancarias) con el mismo id.
+  window.PANTALLAS['facturacion/consulta-de-notas'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Consulta de Notas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta vnc-consulta', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
     // Fecha inicial por omisión: el primer día del mes en curso; en la organización 2, el de dos meses atrás (hoy, el 1 de septiembre).

@@ -699,7 +699,8 @@
       ${menuModulo(m, p)}
       <div id="pantalla" data-color="${m.color}"></div>`;
     marcarActivo(p.id === 'usuarios' ? 'usuarios' : m.id);
-    const fn = window.PANTALLAS[p.id];
+    // Una pantalla propia del módulo ("modulo/pantalla") tiene prioridad sobre la de mismo id de otro módulo.
+    const fn = window.PANTALLAS[`${m.id}/${p.id}`] || window.PANTALLAS[p.id];
     if (fn) fn($('pantalla'), m, extra);
     else $('pantalla').innerHTML = `<section class="panel"><p class="vacio">${esc(p.nombre)}: en construcción.</p></section>`;
   }
