@@ -1,42 +1,7 @@
 -- Script 198 · parte 103 de 116 · Organización 2: compras (ACT_COMPRAS.xls), 262 compras (de 2-03 10994 a 2-03 11255).
 -- Se ejecuta después del script 197 (proveedores). Se puede ejecutar de nuevo: la segunda vez solo actualiza.
--- Columnas del sistema anterior (las del script 89 y las que trae este archivo).
-alter table public.compras add column if not exists modulo_factura integer;
-alter table public.compras add column if not exists numero_cheque text;
-alter table public.compras add column if not exists usuario_modifica_anterior text;
-alter table public.compras add column if not exists fecha_modifica_anterior date;
-alter table public.compras add column if not exists tipo_compra_anterior text;
-alter table public.compras add column if not exists poliza_anio integer;
-alter table public.compras add column if not exists poliza_mes integer;
-alter table public.compras add column if not exists poliza_numero integer;
-alter table public.compras add column if not exists pct_iva numeric;
-alter table public.compras add column if not exists pct_retencion numeric;
-alter table public.compras add column if not exists propina numeric;
-alter table public.compras add column if not exists fecha_transferencia date;
-alter table public.compras add column if not exists clasificacion_pago integer;
-alter table public.compras add column if not exists usuario_autoriza text;
-alter table public.compras add column if not exists tipo_periodo_compra text;
-alter table public.compras add column if not exists transaccion_retencion integer;
-alter table public.compras add column if not exists valor_cambio_anterior numeric;
-alter table public.compras add column if not exists origen_anterior text;
-alter table public.compras add column if not exists compra_anterior integer;
-alter table public.compras add column if not exists documento_anterior text;
-alter table public.compras add column if not exists proveedor_anterior integer;
-alter table public.compras add column if not exists transaccion_anterior integer;
-alter table public.compras add column if not exists regimen_isr_anterior integer;
-alter table public.compras add column if not exists fecha_ingreso_anterior timestamp;
-alter table public.compras add column if not exists usuario_anula_anterior text;
-alter table public.compras add column if not exists fecha_anula_anterior timestamp;
-alter table public.compras add column if not exists cuenta_bancaria_anterior text;
-alter table public.compras add column if not exists transferencia_anterior text;
-alter table public.compras add column if not exists banco_anterior integer;
-alter table public.compras add column if not exists contrasena_anterior text;
-alter table public.compras add column if not exists exento_anterior numeric;
-alter table public.compras add column if not exists anio_presentacion_anterior integer;
-alter table public.compras add column if not exists retencion_valor_anterior numeric;
-alter table public.compras add column if not exists fecha_documento_anterior text;
-alter table public.compras add column if not exists fecha_vencimiento_anterior text;
-create unique index if not exists compras_origen_anterior_uk on public.compras (localidad_id, origen_anterior, compra_anterior) where origen_anterior is not null;
+-- Requiere la parte 0 (columnas nuevas). Si la tabla de compras está ocupada por otra consulta, falla a los 20 segundos en vez de quedarse esperando.
+set lock_timeout = '20s';
 
 do $compras$
 declare
