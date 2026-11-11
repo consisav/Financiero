@@ -510,10 +510,11 @@ begin
     (3, 1079, 'TRANSFERENCIAS ENTRE CUENTAS - BAC (DEBITO)'),
     (3, 1204, 'PAGO SERVICIOS PROFESIONALES RESIDENTES - BAC')) as x(loc, numero, descripcion) loop
     select id into v_loc from public.localidades where organizacion_id = v_org and correlativo = r.loc;
-    if v_loc is null then continue; end if;
+    -- Solo las que no existen (la regla de numeración rechaza un número repetido antes de llegar a «on conflict»).
+    if v_loc is null or exists (select 1 from public.transacciones_contables where localidad_id = v_loc and numero = r.numero) then continue; end if;
     insert into public.transacciones_contables (organizacion_id, localidad_id, numero, descripcion, estado, aplica_poliza)
-    values (v_org, v_loc, r.numero, r.descripcion, 'ACTIVO', true) on conflict (localidad_id, numero) do nothing;
-    if found then t_n := t_n + 1; end if;
+    values (v_org, v_loc, r.numero, r.descripcion, 'ACTIVO', true);
+    t_n := t_n + 1;
   end loop;
 
   -- Cuentas contables (de la más corta a la más larga, para que la mayor exista antes).
