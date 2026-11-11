@@ -58,3 +58,7 @@ supabase/pendientes/184_cajas_parte_*.sql
 supabase/migrations/20261109000187_documentos_cajas_organizacion_2.sql
 supabase/migrations/187_documentos_cajas_partes/
 supabase/pendientes/187_documentos_cajas_parte_*.sql
+
+# Partidas contables de la organizacion 2 (descripciones y conceptos con nombres de personas): solo local.
+supabase/migrations/20261110000192_partidas_organizacion_2.sql
+supabase/migrations/192_partidas_partes/
