@@ -940,9 +940,11 @@ RONEM (MEROPENEM 500MG)', 1001, 2400, 7.7, 'V', 'AIM', null, null, 'AIM', '2018-
       (1, 873, 3, 'T01', '15363008', null, '2018-12-12', '2018-12-27 15:40:38', '2018-12-12', 83, 83, null, 1017, 48, 7.7, 'V', 'AIM', null, null, 'AIM', '2018-12-27 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2018, null, 12, 0, 0, 0, null, null, null, null, 'C', false, 10, 4, null, null),
       (1, 874, 3, 'A', '13982', null, '2018-12-12', '2018-12-27 15:41:42', '2018-12-12', 99, 99, null, 1046, 154, 7.7, 'V', 'AIM', null, null, 'AIM', '2018-12-27 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2018, null, 12, 0, 0, 0, null, null, null, null, 'C', false, 10, 4, null, null);
 
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
+  alter table public.compras disable trigger compras_preparar;
+
   -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
   --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
-  alter table public.compras disable trigger compras_preparar;
   for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
              join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
     update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
@@ -975,14 +977,18 @@ RONEM (MEROPENEM 500MG)', 1001, 2400, 7.7, 'V', 'AIM', null, null, 'AIM', '2018-
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -1038,19 +1044,16 @@ RONEM (MEROPENEM 500MG)', 1001, 2400, 7.7, 'V', 'AIM', null, null, 'AIM', '2018-
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 1 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 1 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -1905,17 +1908,9 @@ begin
       (1, 1683, 3, 'A', '485', null, '2020-01-14', '2020-01-14 16:37:15', '2020-01-14', 349, 349, 'REGISTRO DE FC485 POR HONORARIOS MEDICOS PRESTADOS A PTE: MAURA SANTOS GABRIEL LOPEZ -ORD: 2197-', 1006, 336, 7.7, 'V', 'JDL', null, null, 'JDL', '2020-01-14 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 1, 2020, null, 1, 0, 0, 0, null, null, null, null, 'C', false, 10, 2, null, null),
       (1, 1684, 3, 'A', '1830', null, '2020-01-14', '2020-01-17 16:02:43', '2020-01-14', 39, 39, 'compra generada automaticamente para Ingreso 872', 1001, 5250, 1, 'V', 'JDL', null, null, 'ERM', '2020-09-09 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2020, null, 1, 0, 0, 0, null, null, '872', null, null, false, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -1940,14 +1935,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -2003,19 +2002,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 2 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 2 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -2850,17 +2846,9 @@ begin
       (1, 2501, 3, 'A', '9383', null, '2020-10-02', '2020-10-02 15:24:20', '2020-10-02', 661, 661, 'compra generada automaticamente para Ingreso 1733', 1001, 1500, 1, 'V', 'KMM', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2020, null, 10, 0, 0, 0, null, null, '1733', null, null, null, 40, 4, null, null),
       (1, 2502, 3, 'GM', '0080', null, '2020-10-02', '2020-10-02 16:06:13', '2020-10-02', 343, 343, 'PAGO DE HONORARIOS MEDICOS PARA PACIENTE ARACELY CAROLINA MACARIO', 1006, 1120, 7.7, 'V', 'KMM', null, null, 'KMM', '2020-10-02 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2020, null, 10, 0, 0, 0, 1006, null, null, null, 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -2885,14 +2873,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -2948,19 +2940,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 3 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 3 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -3815,17 +3804,9 @@ AL 31/01/2021', 1039, 3800, 7.7, 'V', 'ERM', null, null, 'ERM', '2021-02-01 00:0
       (1, 3308, 9, 'A', '201', null, '2021-03-04', '2021-03-05 13:07:05', '2021-03-04', 1646, 1646, 'HONORARIOS MEDICOS', 1039, 2860, 7.7, 'V', 'JDL', null, null, 'JDL', '2021-04-30 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 4, 2021, null, 3, 0, 0, 0, null, null, null, null, 'C', true, 10, 6, null, null),
       (1, 3309, 3, '23E0C248', '1753370136', null, '2021-02-09', '2021-03-05 14:34:12', '2021-02-09', 42, 42, 'compra generada automaticamente para Ingreso 2445', 1014, 1381.47, 1, 'V', 'JDL', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2021, null, 2, 0, 0, 0, null, null, '2445', null, null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -3850,14 +3831,18 @@ AL 31/01/2021', 1039, 3800, 7.7, 'V', 'ERM', null, null, 'ERM', '2021-02-01 00:0
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -3913,19 +3898,16 @@ AL 31/01/2021', 1039, 3800, 7.7, 'V', 'ERM', null, null, 'ERM', '2021-02-01 00:0
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 4 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 4 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -4782,17 +4764,9 @@ SET', 1001, 4200, 7.7, 'V', 'JDL', null, null, 'JDL', '2021-05-29 00:00:00', 'V'
       (1, 4115, 3, 'C3EAB367', '2989116122', null, '2021-07-20', '2021-07-22 16:12:13', '2021-07-20', 49, 49, 'compra generada automaticamente para Ingreso 3285', 1014, 24170, 1, 'V', 'HJU', null, null, 'HJU', '2021-08-09 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2021, null, 7, 0, 0, 0, null, null, '3285', null, null, null, 40, 4, null, null),
       (1, 4116, 3, 'AFB2512D', '281432033', null, '2021-07-19', '2021-07-22 16:14:23', '2021-07-19', 736, 736, 'compra generada automaticamente para Ingreso 3279', 1014, 2388, 1, 'V', 'HJU', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2021, null, 7, 0, 0, 0, null, null, '3279', null, null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -4817,14 +4791,18 @@ SET', 1001, 4200, 7.7, 'V', 'JDL', null, null, 'JDL', '2021-05-29 00:00:00', 'V'
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -4880,19 +4858,16 @@ SET', 1001, 4200, 7.7, 'V', 'JDL', null, null, 'JDL', '2021-05-29 00:00:00', 'V'
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 5 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 5 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -5747,17 +5722,9 @@ begin
       (1, 4934, 3, 'AD931502', '3289139813', null, '2021-11-11', '2021-12-23 09:07:02', '2021-11-11', 1758, 1758, 'PUBLICIDAD', 1025, 6420, 7.7, 'V', 'HJU', null, null, 'HJU', '2021-12-23 00:00:00', 'V', null, null, null, 12, 5, 300, true, null, 0, null, null, null, null, null, 0, true, null, null, null, 9, 2021, null, 11, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (1, 4935, 3, '1078BD15', '122767876', null, '2021-12-22', '2021-12-23 09:30:06', '2021-12-22', 629, 629, 'MEDICAMENTOS - COMPRA 4178', 1014, 9553.57, 1, 'V', 'JDL', null, null, 'JDL', '2021-12-23 00:00:00', 'V', null, null, null, 12, 5, 446.43, true, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2021, null, 12, 0, 0, 0, null, null, '4177', null, null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -5782,14 +5749,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -5845,19 +5816,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 6 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 6 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -6717,17 +6685,9 @@ begin
       (1, 5769, 3, 'BAA0F353', '3632810025', null, '2022-09-19', '2022-09-27 09:31:51', '2022-09-19', 589, 589, 'MANTENIMIENTO DE VEHICULOS', 1180, 3491.83, 7.7, 'V', 'BJL', null, null, 'JDL', '2022-12-05 00:00:00', 'V', null, null, null, 12, 5, 163.17, true, null, 0, null, null, null, '2022-09-19', null, 0, true, null, '8100747962', '1356', 1, 2022, null, 9, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (1, 5770, 3, '73CF725B', '3880273055', null, '2022-02-17', '2022-09-27 10:21:10', '2022-02-17', 625, 625, 'HONORARIOS MEDICOS', 1039, 7000, 7.7, 'V', 'JDL', null, null, 'JDL', '2022-09-27 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 4, 2022, null, 2, 0, 0, 0, null, null, null, null, 'C', true, 10, 10, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -6752,14 +6712,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -6815,19 +6779,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 7 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 7 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -7700,17 +7661,9 @@ NOV, DIC, ENE,', 1055, 6000, 7.7, 'V', 'BJL', null, null, 'BJL', '2023-04-28 00:
       (1, 6595, 3, 'E3388F3A', '3713482782', null, '2023-04-17', '2023-04-24 10:42:20', '2023-04-17', 276, 276, 'COMPRA DE INSUMOS PARA MANTENIMIENTO DE INSTALACIONES', 1016, 1062.5, 7.7, 'V', 'AVD', null, null, 'AVD', '2023-04-24 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 4, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (1, 6596, 3, 'B90E756E', '1016938696', null, '2023-04-25', '2023-04-25 15:46:25', '2023-04-25', 2930, 2930, 'HONORARIOS MEDICOS', 1007, 3353.3, 7.7, 'V', 'AVD', null, null, 'AVD', '2023-04-25 00:00:00', 'V', null, null, null, 12, 5, 156.7, true, null, 0, null, null, null, null, null, 0, true, null, null, null, 9, 2023, null, 4, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -7735,14 +7688,18 @@ NOV, DIC, ENE,', 1055, 6000, 7.7, 'V', 'BJL', null, null, 'BJL', '2023-04-28 00:
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -7798,19 +7755,16 @@ NOV, DIC, ENE,', 1055, 6000, 7.7, 'V', 'BJL', null, null, 'BJL', '2023-04-28 00:
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 8 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 8 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -8691,17 +8645,9 @@ FEB, MAR, ABRIL', 1055, 6000, 7.7, 'V', 'BJL', null, null, 'HJU', '2023-05-29 00
       (1, 7422, 3, '4B1E1AFF', '2677293521', null, '2023-10-03', '2023-10-03 14:28:13', '2023-10-03', 460, 460, 'MEDICAMENTO INGRESO 5874', 1002, 1875, 1, 'V', 'AVD', null, null, 'AVD', '2023-10-03 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 10, 0, 0, 0, null, null, '5874', null, null, null, 40, 4, null, null),
       (1, 7423, 3, 'D36E3BF9', '2359183113', null, '2023-10-03', '2023-10-03 15:18:28', '2023-10-03', 2362, 2362, 'HON MED', 1007, 6687.5, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-03-01 00:00:00', 'V', null, null, null, 12, 5, 312.5, true, null, 0, null, null, null, null, null, 0, true, null, null, null, 1, 2023, null, 10, 0, 0, 0, null, null, null, 'HJU', 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -8726,14 +8672,18 @@ FEB, MAR, ABRIL', 1055, 6000, 7.7, 'V', 'BJL', null, null, 'HJU', '2023-05-29 00
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -8789,19 +8739,16 @@ FEB, MAR, ABRIL', 1055, 6000, 7.7, 'V', 'BJL', null, null, 'HJU', '2023-05-29 00
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 9 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 9 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -9680,17 +9627,9 @@ PX ANGELY ESPERANZA PIRIR', 1003, 1100, 1, 'V', 'AVD', null, null, 'HJU', '2023-
       (1, 8244, 3, '6C30540D', '1244940924', null, '2024-02-05', '2024-03-08 15:41:21', '2024-02-05', 3335, 3335, 'IMPRESIONES', 1027, 2856.52, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-03-08 00:00:00', 'V', null, null, null, 12, 5, 133.48, true, null, 0, null, null, null, null, null, 0, true, null, null, null, 9, 2024, null, 2, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (1, 8245, 3, '5DFABA7C', '1925400538', null, '2024-02-28', '2024-03-08 15:48:39', '2024-02-28', 3336, 3336, 'SERVICIOS', 1025, 2675, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-03-08 00:00:00', 'V', null, null, null, 12, 5, 125, true, null, 0, null, null, null, null, null, 0, true, null, null, null, 9, 2024, null, 2, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -9715,14 +9654,18 @@ PX ANGELY ESPERANZA PIRIR', 1003, 1100, 1, 'V', 'AVD', null, null, 'HJU', '2023-
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -9778,19 +9721,16 @@ PX ANGELY ESPERANZA PIRIR', 1003, 1100, 1, 'V', 'AVD', null, null, 'HJU', '2023-
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 10 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 10 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -10666,17 +10606,9 @@ DR. ESDRAS MAYEN', 1009, 19750, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-05-21 
       (1, 9058, 3, '3F35762D', '382749727', null, '2024-05-07', '2024-06-04 13:24:13', '2024-05-07', 1953, 1953, 'HON MED', 1039, 5000, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-06-04 00:00:00', 'M', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 4, 2024, null, 5, 0, 0, 0, null, null, null, null, 'C', true, 10, 10, null, null),
       (1, 9059, 3, 'FF96B72F', '1673022297', null, '2024-05-31', '2024-06-04 13:30:39', '2024-05-31', 3277, 3277, 'HON MED', 1039, 7550, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-06-04 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 4, 2024, null, 5, 0, 0, 0, null, null, null, null, 'C', true, 10, 10, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -10701,14 +10633,18 @@ DR. ESDRAS MAYEN', 1009, 19750, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-05-21 
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -10764,19 +10700,16 @@ DR. ESDRAS MAYEN', 1009, 19750, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-05-21 
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 11 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 11 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -11694,17 +11627,9 @@ DR. ALEXIS OLIVA', 1009, 7500, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-11-08 0
       (1, 9878, 4, 'E8729A5E', '1710770445', null, '2024-11-11', '2024-11-19 18:03:35', '2024-11-11', 518, 518, 'TELEFONO CORPORATIVO - RESIDENTES Z10', 1042, 250, 7.7, 'V', 'BJL', null, null, 'BJL', '2024-11-19 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2024, null, 11, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (1, 9879, 4, '488BFAE0', '2331855550', null, '2024-11-11', '2024-11-19 18:04:13', '2024-11-11', 518, 518, 'TELEFONO CORPORATIVO - GERENCIA', 1042, 736.34, 7.7, 'V', 'BJL', null, null, 'BJL', '2024-11-19 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2024, null, 11, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -11729,14 +11654,18 @@ DR. ALEXIS OLIVA', 1009, 7500, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-11-08 0
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -11792,19 +11721,16 @@ DR. ALEXIS OLIVA', 1009, 7500, 7.7, 'V', 'HJU', null, null, 'HJU', '2024-11-08 0
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 12 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 12 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -12691,17 +12617,9 @@ PX. OLDA MARISA SHERRARD', 1084, 1260, 7.7, 'V', 'HJU', null, null, 'HJU', '2025
       (1, 10701, 3, '9E47B6BB', '2354463332', null, '2025-04-08', '2025-04-21 08:54:28', '2025-04-08', 1837, 1837, 'compra generada automaticamente para Ingreso 6939', 1002, 2100.03, 1, 'V', 'BJL', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 4, 0, 0, 0, null, null, '6939', null, null, null, 40, 4, null, null),
       (1, 10702, 3, 'B7A4943B', '4171712651', null, '2025-04-08', '2025-04-21 08:55:46', '2025-04-08', 1837, 1837, 'compra generada automaticamente para Ingreso 6940', 1002, 1179.36, 1, 'V', 'BJL', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 4, 0, 0, 0, null, null, '6940', null, null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -12726,14 +12644,18 @@ PX. OLDA MARISA SHERRARD', 1084, 1260, 7.7, 'V', 'HJU', null, null, 'HJU', '2025
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -12789,19 +12711,16 @@ PX. OLDA MARISA SHERRARD', 1084, 1260, 7.7, 'V', 'HJU', null, null, 'HJU', '2025
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 13 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 13 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -13721,17 +13640,9 @@ PX. ZOILA AURORA GOMEZ', 1084, 3060, 7.7, 'V', 'HJU', null, null, 'HJU', '2025-0
       (1, 11524, 3, '6733100A', '2786674358', null, '2025-09-17', '2025-09-19 00:32:52', '2025-09-17', 115, 115, 'compra generada automaticamente para Ingreso 7187', 1002, 390, 1, 'V', 'JNM', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 9, 0, 0, 0, null, null, '7187', null, null, null, 40, 4, null, null),
       (1, 11525, 3, '3B6C51D9', '1471956695', null, '2025-09-18', '2025-09-19 01:12:54', '2025-09-18', 1813, 1813, 'compra generada automaticamente para Ingreso 7188', 1002, 2814, 1, 'V', 'JNM', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 9, 0, 0, 0, null, null, '7188', null, null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -13756,14 +13667,18 @@ PX. ZOILA AURORA GOMEZ', 1084, 3060, 7.7, 'V', 'HJU', null, null, 'HJU', '2025-0
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -13819,19 +13734,16 @@ PX. ZOILA AURORA GOMEZ', 1084, 3060, 7.7, 'V', 'HJU', null, null, 'HJU', '2025-0
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 14 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 14 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -14749,17 +14661,9 @@ DR. ALEXIS OLIVA', 1009, 7500, 7.7, 'V', 'HJU', null, null, 'HJU', '2026-03-17 0
       (1, 12346, 3, 'B2E42A1B', '2690664831', null, '2026-02-09', '2026-02-11 04:42:37', '2026-02-09', 3582, 3582, 'compra generada automaticamente para Ingreso 7462', 1003, 1750.16, 1, 'V', 'ALH', null, null, 'HJU', '2026-03-20 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 338, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 2, 0, 0, 0, null, null, '7462', null, null, null, 40, 4, null, null),
       (1, 12347, 3, 'B7637659', '1243563714', null, '2026-02-10', '2026-02-11 05:51:31', '2026-02-10', 3582, 3582, 'compra generada automaticamente para Ingreso 7463', 1002, 19671.45, 1, 'V', 'ALH', null, null, 'HJU', '2026-03-20 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 5103, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 2, 0, 0, 0, null, null, '7463', 'HJU', null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -14784,14 +14688,18 @@ DR. ALEXIS OLIVA', 1009, 7500, 7.7, 'V', 'HJU', null, null, 'HJU', '2026-03-17 0
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -14847,19 +14755,16 @@ DR. ALEXIS OLIVA', 1009, 7500, 7.7, 'V', 'HJU', null, null, 'HJU', '2026-03-17 0
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 15 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 15 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -15775,17 +15680,9 @@ DR.- JUAN CARLOS BENITEZ', 1009, 3248.21, 7.7, 'V', 'HJU', null, null, 'HJU', '2
       (1, 13158, 4, 'F6A396A2', '1117015254', null, '2026-07-02', '2026-07-14 11:28:08', '2026-07-02', 3827, 3827, 'HON MED', 1039, 600, 7.7, 'V', 'BJL', null, null, 'HJU', '2026-08-17 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 9, 2026, null, 7, 0, 0, 0, null, null, null, null, 'C', true, 10, 10, null, null),
       (1, 13159, 4, 'CD969860', '2385985933', null, '2026-07-02', '2026-07-14 11:29:27', '2026-07-02', 3827, 3827, 'HON MED', 1039, 826.88, 7.7, 'V', 'BJL', null, null, 'HJU', '2026-08-17 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 9, 2026, null, 7, 0, 0, 0, null, null, null, 'HJU', 'C', true, 10, 10, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -15810,14 +15707,18 @@ DR.- JUAN CARLOS BENITEZ', 1009, 3248.21, 7.7, 'V', 'HJU', null, null, 'HJU', '2
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -15873,19 +15774,16 @@ DR.- JUAN CARLOS BENITEZ', 1009, 3248.21, 7.7, 'V', 'HJU', null, null, 'HJU', '2
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 16 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 16 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -16791,17 +16689,9 @@ DR. BENITEZ', 1009, 4776.79, 7.7, 'V', 'HJU', null, null, 'HJU', '2026-11-02 00:
       (2, 86, 3, '1A7F8997', '1351042052', null, '2020-12-07', '2020-12-09 14:18:16', '2020-12-07', 721, 721, 'COMPRA DE FASTYL IMPERMEABLE Y 1 LATEX PARA ZONA 10', 1002, 2538.53, 7.7, 'V', 'ERM', null, null, 'ERM', '2020-12-09 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2020, null, 12, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (2, 87, 3, 'A', '21265', null, '2020-12-09', '2020-12-10 12:33:58', '2020-12-09', 1546, 1546, 'compra generada automaticamente para Ingreso 26', 1002, 1260, 1, 'V', 'ERM', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 1, 2020, null, 12, 0, 0, 0, null, null, '26', null, null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -16826,14 +16716,18 @@ DR. BENITEZ', 1009, 4776.79, 7.7, 'V', 'HJU', null, null, 'HJU', '2026-11-02 00:
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -16889,19 +16783,16 @@ DR. BENITEZ', 1009, 4776.79, 7.7, 'V', 'HJU', null, null, 'HJU', '2026-11-02 00:
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 17 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 17 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -17783,17 +17674,9 @@ PX DARWIN GUTIERREZ', 1002, 3650, 7.7, 'V', 'LIS', null, null, 'HJU', '2023-02-0
       (2, 923, 3, '26E15957', '1764379860', null, '2023-02-23', '2023-02-28 09:08:56', '2023-02-23', 817, 817, 'COMPRA DE INSUMOS PARA LABORATORIO', 1065, 650, 7.7, 'V', 'WEP', null, null, 'HJU', '2023-03-27 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 2, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (2, 924, 3, 'FDEA5BD5', '2799127460', null, '2023-02-24', '2023-02-28 09:11:44', '2023-03-31', 755, 755, 'COMPRA DE INSUMOS PARA LABORATORIO', 1065, 775, 7.7, 'V', 'WEP', null, null, 'HJU', '2023-03-27 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 9, 2023, null, 2, 0, 0, 0, null, null, null, null, 'C', false, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -17818,14 +17701,18 @@ PX DARWIN GUTIERREZ', 1002, 3650, 7.7, 'V', 'LIS', null, null, 'HJU', '2023-02-0
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -17881,19 +17768,16 @@ PX DARWIN GUTIERREZ', 1002, 3650, 7.7, 'V', 'LIS', null, null, 'HJU', '2023-02-0
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 18 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 18 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -18788,17 +18672,9 @@ begin
       (2, 1773, 3, '07C0F5EB', '2733458122', null, '2025-05-08', '2025-05-19 14:56:58', '2025-05-08', 2811, 2811, 'compra generada automaticamente para Ingreso 215', 1065, 2657.5, 1, 'V', 'HJU', null, null, 'HJU', '2025-05-19 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 5, 0, 0, 0, null, null, '215', 'HJU', null, null, 40, 4, null, null),
       (2, 1774, 3, '87D7F9FF', '1104365223', null, '2025-05-19', '2025-05-19 15:49:48', '2025-05-19', 2411, 2411, 'ZONA 10', 1065, 310, 7.7, 'V', 'SRV', null, null, 'HJU', '2025-06-12 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 5, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -18823,14 +18699,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -18886,19 +18766,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 19 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 19 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -19789,17 +19666,9 @@ begin
       (3, 321, 3, 'B10849C0', '3488236271', null, '2022-11-01', '2022-11-07 15:33:30', '2022-11-01', 2440, 2440, 'SERVICIO DE POLICIA PRIVADO', 1192, 11000, 7.7, 'V', 'NDR', null, null, 'NDR', '2022-11-07 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2022, null, 11, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (3, 322, 3, '6A1678BE', '2817671373', null, '2022-11-02', '2022-11-07 15:35:29', '2022-11-02', 2040, 2040, 'COMPRA DE ABARROTES', 1017, 841.09, 7.7, 'V', 'NDR', null, null, 'NDR', '2022-11-07 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2022, null, 11, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -19824,14 +19693,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -19887,19 +19760,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 20 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 20 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -20774,17 +20644,9 @@ begin
       (3, 1328, 3, '94967E0B', '1634946259', null, '2023-02-17', '2023-03-06 13:19:14', '2023-02-17', 2442, 2442, null, 1056, 485.41, 7.7, 'V', 'WEP', null, null, 'LIS', '2023-04-26 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 2, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (3, 1330, 3, '034BCFD3', '2525577529', null, '2023-02-18', '2023-03-06 13:31:35', '2023-02-18', 2255, 2255, 'compra generada automaticamente para Ingreso 859', 1002, 152.25, 1, 'V', 'WEP', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 2, 0, 0, 0, null, null, '859', null, null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -20809,14 +20671,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -20872,19 +20738,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 21 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 21 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -21783,17 +21646,9 @@ begin
       (3, 2621, 3, 'B846FCA6', '2136033137', null, '2023-07-27', '2023-08-11 11:08:47', '2023-07-27', 2566, 2566, null, 1238, 250, 7.7, 'V', 'LIS', null, null, 'LIS', '2023-08-11 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 7, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (3, 2622, 3, '7F22420A', '1032210574', null, '2023-07-27', '2023-08-11 11:15:57', '2023-07-27', 2566, 2566, null, 1238, 475, 7.7, 'V', 'LIS', null, null, 'LIS', '2023-08-11 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 7, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -21818,14 +21673,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -21881,19 +21740,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 22 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 22 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -22813,17 +22669,9 @@ begin
       (3, 3889, 3, '8474D1AE', '3589751130', null, '2023-12-15', '2023-12-19 11:35:44', '2023-12-15', 3252, 3252, null, 1055, 5998, 7.7, 'V', 'SRV', null, null, 'SRV', '2024-08-14 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 12, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 3890, 3, '726B67C4', '677921249', null, '2023-12-15', '2023-12-19 12:01:24', '2023-12-15', 2773, 2773, null, 1002, 525, 7.7, 'V', 'SRV', null, null, 'SRV', '2023-12-19 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 12, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -22848,14 +22696,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -22911,19 +22763,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 23 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 23 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -23851,17 +23700,9 @@ begin
       (3, 4997, 3, '7638B56B', '294207525', null, '2024-04-30', '2024-05-02 12:44:24', '2024-04-30', 2097, 2097, null, 1237, 125, 7.7, 'V', 'SRV', null, null, 'LIS', '2024-05-23 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 4, 2024, null, 4, 0, 0, 0, null, null, null, null, 'C', true, 10, 10, null, null),
       (3, 4998, 3, '66100615', '355418164', null, '2024-05-01', '2024-05-03 11:38:33', '2024-05-01', 2438, 2438, null, 1217, 1137, 7.7, 'V', 'SRV', null, null, 'SRV', '2024-05-31 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2024, null, 5, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -23886,14 +23727,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -23949,19 +23794,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 24 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 24 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -24889,17 +24731,9 @@ begin
       (3, 5870, 3, '0EDD43DD', '662457251', null, '2024-08-16', '2024-08-22 09:39:01', '2024-08-16', 2442, 2442, null, 1056, 68.88, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-01-29 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2024, null, 8, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (3, 5871, 3, '9F138D9A', '2491761117', null, '2024-08-16', '2024-08-22 09:45:57', '2024-08-16', 3506, 3506, null, 1017, 52.5, 7.7, 'V', 'SRV', null, null, 'SRV', '2024-08-22 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2024, null, 8, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -24924,14 +24758,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -24987,19 +24825,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 25 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 25 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -25925,17 +25760,9 @@ begin
       (3, 6739, 3, '20B1FB91', '2006270832', null, '2024-11-02', '2024-11-07 10:14:50', '2024-11-02', 2104, 2104, null, 1021, 100, 7.7, 'V', 'SRV', null, null, 'SRV', '2024-11-07 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 16.15, null, null, null, null, null, 0, true, null, null, null, 3, 2024, null, 11, 0, 3.51, 0, null, null, null, null, 'C', true, 10, 5, null, null),
       (3, 6740, 3, 'ABA382A2', '1250444046', null, '2024-11-02', '2024-11-07 10:24:43', '2024-11-02', 2255, 2255, null, 1012, 88, 7.7, 'V', 'SRV', null, null, 'SRV', '2024-11-07 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 88, null, null, null, null, null, 0, true, null, null, null, 3, 2024, null, 11, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -25960,14 +25787,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -26023,19 +25854,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 26 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 26 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -26960,17 +26788,9 @@ begin
       (3, 7611, 3, 'E56E4A43', '1061375692', null, '2025-01-25', '2025-02-06 10:57:52', '2025-01-25', 2255, 2255, null, 1002, 348.44, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-02-06 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 1, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 7612, 3, 'E16F034F', '2501922728', null, '2025-01-25', '2025-02-06 10:59:09', '2025-01-25', 2255, 2255, null, 1002, 757.51, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-02-06 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 1, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -26995,14 +26815,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -27058,19 +26882,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 27 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 27 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -27997,17 +27818,9 @@ begin
       (3, 8479, 3, 'DC235092', '3001829890', null, '2025-04-24', '2025-04-30 13:06:57', '2025-04-24', 2287, 2287, null, 1001, 437.5, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-04-30 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 4, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 8480, 3, 'E0FCAFED', '1040990942', null, '2025-04-24', '2025-05-05 07:34:08', '2025-04-24', 2377, 2377, null, 1017, 360, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-05-05 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 4, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -28032,14 +27845,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -28095,19 +27912,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 28 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 28 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -29034,17 +28848,9 @@ begin
       (3, 9354, 3, '42F925B5', '924011616', null, '2025-07-15', '2025-07-17 13:17:41', '2025-07-15', 3986, 3986, null, 1016, 465, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-07-17 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 7, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 9355, 3, 'E75C84AC', '606227397', null, '2025-07-15', '2025-07-17 13:25:09', '2025-07-15', 3986, 3986, null, 1016, 465, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-07-17 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 7, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -29069,14 +28875,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -29132,19 +28942,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 29 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 29 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -30071,17 +29878,9 @@ begin
       (3, 10232, 3, '0E14EEC1', '3024243131', null, '2025-10-02', '2025-10-03 08:15:27', '2025-10-02', 2255, 2255, null, 1002, 213, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-10-03 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 10, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 10233, 3, 'AEFB40A0', '4013836122', null, '2025-10-02', '2025-10-03 08:16:48', '2025-10-02', 3577, 3577, null, 1001, 1559.25, 7.7, 'V', 'SRV', null, null, 'SRV', '2025-10-03 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 2, 2025, null, 10, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -30106,14 +29905,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -30169,19 +29972,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 30 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 30 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -31103,17 +30903,9 @@ begin
       (3, 11105, 3, '5AF57015', '546983193', null, '2026-01-06', '2026-01-14 12:03:20', '2026-01-06', 2045, 2045, null, 1016, 94.97, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-01-14 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 1, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 11106, 3, '8D181712', '2744994616', null, '2026-01-14', '2026-01-14 12:05:12', '2026-01-14', 2104, 2104, null, 1021, 55.02, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-01-14 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 9.45, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 1, 2.01, 0, 0, null, null, null, null, 'C', true, 10, 5, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -31138,14 +30930,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -31201,19 +30997,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 31 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 31 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -32145,17 +31938,9 @@ begin
       (3, 11980, 3, '7077F4BD', '3962389268', null, '2026-03-24', '2026-04-14 12:36:32', '2026-03-24', 4223, 4223, null, 1039, 819, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-04-14 00:00:00', 'V', 2026, 3, 32, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 4, 2026, null, 3, 0, 0, 0, null, null, null, null, 'C', true, 10, 10, null, null),
       (3, 11981, 3, '72F209DF', '16402140', null, '2026-03-24', '2026-04-14 12:48:42', '2026-03-24', 4223, 4223, null, 1039, 380.95, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-04-14 00:00:00', 'V', 2026, 3, 32, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 4, 2026, null, 3, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -32180,14 +31965,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -32243,19 +32032,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 32 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 32 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -33185,17 +32971,9 @@ begin
       (3, 12853, 3, 'AB90B72C', '3440723894', null, '2026-06-08', '2026-06-18 15:31:51', '2026-06-08', 2771, 2771, null, 1055, 286.49, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-06-18 00:00:00', 'V', 2026, 6, 44, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 6, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (3, 12854, 3, '2685DE50', '2067025348', null, '2026-06-08', '2026-06-18 15:36:27', '2026-06-08', 4202, 4202, null, 1007, 5013.49, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-06-18 00:00:00', 'V', 2026, 6, 10, 12, 5, 234.28, true, null, 0, null, null, null, null, null, 0, true, null, null, null, 9, 2026, null, 6, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -33220,14 +32998,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -33283,19 +33065,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 33 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 33 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -34230,17 +34009,9 @@ begin
       (3, 13731, 3, '67DBA417', '1559317511', null, '2026-08-19', '2026-08-20 13:13:38', '2026-08-19', 2069, 2069, null, 1016, 850, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-08-20 00:00:00', 'V', 2026, 8, 11, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 8, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 13732, 3, '46524802', '459031113', null, '2026-08-19', '2026-08-20 13:14:54', '2026-08-19', 2287, 2287, null, 1001, 3749.5, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-08-20 00:00:00', 'V', 2026, 8, 1, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 8, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -34265,14 +34036,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -34328,19 +34103,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 34 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 34 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
@@ -35257,17 +35029,9 @@ begin
       (3, 14594, 3, '80750D1C', '2146126937', null, '2026-10-30', '2026-11-03 13:01:39', '2026-10-30', 2442, 2442, null, 1056, 142.96, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-11-03 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 10, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (3, 14595, 3, '80B8953B', '460409692', null, '2026-10-30', '2026-11-03 13:08:41', '2026-10-30', 2104, 2104, null, 1021, 300, 7.7, 'V', 'SRV', null, null, 'SRV', '2026-11-03 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 300, null, null, null, null, null, 0, true, null, null, null, 3, 2026, null, 10, 8.5, 0, 0, null, null, null, null, 'C', true, 10, 3, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -35292,14 +35056,18 @@ begin
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -35355,19 +35123,16 @@ begin
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 35 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 35 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;

@@ -913,17 +913,9 @@ PX. ZOILA AURORA GOMEZ', 1084, 3060, 7.7, 'V', 'HJU', null, null, 'HJU', '2025-0
       (1, 11524, 3, '6733100A', '2786674358', null, '2025-09-17', '2025-09-19 00:32:52', '2025-09-17', 115, 115, 'compra generada automaticamente para Ingreso 7187', 1002, 390, 1, 'V', 'JNM', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 9, 0, 0, 0, null, null, '7187', null, null, null, 40, 4, null, null),
       (1, 11525, 3, '3B6C51D9', '1471956695', null, '2025-09-18', '2025-09-19 01:12:54', '2025-09-18', 1813, 1813, 'compra generada automaticamente para Ingreso 7188', 1002, 2814, 1, 'V', 'JNM', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2025, null, 9, 0, 0, 0, null, null, '7188', null, null, null, 40, 4, null, null);
 
-  -- a) Las compras que no vienen del sistema anterior pasan a números después del último del archivo
-  --    (2-01 hasta 13883, 2-02 hasta 2293, 2-03 hasta 14595), para que cada compra migrada conserve su número.
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
   alter table public.compras disable trigger compras_preparar;
-  for v_l in select l.id, x.maximo from (values (1, 13883), (2, 2293), (3, 14595)) as x(loc, maximo)
-             join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc loop
-    update public.compras c set numero = greatest((select coalesce(max(numero), 0) from public.compras where localidad_id = v_l.id), v_l.maximo) + q.fila
-    from (select id, row_number() over (order by numero) as fila from public.compras
-          where localidad_id = v_l.id and origen_anterior is null and numero <= v_l.maximo) q
-    where c.id = q.id;
-    get diagnostics v_k = row_count; v_ren := v_ren + v_k;
-  end loop;
+
 
   -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
   insert into public.regimenes_isr (codigo, nombre)
@@ -948,14 +940,18 @@ PX. ZOILA AURORA GOMEZ', 1084, 3060, 7.7, 'V', 'HJU', null, null, 'HJU', '2025-0
   get diagnostics v_idp = row_count;
 
   -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
+  drop table if exists m_k;
+  create temp table m_k as
+    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
+    from public.compras c join public.localidades l on l.id = c.localidad_id
+    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
   update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from public.localidades l, public.compras c, public.tipos_documento_compra t
-  where l.organizacion_id = v_org and l.correlativo = m.loc and c.localidad_id = l.id and c.estado = 'ACTIVA' and m.estado = 'V' and t.codigo = m.tipo_doc
-    and (c.origen_anterior is distinct from 'VARIAS' or c.compra_anterior <> m.compra)
-    and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m.proveedor::text
-    and upper(coalesce(c.serie, '')) = coalesce(m.serie, '') and upper(c.documento) = m.documento;
+  from m_k k, public.tipos_documento_compra t
+  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
+    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
   get diagnostics v_doc = row_count;
-  select count(*) into v_omit from m_c m where not exists (select 1 from public.localidades l where l.organizacion_id = v_org and l.correlativo = m.loc);
+  drop table m_k;
 
   -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
   --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
@@ -1011,19 +1007,16 @@ PX. ZOILA AURORA GOMEZ', 1084, 3060, 7.7, 'V', 'HJU', null, null, 'HJU', '2025-0
     returning (xmax = 0) as nueva)
   select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
   alter table public.compras enable trigger compras_preparar;
-  select count(*) into v_trx from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where m.transaccion is not null and not exists (select 1 from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion);
   perform set_config('fin.migracion', '', true);
 
-  raise notice '%', format('Compras de la organización 2 (parte 14 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s%s%s',
+  raise notice '%', format('Compras de la organización 2 (parte 14 de 35): %s nuevas, %s actualizadas.%s%s%s%s%s',
     v_n, v_a,
     case when v_ren > 0 then format(' %s compras registradas en el sistema pasaron a números después de las migradas.', v_ren) else '' end,
     case when v_prov > 0 then format(' %s proveedores creados (no venían en ACT_PROVEEDORES).', v_prov) else '' end,
     case when v_reg > 0 then format(' %s regímenes ISR creados.', v_reg) else '' end,
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
-    case when v_trx > 0 then format(' %s compras con una transacción que no existe en la localidad (queda su número en transaccion_anterior).', v_trx) else '' end,
-    case when v_omit > 0 then format(' %s compras de localidades que no existen (omitidas).', v_omit) else '' end);
+    '');
   drop table m_c;
 end;
 $compras$;
