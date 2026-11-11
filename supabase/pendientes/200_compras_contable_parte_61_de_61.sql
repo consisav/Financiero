@@ -7,7 +7,7 @@ analyze public.compra_lineas;
 
 do $detcon$
 declare
-  v_org bigint; v_loc bigint; v_kc bigint; v_may bigint; r record; v_n int := 0; v_a int := 0; v_cen int := 0; v_sin_compra int; v_sin_cuenta text; v_rec int; v_ids bigint[];
+  v_org bigint; v_loc bigint; v_kc bigint; v_may bigint; r record; v_n int := 0; v_a int := 0; v_cen int := 0; v_sin_compra int; v_sin_cuenta text;
 begin
   select id into v_org from public.organizaciones where codigo = '2';
   if v_org is null then raise notice 'No existe la organización 2.'; return; end if;
@@ -31,13 +31,6 @@ begin
 
   -- Las validaciones de la pantalla (compra anulada o con partida) se suspenden durante la carga.
   alter table public.compra_lineas disable trigger compra_lineas_validar;
-  -- Las líneas que el script 168 reconstruyó en estas compras se reemplazan por las del sistema anterior.
-  select array_agg(c.id) into v_ids
-  from (values (3, 14489), (3, 14490), (3, 14491), (3, 14492), (3, 14493), (3, 14494), (3, 14495), (3, 14496), (3, 14497), (3, 14498), (3, 14499), (3, 14500), (3, 14501), (3, 14502), (3, 14503), (3, 14504), (3, 14505), (3, 14506), (3, 14507), (3, 14508), (3, 14509), (3, 14510), (3, 14511), (3, 14512), (3, 14513), (3, 14514), (3, 14515), (3, 14516), (3, 14517), (3, 14518), (3, 14519), (3, 14520), (3, 14521), (3, 14522), (3, 14523), (3, 14524), (3, 14525), (3, 14526), (3, 14527), (3, 14528), (3, 14529), (3, 14530), (3, 14531), (3, 14532), (3, 14533), (3, 14534), (3, 14535), (3, 14536), (3, 14537), (3, 14538), (3, 14539), (3, 14540), (3, 14541), (3, 14542), (3, 14543), (3, 14544), (3, 14545), (3, 14546), (3, 14547), (3, 14548), (3, 14549), (3, 14550), (3, 14551), (3, 14552), (3, 14553), (3, 14554), (3, 14555), (3, 14556), (3, 14557), (3, 14558), (3, 14559), (3, 14560), (3, 14561), (3, 14562), (3, 14563), (3, 14564), (3, 14565), (3, 14566), (3, 14567), (3, 14568), (3, 14569), (3, 14570), (3, 14571), (3, 14572), (3, 14573), (3, 14574), (3, 14575), (3, 14576), (3, 14577), (3, 14578), (3, 14579), (3, 14580), (3, 14581), (3, 14582), (3, 14583), (3, 14584), (3, 14585), (3, 14586), (3, 14587), (3, 14588), (3, 14589), (3, 14590), (3, 14591), (3, 14592), (3, 14593), (3, 14594), (3, 14595)) as m(loc, compra)
-  join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra;
-  delete from public.compra_lineas cl where cl.compra_id = any (coalesce(v_ids, '{}')) and cl.reconstruida;
-  get diagnostics v_rec = row_count;
   with m (loc, compra, linea, cuenta, version, centro, debe, haber, debe_ant, haber_ant) as (values
       (3::integer, 14489::integer, 1::integer, '1010501001'::text, 1::integer, null::text, 5767.86::numeric, 0::numeric, null::numeric, null::numeric),
       (3, 14489, 2, '1010401001', 1, null, 692.14, 0, null, null),
@@ -374,10 +367,9 @@ begin
     into v_n, v_a, v_sin_compra, v_sin_cuenta from x;
   alter table public.compra_lineas enable trigger compra_lineas_validar;
 
-  raise notice '%', format('Detalle contable de compras de la organización 2 (parte 61 de 61): %s líneas nuevas, %s actualizadas.%s%s%s%s',
+  raise notice '%', format('Detalle contable de compras de la organización 2 (parte 61 de 61): %s líneas nuevas, %s actualizadas.%s%s%s',
     v_n, v_a,
     case when v_cen > 0 then format(' %s centros de costo creados.', v_cen) else '' end,
-    case when v_rec > 0 then format(' %s líneas reconstruidas reemplazadas.', v_rec) else '' end,
     case when v_sin_compra > 0 then format(' %s líneas omitidas (su compra no existe o su cuenta no está en el catálogo).', v_sin_compra) else '' end,
     case when v_sin_cuenta is not null then ' Cuentas que no existen en el catálogo (líneas omitidas): ' || v_sin_cuenta || '.' else '' end);
 end;
