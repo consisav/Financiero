@@ -13,10 +13,29 @@ begin
   -- Carga de datos históricos: los períodos fiscales cerrados no la bloquean.
   perform set_config('fin.migracion', 'si', true);
 
-  drop table if exists m_c;
-  create temp table m_c (loc integer, compra integer, tipo_doc integer, serie text, documento text, documento_ant text, fecha_documento date, fecha_ingreso timestamp, fecha_venc date, proveedor integer, proveedor_ant integer, descripcion text, transaccion integer, valor_total numeric, valor_cambio numeric, estado text, usuario text, usr_anula text, f_anula timestamp, usr_mod text, f_mod timestamp, tipo_compra text, poliza_anio integer, poliza_mes integer, poliza_numero integer, pct_iva numeric, pct_retencion numeric, valor_retencion numeric, retencion boolean, formulario text, exento numeric, exento_ant numeric, propina numeric, transferencia text, fecha_transf date, banco integer, clasif_pago integer, original boolean, contrasena text, cuenta_bancaria text, numero_cheque text, regimen integer, anio_pres integer, anio_pres_ant integer, mes_pres integer, gal_super numeric, gal_regular numeric, gal_diesel numeric, trans_ret integer, fecha_ret date, orden_compra text, usr_autoriza text, tipo_periodo text, pago_inmediato boolean, modulo integer, clasif integer, fecha_doc_ant text, fecha_venc_ant text);
-  insert into m_c values
-      (3, 1938, 7, 'CCBD81B9', '1102663512', null, '2023-05-22', '2023-05-22 17:40:39', '2023-05-22', 2326, 2326, 'COMPRA DE MEDICAMENTOS', 1180, 201.6, 7.7, 'V', 'LIS', null, null, 'SRV', '2023-11-17 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 4, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
+  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
+  alter table public.compras disable trigger compras_preparar;
+
+
+  -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
+  insert into public.regimenes_isr (codigo, nombre)
+  select x.c, 'RÉGIMEN ISR ' || x.c || ' (CREADO AL MIGRAR PROVEEDORES)' from unnest(array[1, 2, 3, 4, 8, 9]) as x(c)
+  where not exists (select 1 from public.regimenes_isr g where g.codigo = x.c);
+  get diagnostics v_reg = row_count;
+  insert into public.proveedores (organizacion_id, localidad_id, codigo, nombre_comercial, concepto_gastos, pendiente_revisar)
+  select v_org, l.id, x.codigo, case when x.codigo = 999999 then 'SIN PROVEEDOR ASIGNADO' else 'PROVEEDOR ' || x.codigo || ' (CREADO AL MIGRAR COMPRAS)' end, 'POR DEFINIR', true
+  from (values (3, 2326), (3, 2029), (3, 2045), (3, 2233), (3, 2456), (3, 2255), (3, 2031), (3, 2280), (3, 2104), (3, 2560), (3, 2142), (3, 2348), (3, 2107), (3, 2555), (3, 2089), (3, 2038), (3, 2066), (3, 2270), (3, 2442), (3, 2662), (3, 3004), (3, 2286), (3, 2985), (3, 2040), (3, 2050), (3, 2285), (3, 2444), (3, 2881), (3, 2036), (3, 2256), (3, 3006), (3, 2557), (3, 2595), (3, 2499), (3, 2552), (3, 2264), (3, 2250), (3, 2913), (3, 2150), (3, 2704), (3, 3013), (3, 2977), (3, 2860), (3, 2441), (3, 2708), (3, 2454), (3, 2287), (3, 2787), (3, 2755), (3, 3017), (3, 2341), (3, 2447), (3, 2369), (3, 3018), (3, 2446), (3, 2030), (3, 2048), (3, 2243), (3, 2133), (3, 2344), (3, 3019), (3, 2936), (3, 2386), (3, 2771), (3, 2566), (3, 2288), (3, 3021), (3, 2035), (3, 2338), (3, 2592), (3, 2840), (3, 2455), (3, 2987), (3, 2190), (3, 2211), (3, 2209), (3, 2477), (3, 2440), (3, 2438), (3, 2453), (3, 3027), (3, 2302), (3, 2788), (3, 2335), (3, 2145), (3, 2349), (3, 2621), (3, 2245), (3, 2044), (3, 2602), (3, 2309), (3, 3030), (3, 2046)) as x(loc, codigo)
+  join public.localidades l on l.organizacion_id = v_org and l.correlativo = x.loc
+  where not exists (select 1 from public.proveedores p where p.localidad_id = l.id and p.codigo = x.codigo);
+  get diagnostics v_prov = row_count;
+
+  -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
+  --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
+  --    Combustibles: en el sistema anterior el exento ya incluye el IDP; el sistema lo calcula aparte (galones × IDP de los parámetros
+  --    generales), así que el exento queda sin ese IDP (el del archivo en exento_anterior).
+  --    Documento que ya tiene otra compra vigente registrada en el sistema (p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
+  with m0 (loc, compra, tipo_doc, serie, documento, documento_ant, fecha_documento, fecha_ingreso, fecha_venc, proveedor, proveedor_ant, descripcion, transaccion, valor_total, valor_cambio, estado, usuario, usr_anula, f_anula, usr_mod, f_mod, tipo_compra, poliza_anio, poliza_mes, poliza_numero, pct_iva, pct_retencion, valor_retencion, retencion, formulario, exento, exento_ant, propina, transferencia, fecha_transf, banco, clasif_pago, original, contrasena, cuenta_bancaria, numero_cheque, regimen, anio_pres, anio_pres_ant, mes_pres, gal_super, gal_regular, gal_diesel, trans_ret, fecha_ret, orden_compra, usr_autoriza, tipo_periodo, pago_inmediato, modulo, clasif, fecha_doc_ant, fecha_venc_ant) as (values
+      (3::integer, 1938::integer, 7::integer, 'CCBD81B9'::text, '1102663512'::text, null::text, '2023-05-22'::date, '2023-05-22 17:40:39'::timestamp, '2023-05-22'::date, 2326::integer, 2326::integer, 'COMPRA DE MEDICAMENTOS'::text, 1180::integer, 201.6::numeric, 7.7::numeric, 'V'::text, 'LIS'::text, null::text, null::timestamp, 'SRV'::text, '2023-11-17 00:00:00'::timestamp, 'V'::text, null::integer, null::integer, null::integer, 12::numeric, 5::numeric, 0::numeric, false::boolean, null::text, 0::numeric, null::numeric, null::numeric, null::text, null::date, null::integer, 0::integer, true::boolean, null::text, null::text, null::text, 3::integer, 2023::integer, null::integer, 4::integer, 0::numeric, 0::numeric, 0::numeric, null::integer, null::date, null::text, null::text, 'C'::text, true::boolean, 10::integer, 4::integer, null::text, null::text),
       (3, 1942, 3, 'E1AB2A3D', '3892792268', null, '2023-05-04', '2023-05-23 12:04:36', '2023-05-04', 2029, 2029, null, 1016, 1499.19, 7.7, 'V', 'WEP', null, null, 'SRV', '2024-07-25 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 5, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 1943, 3, '942049F8', '2716680534', null, '2023-05-04', '2023-05-23 12:07:48', '2023-05-04', 2045, 2045, null, 1016, 315.21, 7.7, 'V', 'WEP', null, null, 'LIS', '2024-01-23 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 5, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
       (3, 1944, 3, '78040F8D', '2222149464', null, '2023-05-04', '2023-05-23 12:14:31', '2023-05-04', 2233, 2233, null, 1017, 65, 7.7, 'V', 'WEP', null, null, 'LIS', '2024-01-23 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 5, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
@@ -269,51 +288,17 @@ begin
       (3, 2331, 3, '9F6FCCF5', '2998551087', null, '2023-06-15', '2023-06-19 14:11:59', '2023-06-15', 2860, 2860, null, 1039, 3750, 7.7, 'V', 'WEP', null, null, 'SRV', '2024-01-23 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 4, 2023, null, 6, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null),
       (3, 2332, 3, '085BE92C', '3525985991', null, '2023-06-16', '2023-06-19 15:14:26', '2023-06-16', 2338, 2338, 'compra generada automaticamente para Ingreso 1148', 1001, 575, 1, 'V', 'WEP', null, null, null, null, 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 6, 0, 0, 0, null, null, '1148', null, null, null, 40, 4, null, null),
       (3, 2333, 3, 'ACE3C0F2', '1547650158', null, '2023-06-16', '2023-06-19 15:14:50', '2023-06-16', 2255, 2255, null, 1002, 128.55, 7.7, 'V', 'WEP', null, null, 'SRV', '2024-01-23 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 6, 0, 0, 0, null, null, null, null, 'C', true, 10, 4, null, null),
-      (3, 2334, 3, '65A5A7E4', '942751817', null, '2023-06-16', '2023-06-19 15:16:27', '2023-06-16', 2442, 2442, 'PAGO DE P.O.S.', 1236, 53.34, 7.7, 'V', 'WEP', null, null, 'SRV', '2024-01-23 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 6, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null);
-
-  -- La numeración y el estado vienen del archivo: el trigger que los asigna se suspende durante la carga.
-  alter table public.compras disable trigger compras_preparar;
-
-
-  -- b) Regímenes ISR y proveedores que usan las compras y no existen: se crean (el proveedor, para revisarlo).
-  insert into public.regimenes_isr (codigo, nombre)
-  select distinct m.regimen, 'RÉGIMEN ISR ' || m.regimen || ' (CREADO AL MIGRAR PROVEEDORES)' from m_c m
-  where m.regimen > 0 and not exists (select 1 from public.regimenes_isr g where g.codigo = m.regimen);
-  get diagnostics v_reg = row_count;
-  insert into public.proveedores (organizacion_id, localidad_id, codigo, nombre_comercial, concepto_gastos, pendiente_revisar)
-  select distinct v_org, l.id, m.proveedor, case when m.proveedor = 999999 then 'SIN PROVEEDOR ASIGNADO' else 'PROVEEDOR ' || m.proveedor || ' (CREADO AL MIGRAR COMPRAS)' end, 'POR DEFINIR', true
-  from m_c m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
-  where not exists (select 1 from public.proveedores p where p.localidad_id = l.id and p.codigo = m.proveedor);
-  get diagnostics v_prov = row_count;
-
-  -- c) Combustibles: en el sistema anterior el exento ya incluye el IDP; el sistema lo calcula aparte (galones × IDP de los parámetros generales),
-  --    así que el exento queda sin ese IDP (el del archivo en exento_anterior).
-  update m_c m set exento_ant = coalesce(m.exento_ant, m.exento),
-         exento = greatest(m.exento - x.idp, 0)
-  from (select m2.loc, m2.compra, round(m2.gal_super * coalesce(g.idp_super, 0) + m2.gal_regular * coalesce(g.idp_regular, 0) + m2.gal_diesel * coalesce(g.idp_diesel, 0), 2) as idp
-        from m_c m2 join public.localidades l on l.organizacion_id = v_org and l.correlativo = m2.loc
-        left join lateral (select * from public.parametros_generales p where p.localidad_id = l.id order by p.id limit 1) g on true
-        where m2.gal_super + m2.gal_regular + m2.gal_diesel > 0) x
-  where x.loc = m.loc and x.compra = m.compra and x.idp > 0;
-  get diagnostics v_idp = row_count;
-
-  -- c2) Documento que ya tiene otra compra vigente de la localidad (registrada en el sistema, p. ej. cargada de la SAT): se le agrega « (MIGRADA)».
-  --     Primero se toman solo esas compras (las registradas en el sistema) y después se comparan con las del archivo.
-  drop table if exists m_k;
-  create temp table m_k as
-    select l.correlativo as loc, c.tipo_documento, upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) as prov, upper(coalesce(c.serie, '')) as serie, upper(c.documento) as documento
-    from public.compras c join public.localidades l on l.id = c.localidad_id
-    where l.organizacion_id = v_org and c.origen_anterior is null and c.estado = 'ACTIVA';
-  update m_c m set documento_ant = coalesce(m.documento_ant, m.documento), documento = m.documento || ' (MIGRADA)'
-  from m_k k, public.tipos_documento_compra t
-  where m.estado = 'V' and t.codigo = m.tipo_doc and k.loc = m.loc and k.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end
-    and k.prov = m.proveedor::text and k.serie = coalesce(m.serie, '') and k.documento = m.documento;
-  get diagnostics v_doc = row_count;
-  drop table m_k;
-
-  -- d) Las compras. ESTADO V/A = ACTIVA/ANULADA; TIPO_COMPRA M/V = proveedor de productos/servicios; quetzales con cambio 1
-  --    (VALOR_CAMBIO queda en valor_cambio_anterior); FECHA_ESTIMADA_PAGO = fecha de vencimiento; CALCULAR_RETENCION S/N.
-  with x as (
+      (3, 2334, 3, '65A5A7E4', '942751817', null, '2023-06-16', '2023-06-19 15:16:27', '2023-06-16', 2442, 2442, 'PAGO DE P.O.S.', 1236, 53.34, 7.7, 'V', 'WEP', null, null, 'SRV', '2024-01-23 00:00:00', 'V', null, null, null, 12, 5, 0, false, null, 0, null, null, null, null, null, 0, true, null, null, null, 3, 2023, null, 6, 0, 0, 0, null, null, null, null, 'C', true, 10, 2, null, null)),
+  m as (
+    select m0.*, coalesce(round(m0.gal_super * g.idp_super + m0.gal_regular * g.idp_regular + m0.gal_diesel * g.idp_diesel, 2), 0) as idp,
+           m0.estado = 'V' and exists (select 1 from public.compras c where c.localidad_id = l.id and c.origen_anterior is null and c.estado = 'ACTIVA'
+             and c.tipo_documento = case when t.es_recibo then 'RECIBO' else 'FACTURA' end and upper(coalesce(c.proveedor_codigo, c.proveedor_nombre)) = m0.proveedor::text
+             and upper(coalesce(c.serie, '')) = coalesce(m0.serie, '') and upper(c.documento) = m0.documento) as doc_rep
+    from m0 join public.localidades l on l.organizacion_id = v_org and l.correlativo = m0.loc
+    left join public.tipos_documento_compra t on t.codigo = m0.tipo_doc
+    left join lateral (select coalesce(p.idp_super, 0) as idp_super, coalesce(p.idp_regular, 0) as idp_regular, coalesce(p.idp_diesel, 0) as idp_diesel
+                       from public.parametros_generales p where p.localidad_id = l.id order by p.id limit 1) g on true),
+  x as (
     insert into public.compras (organizacion_id, localidad_id, numero, tipo_documento, tipo_documento_id, serie, documento, fecha_documento, fecha_ingreso, fecha_vencimiento,
            tipo_tercero, proveedor_id, proveedor_codigo, proveedor_nombre, nit, beneficiario, transaccion_id, descripcion, moneda_id, tipo_cambio, valor_total,
            forma_pago, estado, anulado_por, anulado_en, motivo_anulacion, usuario, mes_presentacion, anio_presentacion, pago_inmediato, dias_credito, factura_original,
@@ -322,7 +307,7 @@ begin
            pct_iva, pct_retencion, propina, fecha_transferencia, clasificacion_pago, usuario_autoriza, tipo_periodo_compra, transaccion_retencion, valor_cambio_anterior,
            documento_anterior, proveedor_anterior, transaccion_anterior, regimen_isr_anterior, fecha_ingreso_anterior, usuario_anula_anterior, fecha_anula_anterior,
            cuenta_bancaria_anterior, transferencia_anterior, banco_anterior, contrasena_anterior, exento_anterior, anio_presentacion_anterior, retencion_valor_anterior, fecha_documento_anterior, fecha_vencimiento_anterior)
-    select v_org, l.id, m.compra, case when t.es_recibo then 'RECIBO' else 'FACTURA' end, t.id, m.serie, m.documento, coalesce(m.fecha_documento, m.fecha_ingreso::date), coalesce(m.fecha_ingreso::date, m.fecha_documento), m.fecha_venc,
+    select v_org, l.id, m.compra, case when t.es_recibo then 'RECIBO' else 'FACTURA' end, t.id, m.serie, case when m.doc_rep then m.documento || ' (MIGRADA)' else m.documento end, coalesce(m.fecha_documento, m.fecha_ingreso::date), coalesce(m.fecha_ingreso::date, m.fecha_documento), m.fecha_venc,
            case when m.tipo_compra = 'M' then 'PROVEEDOR PRODUCTOS' else 'PROVEEDOR SERVICIOS' end, p.id, m.proveedor::text,
            upper(coalesce(p.nombre_comercial, 'PROVEEDOR ' || m.proveedor)), p.nit, coalesce(p.beneficiario, upper(p.nombre_comercial)),
            (select x.id from public.transacciones_contables x where x.localidad_id = l.id and x.numero = m.transaccion), m.descripcion, v_gtq, 1, m.valor_total,
@@ -331,13 +316,13 @@ begin
            m.usuario, m.mes_pres, m.anio_pres, coalesce(m.pago_inmediato, false),
            case when coalesce(m.pago_inmediato, false) or m.fecha_venc is null then 0 else greatest(m.fecha_venc - coalesce(m.fecha_documento, m.fecha_ingreso::date), 0) end, coalesce(m.original, true),
            (select g.id from public.regimenes_isr g where g.codigo = m.regimen), (select k.id from public.clasificaciones_compra k where k.codigo = m.clasif),
-           m.gal_super, m.gal_regular, m.gal_diesel, m.exento, coalesce(m.retencion, false), case when m.retencion then coalesce(m.valor_retencion, 0) else 0 end,
+           m.gal_super, m.gal_regular, m.gal_diesel, case when m.idp > 0 then greatest(m.exento - m.idp, 0) else m.exento end, coalesce(m.retencion, false), case when m.retencion then coalesce(m.valor_retencion, 0) else 0 end,
            case when m.retencion then m.formulario end, case when m.retencion then m.fecha_ret end, m.orden_compra,
            'VARIAS', m.compra, m.modulo, m.numero_cheque, m.usr_mod, m.f_mod::date, m.tipo_compra, m.poliza_anio, m.poliza_mes, m.poliza_numero,
            m.pct_iva, m.pct_retencion, m.propina, m.fecha_transf, m.clasif_pago, m.usr_autoriza, m.tipo_periodo, m.trans_ret, m.valor_cambio,
-           m.documento_ant, m.proveedor_ant, m.transaccion, m.regimen, m.fecha_ingreso, m.usr_anula, m.f_anula,
-           m.cuenta_bancaria, m.transferencia, m.banco, m.contrasena, m.exento_ant, m.anio_pres_ant, m.valor_retencion, m.fecha_doc_ant, m.fecha_venc_ant
-    from m_c m
+           case when m.doc_rep then coalesce(m.documento_ant, m.documento) else m.documento_ant end, m.proveedor_ant, m.transaccion, m.regimen, m.fecha_ingreso, m.usr_anula, m.f_anula,
+           m.cuenta_bancaria, m.transferencia, m.banco, m.contrasena, case when m.idp > 0 then coalesce(m.exento_ant, m.exento) else m.exento_ant end, m.anio_pres_ant, m.valor_retencion, m.fecha_doc_ant, m.fecha_venc_ant
+    from m
     join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
     left join public.proveedores p on p.localidad_id = l.id and p.codigo = m.proveedor
     left join public.tipos_documento_compra t on t.codigo = m.tipo_doc
@@ -362,8 +347,8 @@ begin
       contrasena_anterior = excluded.contrasena_anterior, exento_anterior = excluded.exento_anterior, anio_presentacion_anterior = excluded.anio_presentacion_anterior,
       retencion_valor_anterior = excluded.retencion_valor_anterior, fecha_documento_anterior = excluded.fecha_documento_anterior,
       fecha_vencimiento_anterior = excluded.fecha_vencimiento_anterior
-    returning (xmax = 0) as nueva)
-  select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
+    returning (xmax = 0) as nueva, documento like '% (MIGRADA)' as migrada, exento_anterior is not null and galones_super + galones_regular + galones_diesel > 0 as con_idp)
+  select count(*) filter (where nueva), count(*) filter (where not nueva), count(*) filter (where migrada), count(*) filter (where con_idp) into v_n, v_a, v_doc, v_idp from x;
   alter table public.compras enable trigger compras_preparar;
   perform set_config('fin.migracion', '', true);
 
@@ -375,6 +360,5 @@ begin
     case when v_idp > 0 then format(' %s compras de combustible con el IDP descontado del exento.', v_idp) else '' end,
     case when v_doc > 0 then format(' %s documentos ya registrados en el sistema llevan « (MIGRADA)».', v_doc) else '' end,
     '');
-  drop table m_c;
 end;
 $compras$;

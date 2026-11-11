@@ -2,16 +2,17 @@
 -- Se ejecuta después del script 198 (compras). Se puede ejecutar de nuevo: la segunda vez solo actualiza.
 alter table public.compra_items add column if not exists cantidad_anterior numeric;
 alter table public.compra_items add column if not exists costo_total_anterior numeric;
+set lock_timeout = '20s';
 
 do $items$
 declare v_org bigint; v_n int := 0; v_a int := 0; v_sin int;
 begin
   select id into v_org from public.organizaciones where codigo = '2';
   if v_org is null then raise notice 'No existe la organización 2.'; return; end if;
-  drop table if exists m_i;
-  create temp table m_i (loc integer, compra integer, linea integer, descripcion text, cantidad numeric, cantidad_ant numeric, costo numeric, costo_ant numeric);
-  insert into m_i values
-      (3, 12066, 13, '3X2 GLADE', 3, null, 151.5, null),
+  -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
+  alter table public.compra_items disable trigger compra_items_validar;
+  with m (loc, compra, linea, descripcion, cantidad, cantidad_ant, costo, costo_ant) as (values
+      (3::integer, 12066::integer, 13::integer, '3X2 GLADE'::text, 3::numeric, null::numeric, 151.5::numeric, null::numeric),
       (3, 12066, 14, 'ROMA CORBATI', 5, null, 50.25, null),
       (3, 12066, 15, 'PASTA ROMA', 5, null, 20.5, null),
       (3, 12066, 16, 'ENV DOMICILI', 1, null, 14.9, null),
@@ -4269,24 +4270,18 @@ begin
       (3, 13732, 3, 'CATETER INTRAVENOSO # 18X 1 1/4 (ANGIOCATH) NIPROLOTE: 25L02D  VENCE:30-11-2030 (50)', 50, null, 237.5, null),
       (3, 13732, 4, 'CATETER INTRAVENOSO # 20X 1 1/4 (ANGIOCATH) NIPROLOTE: 26C09G  VENCE:28-02-2031 (50)', 50, null, 237.5, null),
       (3, 13732, 5, 'CLORURO DE SODIO 20%AMP 200MG/10ML  VIJOSALOTE: 2603390A  VENCE:31-03-2031 (25)', 25, null, 437.5, null),
-      (3, 13732, 6, 'HALOPERIDOL AMP5MG/1ML VIJOSALOTE: 2508161  VENCE:31-08-2028 (25)', 25, null, 1000, null);
-  select count(*) into v_sin from m_i m where not exists (
-    select 1 from public.localidades l join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra
-    where l.organizacion_id = v_org and l.correlativo = m.loc);
-  -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
-  alter table public.compra_items disable trigger compra_items_validar;
-  with x as (
+      (3, 13732, 6, 'HALOPERIDOL AMP5MG/1ML VIJOSALOTE: 2508161  VENCE:31-08-2028 (25)', 25, null, 1000, null)),
+  x as (
     insert into public.compra_items (compra_id, linea, descripcion, cantidad, costo_total, cantidad_anterior, costo_total_anterior)
     select c.id, m.linea, m.descripcion, m.cantidad, m.costo, m.cantidad_ant, m.costo_ant
-    from m_i m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
+    from m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
     join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra
     on conflict (compra_id, linea) do update set descripcion = excluded.descripcion, cantidad = excluded.cantidad, costo_total = excluded.costo_total,
       cantidad_anterior = excluded.cantidad_anterior, costo_total_anterior = excluded.costo_total_anterior
     returning (xmax = 0) as nueva)
-  select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
+  select count(*) filter (where nueva), count(*) filter (where not nueva), (select count(*) from m) - count(*) into v_n, v_a, v_sin from x;
   alter table public.compra_items enable trigger compra_items_validar;
   raise notice '%', format('Detalle de compras de la organización 2 (parte 17 de 18): %s líneas nuevas, %s actualizadas.%s', v_n, v_a,
     case when v_sin > 0 then format(' %s líneas de compras que no existen (omitidas: ejecuta antes el script 198).', v_sin) else '' end);
-  drop table m_i;
 end;
 $items$;

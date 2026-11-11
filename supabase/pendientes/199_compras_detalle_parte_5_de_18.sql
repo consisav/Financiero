@@ -2,16 +2,17 @@
 -- Se ejecuta después del script 198 (compras). Se puede ejecutar de nuevo: la segunda vez solo actualiza.
 alter table public.compra_items add column if not exists cantidad_anterior numeric;
 alter table public.compra_items add column if not exists costo_total_anterior numeric;
+set lock_timeout = '20s';
 
 do $items$
 declare v_org bigint; v_n int := 0; v_a int := 0; v_sin int;
 begin
   select id into v_org from public.organizaciones where codigo = '2';
   if v_org is null then raise notice 'No existe la organización 2.'; return; end if;
-  drop table if exists m_i;
-  create temp table m_i (loc integer, compra integer, linea integer, descripcion text, cantidad numeric, cantidad_ant numeric, costo numeric, costo_ant numeric);
-  insert into m_i values
-      (1, 8099, 1, 'SMOFKABIVEN PERIFERICA 1000 KCAL 1448ML', 1, null, 1200, null),
+  -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
+  alter table public.compra_items disable trigger compra_items_validar;
+  with m (loc, compra, linea, descripcion, cantidad, cantidad_ant, costo, costo_ant) as (values
+      (1::integer, 8099::integer, 1::integer, 'SMOFKABIVEN PERIFERICA 1000 KCAL 1448ML'::text, 1::numeric, null::numeric, 1200::numeric, null::numeric),
       (1, 8100, 1, 'AGUA OXIGENADA CC', 2, null, 63.48, null),
       (1, 8100, 2, 'ENGRAPADORA DE PIEL', 5, null, 625, null),
       (1, 8100, 3, 'ACIDO POLIGLATIN 2/0  HR 35 1A 70CM', 12, null, 240, null),
@@ -3825,24 +3826,18 @@ begin
       (1, 9721, 1, 'PINZAS DE ANILLOS FOERSTER 8"', 2, null, 105, null),
       (1, 9721, 2, 'CLIP DE TITANEO DE #10', 120, null, 1080, null),
       (1, 9722, 1, 'NYLON 2-0CE26', 6, null, 84, null),
-      (1, 9722, 2, 'NYLON 2-0 CE19 AGUJA CORTANTE - ATRAMAT', 6, null, 84, null);
-  select count(*) into v_sin from m_i m where not exists (
-    select 1 from public.localidades l join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra
-    where l.organizacion_id = v_org and l.correlativo = m.loc);
-  -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
-  alter table public.compra_items disable trigger compra_items_validar;
-  with x as (
+      (1, 9722, 2, 'NYLON 2-0 CE19 AGUJA CORTANTE - ATRAMAT', 6, null, 84, null)),
+  x as (
     insert into public.compra_items (compra_id, linea, descripcion, cantidad, costo_total, cantidad_anterior, costo_total_anterior)
     select c.id, m.linea, m.descripcion, m.cantidad, m.costo, m.cantidad_ant, m.costo_ant
-    from m_i m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
+    from m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
     join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra
     on conflict (compra_id, linea) do update set descripcion = excluded.descripcion, cantidad = excluded.cantidad, costo_total = excluded.costo_total,
       cantidad_anterior = excluded.cantidad_anterior, costo_total_anterior = excluded.costo_total_anterior
     returning (xmax = 0) as nueva)
-  select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
+  select count(*) filter (where nueva), count(*) filter (where not nueva), (select count(*) from m) - count(*) into v_n, v_a, v_sin from x;
   alter table public.compra_items enable trigger compra_items_validar;
   raise notice '%', format('Detalle de compras de la organización 2 (parte 5 de 18): %s líneas nuevas, %s actualizadas.%s', v_n, v_a,
     case when v_sin > 0 then format(' %s líneas de compras que no existen (omitidas: ejecuta antes el script 198).', v_sin) else '' end);
-  drop table m_i;
 end;
 $items$;

@@ -2,16 +2,17 @@
 -- Se ejecuta después del script 198 (compras). Se puede ejecutar de nuevo: la segunda vez solo actualiza.
 alter table public.compra_items add column if not exists cantidad_anterior numeric;
 alter table public.compra_items add column if not exists costo_total_anterior numeric;
+set lock_timeout = '20s';
 
 do $items$
 declare v_org bigint; v_n int := 0; v_a int := 0; v_sin int;
 begin
   select id into v_org from public.organizaciones where codigo = '2';
   if v_org is null then raise notice 'No existe la organización 2.'; return; end if;
-  drop table if exists m_i;
-  create temp table m_i (loc integer, compra integer, linea integer, descripcion text, cantidad numeric, cantidad_ant numeric, costo numeric, costo_ant numeric);
-  insert into m_i values
-      (3, 13732, 7, 'GUANTES QUIRURGICOS #7.5 CON 50 PARES ELITEAMBIDERMLOTE: 2508127A1  VENCE:01-07-2030 (1)', 1, null, 168.5, null),
+  -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
+  alter table public.compra_items disable trigger compra_items_validar;
+  with m (loc, compra, linea, descripcion, cantidad, cantidad_ant, costo, costo_ant) as (values
+      (3::integer, 13732::integer, 7::integer, 'GUANTES QUIRURGICOS #7.5 CON 50 PARES ELITEAMBIDERMLOTE: 2508127A1  VENCE:01-07-2030 (1)'::text, 1::numeric, null::numeric, 168.5::numeric, null::numeric),
       (3, 13733, 1, 'JERINGAS DESCARTABLES #1CC 30G INSULINAAMBIDERM(CAJA 100UNIDADES)LOTE: 20250420  VENCE:15-04-2030 (2)', 2, null, 138, null),
       (3, 13733, 2, 'JERINGAS DESCARTABLES #3CC 21G X 1 1/2 NIPRO (CAJA100 UNIDADES)LOTE: 25I0408J  VENCE:31-08-2030 (3)', 3, null, 214.35, null),
       (3, 13733, 3, 'MASCARILLA DE OXIGENOC/BOLSA RESERVORIOGRANDE L  OPERSONLOTE: 20260318-MQ088VENCE:17-03-2031 (20)', 20, null, 320, null),
@@ -1976,25 +1977,19 @@ begin
       (3, 14593, 5, 'S90001 - SERVICIO DEENTREGA', 1, null, 20, null),
       (3, 14594, 1, '2026/10/24 LIQ.COM63031896870', 1, null, 7.28, null),
       (3, 14594, 2, '2026/10/28 LIQ.COM63074599100', 1, null, 135.68, null),
-      (3, 14595, 1, 'SUPER S-C', 8, null, 300, null);
-  select count(*) into v_sin from m_i m where not exists (
-    select 1 from public.localidades l join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra
-    where l.organizacion_id = v_org and l.correlativo = m.loc);
-  -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
-  alter table public.compra_items disable trigger compra_items_validar;
-  with x as (
+      (3, 14595, 1, 'SUPER S-C', 8, null, 300, null)),
+  x as (
     insert into public.compra_items (compra_id, linea, descripcion, cantidad, costo_total, cantidad_anterior, costo_total_anterior)
     select c.id, m.linea, m.descripcion, m.cantidad, m.costo, m.cantidad_ant, m.costo_ant
-    from m_i m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
+    from m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
     join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra
     on conflict (compra_id, linea) do update set descripcion = excluded.descripcion, cantidad = excluded.cantidad, costo_total = excluded.costo_total,
       cantidad_anterior = excluded.cantidad_anterior, costo_total_anterior = excluded.costo_total_anterior
     returning (xmax = 0) as nueva)
-  select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
+  select count(*) filter (where nueva), count(*) filter (where not nueva), (select count(*) from m) - count(*) into v_n, v_a, v_sin from x;
   alter table public.compra_items enable trigger compra_items_validar;
   raise notice '%', format('Detalle de compras de la organización 2 (parte 18 de 18): %s líneas nuevas, %s actualizadas.%s', v_n, v_a,
     case when v_sin > 0 then format(' %s líneas de compras que no existen (omitidas: ejecuta antes el script 198).', v_sin) else '' end);
-  drop table m_i;
 end;
 $items$;
 

@@ -2,16 +2,17 @@
 -- Se ejecuta después del script 198 (compras). Se puede ejecutar de nuevo: la segunda vez solo actualiza.
 alter table public.compra_items add column if not exists cantidad_anterior numeric;
 alter table public.compra_items add column if not exists costo_total_anterior numeric;
+set lock_timeout = '20s';
 
 do $items$
 declare v_org bigint; v_n int := 0; v_a int := 0; v_sin int;
 begin
   select id into v_org from public.organizaciones where codigo = '2';
   if v_org is null then raise notice 'No existe la organización 2.'; return; end if;
-  drop table if exists m_i;
-  create temp table m_i (loc integer, compra integer, linea integer, descripcion text, cantidad numeric, cantidad_ant numeric, costo numeric, costo_ant numeric);
-  insert into m_i values
-      (1, 9722, 3, 'NYLON 0 G37 AGUJA REDONDA - ATRAMAT', 6, null, 93, null),
+  -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
+  alter table public.compra_items disable trigger compra_items_validar;
+  with m (loc, compra, linea, descripcion, cantidad, cantidad_ant, costo, costo_ant) as (values
+      (1::integer, 9722::integer, 3::integer, 'NYLON 0 G37 AGUJA REDONDA - ATRAMAT'::text, 6::numeric, null::numeric, 93::numeric, null::numeric),
       (1, 9723, 1, 'CUTICELL CLASSIC 10*10 CM', 50, null, 1182, null),
       (1, 9723, 2, 'HYPAFIX TRANSPARENTE ROLLO 10*10 CM', 1, null, 337.29, null),
       (1, 9723, 3, 'LEUKOMED IV 6*8 CM', 50, null, 219.75, null),
@@ -3636,24 +3637,18 @@ begin
       (1, 11290, 21, 'CATGUT CROMICO 2-0 R26', 12, null, 328.2, null),
       (1, 11290, 22, 'SOLUCION HARTMAN BOLSA 1000ML', 36, null, 609.12, null),
       (1, 11290, 23, 'SOLUCION SALINA 100ML', 120, null, 948, null),
-      (1, 11290, 24, 'CLORURO DE POTASIO 200MG/ML 5ML', 20, null, 200, null);
-  select count(*) into v_sin from m_i m where not exists (
-    select 1 from public.localidades l join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra
-    where l.organizacion_id = v_org and l.correlativo = m.loc);
-  -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
-  alter table public.compra_items disable trigger compra_items_validar;
-  with x as (
+      (1, 11290, 24, 'CLORURO DE POTASIO 200MG/ML 5ML', 20, null, 200, null)),
+  x as (
     insert into public.compra_items (compra_id, linea, descripcion, cantidad, costo_total, cantidad_anterior, costo_total_anterior)
     select c.id, m.linea, m.descripcion, m.cantidad, m.costo, m.cantidad_ant, m.costo_ant
-    from m_i m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
+    from m join public.localidades l on l.organizacion_id = v_org and l.correlativo = m.loc
     join public.compras c on c.localidad_id = l.id and c.origen_anterior = 'VARIAS' and c.compra_anterior = m.compra
     on conflict (compra_id, linea) do update set descripcion = excluded.descripcion, cantidad = excluded.cantidad, costo_total = excluded.costo_total,
       cantidad_anterior = excluded.cantidad_anterior, costo_total_anterior = excluded.costo_total_anterior
     returning (xmax = 0) as nueva)
-  select count(*) filter (where nueva), count(*) filter (where not nueva) into v_n, v_a from x;
+  select count(*) filter (where nueva), count(*) filter (where not nueva), (select count(*) from m) - count(*) into v_n, v_a, v_sin from x;
   alter table public.compra_items enable trigger compra_items_validar;
   raise notice '%', format('Detalle de compras de la organización 2 (parte 6 de 18): %s líneas nuevas, %s actualizadas.%s', v_n, v_a,
     case when v_sin > 0 then format(' %s líneas de compras que no existen (omitidas: ejecuta antes el script 198).', v_sin) else '' end);
-  drop table m_i;
 end;
 $items$;
