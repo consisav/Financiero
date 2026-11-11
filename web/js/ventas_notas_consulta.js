@@ -1,5 +1,5 @@
 // Facturación/Ventas · Registros · Consulta de Notas: el mismo diseño de la Consulta de Facturas.
-//   Arriba los parámetros (empresa, tipo de nota —crédito, débito o abono—, cliente, vendedor, tipo de ajuste, fechas
+//   Arriba los parámetros (empresa, tipo de nota —todas, crédito, débito o abono—, tipo de ajuste, fechas, cliente, fechas
 //   —la inicial, por omisión, el primer día del mes en curso—, orden y estado) y la lista con sus totales; abajo la
 //   nota elegida con sus productos, su detalle contable y su factura de referencia. «Consultar» abre la nota en su
 //   pantalla. Reportes en PDF y Excel, resumidos o detallados.
@@ -18,25 +18,32 @@
   window.PANTALLAS['consulta-de-notas'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Consulta de Notas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques cqc-con-tipo vfc-consulta vnc-consulta', grupo: 'Ventas · Registros' });
     const { sb } = ctx;
-    const primeroDelMes = () => `${fmt.hoy().slice(0, 7)}-01`;
+    // Fecha inicial por omisión: el primer día del mes en curso; en la organización 2, el de dos meses atrás (hoy, el 1 de septiembre).
+    const primeroDelMes = () => {
+      const org = ctx.organizaciones.find((o) => o.id === (ctx.localidad(ctx.sel.loc)?.organizacion_id ?? ctx.sel.org));
+      const [y, m] = fmt.hoy().split('-').map(Number); const k = y * 12 + (m - 1) - (String(org?.codigo) === '2' ? 2 : 0);
+      return `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`;
+    };
     const f = { tipo: 'CRÉDITO', cliente: '', vendedor: '', ajuste: '', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
     let notas = [], vendedores = [], facturas = new Map(), sel = null, consulta = 0, rango = null;
     let detalle = { lineas: [], conta: [] };
 
     const tipoDe = (t) => TIPOS.find((x) => x[0] === t) || TIPOS[0];
-    const nombre = (x) => `NC-${x.numero}`;
+    // Tipo elegido en los parámetros («Todas» = las de crédito, débito y abono).
+    const tipoF = () => f.tipo === 'TODAS' ? ['TODAS', 'Notas', ''] : tipoDe(f.tipo);
+    const tiposF = () => f.tipo === 'TODAS' ? TIPOS.map((x) => x[0]) : [f.tipo];
+    const nombre = (x) => `${{ 'DÉBITO': 'ND', ABONO: 'NA' }[x.tipo] || 'NC'}-${x.numero}`;
     const nombreFac = (v) => v ? (v.serie ? `${v.serie}-${v.numero_dte || ''}` : `Interna ${v.numero}`) : '';
     const vendedor = (id) => vendedores.find((v) => v.id === id);
     const estadoDe = (x) => x.estado === 'ANULADA' ? ['anulada', 'Anulada'] : x.estado === 'CERTIFICADA' ? ['definitiva', 'Certificada'] : ['aprobada', 'Emitida'];
 
     function pintarFiltros() {
       ctx.filtros(`
-        <label class="campo vnc-tipo"><span>Tipo de nota</span><select name="tipo">${TIPOS.map(([k, t]) => `<option value="${k}" ${f.tipo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-        <label class="campo cq-prov"><span>Cliente</span><input name="cliente" value="${esc(f.cliente)}" placeholder="Todos (nombre, NIT o código)"></label>
-        <label class="campo"><span>Vendedor</span><select name="vendedor"><option value="">Todos</option>${vendedores.map((v) => `<option value="${v.id}" ${String(f.vendedor) === String(v.id) ? 'selected' : ''}>${v.codigo} · ${esc(v.nombre)}</option>`).join('')}</select></label>
+        <label class="campo vnc-tipo"><span>Tipo de nota</span><select name="tipo"><option value="TODAS" ${f.tipo === 'TODAS' ? 'selected' : ''}>Todas</option>${TIPOS.map(([k, t]) => `<option value="${k}" ${f.tipo === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Tipo de ajuste</span><select name="ajuste"><option value="">Todos</option>${AJUSTES.map((x) => `<option ${f.ajuste === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
         <label class="campo"><span>Fecha inicial</span><input type="date" name="desde" value="${f.desde}" max="${f.hasta}"></label>
         <label class="campo"><span>Fecha final</span><input type="date" name="hasta" value="${f.hasta}" min="${f.desde}"></label>
+        <label class="campo cq-prov"><span>Cliente</span><input name="cliente" value="${esc(f.cliente)}" placeholder="Todos (nombre, NIT o código)"></label>
         <label class="campo"><span>Ordenar por</span><select name="orden">${ORDENES.map(([k, t]) => `<option value="${k}" ${`${f.orden}:${f.dir}` === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label class="campo"><span>Estado</span><select name="estado">${ESTADOS.map((e) => `<option ${f.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></label>`,
         `<div class="bmc-reportes"><button type="button" class="boton secundario-sm bca-pdf" data-accion="pdf"><i class="ti ti-file-type-pdf" aria-hidden="true"></i><span><b>Imprimir en PDF</b><small>Resumido o detallado</small></span></button>
@@ -62,7 +69,7 @@
       const yo = ++consulta;
       const lista = [];
       for (let p = 0; p < 20000; p += 1000) {
-        let q = sb.from('notas_venta').select('*').eq('localidad_id', loc).eq('tipo', f.tipo).gte('fecha_emision', `${f.desde}T00:00:00-06:00`).lte('fecha_emision', `${f.hasta}T23:59:59.999-06:00`)
+        let q = sb.from('notas_venta').select('*').eq('localidad_id', loc).in('tipo', tiposF()).gte('fecha_emision', `${f.desde}T00:00:00-06:00`).lte('fecha_emision', `${f.hasta}T23:59:59.999-06:00`)
           .order('fecha_emision', { ascending: false }).order('numero', { ascending: false }).range(p, p + 999);
         if (f.vendedor) q = q.eq('vendedor_id', Number(f.vendedor));
         if (f.ajuste) q = q.eq('tipo_ajuste', f.ajuste);
@@ -82,7 +89,7 @@
       notas = lista; facturas = fm;
       rango = null;
       if (!lista.length) {
-        const a = await sb.from('notas_venta').select('fecha_emision', { count: 'exact' }).eq('localidad_id', loc).eq('tipo', f.tipo).order('fecha_emision').limit(1);
+        const a = await sb.from('notas_venta').select('fecha_emision', { count: 'exact' }).eq('localidad_id', loc).in('tipo', tiposF()).order('fecha_emision').limit(1);
         if (a.count) rango = { n: a.count, desde: diaLocal(a.data[0].fecha_emision) };
       }
       sel = notas.find((x) => x.id === id) || null;
@@ -127,7 +134,7 @@
       const vivas = filas.filter((x) => x.estado !== 'ANULADA');
       ctx.pMae.innerHTML = `
         <header class="tk-bandeja-cab cc-cab">
-          <h2>${esc(tipoDe(f.tipo)[1])} <small>${filas.length}</small></h2>
+          <h2>${esc(tipoF()[1])} <small>${filas.length}</small></h2>
           <div class="ta-totales pc-resumen">
             <span class="ta-total"><b>Q ${fmt.monto(vivas.reduce((t, x) => t + Number(x.valor || 0), 0))}</b> vigentes (${vivas.length})</span>
             <span class="ta-total"><b>${filas.length - vivas.length}</b> anuladas</span>
@@ -149,7 +156,7 @@
               <td class="num tk-tenue">${fmt.monto(x.valor_mi)}</td>
               <td class="cqc-estado"><span class="pc-marca ${cls}">${txt}</span></td>
               <td class="cq-acc"><button type="button" class="boton secundario-sm cqc-ver" data-consultar="${x.id}" title="Consultar: abrir la nota"><i class="ti ti-file-search" aria-hidden="true"></i> Consultar</button></td></tr>`; }).join('')
-              || `<tr><td colspan="9" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : !notas.length && rango ? `No hay ${esc(tipoDe(f.tipo)[1].toLowerCase())} entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b>. <button type="button" class="boton primario-sm" data-ver-todos>Ver todas</button>` : `No hay ${esc(tipoDe(f.tipo)[1].toLowerCase())} con estos parámetros.`}</td></tr>`}</tbody></table>
+              || `<tr><td colspan="9" class="tk-vacio"><i class="ti ti-file-search" aria-hidden="true"></i>${!ctx.sel.loc ? 'Elige la empresa.' : !notas.length && rango ? `No hay ${esc(tipoF()[1].toLowerCase())} entre el ${esc(fmt.fechaDia(f.desde))} y el ${esc(fmt.fechaDia(f.hasta))}. La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b>. <button type="button" class="boton primario-sm" data-ver-todos>Ver todas</button>` : `No hay ${esc(tipoF()[1].toLowerCase())} con estos parámetros.`}</td></tr>`}</tbody></table>
         </div>`;
     }
 
@@ -194,16 +201,15 @@
     // ---------- Reportes ----------
     function parametros() {
       const emp = ctx.localidad(ctx.sel.loc);
-      const v = vendedor(Number(f.vendedor));
-      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Tipo: ${tipoDe(f.tipo)[1]}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Cliente: ${f.cliente.trim() || 'Todos'}`,
-        `Vendedor: ${v ? v.nombre : 'Todos'}`, `Ajuste: ${f.ajuste || 'Todos'}`, `Estado: ${f.estado}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
+      return [`Empresa: ${emp ? `${emp.codigo} · ${emp.nombre_comercial}` : '—'}`, `Tipo: ${tipoF()[1]}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.hasta)}`, `Cliente: ${f.cliente.trim() || 'Todos'}`,
+        `Ajuste: ${f.ajuste || 'Todos'}`, `Estado: ${f.estado}`, ...(f.buscar.trim() ? [`Búsqueda: ${f.buscar.trim()}`] : [])];
     }
     function dialogo(formato) {
       const filas = visibles();
       if (!filas.length) return window.FIN.aviso('No hay notas con estos parámetros');
       let formRef = null;
       window.UI.formulario({
-        titulo: `Reporte de ${tipoDe(f.tipo)[1].toLowerCase()} · ${formato === 'PDF' ? 'Imprimir en PDF' : 'Generar Excel'}`, campos: [],
+        titulo: `Reporte de ${tipoF()[1].toLowerCase()} · ${formato === 'PDF' ? 'Imprimir en PDF' : 'Generar Excel'}`, campos: [],
         alPreparar: (form) => {
           formRef = form;
           form.querySelector('.modal-cuerpo').innerHTML = `
@@ -228,7 +234,7 @@
       }
       const vivas = filas.filter((x) => x.estado !== 'ANULADA');
       const total = vivas.reduce((t, x) => t + Number(x.valor || 0), 0);
-      const titulo = `Consulta de ${tipoDe(f.tipo)[1]}`;
+      const titulo = `Consulta de ${tipoF()[1]}`;
       if (formato === 'PDF') {
         window.BANCOS.imprimir(titulo, `<h1>${esc(titulo)} · ${modo === 'DETALLADO' ? 'detallado' : 'resumido'}</h1><h2>${esc(parametros().join(' · '))}</h2>
           <table><thead><tr><th>Nota</th><th>Fecha</th><th>Cliente</th><th>NIT</th><th>Factura</th><th>Ajuste</th><th class="n">Valor</th><th>Estado</th></tr></thead><tbody>
