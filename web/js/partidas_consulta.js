@@ -18,8 +18,8 @@
   window.PANTALLAS['consulta-de-partidas'] = function (cont) {
     const ctx = montar(cont, { titulo: 'Consulta de Partidas', icono: 'ti-file-search', clase: 'bk-movimientos bk-consultar cb-apilado bk-consulta-cheques pz-consulta', grupo: 'Registros' });
     const { sb } = ctx;
-    // Fecha inicial: primer día del mes anterior (p. ej. el 10 de noviembre muestra desde el 1 de octubre).
-    const primeroDelMes = () => { const [y, m] = fmt.hoy().split('-').map(Number); const a = m === 1 ? y - 1 : y; const p = m === 1 ? 12 : m - 1; return `${a}-${String(p).padStart(2, '0')}-01`; };
+    // Fecha inicial: primer día de dos meses atrás (p. ej. el 10 de noviembre muestra desde el 1 de septiembre).
+    const primeroDelMes = () => { const [y, m] = fmt.hoy().split('-').map(Number); const k = y * 12 + (m - 1) - 2; return `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`; };
     const f = { tipo: '', clasif: '', desde: primeroDelMes(), hasta: fmt.hoy(), estado: 'TODAS', buscar: '', orden: 'fecha', dir: 'desc' };
     let tipos = [];
     let partidas = [];
