@@ -126,7 +126,6 @@ window.MODULOS = [
           subgrupo: 'Generación de Cierres',
           icono: 'ti-lock-check',
           pantallas: [
-            { id: 'con-transacciones-modulo', nombre: 'Transacciones por módulo', icono: 'ti-arrows-exchange', descripcion: 'Agrupa las transacciones contables de la empresa por módulo (ventas, compras, inventarios, caja y bancos, nóminas…); la asignación inicial sale de su descripción y se cambia a mano.' },
             { id: 'con-cierre-preliminar', nombre: 'Cierre Preliminar', icono: 'ti-lock-open', descripcion: 'Elige el mes y el módulo y genera, por transacción, la póliza que integra los documentos del mes aún sin partida; se reversa mientras el mes no tenga cierre definitivo.' },
             { id: 'cierre-de-mes', nombre: 'Cierre Mensual', icono: 'ti-calendar-check', descripcion: 'Cierra o reabre cada mes de la empresa; con el mes cerrado sus partidas ya no se modifican.' },
             { id: 'con-cierre-anual', nombre: 'Cierre Anual Fiscal', icono: 'ti-lock-check', descripcion: 'Revisión del ejercicio, partida de cierre de resultados, reserva legal 5 % y traslado a utilidades, cierre (PCE) y apertura del año siguiente (PA); reapertura con motivo.' }
@@ -202,7 +201,8 @@ window.MODULOS = [
           icono: 'ti-box',
           pantallas: [
             { id: 'objetos-definicion', nombre: 'Definición de objetos', icono: 'ti-category', descripcion: 'Objetos contables de cada organización y localidad con sus cuentas y transacciones.' },
-            { id: 'objetos-transacciones', nombre: 'Transacciones', icono: 'ti-arrows-exchange', descripcion: 'Plantillas de partida con sus cuentas, debe o haber, operación y centro de costo.' }
+            { id: 'objetos-transacciones', nombre: 'Transacciones', icono: 'ti-arrows-exchange', descripcion: 'Plantillas de partida con sus cuentas, debe o haber, operación y centro de costo.' },
+            { id: 'con-transacciones-modulo', nombre: 'Transacciones por módulo', icono: 'ti-arrows-exchange', descripcion: 'Agrupa las transacciones contables de la empresa por módulo (ventas, compras, inventarios, caja y bancos, nóminas…); la asignación inicial sale de su descripción y se cambia a mano.' }
           ]
         },
         {

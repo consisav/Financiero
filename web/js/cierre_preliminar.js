@@ -32,7 +32,7 @@
 
   // ===================== Transacciones por módulo =====================
   window.PANTALLAS['con-transacciones-modulo'] = function (cont) {
-    const ctx = montar(cont, { titulo: 'Transacciones por módulo', icono: 'ti-arrows-exchange', clase: 'bk-movimientos bm-solo cx-rep cp-espacio', grupo: 'Contabilidad · Generación de Cierres' });
+    const ctx = montar(cont, { titulo: 'Transacciones por módulo', icono: 'ti-arrows-exchange', clase: 'bk-movimientos bm-solo cx-rep cp-espacio', grupo: 'Contabilidad · Objetos contables' });
     const { sb } = ctx;
     let trx = []; let buscar = '';
     async function iniciar() { if (!(await ctx.cargarBase())) return; await cargar(); }

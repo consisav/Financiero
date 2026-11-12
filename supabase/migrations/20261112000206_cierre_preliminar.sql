@@ -368,7 +368,7 @@ begin
     if v_id is null then
       insert into public.opciones_sistema (modulo_id, grupo, subgrupo, clave, nombre, orden) values (v_mod, 'procesos', 'Generación de Cierres', o.clave, o.nombre, v_orden + o.n) returning id into v_id;
     else
-      update public.opciones_sistema set grupo = 'procesos', subgrupo = 'Generación de Cierres', nombre = o.nombre, activo = true where id = v_id;
+      update public.opciones_sistema set nombre = o.nombre, activo = true where id = v_id;  -- no la mueve de grupo (el 208 la pasa a Objetos contables)
     end if;
     if v_ref is not null then
       insert into public.rol_accesos (rol_id, opcion_id, ver, crear, modificar, anular, imprimir)
