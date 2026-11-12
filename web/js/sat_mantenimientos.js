@@ -266,7 +266,7 @@
     const { sb } = ctx;
     let x = null;
     const CAMPOS = [['ambiente', 'Ambiente', [['PRUEBAS', 'Pruebas'], ['PRODUCCION', 'Producción']]], ['url', 'URL del web service (RequestTransaction)'], ['soap_action', 'SOAP Action (solo si el certificador la exige)'], ['transaccion', 'Transacción'], ['dato_certificar', 'Identificador para certificar'],
-      ['dato_anular', 'Identificador para anular'], ['transaccion_consulta', 'Transacción de consulta'], ['secreto', 'Prefijo de los secretos']];
+      ['dato_anular', 'Identificador para anular'], ['transaccion_consulta', 'Transacción de consulta'], ['dato_consulta', 'Identificador de consulta (validación)'], ['secreto', 'Prefijo de los secretos']];
     async function iniciar() { if (!(await ctx.cargarBase())) return; await cargar(); }
     async function cargar() {
       if (!ctx.sel.loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-plug-connected'); return; }
@@ -279,7 +279,7 @@
         <p class="cp-aviso sm-nota"><i class="ti ti-lock" aria-hidden="true"></i> El usuario, la contraseña y el requestor del certificador no se guardan aquí ni se migraron del sistema anterior: van como secretos del servidor (&lt;prefijo&gt;_REQUESTOR y &lt;prefijo&gt;_USUARIO).</p>
         <div class="sm-form">${CAMPOS.map(([k, t, ops]) => `<label class="campo ${k === 'url' ? 'sm-ancho' : ''}"><span>${esc(t)}</span>${ops ? `<select name="${k}" ${ed}>${ops.map(([v, l]) => `<option value="${v}" ${x[k] === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : `<input name="${k}" value="${esc(x[k] || '')}" ${ed} autocomplete="off">`}</label>`).join('')}
           <label class="pc-check"><input type="checkbox" name="activo" ${x.activo ? 'checked' : ''} ${ed}> Conexión activa</label></div>
-        ${data ? `<p class="sm-pie">Registrada ${fh(data.creado_en)}${data.modificado_en ? ` · modificada ${fh(data.modificado_en)}` : ''}</p>` : ''}</div>`;
+        ${data?.url_anterior ? `<p class="sm-pie"><i class="ti ti-history" aria-hidden="true"></i> URL en el sistema anterior: <b>${esc(data.url_anterior)}</b> (servicio puente en el servidor local; no se usa para conectar).</p>` : ''}${data ? `<p class="sm-pie">Registrada ${fh(data.creado_en)}${data.modificado_en ? ` · modificada ${fh(data.modificado_en)}` : ''}</p>` : ''}</div>`;
     }
     cont.addEventListener('change', (e) => { const cm = ctx.cambioOrgLoc(e); if (cm === 'org' || cm === 'loc') cargar(); });
     cont.addEventListener('click', async (e) => {
