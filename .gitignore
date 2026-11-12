@@ -71,3 +71,8 @@ supabase/pendientes/203_liquidaciones_parte_*.sql
 supabase/migrations/20261111000204_facturas_venta_organizacion_2.sql
 supabase/pendientes/204_facturas_parte_*.sql
 !supabase/pendientes/204_facturas_parte_0_de_*.sql
+
+# Historial FEL de la organizacion 3 desde «Data FEL» (datos de clientes): solo local y en el repositorio privado Financiero-datos.
+# La parte 0 (estructura y catalogos) si se publica.
+supabase/pendientes/205_fel_parte_*.sql
+!supabase/pendientes/205_fel_parte_0_de_*.sql
