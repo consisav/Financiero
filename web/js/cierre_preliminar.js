@@ -24,7 +24,11 @@
   const falta206 = (e) => /modulo_cierre|con_preliminar|con_cierre_preliminar|con_asignar_modulos|cierres_preliminares/.test(e?.message || '');
   const errorTxt = (e) => (falta206(e) ? 'Falta instalar el script 206 (Cierre preliminar) en Supabase.' : window.UI.traducirError(e));
   // Módulo elegido: se conserva al cambiar de pantalla.
-  const estado = { modulo: 'VENTAS' };
+  const estado = { modulo: 'VENTAS', cierre: '*' };
+  // Módulos principales del catálogo (Administración · Módulos) y el módulo de cierre que agrupa sus transacciones.
+  const CIERRE_DE_SIGLAS = { CON: 'CONTABILIDAD', FAC: 'VENTAS', INV: 'INVENTARIOS', NOM: 'NÓMINAS', ACT: 'ACTIVOS FIJOS', IMP: 'IMPORTACIONES', CYB: 'CAJA Y BANCOS', COM: 'COMPRAS' };
+  const ICONO_SIGLAS = { CON: 'ti-calculator', FAC: 'ti-receipt', INV: 'ti-packages', NOM: 'ti-users', ACT: 'ti-building', IMP: 'ti-world', SAT: 'ti-file-certificate', CAR: 'ti-wallet', CYB: 'ti-building-bank', COM: 'ti-shopping-cart' };
+  const titulo = (t) => String(t || '').toLowerCase().split(' ').map((w, i) => (['sat', 'iva', 'isr'].includes(w) ? w.toUpperCase() : i && ['y', 'e', 'de', 'del'].includes(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
 
   // ===================== Transacciones por módulo =====================
   window.PANTALLAS['con-transacciones-modulo'] = function (cont) {
@@ -104,7 +108,14 @@
     const { sb } = ctx;
     const f = hoyAM();
     let res = null; const marcadas = new Set(); let avisos = []; let ocupado = false;
-    async function iniciar() { if (!(await ctx.cargarBase())) return; await cargar(); }
+    // Pestañas: los módulos principales del catálogo con código del 1 al 9; si no se puede leer, los módulos de cierre.
+    let pestanas = MODULOS.map(([k, n, i]) => ({ k, n, i }));
+    async function cargarModulos() {
+      const { data, error } = await sb.from('modulos_sistema').select('codigo, siglas, descripcion').is('modulo_mayor_id', null).eq('activo', true).gte('codigo', 1).lte('codigo', 9).order('codigo');
+      if (error || !data?.length) return;
+      pestanas = data.map((m) => ({ k: CIERRE_DE_SIGLAS[m.siglas] || 'CAT:' + m.siglas, n: titulo(m.descripcion), i: ICONO_SIGLAS[m.siglas] || 'ti-apps' }));
+    }
+    async function iniciar() { if (!(await ctx.cargarBase())) return; await cargarModulos(); await cargar(); }
     async function cargar(conservarAvisos = false) {
       if (!ctx.sel.loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', 'ti-lock-open'); return; }
       ctx.filtros(`<label class="campo cx-anio"><span>Año</span><input type="number" name="anio" min="2000" max="2999" value="${f.anio}"></label>`,
@@ -117,8 +128,7 @@
       // Marcadas por omisión: las que tienen documentos pendientes, aplican póliza y no están generadas.
       marcadas.clear();
       res.transacciones.forEach((t) => { if (t.pendientes > 0 && t.aplica_poliza && !t.generado && !t.sin_detalle) marcadas.add(t.id); });
-      const conPend = MODULOS.find((m) => res.transacciones.some((t) => t.modulo === m[0] && (t.pendientes || t.generado)));
-      if (!res.transacciones.some((t) => (t.modulo || SIN) === estado.modulo) && estado.modulo !== '*') estado.modulo = conPend ? conPend[0] : 'VENTAS';
+      if (estado.cierre !== '*' && !pestanas.some((x) => x.k === estado.cierre)) estado.cierre = '*';
       pintar();
     }
     const deMod = (m) => res.transacciones.filter((t) => m === '*' || (t.modulo || SIN) === m);
@@ -133,10 +143,11 @@
     function pintar() {
       const a = f.anio, m = f.mes, desde = `${a}-${String(m).padStart(2, '0')}-01`, hasta = finMes(a, m);
       const cerrado = res.cerrado;
-      const mods = [...MODULOS.map((x) => [x[0], x[1], x[2]]), ...(res.transacciones.some((t) => !t.modulo) ? [[SIN, 'Sin módulo', 'ti-alert-triangle']] : []), ['*', 'Todos', 'ti-list']]
-        .map(([k, n, i]) => { const ts = deMod(k); return { k, n, i, total: ts.length, pend: ts.filter((t) => t.pendientes).length, gen: ts.filter((t) => t.generado).length }; })
-        .filter((x) => x.total || ['VENTAS', 'COMPRAS', 'INVENTARIOS', 'CAJA Y BANCOS', 'NÓMINAS'].includes(x.k));
-      const filas = deMod(estado.modulo);
+      // Todos primero y después los módulos principales del catálogo (1 al 9), en su orden.
+      const mods = [{ k: '*', n: 'Todos', i: 'ti-list' }, ...pestanas]
+        .map(({ k, n, i }) => { const ts = deMod(k); return { k, n, i, total: ts.length, pend: ts.filter((t) => t.pendientes).length, gen: ts.filter((t) => t.generado).length }; });
+      const modAct = mods.find((x) => x.k === estado.cierre) || mods[0];
+      const filas = deMod(estado.cierre);
       const todas = res.transacciones;
       const kp = { pend: todas.filter((t) => t.pendientes).length, docs: todas.reduce((s, t) => s + (t.pendientes || 0), 0), gen: todas.filter((t) => t.generado).length, prob: todas.filter((t) => t.sin_detalle || (t.pendientes && Math.abs((t.debe || 0) - (t.haber || 0)) >= 0.005)).length };
       const cls = { DEFINITIVO: 'cp-def', PRELIMINAR: 'cp-pre', PENDIENTE: '' };
@@ -147,8 +158,8 @@
         <div class="cp-leyenda"><span><i class="ti ti-lock" aria-hidden="true"></i> Definitivo (Cierre Mensual)</span><span><i class="ti ti-circle-half-2" aria-hidden="true"></i> Preliminar generado</span><span>Sin marca: pendiente</span><span class="cp-rango">Del <b>${dmy(desde)}</b> al <b>${dmy(hasta)}</b></span></div>
         ${cerrado ? '<p class="cp-aviso cp-error"><i class="ti ti-lock" aria-hidden="true"></i> El mes tiene cierre mensual definitivo: sus pólizas ya no se generan ni se reversan. Reábrelo en Cierre Mensual si necesitas cambiarlas.</p>' : ''}
         <div class="ec-kpis cp-kpis"><div class="ec-kpi"><small>Transacciones con pendientes</small><b>${kp.pend}</b></div><div class="ec-kpi"><small>Documentos pendientes</small><b>${kp.docs}</b></div><div class="ec-kpi ec-fin"><small>Pólizas generadas</small><b>${kp.gen}</b></div><div class="ec-kpi ${kp.prob ? 'ec-alerta' : ''}"><small>Con problemas</small><b>${kp.prob}</b></div></div>
-        <div class="cp-modtabs" role="tablist" aria-label="Módulo">${mods.map((x) => `<button type="button" role="tab" aria-selected="${estado.modulo === x.k}" class="cp-modtab ${estado.modulo === x.k ? 'activo' : ''} ${x.k === SIN ? 'cp-sin' : ''}" data-mod="${esc(x.k)}"><i class="ti ${x.i}" aria-hidden="true"></i> ${esc(x.n)}${x.pend ? ` <b class="cp-num">${x.pend}</b>` : ''}${x.gen ? ` <span class="cp-gen" title="Pólizas generadas">${x.gen} ✓</span>` : ''}</button>`).join('')}</div>
-        <h3 class="cp-modtitulo"><i class="ti ${iconoMod(estado.modulo === '*' ? 'x' : estado.modulo)}" aria-hidden="true"></i> Módulo: ${esc(estado.modulo === '*' ? 'Todos' : nombreMod(estado.modulo))}</h3>
+        <div class="cp-modtabs" role="tablist" aria-label="Módulo">${mods.map((x) => `<button type="button" role="tab" aria-selected="${estado.cierre === x.k}" class="cp-modtab ${estado.cierre === x.k ? 'activo' : ''} ${x.k === SIN ? 'cp-sin' : ''}" data-mod="${esc(x.k)}"><i class="ti ${x.i}" aria-hidden="true"></i> ${esc(x.n)}${x.pend ? ` <b class="cp-num">${x.pend}</b>` : ''}${x.gen ? ` <span class="cp-gen" title="Pólizas generadas">${x.gen} ✓</span>` : ''}</button>`).join('')}</div>
+        <h3 class="cp-modtitulo"><i class="ti ${modAct.i}" aria-hidden="true"></i> Módulo: ${esc(modAct.n)}</h3>
         <div class="pc-lineas cp-tabla"><table><thead><tr><th class="cp-chk"><input type="checkbox" data-todas aria-label="Marcar todas" ${filas.length && filas.filter(sel).every((t) => marcadas.has(t.id)) && filas.some(sel) ? 'checked' : ''}></th><th class="num">#Trans</th><th>Descripción</th><th>Aplica póliza</th><th class="num">Documentos</th><th class="num">Valor</th><th>Estado</th></tr></thead><tbody>
           ${filas.length ? filas.map((t) => `<tr data-id="${t.id}" class="${t.pendientes || t.generado ? '' : 'cp-vacia'}"><td class="cp-chk"><input type="checkbox" data-trx="${t.id}" ${marcadas.has(t.id) ? 'checked' : ''} ${sel(t) ? '' : 'disabled'} aria-label="Generar ${t.numero}"></td>
             <td class="num">${t.numero}</td><td>${esc(t.descripcion)}</td><td>${t.aplica_poliza ? '<i class="ti ti-check cp-ok" aria-label="Sí"></i>' : '<span class="cp-tenue">No</span>'}</td>
@@ -172,7 +183,7 @@
     async function ejecutar(accion) {
       if (ocupado) return;
       if (res.cerrado) return window.FIN.aviso('El mes tiene cierre mensual definitivo');
-      const visibles = new Set(deMod(estado.modulo).map((t) => t.id));
+      const visibles = new Set(deMod(estado.cierre).map((t) => t.id));
       const ids = [...marcadas].filter((id) => visibles.has(id));
       const lista = res.transacciones.filter((t) => ids.includes(t.id));
       let envio;
@@ -199,13 +210,13 @@
       const c = ctx.cambioOrgLoc(e); if (c === 'org' || c === 'loc') return cargar();
       if (e.target.name === 'anio') { f.anio = Number(e.target.value) || f.anio; return cargar(); }
       if (e.target.dataset.trx) { const id = Number(e.target.dataset.trx); if (e.target.checked) marcadas.add(id); else marcadas.delete(id); return pintar(); }
-      if ('todas' in e.target.dataset) { deMod(estado.modulo).filter(sel).forEach((t) => (e.target.checked ? marcadas.add(t.id) : marcadas.delete(t.id))); pintar(); }
+      if ('todas' in e.target.dataset) { deMod(estado.cierre).filter(sel).forEach((t) => (e.target.checked ? marcadas.add(t.id) : marcadas.delete(t.id))); pintar(); }
     });
     cont.addEventListener('click', (e) => {
       const ms = e.target.closest('[data-mes]'); if (ms) { f.mes = Number(ms.dataset.mes); return cargar(); }
-      const md = e.target.closest('[data-mod]'); if (md) { estado.modulo = md.dataset.mod; return pintar(); }
+      const md = e.target.closest('[data-mod]'); if (md) { estado.cierre = md.dataset.mod; return pintar(); }
       const ac = e.target.closest('[data-acc]'); if (!ac) return;
-      const ts = deMod(estado.modulo);
+      const ts = deMod(estado.cierre);
       if (ac.dataset.acc === 'marcar') { ts.filter((t) => t.pendientes > 0 && t.aplica_poliza && !t.generado).forEach((t) => marcadas.add(t.id)); return pintar(); }
       if (ac.dataset.acc === 'desmarcar') { ts.forEach((t) => marcadas.delete(t.id)); return pintar(); }
       if (ac.dataset.acc === 'generar') return ejecutar('GENERAR');
