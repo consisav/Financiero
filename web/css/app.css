@@ -6527,3 +6527,16 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
   .cp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cp-rango { margin-left: 0; }
 }
+
+/* ===== Integraciones (Generación de Cierres): módulos a desglosar ===== */
+.ci-tipos { margin: 0; padding: 8px 12px 10px; border: 1px solid var(--borde); border-radius: 10px; background: var(--panel); display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.ci-tipos legend { padding: 0 6px; font-size: 12.5px; font-weight: 700; color: var(--acento); display: flex; align-items: center; gap: 8px; }
+.ci-tipos legend span { font-weight: 400; color: var(--suave); }
+.ci-mini { border: 0; background: none; padding: 0; font: inherit; font-size: 12px; color: var(--acento); text-decoration: underline; cursor: pointer; }
+.ci-grupo { display: flex; flex-direction: column; gap: 3px; min-width: 170px; }
+.ci-gtit { border: 0; background: none; padding: 0 0 2px; text-align: left; font: inherit; font-size: 11.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--suave); cursor: pointer; border-bottom: 1px solid var(--borde); }
+.ci-gtit:hover { color: var(--acento); }
+.ci-grupo .pc-check { font-weight: 400; font-size: 12.5px; }
+.ci-grupo .pc-check.ci-cero { color: var(--suave); }
+.ci-grupo .cp-num { margin-left: auto; }
+@media (max-width: 900px) { .ci-grupo { min-width: calc(50% - 18px); } }

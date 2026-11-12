@@ -126,9 +126,27 @@ window.MODULOS = [
           subgrupo: 'Generación de Cierres',
           icono: 'ti-lock-check',
           pantallas: [
-            { id: 'con-cierre-preliminar', nombre: 'Cierre Preliminar', icono: 'ti-lock-open', descripcion: 'Elige el mes y el módulo y genera, por transacción, la póliza que integra los documentos del mes aún sin partida; se reversa mientras el mes no tenga cierre definitivo.' },
-            { id: 'cierre-de-mes', nombre: 'Cierre Mensual', icono: 'ti-calendar-check', descripcion: 'Cierra o reabre cada mes de la empresa; con el mes cerrado sus partidas ya no se modifican.' },
-            { id: 'con-cierre-anual', nombre: 'Cierre Anual Fiscal', icono: 'ti-lock-check', descripcion: 'Revisión del ejercicio, partida de cierre de resultados, reserva legal 5 % y traslado a utilidades, cierre (PCE) y apertura del año siguiente (PA); reapertura con motivo.' }
+            {
+              subgrupo: 'Cierres',
+              icono: 'ti-lock',
+              abierto: true,
+              separador: true,
+              pantallas: [
+                { id: 'con-cierre-preliminar', nombre: 'Cierre Preliminar', etiqueta: 'Preliminar', icono: 'ti-lock-open', descripcion: 'Elige el mes y el módulo y genera, por transacción, la póliza que integra los documentos del mes aún sin partida; se reversa mientras el mes no tenga cierre definitivo.' },
+                { id: 'cierre-de-mes', nombre: 'Cierre Mensual', etiqueta: 'Mensual', icono: 'ti-calendar-check', descripcion: 'Cierra o reabre cada mes de la empresa; con el mes cerrado sus partidas ya no se modifican.' },
+                { id: 'con-cierre-anual', nombre: 'Cierre Anual Fiscal', etiqueta: 'Anual Fiscal', icono: 'ti-lock-check', descripcion: 'Revisión del ejercicio, partida de cierre de resultados, reserva legal 5 % y traslado a utilidades, cierre (PCE) y apertura del año siguiente (PA); reapertura con motivo.' }
+              ]
+            },
+            {
+              subgrupo: 'Integraciones',
+              icono: 'ti-arrows-join',
+              abierto: true,
+              pantallas: [
+                { id: 'con-int-cuenta', nombre: 'Integración por cuenta', etiqueta: 'Por cuenta', icono: 'ti-list-numbers', descripcion: 'Partidas del período donde aparece una cuenta, con saldo anterior, debe, haber y saldo actual; PDF y Excel.' },
+                { id: 'con-int-movimientos', nombre: 'Integración de movimientos contables', etiqueta: 'Movimientos contables', icono: 'ti-list-details', descripcion: 'Detalle por documento (cheques, depósitos, notas, compras, facturas, recibos, cajas, pólizas…) de una cuenta, con los módulos a desglosar; PDF y Excel.' },
+                { id: 'con-int-centro', nombre: 'Integración de movimientos por centro de costo', etiqueta: 'Movimientos por centro de costo', icono: 'ti-sitemap', descripcion: 'Detalle por documento de un centro de costo, agrupado por cuenta con saldo anterior y total; PDF y Excel.' }
+              ]
+            }
           ]
         },
         {

@@ -597,7 +597,7 @@
           ${listaOpciones(m, p.pantallas, actual)}
         </details>
       </li>${p.separador ? '<li class="separador" role="separator"></li>' : ''}` : `
-      <li><a class="opcion ${p === actual ? 'actual' : ''}" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>${p.separador ? '<li class="separador" role="separator"></li>' : ''}`).join('')}</ul>`;
+      <li><a class="opcion ${p === actual ? 'actual' : ''}" href="#/${m.id}/${p.id}"><span><i class="ti ${p.icono}" aria-hidden="true"></i> ${esc(p.etiqueta || p.nombre)}</span><i class="ti ti-chevron-right" aria-hidden="true"></i></a></li>${p.separador ? '<li class="separador" role="separator"></li>' : ''}`).join('')}</ul>`;
   }
 
   function cerrarMenus(excepto) {
