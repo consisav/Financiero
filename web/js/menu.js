@@ -704,6 +704,15 @@ window.MODULOS = [
           { id: 'sat-frases', nombre: 'Frases y escenarios', icono: 'ti-quote', descripcion: 'Frases que exige la SAT en los DTE según el régimen; se marcan las que aplican a la empresa.' }
         ] }
       ],
+      mantenimientos: [
+        { subgrupo: 'FEL', icono: 'ti-file-certificate', pantallas: [
+          { id: 'sat-mant-dte', nombre: 'Documentos FEL (DTE)', icono: 'ti-file-certificate', descripcion: 'DTE del sistema anterior con emisor, receptor, ítems e impuestos, frases, complementos (cambiaria, exportación, notas), adendas, resultado, anulación e ID FEL.' },
+          { id: 'sat-mant-ids', nombre: 'IDs FEL', icono: 'ti-id', descripcion: 'ID reservados en el sistema anterior con su estado y el DTE que lo usó.' },
+          { id: 'sat-mant-frases', nombre: 'Tipos de frase y escenarios', icono: 'ti-quote', descripcion: 'Tipos de frase FEL con sus escenarios, texto en el DTE y si es exento de IVA.' },
+          { id: 'sat-mant-tipos-doc', nombre: 'Tipos de documento FEL', icono: 'ti-files', descripcion: 'Códigos de documento del sistema anterior con su tipo de DTE.' },
+          { id: 'sat-mant-conexion', nombre: 'Conexión del certificador', icono: 'ti-plug-connected', descripcion: 'Ambiente, URL e identificadores del web service del certificador; sin usuario ni contraseña.' }
+        ] }
+      ],
       registros: [
         { subgrupo: 'Documentos', icono: 'ti-files', pantallas: [
           { id: 'dte-emitidos', nombre: 'DTE emitidos', icono: 'ti-file-certificate', descripcion: 'Bandeja de facturas y notas del período: certificadas, pendientes de certificar y anuladas.' },
