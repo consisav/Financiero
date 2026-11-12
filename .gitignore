@@ -62,3 +62,12 @@ supabase/pendientes/187_documentos_cajas_parte_*.sql
 # Partidas contables de la organizacion 2 (descripciones y conceptos con nombres de personas): solo local.
 supabase/migrations/20261110000192_partidas_organizacion_2.sql
 supabase/migrations/192_partidas_partes/
+
+# Liquidaciones de compras de la organizacion 2 (numeros de cuentas bancarias): solo local.
+supabase/migrations/20261111000203_liquidaciones_compras_organizacion_2.sql
+supabase/pendientes/203_liquidaciones_parte_*.sql
+
+# Facturas de venta de la organizacion 2 (nombres, NIT y direcciones de clientes): solo local. La parte 0 (columnas) si se publica.
+supabase/migrations/20261111000204_facturas_venta_organizacion_2.sql
+supabase/pendientes/204_facturas_parte_*.sql
+!supabase/pendientes/204_facturas_parte_0_de_*.sql
