@@ -128,7 +128,6 @@
       // Marcadas por omisión: las que tienen documentos pendientes, aplican póliza y no están generadas.
       marcadas.clear();
       res.transacciones.forEach((t) => { if (t.pendientes > 0 && t.aplica_poliza && !t.generado && !t.sin_detalle) marcadas.add(t.id); });
-      if (estado.cierre !== '*' && !pestanas.some((x) => x.k === estado.cierre)) estado.cierre = '*';
       pintar();
     }
     const deMod = (m) => res.transacciones.filter((t) => m === '*' || (t.modulo || SIN) === m);
@@ -143,10 +142,13 @@
     function pintar() {
       const a = f.anio, m = f.mes, desde = `${a}-${String(m).padStart(2, '0')}-01`, hasta = finMes(a, m);
       const cerrado = res.cerrado;
-      // Todos primero y después los módulos principales del catálogo (1 al 9), en su orden.
-      const mods = [{ k: '*', n: 'Todos', i: 'ti-list' }, ...pestanas]
-        .map(({ k, n, i }) => { const ts = deMod(k); return { k, n, i, total: ts.length, pend: ts.filter((t) => t.pendientes).length, gen: ts.filter((t) => t.generado).length }; });
-      const modAct = mods.find((x) => x.k === estado.cierre) || mods[0];
+      // Todos primero, después los módulos principales del catálogo (1 al 9) que tienen transacciones, en su orden,
+      // y al final las transacciones que no tienen módulo definido.
+      const mods = [{ k: '*', n: 'Todos', i: 'ti-list' }, ...pestanas, { k: SIN, n: 'Sin módulo', i: 'ti-alert-triangle' }]
+        .map(({ k, n, i }) => { const ts = deMod(k); return { k, n, i, total: ts.length, pend: ts.filter((t) => t.pendientes).length, gen: ts.filter((t) => t.generado).length }; })
+        .filter((x) => x.k === '*' || x.total);
+      if (!mods.some((x) => x.k === estado.cierre)) estado.cierre = '*';
+      const modAct = mods.find((x) => x.k === estado.cierre);
       const filas = deMod(estado.cierre);
       const todas = res.transacciones;
       const kp = { pend: todas.filter((t) => t.pendientes).length, docs: todas.reduce((s, t) => s + (t.pendientes || 0), 0), gen: todas.filter((t) => t.generado).length, prob: todas.filter((t) => t.sin_detalle || (t.pendientes && Math.abs((t.debe || 0) - (t.haber || 0)) >= 0.005)).length };
