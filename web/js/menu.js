@@ -112,22 +112,23 @@ window.MODULOS = [
     subgrupos: {
       procesos: [
         {
-          subgrupo: 'Cierre mensual',
-          icono: 'ti-calendar-check',
+          subgrupo: 'Revisión Preliminar',
+          icono: 'ti-checklist',
           pantallas: [
             { id: 'con-revision-cierre', nombre: 'Revisión previa al cierre', icono: 'ti-checklist', descripcion: 'Semáforo del mes: partidas descuadradas o sin aprobar, cuentas que agrupan con movimiento, documentos sin contabilizar, automáticas y reversiones pendientes. PDF y Excel.' },
             { id: 'con-mayorizacion', nombre: 'Mayorización y validación', icono: 'ti-scale', descripcion: 'Valida mes por mes el cuadre, los totales contra sus líneas y las cuentas usadas; recalcula los totales de los meses abiertos.' },
             { id: 'con-automaticas', nombre: 'Recurrentes y amortizaciones', icono: 'ti-repeat', descripcion: 'Genera aprobadas las partidas recurrentes y la cuota del mes de provisiones y diferidos, una sola vez por mes.' },
             { id: 'con-diferencial', nombre: 'Diferencial cambiario', icono: 'ti-currency-dollar', descripcion: 'Revalúa las cuentas bancarias en moneda extranjera al tipo de cambio de cierre y registra la partida PDC.' },
-            { id: 'con-reversion', nombre: 'Reversión de provisiones', icono: 'ti-arrow-back-up', descripcion: 'Revierte el primer día del mes siguiente las provisiones y estimaciones (PPR y PEV) con una partida PRV.' },
-            { id: 'cierre-de-mes', nombre: 'Cierre de mes', icono: 'ti-calendar-check', descripcion: 'Cierra o reabre cada mes de la empresa; con el mes cerrado sus partidas ya no se modifican.' }
+            { id: 'con-reversion', nombre: 'Reversión de provisiones', icono: 'ti-arrow-back-up', descripcion: 'Revierte el primer día del mes siguiente las provisiones y estimaciones (PPR y PEV) con una partida PRV.' }
           ]
         },
         {
-          subgrupo: 'Cierre anual',
+          subgrupo: 'Generación de Cierres',
           icono: 'ti-lock-check',
           pantallas: [
-            { id: 'con-cierre-anual', nombre: 'Cierre del ejercicio', icono: 'ti-lock-check', descripcion: 'Revisión del ejercicio, partida de cierre de resultados, reserva legal 5 % y traslado a utilidades, cierre (PCE) y apertura del año siguiente (PA); reapertura con motivo.' }
+            { id: 'con-cierre-preliminar', nombre: 'Cierre Preliminar', icono: 'ti-lock-open', descripcion: 'Cierre preliminar del mes para revisar resultados antes del cierre mensual definitivo.' },
+            { id: 'cierre-de-mes', nombre: 'Cierre Mensual', icono: 'ti-calendar-check', descripcion: 'Cierra o reabre cada mes de la empresa; con el mes cerrado sus partidas ya no se modifican.' },
+            { id: 'con-cierre-anual', nombre: 'Cierre Anual Fiscal', icono: 'ti-lock-check', descripcion: 'Revisión del ejercicio, partida de cierre de resultados, reserva legal 5 % y traslado a utilidades, cierre (PCE) y apertura del año siguiente (PA); reapertura con motivo.' }
           ]
         },
         {
