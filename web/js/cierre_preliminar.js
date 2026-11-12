@@ -108,12 +108,21 @@
     const { sb } = ctx;
     const f = hoyAM();
     let res = null; const marcadas = new Set(); let avisos = []; let ocupado = false;
-    // Pestañas: los módulos principales del catálogo con código del 1 al 9; si no se puede leer, los módulos de cierre.
-    let pestanas = MODULOS.map(([k, n, i]) => ({ k, n, i }));
+    // Pestañas: los módulos principales del catálogo con código del 1 al 9 más Compras; si no se puede leer, los módulos de cierre.
+    // Orden: Contabilidad, Facturación y Ventas, Compras y después los demás por su código.
+    // Compras y Activos fijos se muestran siempre (toda empresa tiene compras y la depreciación mensual de sus activos).
+    const PRIMEROS = ['CONTABILIDAD', 'VENTAS', 'COMPRAS'];
+    const SIEMPRE = ['COMPRAS', 'ACTIVOS FIJOS'];
+    const ordenar = (l) => [...PRIMEROS.map((k) => l.find((x) => x.k === k)).filter(Boolean), ...l.filter((x) => !PRIMEROS.includes(x.k))];
+    let pestanas = ordenar(MODULOS.map(([k, n, i]) => ({ k, n, i })));
     async function cargarModulos() {
-      const { data, error } = await sb.from('modulos_sistema').select('codigo, siglas, descripcion').is('modulo_mayor_id', null).eq('activo', true).gte('codigo', 1).lte('codigo', 9).order('codigo');
+      const { data, error } = await sb.from('modulos_sistema').select('codigo, siglas, descripcion').is('modulo_mayor_id', null).eq('activo', true).gte('codigo', 1).order('codigo');
       if (error || !data?.length) return;
-      pestanas = data.map((m) => ({ k: CIERRE_DE_SIGLAS[m.siglas] || 'CAT:' + m.siglas, n: titulo(m.descripcion), i: ICONO_SIGLAS[m.siglas] || 'ti-apps' }));
+      const lista = data.filter((m) => m.codigo <= 9 || m.siglas === 'COM')
+        .map((m) => ({ k: CIERRE_DE_SIGLAS[m.siglas] || 'CAT:' + m.siglas, n: titulo(m.descripcion), i: ICONO_SIGLAS[m.siglas] || 'ti-apps' }));
+      // Si el catálogo no tiene Compras o Activos fijos activos, se agregan igual.
+      SIEMPRE.forEach((k) => { if (!lista.some((x) => x.k === k)) { const m = MODULOS.find((x) => x[0] === k); lista.push({ k, n: m[1], i: m[2] }); } });
+      pestanas = ordenar(lista);
     }
     async function iniciar() { if (!(await ctx.cargarBase())) return; await cargarModulos(); await cargar(); }
     async function cargar(conservarAvisos = false) {
@@ -146,7 +155,7 @@
       // y al final las transacciones que no tienen módulo definido.
       const mods = [{ k: '*', n: 'Todos', i: 'ti-list' }, ...pestanas, { k: SIN, n: 'Sin módulo', i: 'ti-alert-triangle' }]
         .map(({ k, n, i }) => { const ts = deMod(k); return { k, n, i, total: ts.length, pend: ts.filter((t) => t.pendientes).length, gen: ts.filter((t) => t.generado).length }; })
-        .filter((x) => x.k === '*' || x.total);
+        .filter((x) => x.k === '*' || x.total || SIEMPRE.includes(x.k));
       if (!mods.some((x) => x.k === estado.cierre)) estado.cierre = '*';
       const modAct = mods.find((x) => x.k === estado.cierre);
       const filas = deMod(estado.cierre);
