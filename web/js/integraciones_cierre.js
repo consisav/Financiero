@@ -75,11 +75,16 @@
       }
       try { cfg = op.construir(ctx, f, datos); } catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(e.message)}</p>`; return; }
       cfg = { orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: op.titulo.slice(0, 30), archivo: op.archivo(f), titulo: op.titulo, ...cfg };
-      ctx.pDet.innerHTML = `<div class="bm-form cx-form cl-clasico"><div class="cl-banda">${esc(cfg.titulo)} · ${esc(cfg.parametros.slice(1, 3).join(' · '))}</div>
-        ${op.ayuda ? `<p class="pr-guia"><i class="ti ti-info-circle" aria-hidden="true"></i> ${op.ayuda}</p>` : ''}
+      // Diseño compacto: una sola barra con el título, los indicadores y el botón de módulos; la ayuda queda en el ícono (i).
+      const agrupado = op.tipos && (op.centros || !f.cuenta);
+      ctx.pDet.innerHTML = `<div class="bm-form cx-form cl-clasico ci-compacto ${agrupado ? 'ci-agrupado' : ''}">
+        <div class="ci-barra">
+          <div class="ci-tit"><b>${esc(cfg.titulo)}</b> <span>${esc(cfg.parametros.slice(1, 3).join(' · '))}</span>${op.ayuda ? ` <i class="ti ti-info-circle" title="${esc(op.ayuda)}" aria-label="${esc(op.ayuda)}"></i>` : ''}</div>
+          <div class="ci-kpis">${(cfg.kpis || []).map(([t, v, c]) => `<span class="ci-k ${c || ''}"><small>${esc(t)}</small> <b>${esc(String(v))}</b></span>`).join('')}</div>
+          ${op.tipos ? `<button type="button" class="ci-modbtn ${f.mods ? 'abierto' : ''}" data-mods aria-expanded="${!!f.mods}"><i class="ti ti-filter" aria-hidden="true"></i> Módulos <b>${f.tipos.size}/${TODOS.length}</b> <i class="ti ti-chevron-down" aria-hidden="true"></i></button>` : ''}
+        </div>
         ${cfg.aviso ? `<p class="cp-aviso cp-error"><i class="ti ti-alert-triangle" aria-hidden="true"></i> ${esc(cfg.aviso)}</p>` : ''}
-        <div class="ec-kpis">${(cfg.kpis || []).map(([t, v, c]) => kpi(t, v, c)).join('')}</div>
-        ${op.tipos ? panelTipos(f, datos) : ''}
+        ${op.tipos && f.mods ? panelTipos(f, datos) : ''}
         ${C().tabla(cfg, false)}</div>`;
       window.CUENTAS_XLSX.ajustarAlto(cont);
     }
@@ -93,6 +98,7 @@
     });
     cont.addEventListener('click', (e) => {
       const ex = e.target.closest('[data-exp]'); if (ex) return C().exportar(cfg, ex.dataset.exp, false);
+      if (e.target.closest('[data-mods]')) { f.mods = !f.mods; return consultar(); }
       const t = e.target.closest('[data-tipos]'); if (!t) return;
       if (t.dataset.tipos === 'todos') TODOS.forEach((k) => f.tipos.add(k));
       else if (t.dataset.tipos === 'ninguno') f.tipos.clear();
@@ -111,7 +117,7 @@
   // Casillas de los tipos de documento a desglosar, con cuántos movimientos hay de cada uno.
   function panelTipos(f, D) {
     const n = new Map(); (D?.filas || []).forEach((x) => n.set(x.t, (n.get(x.t) || 0) + 1));
-    return `<fieldset class="ci-tipos"><legend><i class="ti ti-filter" aria-hidden="true"></i> Módulos a desglosar <span>${[...f.tipos].length} de ${TODOS.length}</span>
+    return `<fieldset class="ci-tipos"><legend>Módulos a desglosar
         <button type="button" class="ci-mini" data-tipos="todos">Todos</button><button type="button" class="ci-mini" data-tipos="ninguno">Ninguno</button></legend>
       ${TIPOS.map(([g, ts]) => `<div class="ci-grupo"><button type="button" class="ci-gtit" data-tipos="${esc(g)}" title="Marcar o desmarcar ${esc(g.toLowerCase())}">${esc(g)}</button>
         ${ts.map(([k, t]) => `<label class="pc-check ${n.get(k) ? '' : 'ci-cero'}"><input type="checkbox" name="tipo" value="${k}" ${f.tipos.has(k) ? 'checked' : ''}> ${esc(t)} <b class="cp-num ${n.get(k) ? '' : 'cp-cero'}">${n.get(k) || 0}</b></label>`).join('')}</div>`).join('')}
@@ -177,26 +183,42 @@
   // ===================== a) Por cuenta =====================
   window.PANTALLAS['con-int-cuenta'] = (cont) => pantalla(cont, {
     titulo: 'Integración por cuenta', icono: 'ti-list-numbers', rpc: 'con_integracion_cuenta',
-    ayuda: 'Todas las partidas vigentes del período donde aparece la cuenta (o la cuenta mayor y sus subcuentas). El saldo anterior es el acumulado antes de la fecha inicial.',
-    f: () => ({ cuenta: '', desde: inicioAnio(), al: hoy() }),
-    filtros: (f, L) => `${campoCuenta(f, L.cuentas)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
-    falta: (f) => (!f.cuenta ? 'Escribe o elige la cuenta a integrar.' : f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
+    ayuda: 'Partidas vigentes del período donde aparece la cuenta (o la cuenta mayor y sus subcuentas); sin cuenta, todas las cuentas agrupadas, cada una con su saldo anterior (acumulado antes de la fecha inicial) y su total.',
+    f: () => ({ cuenta: '', desde: mesAnterior(), al: hoy() }),
+    filtros: (f, L) => `${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
+    falta: (f) => (f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
     clave: (f) => `${f.cuenta}|${f.desde}|${f.al}`,
-    args: (f, ctx) => ({ p_loc: ctx.sel.loc, p_cuenta: f.cuenta, p_desde: f.desde, p_hasta: f.al }),
+    args: (f, ctx) => ({ p_loc: ctx.sel.loc, p_cuenta: f.cuenta || null, p_desde: f.desde, p_hasta: f.al }),
     construir: (ctx, f, D) => {
-      const nat = num(D.nat) || 1; let s = num(D.saldo_inicial) * nat; const ini = s; let td = 0, th = 0;
-      const filas = [{ valores: ['', '', '', '', `Saldo al ${fmt.fechaDia(f.desde)}`, '', '', '', r2(ini)], tipo: 'nota' }];
-      D.filas.forEach((x) => {
-        const ant = s; s += (num(x.debe) - num(x.haber)) * nat; td += num(x.debe); th += num(x.haber);
-        filas.push({ valores: [String(x.anio), String(x.mes).padStart(2, '0'), `${x.tipo || 'PD'} ${x.numero}`, fmt.fechaDia(x.fecha), x.descripcion, r2(ant), r2(x.debe), r2(x.haber), r2(s)] });
+      const nat = (c) => num(D.cuenta ? D.nat : D.nats?.[c]) || 1;
+      const filas = []; let td = 0, th = 0, tIni = 0, tFin = 0;
+      // Un bloque por cuenta (o uno solo con la cuenta elegida): saldo anterior, partidas y total.
+      const cuentas = D.cuenta ? [D.cuenta] : [...new Set(D.filas.map((x) => x.c))].sort();
+      cuentas.forEach((c) => {
+        const xs = D.cuenta ? D.filas : D.filas.filter((x) => x.c === c);
+        const ini = (D.cuenta ? num(D.saldo_inicial) : num(D.saldos?.[c])) * nat(c);
+        let s = ini, d = 0, h = 0;
+        if (!D.cuenta) filas.push({ valores: [`Cuenta ${c} · ${xs[0]?.cn || ''}`], tipo: 'grupo', combinar: true });
+        filas.push({ valores: ['', '', '', '', `Saldo al ${fmt.fechaDia(f.desde)}`, '', '', '', r2(ini)], tipo: 'nota' });
+        xs.forEach((x) => {
+          const ant = s; s += (num(x.debe) - num(x.haber)) * nat(c); d += num(x.debe); h += num(x.haber);
+          filas.push({ valores: [String(x.anio), String(x.mes).padStart(2, '0'), `${x.tipo || 'PD'} ${x.numero}`, fmt.fechaDia(x.fecha), x.descripcion, r2(ant), r2(x.debe), r2(x.haber), r2(s)] });
+        });
+        if (!D.cuenta) filas.push({ valores: ['', '', '', '', `Total cuenta ${c}`, r2(ini), r2(d), r2(h), r2(s)], tipo: 'subtotal' });
+        td += d; th += h; tIni += ini; tFin += s;
       });
-      filas.push({ valores: ['', '', '', '', 'Totales del período', r2(ini), r2(td), r2(th), r2(s)], tipo: 'total' });
-      return { titulo: 'Integración por cuenta', parametros: [`Empresa: ${empresaDe(ctx)}`, `Cuenta: ${D.cuenta} · ${D.nombre || 'no encontrada'}`, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.al)}`, `Saldo ${nat === -1 ? 'acreedor' : 'deudor'}`],
-        kpis: [['Saldo anterior', q(ini)], ['Debe', q(td)], ['Haber', q(th)], ['Saldo actual', q(s), 'ec-fin'], ['Partidas', D.filas.length]],
+      if (D.cuenta) filas.push({ valores: ['', '', '', '', 'Totales del período', r2(tIni), r2(td), r2(th), r2(tFin)], tipo: 'total' });
+      else filas.push({ valores: ['', '', '', '', 'Total de las cuentas', '', r2(td), r2(th), ''], tipo: 'total' });
+      const partidas = new Set(D.filas.map((x) => x.id)).size;
+      return { titulo: 'Integración por cuenta',
+        parametros: [`Empresa: ${empresaDe(ctx)}`, D.cuenta ? `Cuenta: ${D.cuenta} · ${D.nombre || 'no encontrada'}` : 'Cuenta: todas', `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.al)}`, ...(D.cuenta ? [`Saldo ${nat(D.cuenta) === -1 ? 'acreedor' : 'deudor'}`] : [])],
+        aviso: D.total > D.filas.length ? `Hay ${D.total.toLocaleString('es-GT')} filas; se muestran las primeras ${D.filas.length.toLocaleString('es-GT')}. Acorta el período o elige una cuenta para verlas todas.` : '',
+        kpis: D.cuenta ? [['Saldo anterior', q(tIni)], ['Debe', q(td)], ['Haber', q(th)], ['Saldo actual', q(tFin), 'ec-fin'], ['Partidas', partidas]]
+          : [['Cuentas', cuentas.length], ['Debe', q(td)], ['Haber', q(th)], ['Partidas', partidas]],
         columnas: [col('Año', 'texto', 7), col('Mes', 'texto', 6), col('Póliza', 'texto', 10), col('Fecha', 'texto', 11), col('Descripción', 'texto', 46), col('Saldo anterior', 'monto', 16), col('Debe', 'monto', 15), col('Haber', 'monto', 15), col('Saldo actual', 'monto', 16)],
         filas, firmas: ['Elaborado por', 'Revisado por', 'Contador general'] };
     },
-    archivo: (f) => `integracion_cuenta_${f.cuenta}_${f.al}` });
+    archivo: (f) => `integracion_cuenta_${f.cuenta || 'todas'}_${f.al}` });
 
   // ===================== b) Movimientos contables =====================
   window.PANTALLAS['con-int-movimientos'] = (cont) => pantalla(cont, {
