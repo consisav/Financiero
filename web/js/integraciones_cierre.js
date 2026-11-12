@@ -30,6 +30,8 @@
 
   const hoy = () => fmt.hoy();
   const inicioAnio = () => `${hoy().slice(0, 4)}-01-01`;
+  // Primer día del mes anterior.
+  const mesAnterior = () => { const [a, m] = hoy().split('-').map(Number); return m === 1 ? `${a - 1}-12-01` : `${a}-${String(m - 1).padStart(2, '0')}-01`; };
   const empresaDe = (ctx) => { const e = ctx.localidad(ctx.sel.loc); return e ? `${e.codigo} · ${e.nombre_comercial}` : ''; };
   const fecha = (n, lbl, v) => `<label class="campo"><span>${lbl}</span><input type="date" name="${n}" value="${v}"></label>`;
   const codigo = (v) => String(v || '').split(' ')[0].trim();
@@ -102,7 +104,7 @@
 
   const campoCuenta = (f, cuentas, opcional = false) => `<label class="campo cx-prov pr-prod"><span>Cuenta${opcional ? ' (opcional)' : ''}</span><input name="cuenta" list="ci-cuentas" value="${esc(f.cuenta)}" placeholder="${opcional ? 'Todas las cuentas' : 'Código de la cuenta'}" autocomplete="off"></label>
     <datalist id="ci-cuentas">${cuentas.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>`;
-  const campoCentro = (f, centros) => `<label class="campo cx-prov pr-prod"><span>Centro de costo</span><input name="centro" list="ci-centros" value="${esc(f.centro)}" placeholder="Código del centro" autocomplete="off"></label>
+  const campoCentro = (f, centros) => `<label class="campo cx-prov pr-prod"><span>Centro de costo</span><input name="centro" list="ci-centros" value="${esc(f.centro)}" placeholder="Todos los centros" autocomplete="off"></label>
     <datalist id="ci-centros">${centros.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>`;
   const nombreDe = (lista, cod) => lista.find((c) => c.codigo === cod)?.nombre || '';
 
@@ -117,29 +119,53 @@
   }
 
   // Filas de movimientos con saldo corrido (por la naturaleza de la cuenta) y resumen por tipo de documento.
-  function movimientos(D, f, porCuenta) {
+  //   modo 'cuenta': una sola cuenta, sin agrupar; 'cuentas': agrupado por cuenta; 'centros': por centro de costo y, dentro, por cuenta.
+  //   Solo se muestran las cuentas con movimientos en el período (con los módulos marcados).
+  function movimientos(D, f, modo) {
     const nat = (c) => num(D.nat?.[c]) || 1;
     const visibles = D.filas.filter((x) => f.tipos.has(x.t));
-    const filas = []; let n = 0;
-    const cuentas = porCuenta ? [...new Set([...Object.keys(D.saldos || {}), ...visibles.map((x) => x.c)])].sort() : [null];
-    let tIni = 0, tD = 0, tH = 0, tFin = 0;
-    cuentas.forEach((c) => {
-      const xs = c ? visibles.filter((x) => x.c === c) : visibles;
-      const ini = c ? num(D.saldos?.[c]) * nat(c) : Object.entries(D.saldos || {}).reduce((s, [k, v]) => s + num(v) * nat(k), 0);
-      if (c && !xs.length && Math.abs(ini) < 0.005) return;
-      let s = ini;
-      const nom = c ? (xs[0]?.cn || D.filas.find((x) => x.c === c)?.cn || '') : '';
-      if (c) filas.push({ valores: [`${c} · ${nom}`], tipo: 'grupo', combinar: true });
+    const filas = []; let n = 0, tD = 0, tH = 0;
+    const fila = (x, ant, s) => [n, x.c, x.t, x.doc, fmt.fechaDia(x.fd), x.pt, x.cc || '', r2(ant), num(x.d) ? r2(x.d) : '', num(x.h) ? r2(x.h) : '', r2(s), x.desc || ''];
+    const v = (x) => (x === '' ? '' : r2(x));
+    const pie = (txt, ini, d, h, s, tipo) => filas.push({ valores: ['', '', '', '', txt, '', '', v(ini), v(d), v(h), v(s), ''], tipo });
+    // Un bloque de movimientos de una cuenta (o de la cuenta elegida) con su saldo anterior.
+    const bloque = (xs, ini, titulo) => {
+      let s = ini, d = 0, h = 0;
+      if (titulo) filas.push({ valores: [titulo], tipo: 'grupo', combinar: true });
       filas.push({ valores: ['', '', '', '', 'Saldo anterior', '', '', '', '', '', r2(ini), ''], tipo: 'nota' });
-      let d = 0, h = 0;
-      xs.forEach((x) => {
-        const ant = s; s += (num(x.d) - num(x.h)) * nat(x.c); d += num(x.d); h += num(x.h); n++;
-        filas.push({ valores: [n, x.c, x.t, x.doc, fmt.fechaDia(x.fd), x.pt, x.cc || '', r2(ant), num(x.d) ? r2(x.d) : '', num(x.h) ? r2(x.h) : '', r2(s), x.desc || ''] });
+      xs.forEach((x) => { const ant = s; s += (num(x.d) - num(x.h)) * nat(x.c); d += num(x.d); h += num(x.h); n++; filas.push({ valores: fila(x, ant, s) }); });
+      tD += d; tH += h;
+      return { ini, d, h, s };
+    };
+    if (modo === 'cuenta') {
+      const ini = Object.entries(D.saldos || {}).reduce((t, [k, v]) => t + num(v) * nat(k), 0);
+      const b = bloque(visibles, ini, '');
+      return { filas, n, tD, tH, tIni: b.ini, tFin: b.s, visibles, grupos: 1 };
+    }
+    const porCuenta = (xs, saldo, sangria = '') => {
+      const cs = [...new Set(xs.map((x) => x.c))].sort();
+      cs.forEach((c) => {
+        const ys = xs.filter((x) => x.c === c);
+        const b = bloque(ys, num(saldo(c)) * nat(c), `${sangria}Cuenta ${c} · ${ys[0].cn || ''}`);
+        pie(`Total cuenta ${c}`, b.ini, b.d, b.h, b.s, 'subtotal');
       });
-      if (c) filas.push({ valores: ['', '', '', '', `Total ${c}`, '', '', r2(ini), r2(d), r2(h), r2(s), ''], tipo: 'subtotal' });
-      tIni += ini; tD += d; tH += h; tFin += s;
+      return cs.length;
+    };
+    if (modo === 'cuentas') {
+      const g = porCuenta(visibles, (c) => D.saldos?.[c]);
+      return { filas, n, tD, tH, visibles, grupos: g };
+    }
+    // Por centro de costo y cuenta.
+    const centros = [...new Set(visibles.map((x) => x.cc || ''))].sort();
+    let cuentas = 0;
+    centros.forEach((cc) => {
+      const xs = visibles.filter((x) => (x.cc || '') === cc);
+      filas.push({ valores: [`Centro de costo ${cc || 'sin centro'} · ${xs[0].ccn || ''}`], tipo: 'grupo', combinar: true });
+      const d0 = tD, h0 = tH;
+      cuentas += porCuenta(xs, (c) => D.saldos?.[`${cc}|${c}`], '   ');
+      pie(`Total centro ${cc}`, '', tD - d0, tH - h0, '', 'subtotal');
     });
-    return { filas, n, tIni, tD, tH, tFin, visibles };
+    return { filas, n, tD, tH, visibles, grupos: centros.length, cuentas };
   }
   function resumenTipos(visibles) {
     const m = new Map(); visibles.forEach((x) => { const a = m.get(x.t) || { n: 0, d: 0, h: 0 }; a.n++; a.d += num(x.d); a.h += num(x.h); m.set(x.t, a); });
@@ -175,43 +201,49 @@
   // ===================== b) Movimientos contables =====================
   window.PANTALLAS['con-int-movimientos'] = (cont) => pantalla(cont, {
     titulo: 'Integración de movimientos contables', icono: 'ti-list-details', rpc: 'con_integracion_movimientos', tipos: true,
-    ayuda: 'Detalle por documento de los movimientos de la cuenta: el tipo y número salen del documento que generó la partida; las pólizas del Cierre Preliminar se abren en cada documento y las partidas sin documento salen como POL. El saldo corre con los módulos marcados.',
-    f: () => ({ cuenta: '', desde: inicioAnio(), al: hoy(), tipos: new Set(TODOS) }),
-    filtros: (f, L) => `${campoCuenta(f, L.cuentas)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
-    falta: (f) => (!f.cuenta ? 'Escribe o elige la cuenta a integrar.' : f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
+    ayuda: 'Detalle por documento de los movimientos de la cuenta (o de todas, agrupadas por cuenta): el tipo y número salen del documento que generó la partida; las pólizas del Cierre Preliminar se abren en cada documento y las partidas sin documento salen como POL. El saldo corre con los módulos marcados.',
+    f: () => ({ cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS) }),
+    filtros: (f, L) => `${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
+    falta: (f) => (f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
     clave: (f) => `${f.cuenta}|${f.desde}|${f.al}`,
-    args: (f, ctx) => ({ p_loc: ctx.sel.loc, p_desde: f.desde, p_hasta: f.al, p_cuenta: f.cuenta, p_centro: null }),
+    args: (f, ctx) => ({ p_loc: ctx.sel.loc, p_desde: f.desde, p_hasta: f.al, p_cuenta: f.cuenta || null, p_centro: null }),
     construir: (ctx, f, D) => construirMov(ctx, f, D, false),
-    archivo: (f) => `movimientos_${f.cuenta}_${f.al}` });
+    archivo: (f) => `movimientos_${f.cuenta || 'todas'}_${f.al}` });
 
   // ===================== c) Movimientos por centro de costo =====================
   window.PANTALLAS['con-int-centro'] = (cont) => pantalla(cont, {
     titulo: 'Integración de movimientos por centro de costo', icono: 'ti-sitemap', rpc: 'con_integracion_movimientos', tipos: true, centros: true,
-    ayuda: 'Detalle por documento de los movimientos del centro de costo (y sus subcentros), agrupado por cuenta con su saldo anterior y su total. Si eliges una cuenta, solo esa cuenta y sus subcuentas.',
-    f: () => ({ centro: '', cuenta: '', desde: inicioAnio(), al: hoy(), tipos: new Set(TODOS) }),
+    ayuda: 'Detalle por documento de los movimientos del centro de costo y sus subcentros (o de todos los centros), agrupado por centro y cuenta con su saldo anterior y su total. Si eliges una cuenta, solo esa cuenta y sus subcuentas.',
+    f: () => ({ centro: '', cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS) }),
     filtros: (f, L) => `${campoCentro(f, L.centros)}${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
-    falta: (f) => (!f.centro ? 'Escribe o elige el centro de costo a integrar.' : f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
+    falta: (f) => (f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
     clave: (f) => `${f.centro}|${f.cuenta}|${f.desde}|${f.al}`,
-    args: (f, ctx) => ({ p_loc: ctx.sel.loc, p_desde: f.desde, p_hasta: f.al, p_cuenta: f.cuenta || null, p_centro: f.centro }),
+    args: (f, ctx) => ({ p_loc: ctx.sel.loc, p_desde: f.desde, p_hasta: f.al, p_cuenta: f.cuenta || null, p_centro: f.centro || '*' }),
     construir: (ctx, f, D) => construirMov(ctx, f, D, true),
-    archivo: (f) => `movimientos_centro_${f.centro}_${f.al}` });
+    archivo: (f) => `movimientos_centro_${f.centro || 'todos'}_${f.al}` });
 
   function construirMov(ctx, f, D, porCentro) {
-    const M = movimientos(D, f, porCentro);
+    const modo = porCentro ? 'centros' : f.cuenta ? 'cuenta' : 'cuentas';
+    const M = movimientos(D, f, modo);
     const filas = [...M.filas];
-    filas.push({ valores: ['', '', '', '', porCentro ? 'Total del centro de costo' : 'Totales del período', '', '', r2(M.tIni), r2(M.tD), r2(M.tH), r2(M.tFin), ''], tipo: 'total' });
+    if (modo === 'cuenta') filas.push({ valores: ['', '', '', '', 'Totales del período', '', '', r2(M.tIni), r2(M.tD), r2(M.tH), r2(M.tFin), ''], tipo: 'total' });
+    else filas.push({ valores: ['', '', '', '', porCentro ? 'Total de los centros de costo' : 'Total de las cuentas', '', '', '', r2(M.tD), r2(M.tH), '', ''], tipo: 'total' });
     const res = resumenTipos(M.visibles);
     if (res.length) {
       filas.push({ valores: ['Resumen por tipo de documento'], tipo: 'grupo', combinar: true });
       res.forEach((r) => filas.push({ valores: ['', '', r.k, `${NOMBRE_TIPO.get(r.k) || r.k}`, `${r.n} mov.`, '', '', '', r2(r.d), r2(r.h), '', ''] }));
     }
     const ocultos = TODOS.length - f.tipos.size;
-    const sujeto = porCentro ? `Centro: ${D.centro} · ${D.centro_nombre || 'no encontrado'}` : `Cuenta: ${D.cuenta} · ${D.cuenta_nombre || 'no encontrada'}`;
+    const cuenta = D.cuenta ? `Cuenta: ${D.cuenta} · ${D.cuenta_nombre || 'no encontrada'}` : 'Cuenta: todas';
+    const centro = D.centro && D.centro !== '*' ? `Centro: ${D.centro} · ${D.centro_nombre || 'no encontrado'}` : 'Centro: todos';
+    const movs = ['Movimientos', `${M.n}${M.n !== D.filas.length ? ` de ${D.filas.length}` : ''}`];
     return {
       titulo: porCentro ? 'Movimientos por centro de costo' : 'Movimientos contables',
-      parametros: [`Empresa: ${empresaDe(ctx)}`, sujeto, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.al)}`, ...(porCentro && D.cuenta ? [`Cuenta: ${D.cuenta}`] : []), ocultos ? `Módulos: ${f.tipos.size} de ${TODOS.length}` : 'Módulos: todos', 'Moneda: quetzales'],
-      aviso: D.total > D.filas.length ? `Hay ${D.total.toLocaleString('es-GT')} movimientos; se muestran los primeros ${D.filas.length.toLocaleString('es-GT')}. Acorta el período para verlos todos.` : '',
-      kpis: [['Saldo anterior', q(M.tIni)], ['Debe', q(M.tD)], ['Haber', q(M.tH)], ['Saldo actual', q(M.tFin), 'ec-fin'], ['Movimientos', `${M.n}${M.n !== D.filas.length ? ` de ${D.filas.length}` : ''}`]],
+      parametros: [`Empresa: ${empresaDe(ctx)}`, porCentro ? centro : cuenta, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.al)}`, ...(porCentro ? [cuenta] : []), ocultos ? `Módulos: ${f.tipos.size} de ${TODOS.length}` : 'Módulos: todos', 'Moneda: quetzales'],
+      aviso: D.total > D.filas.length ? `Hay ${D.total.toLocaleString('es-GT')} movimientos; se muestran los primeros ${D.filas.length.toLocaleString('es-GT')}. Acorta el período o elige una cuenta para verlos todos.` : '',
+      kpis: modo === 'cuenta'
+        ? [['Saldo anterior', q(M.tIni)], ['Debe', q(M.tD)], ['Haber', q(M.tH)], ['Saldo actual', q(M.tFin), 'ec-fin'], movs]
+        : [[porCentro ? 'Centros de costo' : 'Cuentas', M.grupos], ...(porCentro ? [['Cuentas', M.cuentas]] : []), ['Debe', q(M.tD)], ['Haber', q(M.tH)], movs],
       columnas: COLS_MOV, filas, firmas: ['Elaborado por', 'Revisado por', 'Contador general'] };
   }
 })();
