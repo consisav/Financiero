@@ -1,0 +1,15 @@
+-- Script 215 · Organización 2 (Hospital Miraflores): cierres contables del sistema anterior, de la carpeta
+--   «Datos Cierres y Centros Hospital Miraflores al 04-11-2026» (los archivos de «Data Cierres» son de la organización 3, Futura Farma-Mavisa).
+--   · CON_TIPOS_CIERRES (19) → tipos_cierre (tabla nueva: catálogo de tipos de cierre: previo, definitivo, anual, balance, cierres de centros…).
+--   · CON_CIERRES (929) → cierres_contables_anteriores (tabla nueva: historial de cierres por localidad, año, mes y tipo, con
+--     RESULTADO_EJERCICIO, FECHA y USUARIO). NO se marcan meses cerrados en cierres_mes: hacerlo bloquearía los documentos que aún se migran.
+--   · CON_SALDOS_CIERRE (3 archivos, 152204 filas) → saldos_cierre (tabla nueva): solo las 43167 filas con algún monto; las
+--     109037 filas en cero no traen información (cada cierre listaba todas las cuentas). Cada fila se liga a su cuenta
+--     (código y VERSION del catálogo de la localidad) en cuenta_id; si la cuenta no existe queda el código (cuenta_codigo).
+--   · CON_SALDOS_CIERRE_CC (64301 filas) → saldos_cierre_centros (tabla nueva): solo las 679 con algún monto, ligadas a su centro.
+--   · PRE_CENTROS_COSTOS: idéntico al que ya migró el script 201 (445 centros, sin diferencias): no se repite.
+--     PRE_CENTROS_CUENTAS no viene en la carpeta del Hospital (el de «Data Cierres» es de la organización 3).
+--   · Años 202 y 2006 en el sistema anterior (errores de captura; sus cierres tienen fecha 2023-2024 y 2026): se guardan tal como venían.
+--   · Localidad del sistema anterior = correlativo de la localidad de la organización 2 (1 → 2-01, 2 → 2-02, 3 → 2-03).
+--   Partes: supabase/pendientes/215_cierres_parte_0 (estructura, tipos y cierres) y 215_cierres_parte_1..N (saldos). Se pueden ejecutar de nuevo: actualizan.
+--   Esta migración es el índice: el SQL está en las partes de supabase/pendientes (0 a 19).
