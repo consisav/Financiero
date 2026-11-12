@@ -1,9 +1,27 @@
 -- Script 202 · Organización 2 (Hospital Miraflores): vendedores del sistema anterior (VEN_VENDEDORES.xls), 1 vendedor(es).
 --   VENDEDOR = código; NOMBRE_VENDEDOR = nombre; ESTADO (A = activo) = activo; TIPO_VENDEDOR va a la columna nueva tipo_vendedor
 --   (O en el sistema anterior). FECHA_INGRESO viene vacía. Se puede ejecutar de nuevo: la segunda vez solo actualiza.
+-- Columnas nuevas: el ALTER TABLE necesita la tabla vendedores sola por un instante. Solo se pide ese bloqueo si falta alguna columna,
+--   y si otra consulta la está usando se reintenta cada pocos segundos (hasta 1 minuto) en vez de cancelar el script.
+set lock_timeout = '5s';
+do $columnas$
+declare v_i int;
+begin
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'vendedores'
+      and column_name in ('tipo_vendedor', 'estado_anterior')) = 2 then return; end if;
+  for v_i in 1..10 loop
+    begin
+      alter table public.vendedores add column if not exists tipo_vendedor text, add column if not exists estado_anterior text;
+      return;
+    exception when lock_not_available then
+      raise notice 'La tabla vendedores está ocupada por otra consulta; reintento %/10.', v_i;
+      perform pg_sleep(1);
+    end;
+  end loop;
+  raise exception 'La tabla vendedores sigue ocupada por otra consulta. Espere a que termine (o revise "Ver consultas en ejecución") y vuelva a correr este script.';
+end;
+$columnas$;
 set lock_timeout = '20s';
-alter table public.vendedores add column if not exists tipo_vendedor text;
-alter table public.vendedores add column if not exists estado_anterior text;
 
 do $vendedores$
 declare v_org bigint; v_n int := 0; v_a int := 0; v_sin int;

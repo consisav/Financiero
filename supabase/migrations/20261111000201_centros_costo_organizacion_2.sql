@@ -9,11 +9,27 @@
 --   Columnas nuevas en centros_costo: nivel_anterior (NIVEL), integracion_anterior (INTEGRACION), estado_anterior (ESTADO),
 --   creado_al_migrar (centro mayor creado porque no venía en el archivo).
 --   Se puede ejecutar de nuevo: la segunda vez solo actualiza.
+-- Columnas nuevas: el ALTER TABLE necesita la tabla centros_costo sola por un instante. Solo se pide ese bloqueo si falta alguna columna,
+--   y si otra consulta la está usando se reintenta cada pocos segundos (hasta 1 minuto) en vez de cancelar el script.
+set lock_timeout = '5s';
+do $columnas$
+declare v_i int;
+begin
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'centros_costo'
+      and column_name in ('nivel_anterior', 'integracion_anterior', 'estado_anterior', 'creado_al_migrar')) = 4 then return; end if;
+  for v_i in 1..10 loop
+    begin
+      alter table public.centros_costo add column if not exists nivel_anterior integer, add column if not exists integracion_anterior text, add column if not exists estado_anterior text, add column if not exists creado_al_migrar boolean not null default false;
+      return;
+    exception when lock_not_available then
+      raise notice 'La tabla centros_costo está ocupada por otra consulta; reintento %/10.', v_i;
+      perform pg_sleep(1);
+    end;
+  end loop;
+  raise exception 'La tabla centros_costo sigue ocupada por otra consulta. Espere a que termine (o revise "Ver consultas en ejecución") y vuelva a correr este script.';
+end;
+$columnas$;
 set lock_timeout = '20s';
-alter table public.centros_costo add column if not exists nivel_anterior integer;
-alter table public.centros_costo add column if not exists integracion_anterior text;
-alter table public.centros_costo add column if not exists estado_anterior text;
-alter table public.centros_costo add column if not exists creado_al_migrar boolean not null default false;
 
 do $centros$
 declare

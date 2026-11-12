@@ -9,7 +9,27 @@
 --   Se reversa anulando la póliza: los documentos vuelven a quedar pendientes. Con el mes cerrado no se toca.
 
 -- ============ Transacciones por módulo ============
-alter table public.transacciones_contables add column if not exists modulo_cierre text;
+-- Columnas nuevas: el ALTER TABLE necesita la tabla transacciones_contables sola por un instante. Solo se pide ese bloqueo si falta alguna columna,
+--   y si otra consulta la está usando se reintenta cada pocos segundos (hasta 1 minuto) en vez de cancelar el script.
+set lock_timeout = '5s';
+do $columnas$
+declare v_i int;
+begin
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'transacciones_contables'
+      and column_name in ('modulo_cierre')) = 1 then return; end if;
+  for v_i in 1..10 loop
+    begin
+      alter table public.transacciones_contables add column if not exists modulo_cierre text;
+      return;
+    exception when lock_not_available then
+      raise notice 'La tabla transacciones_contables está ocupada por otra consulta; reintento %/10.', v_i;
+      perform pg_sleep(1);
+    end;
+  end loop;
+  raise exception 'La tabla transacciones_contables sigue ocupada por otra consulta. Espere a que termine (o revise "Ver consultas en ejecución") y vuelva a correr este script.';
+end;
+$columnas$;
+reset lock_timeout;
 do $$
 begin
   if not exists (select 1 from pg_constraint where conname = 'transacciones_contables_modulo_cierre_check') then
