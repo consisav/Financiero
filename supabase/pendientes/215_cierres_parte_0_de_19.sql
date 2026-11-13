@@ -42,6 +42,11 @@ create table if not exists public.saldos_cierre_centros (
   saldo_actual_mi numeric(18, 2) not null default 0, saldo_mensual_mi numeric(18, 2) not null default 0, unique (localidad_id, anio, mes, tipo_cierre, centro_codigo)
 );
 create index if not exists saldos_cierre_centros_centro_idx on public.saldos_cierre_centros (centro_id);
+-- RLS explícito (el editor de Supabase avisa si una tabla nueva no lo tiene en el mismo script).
+alter table public.tipos_cierre enable row level security;
+alter table public.cierres_contables_anteriores enable row level security;
+alter table public.saldos_cierre enable row level security;
+alter table public.saldos_cierre_centros enable row level security;
 do $$
 declare t text;
 begin
