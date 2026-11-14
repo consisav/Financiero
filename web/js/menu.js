@@ -1018,7 +1018,8 @@ window.MODULOS = [
     ] },
     { subgrupo: 'Cierre y análisis', icono: 'ti-report-search', pantallas: [
       { id: 'rep-integraciones', nombre: 'Integraciones contables', icono: 'ti-arrows-join', descripcion: 'Saldos contables contra auxiliares, resumido o detallado por cuenta, con diferencias y gráfica. PDF y Excel.' },
-      { id: 'bitacora-cierres', nombre: 'Bitácora de cierres', icono: 'ti-history', descripcion: 'Cierres y reaperturas de meses y ejercicios con usuario, fecha y motivo, y las partidas de los procesos automáticos. PDF y Excel.' }
+      { id: 'bitacora-cierres', nombre: 'Bitácora de cierres', icono: 'ti-history', descripcion: 'Cierres y reaperturas de meses y ejercicios con usuario, fecha y motivo, y las partidas de los procesos automáticos. PDF y Excel.' },
+      { id: 'sintesis-cierres', nombre: 'Síntesis de cierres', icono: 'ti-report-search', descripcion: 'Cierres del sistema anterior por año, mes y tipo (maestro) y sus saldos por cuenta, con la cuenta mayor y sus subcuentas indentadas por nivel (detalle). PDF y Excel.' }
     ] }
   ];
 })();

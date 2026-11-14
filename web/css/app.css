@@ -6614,3 +6614,24 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
 .sm-fel .bm-form { height: 100%; }
 .sm-fel .sm-lista, .sm-fel .sm-dos .sm-tabla, .sm-fel .bm-form > .sm-ed { flex: 1 1 0; min-height: 220px; overflow: auto; }
 .sm-fel .sm-det { flex: 0 0 auto; }
+
+/* ===== Síntesis de cierres: maestro (cierres) arriba y detalle (saldos por cuenta) abajo ===== */
+.sc-form .sc-maestro { flex: 0 0 auto; max-height: 30%; min-height: 90px; display: flex; }
+.sc-form .sc-detalle { flex: 1 1 0; min-height: 0; display: flex; }
+.sc-form .sc-maestro > .pr-tabla, .sc-form .sc-detalle > .pr-tabla { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.sc-form .sc-maestro tr[data-cierre] { cursor: pointer; }
+.sc-form .sc-maestro tr[data-cierre]:hover td { background: var(--cl-azul); }
+.sc-form .sc-maestro tr[data-sel] td { background: var(--cl-azul); color: var(--acento); font-weight: 600; }
+.sc-form .sc-maestro .pr-tabla th:nth-child(1) { width: 6% !important; }
+.sc-form .sc-maestro .pr-tabla th:nth-child(2) { width: 10% !important; }
+.sc-form .sc-maestro .pr-tabla th:nth-child(3) { width: 28% !important; }
+.sc-form .sc-maestro .pr-tabla th:nth-child(4) { width: 10% !important; }
+.sc-form .sc-maestro .pr-tabla th:nth-child(5) { width: 9% !important; }
+.sc-form .sc-maestro .pr-tabla th:nth-child(6) { width: 14% !important; }
+.sc-form .sc-maestro .pr-tabla th:nth-child(7) { width: 14% !important; }
+.sc-form .sc-maestro .pr-tabla th:nth-child(8) { width: 9% !important; }
+.sc-form .sc-detalle .pr-tabla th:nth-child(1) { width: 15% !important; }
+.sc-form .sc-detalle .pr-tabla th:nth-child(2) { width: 33% !important; }
+.sc-form .sc-detalle .pr-tabla th:nth-child(3) { width: 6% !important; }
+.sc-form .sc-detalle .pr-tabla th:nth-child(n+4) { width: 11.5% !important; }
+.sc-form .sc-detalle td { white-space: pre !important; }
