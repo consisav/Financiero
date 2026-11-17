@@ -27,25 +27,89 @@
   ],
   "nota": "Un depósito con partida ya no cambia su valor, fecha ni cuenta: anula la partida o el depósito y regístralo de nuevo.",
   "campos": [
-   ["Cuenta bancaria *", "{cuentaBancaria}", "Cuenta de {empresa} donde entró el dinero; define el banco y la cuenta contable del Debe."],
-   ["No. depósito", "100245871", "Número impreso en la boleta del banco; sirve para conciliar con el estado de cuenta."],
-   ["Fecha *", "05/11/{anio}", "Día en que el banco recibió el depósito."],
-   ["Moneda / Cambio", "Quetzales · 1", "En dólares, el valor de cambio del día (ej. 7.75)."],
-   ["Valor *", "Q 3,450.00", "Monto de la boleta; el sistema muestra el equivalente en quetzales."],
-   ["Código / Cliente", "{cliente}", "Cliente que paga; con «Clientes varios» se detalla en las facturas."],
-   ["Depositó", "Juan Pérez", "Persona que llevó el dinero al banco."],
-   ["Descripción", "Pago facturas FE-7074 FE-7075", "Concepto que sale en la consulta, la póliza y los reportes."],
-   ["Tipo de operación", "EFECTIVO", "Efectivo, cheque o transferencia; ayuda a filtrar y conciliar."],
-   ["Imagen", "boleta-100245871.pdf", "Foto o PDF de la boleta (hasta 10 MB)."]
+   [
+    "Cuenta bancaria *",
+    "{cuentaBancaria}",
+    "Cuenta de {empresa} donde entró el dinero; define el banco y la cuenta contable del Debe."
+   ],
+   [
+    "No. depósito",
+    "100245871",
+    "Número impreso en la boleta del banco; sirve para conciliar con el estado de cuenta."
+   ],
+   [
+    "Fecha *",
+    "05/11/{anio}",
+    "Día en que el banco recibió el depósito."
+   ],
+   [
+    "Moneda / Cambio",
+    "Quetzales · 1",
+    "En dólares, el valor de cambio del día (ej. 7.75)."
+   ],
+   [
+    "Valor *",
+    "Q 3,450.00",
+    "Monto de la boleta; el sistema muestra el equivalente en quetzales."
+   ],
+   [
+    "Código / Cliente",
+    "{cliente}",
+    "Cliente que paga; con «Clientes varios» se detalla en las facturas."
+   ],
+   [
+    "Depositó",
+    "Juan Pérez",
+    "Persona que llevó el dinero al banco."
+   ],
+   [
+    "Descripción",
+    "Pago facturas FE-7074 FE-7075",
+    "Concepto que sale en la consulta, la póliza y los reportes."
+   ],
+   [
+    "Tipo de operación",
+    "EFECTIVO",
+    "Efectivo, cheque o transferencia; ayuda a filtrar y conciliar."
+   ],
+   [
+    "Imagen",
+    "boleta-100245871.pdf",
+    "Foto o PDF de la boleta (hasta 10 MB)."
+   ]
   ],
   "ejemplo": {
    "titulo": "Ejemplo de registro · Depósito con dos facturas",
-   "columnas": ["Factura", "Nombre factura", "Valor factura", "Valor abono", "Valor abono Q"],
-   "filas": [
-    ["FE-7074", "{cliente}", "Q 2,000.00", "Q 2,000.00", "Q 2,000.00"],
-    ["FE-7075", "{cliente}", "Q 1,450.00", "Q 1,450.00", "Q 1,450.00"]
+   "columnas": [
+    "Factura",
+    "Nombre factura",
+    "Valor factura",
+    "Valor abono",
+    "Valor abono Q"
    ],
-   "totales": ["Totales", "", "Q 3,450.00", "Q 3,450.00", "Q 3,450.00"],
+   "filas": [
+    [
+     "FE-7074",
+     "{cliente}",
+     "Q 2,000.00",
+     "Q 2,000.00",
+     "Q 2,000.00"
+    ],
+    [
+     "FE-7075",
+     "{cliente}",
+     "Q 1,450.00",
+     "Q 1,450.00",
+     "Q 1,450.00"
+    ]
+   ],
+   "totales": [
+    "Totales",
+    "",
+    "Q 3,450.00",
+    "Q 3,450.00",
+    "Q 3,450.00"
+   ],
    "nota": "La suma de los abonos debe ser igual al valor del depósito; el total aplicado se ve junto a las pestañas."
   },
   "resultado": {
@@ -54,12 +118,40 @@
     "Al «Contabilizar» con la transacción del depósito se arma este detalle; al «Generar partida» queda como póliza del mes y el depósito muestra «Partida 11-0045».",
     "El depósito queda ACTIVO y sin conciliar hasta que se marque en Conciliación bancaria con el estado de cuenta del banco."
    ],
-   "columnas": ["Línea", "Cuenta", "Nombre de la cuenta", "Debe", "Haber", "Centro"],
-   "filas": [
-    ["1", "1.1.1.02", "Bancos · {cuentaBancaria}", "Q 3,450.00", "", "01 · Administración"],
-    ["2", "1.1.2.01", "Clientes · {cliente}", "", "Q 3,450.00", "01 · Administración"]
+   "columnas": [
+    "Línea",
+    "Cuenta",
+    "Nombre de la cuenta",
+    "Debe",
+    "Haber",
+    "Centro"
    ],
-   "totales": ["", "", "Totales", "Q 3,450.00", "Q 3,450.00", "Cuadrada"],
+   "filas": [
+    [
+     "1",
+     "1.1.1.02",
+     "Bancos · {cuentaBancaria}",
+     "Q 3,450.00",
+     "",
+     "01 · Administración"
+    ],
+    [
+     "2",
+     "1.1.2.01",
+     "Clientes · {cliente}",
+     "",
+     "Q 3,450.00",
+     "01 · Administración"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales",
+    "Q 3,450.00",
+    "Q 3,450.00",
+    "Cuadrada"
+   ],
    "nota": "Las cuentas y el centro salen de la transacción contable configurada en Contabilidad › Objetos contables; los códigos de este ejemplo son ilustrativos."
   }
  },
@@ -85,17 +177,1293 @@
   "nota": "Los depósitos SIN PARTIDA no están en la contabilidad: genérales la partida antes del cierre del mes.",
   "reporte": {
    "titulo": "Ejemplo del reporte · Depósitos de octubre",
-   "puntos": ["Filtros: todas las cuentas · 01/10/{anio} al 31/10/{anio} · estado TODOS · orden Fecha ↓"],
-   "columnas": ["Depósito", "Fecha", "Cliente · descripción", "Cuenta bancaria", "Valor", "Estado", "Docs."],
-   "filas": [
-    ["100245871", "30/10/{anio}", "{cliente} · Pago FE-7074 FE-7075", "{cuentaBancaria}", "Q 3,450.00", "Conciliado", "2"],
-    ["100245655", "22/10/{anio}", "CLIENTES VARIOS · Ventas de contado semana 4", "{cuentaBancaria}", "Q 12,780.50", "Activo", "9"],
-    ["100245390", "15/10/{anio}", "{cliente} · Anticipo pedido 315", "{cuentaBancaria}", "Q 5,000.00", "Sin partida", "0"],
-    ["100245102", "08/10/{anio}", "CLIENTES VARIOS · Boleta duplicada", "{cuentaBancaria}", "Q 1,200.00", "Anulado", "0"]
+   "puntos": [
+    "Filtros: todas las cuentas · 01/10/{anio} al 31/10/{anio} · estado TODOS · orden Fecha ↓"
    ],
-   "totales": ["Total vigentes (3)", "", "", "", "Q 21,230.50", "1 anulado", ""],
+   "columnas": [
+    "Depósito",
+    "Fecha",
+    "Cliente · descripción",
+    "Cuenta bancaria",
+    "Valor",
+    "Estado",
+    "Docs."
+   ],
+   "filas": [
+    [
+     "100245871",
+     "30/10/{anio}",
+     "{cliente} · Pago FE-7074 FE-7075",
+     "{cuentaBancaria}",
+     "Q 3,450.00",
+     "Conciliado",
+     "2"
+    ],
+    [
+     "100245655",
+     "22/10/{anio}",
+     "CLIENTES VARIOS · Ventas de contado semana 4",
+     "{cuentaBancaria}",
+     "Q 12,780.50",
+     "Activo",
+     "9"
+    ],
+    [
+     "100245390",
+     "15/10/{anio}",
+     "{cliente} · Anticipo pedido 315",
+     "{cuentaBancaria}",
+     "Q 5,000.00",
+     "Sin partida",
+     "0"
+    ],
+    [
+     "100245102",
+     "08/10/{anio}",
+     "CLIENTES VARIOS · Boleta duplicada",
+     "{cuentaBancaria}",
+     "Q 1,200.00",
+     "Anulado",
+     "0"
+    ]
+   ],
+   "totales": [
+    "Total vigentes (3)",
+    "",
+    "",
+    "",
+    "Q 21,230.50",
+    "1 anulado",
+    ""
+   ],
    "nota": "En Excel detallado cada depósito lleva debajo sus líneas contables y sus facturas o recibos."
   },
   "voz": "Consulta de depósitos de {empresa}, del uno al treinta y uno de octubre: tres depósitos vigentes por veintiún mil doscientos treinta quetzales con cincuenta centavos. Un depósito anulado. Uno conciliado y dos sin conciliar. Un depósito sin partida contable por cinco mil quetzales."
+ },
+ "cuentas-bancarias": {
+  "puntos": [
+   "Catálogo de los bancos de {empresa} y de sus cuentas bancarias: moneda, saldo inicial, saldo mínimo, chequera, formato de cheque y cuenta contable.",
+   "Arriba están los bancos (maestro); al elegir uno, abajo aparecen sus cuentas y a la derecha la ficha de la cuenta elegida.",
+   "Toda pantalla bancaria (depósitos, notas, cheques, conciliación y disponibilidad) usa estas cuentas."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Cuentas bancarias.",
+   "Elige la organización ({organizacion}) y la localidad ({empresa}); cada localidad tiene su propio catálogo de bancos y cuentas.",
+   "Si el banco no existe, presiona «Banco», escribe su código y nombre (ej. 03 · Banco Industrial) y guarda: aparece en «Bancos de la empresa».",
+   "Haz clic en el banco: abajo se listan sus cuentas con saldo mínimo, saldo actual y moneda.",
+   "Presiona «Nueva cuenta»: a la derecha se abre la ficha «Nueva cuenta bancaria».",
+   "Escribe la «Cuenta bancaria *» (el número exacto del banco, ej. 0990012345) y el «Nombre *» con que se verá en las listas (ej. Monetaria operaciones).",
+   "Elige la «Moneda» (Quetzales o Dólares). Los documentos de la cuenta se registran en esa moneda y se convierten a quetzales.",
+   "Escribe el «Saldo inicial» y la fecha «Saldo inicial al» (el saldo del estado de cuenta el día que empiezas a usar el sistema) y el «Saldo mínimo» que no debe bajar la cuenta.",
+   "En «Cuenta contable» elige la cuenta de bancos del catálogo contable (ej. 1.1.1.02); es la que va al Debe en los depósitos y al Haber en los cheques.",
+   "Si la cuenta emite cheques, llena la chequera: «Cheque inicial», «Cheque final», «Utilizados» y «Mínimo» (aviso cuando quedan pocos cheques); elige el «Formato de cheque (reporte)» del banco.",
+   "Guarda la ficha: la cuenta aparece en la lista del banco con su saldo actual.",
+   "Para cambiar datos selecciona la cuenta, corrige y guarda. «Eliminar» solo se permite si la cuenta no tiene documentos; si ya los tiene, desactívala."
+  ],
+  "nota": "Al terminar una chequera, actualiza «Cheque inicial» y «Cheque final» con la nueva y pon «Utilizados» en 0.",
+  "campos": [
+   [
+    "Banco",
+    "03 · Banco Industrial",
+    "Banco al que pertenece la cuenta (catálogo de la empresa)."
+   ],
+   [
+    "Cuenta bancaria *",
+    "0990012345",
+    "Número de la cuenta tal como lo da el banco."
+   ],
+   [
+    "Nombre *",
+    "Monetaria operaciones",
+    "Nombre corto que aparece en las listas y reportes."
+   ],
+   [
+    "Moneda",
+    "Quetzales",
+    "Moneda en que se manejan sus documentos."
+   ],
+   [
+    "Saldo inicial / al",
+    "Q 125,000.00 · 01/01/{anio}",
+    "Saldo de arranque para disponibilidad y conciliación."
+   ],
+   [
+    "Saldo mínimo",
+    "Q 10,000.00",
+    "Alerta en Disponibilidad cuando la cuenta baja de este monto."
+   ],
+   [
+    "Cuenta contable",
+    "1.1.1.02 · Bancos",
+    "Cuenta del catálogo que mueven sus documentos."
+   ],
+   [
+    "Cheque inicial / final",
+    "1001 · 1500",
+    "Rango de la chequera vigente."
+   ],
+   [
+    "Utilizados / Mínimo",
+    "12 · 20",
+    "Cheques ya emitidos y aviso de reposición."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo de registro · Cuentas de un banco",
+   "columnas": [
+    "Cuenta bancaria",
+    "Nombre",
+    "Saldo mínimo",
+    "Saldo actual",
+    "Moneda local"
+   ],
+   "filas": [
+    [
+     "0990012345",
+     "Monetaria operaciones",
+     "Q 10,000.00",
+     "Q 148,325.40",
+     "Quetzales"
+    ],
+    [
+     "0990067890",
+     "Monetaria dólares",
+     "US$ 2,000.00",
+     "US$ 15,420.00",
+     "Dólares"
+    ]
+   ],
+   "nota": "El saldo actual = saldo inicial + depósitos y notas de crédito − cheques y notas de débito."
+  }
+ },
+ "notas-credito": {
+  "puntos": [
+   "Registra las notas de crédito del banco y las transferencias recibidas en las cuentas de {empresa}: dinero que entra sin boleta de depósito.",
+   "Usa la misma pantalla que los depósitos: banco y cuenta, número de nota, fecha, moneda, valor, cliente u ordenante, descripción e imagen del comprobante.",
+   "Pestañas: Detalle contable, Facturas y Recibos que la nota liquida."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Notas de crédito / transferencias y elige {empresa}.",
+   "Presiona «Nuevo»: el título cambia a «Nueva nota de crédito».",
+   "Elige la «Cuenta bancaria *» donde entró la transferencia (ej. {cuentaBancaria}).",
+   "Escribe el «No. nota» (número de la nota o referencia de la transferencia) y la «Fecha *» en que el banco la acreditó.",
+   "Elige la «Moneda» y el «Cambio»; escribe el «Valor *». A la derecha se ve el valor en quetzales.",
+   "En «Cliente y descripción» escribe el código y nombre del cliente (ej. {cliente}); en «Ordenante» quien hizo la transferencia y en «Descripción» el concepto (ej. Transferencia pago FE-7080). Marca «Clientes varios» si son varios clientes.",
+   "Escribe el «Tipo de operación» (ej. TRANSFERENCIA ACH) y adjunta el comprobante en «Imagen de la operación bancaria».",
+   "Pestaña «Detalle contable»: elige la «Transacción» y presiona «Contabilizar»; revisa que los «Totales» de Debe y Haber cuadren.",
+   "En «Facturas» presiona «Agregar» por cada factura que cubre la nota y escribe número, nombre, valor y abono.",
+   "Presiona «Registrar»: se asigna el folio y queda ACTIVA.",
+   "Presiona «Generar partida» para crear la póliza.",
+   "Usa «Modificar» para corregir (antes de la partida) o «Anular» con su motivo; consulta las notas en «Consulta de Notas»."
+  ],
+  "nota": "Los intereses que paga el banco también se registran como nota de crédito con su transacción de ingresos financieros.",
+  "campos": [
+   [
+    "Cuenta bancaria *",
+    "{cuentaBancaria}",
+    "Cuenta que recibió el dinero."
+   ],
+   [
+    "No. nota",
+    "ACH-558120",
+    "Referencia de la transferencia o número de la nota."
+   ],
+   [
+    "Fecha *",
+    "12/11/{anio}",
+    "Fecha de acreditación del banco."
+   ],
+   [
+    "Valor *",
+    "Q 8,900.00",
+    "Monto acreditado."
+   ],
+   [
+    "Cliente",
+    "{cliente}",
+    "Quien paga."
+   ],
+   [
+    "Ordenante",
+    "Contabilidad del cliente",
+    "Quien hizo la transferencia."
+   ],
+   [
+    "Descripción",
+    "Transferencia pago FE-7080",
+    "Concepto de la nota."
+   ]
+  ],
+  "resultado": {
+   "titulo": "Resultado del proceso · Partida de la nota de crédito",
+   "columnas": [
+    "Línea",
+    "Cuenta",
+    "Nombre de la cuenta",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "1",
+     "1.1.1.02",
+     "Bancos · {cuentaBancaria}",
+     "Q 8,900.00",
+     ""
+    ],
+    [
+     "2",
+     "1.1.2.01",
+     "Clientes · {cliente}",
+     "",
+     "Q 8,900.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales",
+    "Q 8,900.00",
+    "Q 8,900.00"
+   ],
+   "nota": "Códigos ilustrativos: las cuentas salen de la transacción elegida."
+  }
+ },
+ "notas-debito": {
+  "puntos": [
+   "Registra las notas de débito del banco y las transferencias enviadas desde las cuentas de {empresa}: pagos a proveedores, comisiones, cargos e impuestos bancarios.",
+   "El tercero es un proveedor de productos o de servicios; el «Beneficiario» es a quien se pagó o transfirió.",
+   "Pestañas: Detalle contable, Notas, Facturas y Otros documentos que la nota paga."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Notas de débito / transferencias y elige {empresa}.",
+   "Presiona «Nuevo» (título «Nueva nota de débito»).",
+   "Elige la «Cuenta bancaria *» de la que salió el dinero (ej. {cuentaBancaria}).",
+   "Escribe el «No. nota» o referencia de la transferencia y la «Fecha *» del débito.",
+   "Elige la moneda, el cambio y escribe el «Valor *».",
+   "Marca si es «Proveedor de productos» o «Proveedor de servicios»; escribe código y nombre del proveedor (ej. {proveedor}), el «Beneficiario» y la «Descripción» (ej. Pago factura 4521 transferencia).",
+   "Adjunta el comprobante de la transferencia en «Imagen de la operación bancaria».",
+   "Pestaña «Detalle contable»: elige la «Transacción» (ej. pago a proveedores o comisiones bancarias) y presiona «Contabilizar»; revisa el cuadre.",
+   "En «Facturas» agrega las facturas del proveedor que se pagan con la nota (número, nombre, valor y abono).",
+   "Presiona «Registrar» y luego «Generar partida».",
+   "Las transferencias masivas a proveedores se generan solas en Cheques › Generación transferencias.",
+   "Corrige con «Modificar» o deja sin efecto con «Anular» (con motivo)."
+  ],
+  "nota": "Comisiones e impuestos del banco (IVA, timbres) se registran como nota de débito con su transacción de gastos bancarios.",
+  "campos": [
+   [
+    "Cuenta bancaria *",
+    "{cuentaBancaria}",
+    "Cuenta que se debita."
+   ],
+   [
+    "No. nota",
+    "TRF-90321",
+    "Referencia de la transferencia."
+   ],
+   [
+    "Valor *",
+    "Q 4,480.00",
+    "Monto debitado."
+   ],
+   [
+    "Tipo de proveedor",
+    "Proveedor de productos",
+    "Productos o servicios."
+   ],
+   [
+    "Proveedor",
+    "{proveedor}",
+    "A quién se paga."
+   ],
+   [
+    "Descripción",
+    "Pago factura 4521",
+    "Concepto."
+   ]
+  ],
+  "resultado": {
+   "titulo": "Resultado del proceso · Partida de la nota de débito",
+   "columnas": [
+    "Línea",
+    "Cuenta",
+    "Nombre de la cuenta",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "1",
+     "2.1.1.01",
+     "Proveedores · {proveedor}",
+     "Q 4,480.00",
+     ""
+    ],
+    [
+     "2",
+     "1.1.1.02",
+     "Bancos · {cuentaBancaria}",
+     "",
+     "Q 4,480.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales",
+    "Q 4,480.00",
+    "Q 4,480.00"
+   ],
+   "nota": "Códigos ilustrativos: las cuentas salen de la transacción elegida."
+  }
+ },
+ "consulta-de-notas": {
+  "puntos": [
+   "Reporte de las notas de crédito y de débito de {empresa} en un rango de fechas, con totales de crédito, débito, anuladas, conciliadas, sin conciliar y sin partida.",
+   "Al elegir una nota se ven abajo su detalle contable y las facturas, recibos o compras que liquida."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Consulta de Notas.",
+   "Elige la organización y la localidad ({empresa}).",
+   "En «Cuenta bancaria» deja «Todas» o elige una (ej. {cuentaBancaria}).",
+   "En «Tipo de nota» elige «Crédito y débito», «Notas de crédito» o «Notas de débito».",
+   "En «Cliente o proveedor» escribe parte del nombre o el código (vacío = todos).",
+   "Ajusta «Fecha inicial» y «Fecha final» (por omisión desde la primera nota de la empresa hasta hoy).",
+   "Elige el «Estado» (TODOS, VIGENTES, ANULADOS, CONCILIADOS, SIN CONCILIAR, SIN PARTIDA) y el orden.",
+   "Lee los totales del encabezado: monto de crédito y de débito vigentes, anuladas, conciliadas y sin partida.",
+   "Haz clic en una nota (marcada NC o ND) para ver su detalle contable y documentos.",
+   "Ábrela en su pantalla con el botón de la última columna para modificar o anular.",
+   "Presiona «Generar Excel» (resumido o detallado)."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo del reporte · Notas de noviembre",
+   "puntos": [
+    "Filtros: todas las cuentas · crédito y débito · 01/11/{anio} al 15/11/{anio}"
+   ],
+   "columnas": [
+    "Nota",
+    "Fecha",
+    "Cliente / proveedor · descripción",
+    "Valor",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "NC ACH-558120",
+     "12/11/{anio}",
+     "{cliente} · Transferencia pago FE-7080",
+     "Q 8,900.00",
+     "Activo"
+    ],
+    [
+     "ND TRF-90321",
+     "10/11/{anio}",
+     "{proveedor} · Pago factura 4521",
+     "Q 4,480.00",
+     "Conciliado"
+    ],
+    [
+     "ND 000781",
+     "05/11/{anio}",
+     "Banco · Comisión manejo de cuenta",
+     "Q 75.00",
+     "Sin partida"
+    ]
+   ],
+   "totales": [
+    "Crédito Q 8,900.00 (1)",
+    "",
+    "Débito Q 4,555.00 (2)",
+    "",
+    ""
+   ]
+  },
+  "voz": "Consulta de notas de {empresa}, del uno al quince de noviembre: una nota de crédito por ocho mil novecientos quetzales y dos notas de débito por cuatro mil quinientos cincuenta y cinco quetzales. Una nota conciliada y una sin partida contable."
+ },
+ "conciliacion-bancaria": {
+  "puntos": [
+   "Compara cada mes el saldo de una cuenta en el sistema con el estado de cuenta del banco y marca los documentos que el banco ya pagó o acreditó.",
+   "Muestra saldo según banco, saldo contable, saldo del sistema, conciliados, en circulación y la diferencia, que debe quedar en cero.",
+   "Pestañas: movimientos del mes, resumen, detalle de diferencias y las cuentas de la empresa con el estado de su conciliación."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Conciliación bancaria.",
+   "Elige la organización, la localidad ({empresa}), el «Año» y el «Mes» a conciliar.",
+   "En el encabezado elige la cuenta bancaria (ej. {cuentaBancaria}).",
+   "Escribe el saldo final según el estado de cuenta del banco y su «Fecha»; adjunta la imagen o PDF del estado de cuenta.",
+   "En la pestaña de movimientos marca la casilla «Conciliado» de cada depósito, nota o cheque que aparece en el estado de cuenta.",
+   "Lo que no marques queda «En circulación» (por ejemplo cheques entregados que el proveedor aún no cobra).",
+   "Revisa el bloque de saldos: saldo sistema − en circulación debe ser igual al saldo según banco.",
+   "Si hay diferencia (cargos del banco no registrados, errores de digitación), anótala en «Detalle de diferencias» con «Agregar»: descripción, valor real y valor contable.",
+   "Registra lo que falte (por ejemplo una nota de débito por comisión) y vuelve a marcar.",
+   "Escribe las «Observaciones» y guarda.",
+   "Cuando la diferencia sea cero presiona «Cerrar conciliación»: el mes queda bloqueado.",
+   "Para corregir un mes cerrado usa «Reversar cierre», luego «Modificar», corrige y vuelve a cerrar."
+  ],
+  "nota": "Concilia en orden: un mes no debe cerrarse si el anterior de la misma cuenta está abierto.",
+  "campos": [
+   [
+    "Año / Mes",
+    "{anio} · Octubre",
+    "Período a conciliar."
+   ],
+   [
+    "Cuenta bancaria",
+    "{cuentaBancaria}",
+    "Cuenta del estado de cuenta."
+   ],
+   [
+    "Saldo según banco",
+    "Q 141,870.40",
+    "Saldo final impreso en el estado de cuenta."
+   ],
+   [
+    "Fecha",
+    "31/10/{anio}",
+    "Fecha del saldo."
+   ],
+   [
+    "Conciliado",
+    "✔ en cada documento",
+    "Marca lo que aparece en el estado de cuenta."
+   ],
+   [
+    "Observaciones",
+    "Cheque 1012 pendiente de cobro",
+    "Notas del mes."
+   ]
+  ],
+  "resultado": {
+   "titulo": "Resultado del proceso · Cuadre de la conciliación",
+   "columnas": [
+    "Concepto",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "Saldo del sistema al 31/10",
+     "Q 148,325.40"
+    ],
+    [
+     "(−) Cheques en circulación (2)",
+     "Q 6,455.00"
+    ],
+    [
+     "(=) Saldo conciliado",
+     "Q 141,870.40"
+    ],
+    [
+     "Saldo según banco",
+     "Q 141,870.40"
+    ]
+   ],
+   "totales": [
+    "Diferencia",
+    "Q 0.00"
+   ],
+   "nota": "Con diferencia en cero se cierra la conciliación de octubre."
+  }
+ },
+ "disponibilidad-bancaria": {
+  "puntos": [
+   "Genera la disponibilidad de las cuentas de {empresa} a una fecha de corte: saldo inicial, ingresos, egresos, saldo en libros, estimado en banco (saldo + en circulación), mínimo y disponible.",
+   "Cada generación se guarda en el histórico con su correlativo (SIGLAS-AÑO-MES-NÚMERO), el usuario y la fecha y hora.",
+   "Muestra un tablero con indicadores, las cuentas agrupadas por banco con subtotales, el resumen por empresa y el consolidado de la organización."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Disponibilidad bancaria.",
+   "Elige la organización y la localidad ({empresa}).",
+   "En «Banco» deja «Todos» o elige uno; en «Cuenta bancaria» deja «Todas» o elige una.",
+   "En «Disponibilidad al» escribe la fecha de corte (ej. {hoy}).",
+   "Presiona «Generar disponibilidad»: el sistema calcula y guarda la generación con su correlativo.",
+   "Revisa los indicadores: total disponible en quetzales, en circulación, estimado en banco y cuentas bajo su mínimo.",
+   "Revisa «Cuentas de la empresa»: por cada cuenta, saldo inicial, ingresos, egresos, saldo en libros, estimado en banco, mínimo y disponible Q.",
+   "Revisa «Organización por empresa» y «Organización por banco» para ver el total del grupo.",
+   "Las cuentas bajo el mínimo salen resaltadas: programa depósitos o traslados.",
+   "Imprime en PDF o genera el Excel; la generación queda en Consulta de Disponibilidad."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo del reporte · Disponibilidad al {hoy}",
+   "columnas": [
+    "Cuenta bancaria",
+    "Saldo inicial",
+    "Ingresos",
+    "Egresos",
+    "Saldo (libros)",
+    "Mínimo",
+    "Disponible Q"
+   ],
+   "filas": [
+    [
+     "0990012345 · Monetaria operaciones",
+     "Q 120,000.00",
+     "Q 65,430.50",
+     "Q 37,105.10",
+     "Q 148,325.40",
+     "Q 10,000.00",
+     "Q 138,325.40"
+    ],
+    [
+     "0990034567 · Ahorro reserva",
+     "Q 50,000.00",
+     "Q 0.00",
+     "Q 0.00",
+     "Q 50,000.00",
+     "Q 60,000.00",
+     "Q -10,000.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "Q 170,000.00",
+    "Q 65,430.50",
+    "Q 37,105.10",
+    "Q 198,325.40",
+    "",
+    "Q 128,325.40"
+   ],
+   "nota": "La cuenta de ahorro está bajo su mínimo: aparece en las alertas."
+  },
+  "voz": "Disponibilidad de {empresa} al día de hoy: dos cuentas con un saldo en libros de ciento noventa y ocho mil trescientos veinticinco quetzales con cuarenta centavos. Disponible sobre los mínimos: ciento veintiocho mil trescientos veinticinco quetzales. Atención: la cuenta de ahorro reserva está diez mil quetzales bajo su mínimo."
+ },
+ "consulta-de-disponibilidad": {
+  "puntos": [
+   "Histórico de las disponibilidades generadas de {empresa}: correlativo, fecha de generación, fecha de corte, banco y cuenta, y quién la generó.",
+   "Al elegir una generación se ve el mismo tablero tal como quedó ese día (no se recalcula)."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Consulta de Disponibilidad.",
+   "Elige la organización y la localidad ({empresa}).",
+   "En «Generadas desde» y «Hasta» elige el rango (por omisión desde la primera generación).",
+   "Filtra por «Banco», «Cuenta bancaria» o por quién la «Generó».",
+   "En la lista «Generaciones» haz clic en un correlativo.",
+   "Revisa el tablero guardado: indicadores, cuentas por banco y resumen.",
+   "Imprime en PDF o genera el Excel de esa generación."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo del reporte · Generaciones del mes",
+   "columnas": [
+    "Correlativo",
+    "Generada",
+    "Disponibilidad al",
+    "Banco · cuenta",
+    "Generó",
+    "Total disponible Q"
+   ],
+   "filas": [
+    [
+     "EMP-{anio}-11-0003",
+     "15/11/{anio} 08:10",
+     "15/11/{anio}",
+     "Todos",
+     "{usuario}",
+     "Q 128,325.40"
+    ],
+    [
+     "EMP-{anio}-11-0002",
+     "08/11/{anio} 08:05",
+     "08/11/{anio}",
+     "Todos",
+     "{usuario}",
+     "Q 112,940.00"
+    ]
+   ]
+  },
+  "voz": "Consulta de disponibilidad de {empresa}: dos generaciones en noviembre. La más reciente, del quince de noviembre, muestra un disponible de ciento veintiocho mil trescientos veinticinco quetzales."
+ },
+ "disponibilidad-integrada": {
+  "puntos": [
+   "Saldos de todas las cuentas de todas las localidades de {organizacion} a una fecha, en su moneda y en quetzales, con su saldo mínimo y lo disponible sobre el mínimo.",
+   "Pestañas por cuenta, por localidad y por banco; alertas de cuentas bajo el mínimo y saldos por moneda. Es una consulta: no modifica nada."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Disponibilidad integrada.",
+   "Elige una localidad de la organización ({empresa}); la consulta toma toda {organizacion}.",
+   "En «Saldos al» escribe la fecha de corte.",
+   "Revisa las «Alertas» (cuentas bajo el mínimo) y los «Saldos por moneda».",
+   "Pestaña por cuenta: localidad, banco, cuenta, moneda, saldo, cambio, saldo Q, mínimo y disponible sobre el mínimo.",
+   "Pestaña por localidad: total de cada empresa y su participación en el grupo.",
+   "Pestaña por banco: cuántas cuentas y cuánto dinero hay en cada banco.",
+   "Presiona «Imprimir» para el PDF."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo del reporte · Organización por localidad",
+   "columnas": [
+    "Localidad",
+    "Cuentas",
+    "Saldo Q",
+    "Mínimo",
+    "Bajo el mínimo",
+    "Participación"
+   ],
+   "filas": [
+    [
+     "{empresa}",
+     "2",
+     "Q 198,325.40",
+     "Q 70,000.00",
+     "1",
+     "62.4%"
+    ],
+    [
+     "Otra empresa",
+     "3",
+     "Q 119,500.00",
+     "Q 30,000.00",
+     "0",
+     "37.6%"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "5",
+    "Q 317,825.40",
+    "Q 100,000.00",
+    "1",
+    "100%"
+   ]
+  },
+  "voz": "Disponibilidad integrada de {organizacion}: cinco cuentas con trescientos diecisiete mil ochocientos veinticinco quetzales con cuarenta centavos. {empresa} tiene el sesenta y dos por ciento. Una cuenta está bajo su saldo mínimo."
+ },
+ "solicitud-de-cheques": {
+  "puntos": [
+   "Pide que se emita un cheque: tipo de solicitud, requisición (número, formulario, fecha y estado), importe, beneficiario (proveedor, empleado o a favor de) y la descripción del pago.",
+   "La solicitud pasa por los estados PENDIENTE → APROBADA (o RECHAZADA/ANULADA) → EMITIDA cuando se emite el cheque.",
+   "Pestañas: Solicitar cheque (con el número de requisición para dar seguimiento), Listado de solicitudes y Ayuda."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cheques › Solicitud de cheques y elige {empresa}.",
+   "Presiona «Nueva»: se abre «Nueva solicitud de cheque».",
+   "Elige el «Tipo de solicitud *» (pago a proveedor, anticipo, viáticos, reintegro de caja, etc.) y escribe el «# Formulario» si usan formulario físico.",
+   "Escribe la «Fecha *», elige la «Moneda» y el «Valor cambio», y el «Monto *»; se muestra el monto en quetzales.",
+   "En «Beneficiario» elige el «Proveedor» (ej. {proveedor}) o el «Empleado»; el «Beneficiario (a favor de) *» se llena con su nombre y puedes corregirlo: es el nombre que saldrá impreso en el cheque.",
+   "En «Solicitud» elige el «Depto. solicita» y el «Solicitante».",
+   "Escribe la «Descripción general del pago *» (ej. Pago factura 4521 compra de insumos) y las «Observaciones».",
+   "Presiona «Solicitar cheque»: el sistema da el número de requisición; con ese número se da seguimiento.",
+   "El aprobador abre la solicitud y presiona «Aprobar» o «Rechazar» (o «Regresar a pendiente» para que la corrijan).",
+   "Mientras esté PENDIENTE se puede «Modificar» y «Guardar cambios», o «Anular».",
+   "Con la solicitud APROBADA presiona «Emitir cheque»: abre Emisión de cheques con la solicitud ya elegida.",
+   "En el «Listado de solicitudes» filtra por tipo, estado y fechas; «Imprimir» saca la requisición."
+  ],
+  "campos": [
+   [
+    "Tipo de solicitud *",
+    "PAGO A PROVEEDOR",
+    "Motivo del cheque."
+   ],
+   [
+    "Fecha *",
+    "{hoy}",
+    "Fecha de la requisición."
+   ],
+   [
+    "Monto *",
+    "Q 4,480.00",
+    "Valor del cheque solicitado."
+   ],
+   [
+    "Proveedor",
+    "{proveedor}",
+    "Proveedor a pagar (o empleado)."
+   ],
+   [
+    "Beneficiario *",
+    "Nombre que irá en el cheque",
+    "A favor de quien se emite."
+   ],
+   [
+    "Solicitante",
+    "{usuario}",
+    "Quien pide el cheque."
+   ],
+   [
+    "Descripción *",
+    "Pago factura 4521 insumos",
+    "Concepto del pago."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Listado de solicitudes",
+   "columnas": [
+    "Requisición",
+    "Fecha",
+    "Tipo",
+    "Beneficiario",
+    "Monto Q",
+    "Estado",
+    "Cheque"
+   ],
+   "filas": [
+    [
+     "00045",
+     "{hoy}",
+     "PAGO A PROVEEDOR",
+     "{proveedor}",
+     "Q 4,480.00",
+     "APROBADA",
+     ""
+    ],
+    [
+     "00044",
+     "10/11/{anio}",
+     "VIÁTICOS",
+     "Juan Pérez",
+     "Q 600.00",
+     "EMITIDA",
+     "1012"
+    ]
+   ]
+  }
+ },
+ "emision-de-cheques": {
+  "puntos": [
+   "Emite e imprime los cheques de las cuentas de {empresa}: el número sale de la chequera de la cuenta y se ve cuántos cheques quedan disponibles.",
+   "Tiene «A favor de» (beneficiario impreso), proveedor, solicitud aprobada, no negociable, CXC, firmado, valor en letras, detalle contable y facturas pagadas.",
+   "Imprime cheque y voucher, solo cheque o solo voucher; un cheque impreso ya no cambia su valor ni beneficiario."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cheques › Emisión de cheques y elige {empresa}.",
+   "Presiona «Nuevo»: el «Siguiente cheque» muestra el número que tomará de la chequera y «Cheques disp.» cuántos quedan.",
+   "Elige la «Cuenta bancaria *» (ej. {cuentaBancaria}) y la «Fecha *».",
+   "Si viene de una solicitud, elígela en «Solicitud»: se llenan beneficiario, monto y descripción.",
+   "Escribe el «Valor *» y revisa la moneda y el cambio.",
+   "Marca «Proveedor de productos» o «de servicios», escribe código y nombre del proveedor (ej. {proveedor}), «A favor de» (nombre impreso) y la «Descripción» del pago.",
+   "Marca «No negociable» si solo se puede depositar a la cuenta del beneficiario; «CXC» si el cheque genera una cuenta por cobrar; «Firmado» cuando ya tenga firmas.",
+   "Pestaña «Detalle contable»: elige la «Transacción» y presiona «Contabilizar»; revisa el cuadre.",
+   "Pestaña «Facturas pagadas»: agrega las facturas del proveedor que paga el cheque.",
+   "Presiona «Registrar»: el cheque toma su número y la chequera suma uno a «Utilizados».",
+   "Elige en la lista «Cheque y voucher», «Solo cheque» o «Solo voucher» y presiona «Imprimir»: el valor sale en letras (ej. CUATRO MIL CUATROCIENTOS OCHENTA QUETZALES CON 00/100).",
+   "Presiona «Generar partida» para la póliza; si hubo un error, «Anular» con su motivo (el número queda anulado)."
+  ],
+  "nota": "Cuando «Cheques disp.» llega al mínimo de la chequera sale en rojo: pide una chequera nueva al banco.",
+  "campos": [
+   [
+    "Cuenta bancaria *",
+    "{cuentaBancaria}",
+    "Cuenta y chequera que se usan."
+   ],
+   [
+    "No. cheque",
+    "1013 (automático)",
+    "Siguiente de la chequera."
+   ],
+   [
+    "Valor *",
+    "Q 4,480.00",
+    "Monto del cheque."
+   ],
+   [
+    "A favor de",
+    "Beneficiario",
+    "Nombre impreso en el cheque."
+   ],
+   [
+    "Solicitud",
+    "00045 · {proveedor}",
+    "Solicitud aprobada (opcional)."
+   ],
+   [
+    "No negociable",
+    "✔",
+    "Solo depósito en cuenta del beneficiario."
+   ]
+  ],
+  "resultado": {
+   "titulo": "Resultado del proceso · Cheque 1013 y su partida",
+   "puntos": [
+    "Valor en letras: CUATRO MIL CUATROCIENTOS OCHENTA QUETZALES CON 00/100",
+    "La solicitud 00045 pasa a EMITIDA con el cheque 1013."
+   ],
+   "columnas": [
+    "Línea",
+    "Cuenta",
+    "Nombre de la cuenta",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "1",
+     "2.1.1.01",
+     "Proveedores · {proveedor}",
+     "Q 4,480.00",
+     ""
+    ],
+    [
+     "2",
+     "1.1.1.02",
+     "Bancos · {cuentaBancaria}",
+     "",
+     "Q 4,480.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales",
+    "Q 4,480.00",
+    "Q 4,480.00"
+   ]
+  }
+ },
+ "consulta-de-cheques": {
+  "puntos": [
+   "Reporte de los cheques de {empresa} en un rango de fechas (por omisión del 1 del mes anterior a hoy) con sus totales: vigentes, anulados, conciliados, sin conciliar y sin partida.",
+   "Al elegir un cheque se ven abajo su detalle contable y las compras y facturas que pagó."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cheques › Consulta de Cheques y elige {empresa}.",
+   "En «Cuenta bancaria» deja «Todas» o elige una.",
+   "En «Beneficiario o proveedor» escribe parte del nombre o código.",
+   "Revisa «Fecha inicial» (1 del mes anterior) y «Fecha final» (hoy) y cámbialas si necesitas otro período.",
+   "Elige el «Estado» y el «Ordenar por» (número, fecha o valor).",
+   "Lee los totales: monto de los vigentes, anulados, conciliados, sin conciliar y sin partida.",
+   "Haz clic en un cheque para ver su detalle contable y las compras pagadas.",
+   "Con el botón de la última columna ábrelo en Emisión de cheques.",
+   "Presiona «Generar Excel» (resumido o detallado)."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo del reporte · Cheques de octubre y noviembre",
+   "columnas": [
+    "Cheque",
+    "Fecha",
+    "A favor de · descripción",
+    "Valor",
+    "Estado",
+    "Compras"
+   ],
+   "filas": [
+    [
+     "1013",
+     "{hoy}",
+     "{proveedor} · Pago factura 4521",
+     "Q 4,480.00",
+     "Activo",
+     "1"
+    ],
+    [
+     "1012",
+     "10/11/{anio}",
+     "Juan Pérez · Viáticos",
+     "Q 600.00",
+     "Conciliado",
+     "0"
+    ],
+    [
+     "1011",
+     "28/10/{anio}",
+     "Anulado por error de impresión",
+     "Q 0.00",
+     "Anulado",
+     "0"
+    ]
+   ],
+   "totales": [
+    "Vigentes (2)",
+    "",
+    "",
+    "Q 5,080.00",
+    "1 anulado",
+    ""
+   ]
+  },
+  "voz": "Consulta de cheques de {empresa}, del uno de octubre a hoy: dos cheques vigentes por cinco mil ochenta quetzales y un cheque anulado. Uno conciliado y uno pendiente de cobro."
+ },
+ "generacion-cheques": {
+  "puntos": [
+   "Paga de forma automática las facturas y recibos de compra pendientes (Facturas de compra por pagar) emitiendo cheques: uno por proveedor o uno por factura.",
+   "Arriba están las compras con saldo, su casilla «Generar» y el resumen de lo marcado; abajo la compra elegida con su detalle contable y el panel de generación.",
+   "Cada cheque toma el número de la chequera, liquida las compras y genera su partida contable."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cheques › Generación cheques y elige {empresa}.",
+   "Filtra por «Documento» (facturas o recibos), «Proveedor» e «Ingreso desde / hasta» y presiona «Consultar».",
+   "Revisa cada compra: documento, proveedor, transacción, fecha de ingreso, vencimiento, valor total, bonificaciones y «Pendiente liq.».",
+   "Marca la casilla «Generar» de las compras a pagar (o «Marcar» para todas); el resumen muestra cuántas y el total.",
+   "Haz clic en una compra para revisar abajo sus notas de crédito, descuentos y su detalle contable.",
+   "En el panel de generación elige la cuenta bancaria, la fecha de los cheques y la «Transacción» del pago.",
+   "Elige si se hace un cheque por proveedor (agrupa sus facturas) o uno por factura, y escribe la «Descripción».",
+   "Presiona generar: se crean los cheques con su número de chequera, se liquidan las compras y se genera la partida de cada uno; los mensajes del proceso aparecen abajo.",
+   "Presiona «Imprimir relación» para la lista de cheques generados.",
+   "Imprime cada cheque desde Emisión de cheques (cheque y voucher)."
+  ],
+  "resultado": {
+   "titulo": "Resultado del proceso · Cheques generados",
+   "columnas": [
+    "Cheque",
+    "Beneficiario",
+    "Facturas pagadas",
+    "Partida",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "1014",
+     "{proveedor}",
+     "FAC 4521, FAC 4560",
+     "11-0052",
+     "Q 9,230.00"
+    ],
+    [
+     "1015",
+     "Servicios Técnicos, S.A.",
+     "FAC 889",
+     "11-0053",
+     "Q 1,850.00"
+    ]
+   ],
+   "totales": [
+    "2 cheques",
+    "",
+    "3 facturas",
+    "",
+    "Q 11,080.00"
+   ]
+  }
+ },
+ "generacion-transferencias": {
+  "puntos": [
+   "Paga las compras pendientes por transferencia: crea notas de débito con la referencia del lote y la cuenta destino de cada proveedor.",
+   "Descarga el lote (CSV) para subirlo a la banca en línea del banco."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cheques › Generación transferencias y elige {empresa}.",
+   "Filtra documento, proveedor y fechas de ingreso; presiona «Consultar».",
+   "Revisa que cada proveedor tenga «Banco destino» y «Cuenta destino» (se configuran en el catálogo de proveedores).",
+   "Marca «Generar» en las compras a pagar.",
+   "Elige la cuenta bancaria origen, la fecha, la «Transacción», el «Tipo de cambio» y escribe la «Referencia del lote» (ej. LOTE-{anio}-11-01) y la «Descripción».",
+   "Presiona generar: se crea una nota de débito por proveedor con la referencia del lote, se liquidan sus compras y se genera la partida.",
+   "Presiona «Descargar lote (CSV)» y súbelo a la banca en línea.",
+   "Imprime la relación con «Imprimir relación»."
+  ],
+  "resultado": {
+   "titulo": "Resultado del proceso · Lote LOTE-{anio}-11-01",
+   "columnas": [
+    "Lote",
+    "Proveedor",
+    "Banco destino",
+    "Cuenta destino",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "LOTE-{anio}-11-01",
+     "{proveedor}",
+     "Banco Industrial",
+     "0450012233",
+     "Q 9,230.00"
+    ],
+    [
+     "LOTE-{anio}-11-01",
+     "Servicios Técnicos, S.A.",
+     "BAM",
+     "3010098877",
+     "Q 1,850.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "2 transferencias",
+    "",
+    "",
+    "Q 11,080.00"
+   ]
+  }
+ },
+ "facturas-de-compra": {
+  "puntos": [
+   "Las compras de {empresa} con saldo pendiente de pagar: son las mismas del Ingreso de compras del módulo de Compras.",
+   "Muestra documento, proveedor, fecha, total, IVA, saldo, contraseña de pago y estado; desde aquí se ve qué se pagará en Generación cheques o transferencias."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cheques › Facturas de compra por pagar y elige {empresa}.",
+   "Filtra por «Estado» y por «Fecha desde / hasta».",
+   "Revisa cada compra: compra, tipo, documento, fecha, proveedor, NIT, total, IVA y saldo.",
+   "Elige una compra para ver su detalle, su detalle contable y los pagos (documentos a liquidar).",
+   "Si falta la contraseña de pago presiona «Contraseña» para crearla.",
+   "Para pagarlas usa Generación cheques o Generación transferencias."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Compras por pagar",
+   "columnas": [
+    "Compra",
+    "Documento",
+    "Fecha",
+    "Proveedor",
+    "Total",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "C-0981",
+     "FAC A-4521",
+     "02/11/{anio}",
+     "{proveedor}",
+     "Q 4,480.00",
+     "Q 4,480.00"
+    ],
+    [
+     "C-0975",
+     "FAC B-889",
+     "28/10/{anio}",
+     "Servicios Técnicos, S.A.",
+     "Q 1,850.00",
+     "Q 1,850.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "Total",
+    "Q 6,330.00",
+    "Q 6,330.00"
+   ]
+  },
+  "voz": "{empresa} tiene dos facturas de compra por pagar con un saldo de seis mil trescientos treinta quetzales."
+ },
+ "definicion-cajas": {
+  "puntos": [
+   "Define las cajas chicas de {empresa}: nombre, responsable, tipo de movimiento, modalidad, transacción, cuenta principal, centros de costo, moneda, monto asignado, usuario que liquida y cuenta bancaria de reintegro.",
+   "Incluye la vinculación de cuentas para la contabilización por carga masiva y los tipos de gasto con su cuenta contable."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cajas › Definición de Cajas y elige {empresa}.",
+   "A la izquierda están las cajas (número, nombre, responsable, tipo y estado). Presiona «Nueva caja».",
+   "Escribe el «Nombre *» (ej. Caja chica administración) y elige el «Responsable».",
+   "Elige el «Tipo de movimiento» (tipo de caja) y la «Modalidad» (normal o liquidación).",
+   "Elige la «Moneda» y escribe el «Monto asignado» (fondo fijo, ej. Q 5,000.00).",
+   "Elige la «Transacción» contable de la caja, la cuenta principal y los centros de costo.",
+   "Elige el «Usuario que liquida» y la «Cuenta bancaria de reintegro» (de donde sale el cheque o nota de reposición), y las cuentas del IVA y de retenciones.",
+   "En «Vinculación de cuentas» indica la cuenta de la caja, la de anticipo y la «Cuenta de migración».",
+   "En «Tipos de gasto» presiona «Agregar» por cada tipo (combustible, papelería, mensajería…) y elige su cuenta contable; «Cargar cuentas» trae las cuentas que ya usan los documentos de la caja.",
+   "Guarda la caja; imprime el listado en PDF o Excel."
+  ],
+  "campos": [
+   [
+    "Nombre *",
+    "Caja chica administración",
+    "Nombre de la caja."
+   ],
+   [
+    "Responsable",
+    "Encargada de caja",
+    "Quien maneja el efectivo."
+   ],
+   [
+    "Modalidad",
+    "Normal",
+    "Normal o por liquidación."
+   ],
+   [
+    "Monto asignado",
+    "Q 5,000.00",
+    "Fondo fijo de la caja."
+   ],
+   [
+    "Cuenta bancaria de reintegro",
+    "{cuentaBancaria}",
+    "De donde sale la reposición."
+   ],
+   [
+    "Tipo de gasto · cuenta",
+    "Combustible · 6.1.2.05",
+    "Cuenta de cada tipo de gasto."
+   ]
+  ]
+ },
+ "cajas-chicas": {
+  "puntos": [
+   "Opera cada caja chica: se elige la caja en «Selección de caja a operar» y con «Ir a detalle» se administra.",
+   "Cada mes la caja tiene una subcaja con su valor, tasa, póliza y estado; en ella se registran los documentos (facturas y recibos) con su desglose fiscal (IVA, IDP, INGUAT, timbre, exentos, no deducibles y retención) y cuenta de gasto.",
+   "Con los documentos se reconstruye el detalle contable y se liquida la subcaja con su póliza."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cajas › Cajas chicas y elige {empresa}.",
+   "En «Selección de caja a operar» haz clic en la caja (ej. {caja}) y presiona «Ir a detalle». «Con info.» muestra solo las subcajas con información.",
+   "Si no existe la subcaja del mes, presiona «Crear subcaja»: escribe «Año», «Mes», «Valor del fondo» y la cuenta y cheque del anticipo.",
+   "Elige la subcaja en la lista «Subcajas».",
+   "Presiona «Nuevo» para registrar un documento: «Serie», «Documento *», «Fecha *», «Tipo» (factura electrónica, especial, recibo…), «NIT» y «Proveedor *».",
+   "Escribe el «Total factura *», elige la «Clasificación» (servicios, bienes, combustible…) y la cuenta de gasto; el sistema calcula base, IVA, IDP, INGUAT, timbre y exento.",
+   "Si aplica retención escribe el «Valor ret.»; en «Justificación» explica el gasto. Guarda.",
+   "Repite con cada documento; con «Marcar/Desmarcar» eliges los que entran en la liquidación.",
+   "Presiona «Reconstruir detalle contable»: arma las líneas de gasto, IVA y la contrapartida de la caja.",
+   "Revisa el «Resumen de la liquidación» y presiona «Guardar liquidación»: la subcaja queda liquidada con su póliza.",
+   "Con «Cerrar caja» se bloquea; «Reabrir caja» permite corregir.",
+   "En «Reportes» genera «Resumen contable», «Detalle contable», «Movimientos» o «Documentos» en PDF o Excel."
+  ],
+  "campos": [
+   [
+    "Año / Mes",
+    "{anio} · Noviembre",
+    "Subcaja del mes."
+   ],
+   [
+    "Documento *",
+    "FEL A1B2-3344",
+    "Número de la factura."
+   ],
+   [
+    "Proveedor *",
+    "Gasolinera El Sol",
+    "Emisor del documento."
+   ],
+   [
+    "Clasificación",
+    "COMBUSTIBLE",
+    "Define IDP e IVA."
+   ],
+   [
+    "Total factura *",
+    "Q 300.00",
+    "Total pagado."
+   ],
+   [
+    "Justificación",
+    "Combustible mensajería",
+    "Motivo del gasto."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Documentos liquidados de la subcaja",
+   "columnas": [
+    "Documento",
+    "Proveedor",
+    "Total",
+    "IDP",
+    "Base",
+    "IVA"
+   ],
+   "filas": [
+    [
+     "A1B2-3344",
+     "Gasolinera El Sol",
+     "Q 300.00",
+     "Q 18.00",
+     "Q 251.79",
+     "Q 30.21"
+    ],
+    [
+     "F-1020",
+     "Librería Central",
+     "Q 112.00",
+     "Q 0.00",
+     "Q 100.00",
+     "Q 12.00"
+    ]
+   ],
+   "totales": [
+    "Totales",
+    "",
+    "Q 412.00",
+    "Q 18.00",
+    "Q 351.79",
+    "Q 42.21"
+   ]
+  },
+  "resultado": {
+   "titulo": "Resultado del proceso · Detalle contable de la subcaja",
+   "columnas": [
+    "Línea",
+    "Cuenta",
+    "Nombre de la cuenta",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "1",
+     "6.1.2.05",
+     "Combustibles",
+     "Q 269.79",
+     ""
+    ],
+    [
+     "2",
+     "6.1.2.08",
+     "Papelería y útiles",
+     "Q 100.00",
+     ""
+    ],
+    [
+     "3",
+     "1.1.4.01",
+     "IVA por cobrar",
+     "Q 42.21",
+     ""
+    ],
+    [
+     "4",
+     "1.1.1.01",
+     "Caja chica administración",
+     "",
+     "Q 412.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales",
+    "Q 412.00",
+    "Q 412.00"
+   ],
+   "nota": "El IDP se suma al gasto de combustible. Códigos ilustrativos."
+  }
+ },
+ "liquidacion-cajas-chicas": {
+  "puntos": [
+   "Liquida varias subcajas a la vez: muestra las subcajas de una caja (o de todas) con su mes, total de gastos, anticipo, adelanto y lo que falta por liquidar.",
+   "Las marcadas se liquidan con una nota o un cheque (cuenta bancaria, número, fecha y total) y cada subcaja queda con su póliza."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Cajas › Liquidación de Cajas Chicas y elige {empresa}.",
+   "Elige la «Caja» (o todas) y en «Subcajas» las pendientes; presiona «Consultar».",
+   "Revisa cada subcaja: mes, total gastos, anticipo (cuenta y valor), adelanto y «Por liquidar».",
+   "Marca las subcajas a liquidar.",
+   "En «Ejecutar la liquidación» elige la «Cuenta bancaria», si será cheque o nota, el número, la «Fecha» y revisa el total.",
+   "Presiona «Liquidar»: cada subcaja queda LIQUIDADA con su póliza y se registra el documento bancario de reintegro.",
+   "Imprime el listado en PDF o Excel."
+  ],
+  "resultado": {
+   "titulo": "Resultado del proceso · Subcajas liquidadas",
+   "columnas": [
+    "Caja",
+    "Subcaja",
+    "Mes",
+    "Total gastos",
+    "Por liquidar",
+    "Cheque / nota",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "01",
+     "45",
+     "Octubre",
+     "Q 4,212.50",
+     "Q 4,212.50",
+     "Cheque 1016",
+     "LIQUIDADA"
+    ],
+    [
+     "01",
+     "46",
+     "Noviembre",
+     "Q 412.00",
+     "Q 412.00",
+     "Cheque 1016",
+     "LIQUIDADA"
+    ]
+   ],
+   "totales": [
+    "",
+    "2 subcajas",
+    "",
+    "Q 4,624.50",
+    "Q 4,624.50",
+    "",
+    ""
+   ]
+  }
  }
 }
