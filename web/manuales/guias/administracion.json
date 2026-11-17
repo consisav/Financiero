@@ -1,0 +1,692 @@
+{
+ "usuarios": {
+  "puntos": [
+   "Usuarios del sistema con su código, nombre, correo, empresa activa, rol y estado; abajo la ficha del usuario elegido (empresa y rol, creado, vence clave, empleado, extensión, teléfono, correo de reportes, firma).",
+   "Los usuarios migrados del sistema anterior aparecen «Por crear»: se les escribe el correo y «Crear» genera su cuenta.",
+   "Solo el Super Administrador Global puede eliminar usuarios; los demás se desactivan."
+  ],
+  "pasos": [
+   "Entra a Administración › Catálogos › Usuarios › Usuarios.",
+   "Filtra por «Organización» y «Localidad» o usa el buscador (usuario, nombre o correo). Los indicadores muestran usuarios, activos, por crear y claves vencidas.",
+   "Para un usuario «Por crear», escribe su correo en la fila y presiona «Crear»: aparece la clave temporal una sola vez («Copiar»); vence hoy y el usuario la cambia al entrar.",
+   "Haz clic en un usuario para ver su ficha abajo.",
+   "Presiona «Modificar»: corrige el código de usuario, nombre, organización y «Empresa principal».",
+   "En «Empresas y rol en cada una» marca el acceso a cada empresa y elige su rol («Todas las empresas», «Mismo rol en todas»). El Global puede marcar «Super Administrador de la organización».",
+   "Desmarca «Activo» para bloquear el acceso; ajusta «Fecha vence clave», empleado, extensión, teléfono (WhatsApp) y correo para reportes; sube la imagen de la firma.",
+   "Presiona guardar.",
+   "«Generar usuario» propone el código (iniciales + primer apellido) y «Enviar cambio de clave» manda al correo el enlace para cambiarla.",
+   "Solo el Super Administrador Global: «Eliminar» borra la cuenta (no a sí mismo ni a otro Global; si tiene movimientos, se desactiva en su lugar). La papelera de una fila «Por crear» la quita."
+  ],
+  "campos": [
+   [
+    "Usuario (código)",
+    "JPerez",
+    "Letras y números, 2 a 20."
+   ],
+   [
+    "Nombre",
+    "Juan Pérez",
+    "Nombre completo."
+   ],
+   [
+    "Empresa principal",
+    "{empresa}",
+    "Empresa con la que entra."
+   ],
+   [
+    "Rol en la empresa",
+    "Contador",
+    "Define lo que ve y hace."
+   ],
+   [
+    "Fecha vence clave",
+    "31/12/{anio}",
+    "Le pide cambiarla al vencer."
+   ],
+   [
+    "Correo para reportes",
+    "reportes@empresa.com",
+    "Destino de los reportes gerenciales."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Lista de usuarios",
+   "columnas": [
+    "Usuario",
+    "Nombre",
+    "Empresa",
+    "Rol",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "JPerez",
+     "Juan Pérez",
+     "{empresa}",
+     "Contador",
+     "Activo"
+    ],
+    [
+     "MLopez",
+     "María López",
+     "{empresa} +2",
+     "Administrador",
+     "Activo"
+    ],
+    [
+     "BOD",
+     "BODEGA",
+     "{empresa}",
+     "Desde 07-10-2025",
+     "Por crear"
+    ]
+   ]
+  }
+ },
+ "generar-usuario": {
+  "puntos": [
+   "Genera el código de usuario (iniciales de los nombres + primer apellido: Juan Carlos Tut → JCtut) y una clave temporal que se muestra una sola vez y vence hoy."
+  ],
+  "pasos": [
+   "Entra a Administración › Catálogos › Usuarios › Generar clave (o «Generar usuario» desde la ficha).",
+   "En «Buscar usuario» escribe el nombre o correo y elígelo.",
+   "Presiona «Generar usuario»: se propone el «Usuario *»; corrígelo si ya existe.",
+   "Presiona «Asignar clave»: aparece la clave temporal.",
+   "Presiona «Copiar» y entrégala al usuario de forma segura.",
+   "Al entrar, el sistema le pide crear su clave nueva (mínimo 8 caracteres con letras y números)."
+  ],
+  "campos": [
+   [
+    "Usuario *",
+    "JCtut",
+    "Iniciales + primer apellido."
+   ],
+   [
+    "Clave",
+    "Se muestra una sola vez",
+    "Vence hoy ({hoy})."
+   ]
+  ]
+ },
+ "modulos": {
+  "puntos": [
+   "Módulos principales del sistema (izquierda) y la ficha del módulo elegido con sus sub-módulos (derecha), su estado y orden en el menú."
+  ],
+  "pasos": [
+   "Entra a Administración › Catálogos › Módulos › Módulos.",
+   "Elige un módulo de la lista.",
+   "En la ficha revisa nombre, estado y orden; presiona «Modificar» para cambiarlos.",
+   "Presiona «+ Sub-módulo» para agregar una opción.",
+   "«+ Módulo» crea un módulo nuevo.",
+   "Los cambios se ven en el menú al volver a entrar."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Módulo Caja y Bancos",
+   "columnas": [
+    "Sub-módulo",
+    "Estado",
+    "Orden"
+   ],
+   "filas": [
+    [
+     "Bancos",
+     "Activo",
+     "1"
+    ],
+    [
+     "Cheques",
+     "Activo",
+     "2"
+    ],
+    [
+     "Cajas",
+     "Activo",
+     "3"
+    ]
+   ]
+  }
+ },
+ "roles-modulos": {
+  "puntos": [
+   "Roles a la izquierda; a la derecha el rol con sus usuarios, el navegador de módulos y la matriz de accesos del módulo elegido: ver, crear, modificar, anular e imprimir.",
+   "Cada usuario puede tener excepciones a los permisos de su rol."
+  ],
+  "pasos": [
+   "Entra a Administración › Catálogos › Módulos › Roles módulos.",
+   "Elige un rol (o «+ Rol» para crear uno y «Modificar rol» para cambiar su nombre).",
+   "Con «+ Asignar usuario» agrega los usuarios del rol.",
+   "En el navegador de módulos elige el módulo (ej. Caja y Bancos); se ve el avance de permisos.",
+   "En la matriz marca por cada pantalla: ver, crear, modificar, anular, imprimir.",
+   "Para un usuario con permisos distintos usa «Accesos de» y marca sus excepciones.",
+   "Presiona «Guardar accesos» (o «Descartar» para deshacer)."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Rol Contador en Caja y Bancos",
+   "columnas": [
+    "Pantalla",
+    "Ver",
+    "Crear",
+    "Modificar",
+    "Anular",
+    "Imprimir"
+   ],
+   "filas": [
+    [
+     "Depósitos multimoneda",
+     "✔",
+     "✔",
+     "✔",
+     "",
+     "✔"
+    ],
+    [
+     "Emisión de cheques",
+     "✔",
+     "",
+     "",
+     "",
+     "✔"
+    ],
+    [
+     "Conciliación bancaria",
+     "✔",
+     "✔",
+     "✔",
+     "",
+     "✔"
+    ]
+   ]
+  }
+ },
+ "geografia": {
+  "puntos": [
+   "Países → departamentos → municipios, y regiones por país; se usan en organizaciones, personas, clientes y proveedores."
+  ],
+  "pasos": [
+   "Entra a Administración › Catálogos › Parámetros › Geografía.",
+   "Elige el país (ej. Guatemala); «+ País» agrega uno.",
+   "Elige el departamento; «+ Departamento» agrega uno.",
+   "Revisa sus municipios; «+ Municipio» agrega uno.",
+   "Con «Regiones» y «+ Región» agrupa departamentos (ej. Región Central).",
+   "Guarda cada registro."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Guatemala",
+   "columnas": [
+    "País",
+    "Departamento",
+    "Municipio"
+   ],
+   "filas": [
+    [
+     "Guatemala",
+     "Guatemala",
+     "Mixco"
+    ],
+    [
+     "Guatemala",
+     "Sacatepéquez",
+     "Antigua Guatemala"
+    ]
+   ]
+  }
+ },
+ "organizaciones": {
+  "puntos": [
+   "Organizaciones (grupos) y sus localidades (empresas), con logo, eslogan, ubicación, representante legal, NIT, razón social, venta de productos, contactos y auditoría."
+  ],
+  "pasos": [
+   "Entra a Administración › Catálogos › Parámetros › Organizaciones.",
+   "Elige la organización o presiona «+ Organización»: nombre, logo, eslogan, país, departamento, municipio, representante legal, teléfonos, correos, dirección y «Activa».",
+   "Elige una localidad o presiona «+ Localidad»: «Nombre comercial», «Razón social», «Siglas», «NIT», si tiene «Venta de productos», teléfonos, correos y dirección.",
+   "Sube el logo y eslogan de la localidad (sin logo usa el de la organización).",
+   "Guarda; la localidad aparece para elegir en todas las pantallas."
+  ],
+  "campos": [
+   [
+    "Nombre comercial",
+    "{empresa}",
+    "Nombre de la empresa."
+   ],
+   [
+    "Razón social",
+    "Empresa, S.A.",
+    "Nombre legal."
+   ],
+   [
+    "Siglas",
+    "EMP",
+    "Se usan en correlativos."
+   ],
+   [
+    "NIT",
+    "1234567-8",
+    "Identificación tributaria."
+   ],
+   [
+    "Venta de productos",
+    "Sí",
+    "Habilita inventarios y facturación."
+   ]
+  ]
+ },
+ "acceso-sistemas": {
+  "puntos": [
+   "Módulos a los que tiene acceso cada organización y, si se quiere distinto, cada localidad. Solo el Super Administrador Global.",
+   "La localidad sin configuración propia usa la de su organización; sin ninguna, todos los módulos."
+  ],
+  "pasos": [
+   "Entra a Administración › Catálogos › Parámetros › Acceso Sistemas.",
+   "Elige la organización.",
+   "Marca los módulos que puede usar (ej. Contabilidad, Caja y Bancos, Facturación).",
+   "Si una localidad necesita otros módulos, elígela y marca los suyos.",
+   "Presiona «Guardar»; los usuarios ven los cambios al volver a entrar."
+  ]
+ },
+ "datos-personas": {
+  "puntos": [
+   "Ficha general de una persona (empleado, cliente, paciente, proveedor o médico) para usarla en otras pantallas: generales, identificación, dirección y teléfonos, información laboral, crédito y cuenta contable, contactos.",
+   "Valida el DPI (dígito verificador; de él salen departamento y municipio), el NIT (módulo 11), calcula la edad, separa nombres y apellidos y avisa duplicados."
+  ],
+  "pasos": [
+   "Entra a Administración › Registros › Personas › Datos Personas.",
+   "Elige la «Organización» y la «Localidad (cuentas contables)».",
+   "En «Buscar persona» escribe nombre, DPI o NIT; si existe ábrela, si no presiona «Nuevo».",
+   "Elige el «Tipo de persona», el código y el centro de costo; escribe nombres y apellidos (se separan solos).",
+   "Llena los datos generales: fecha de nacimiento (calcula la edad), género, estado civil.",
+   "En identificación escribe el DPI: si es válido se llenan departamento y municipio de extensión; escribe el NIT (se valida).",
+   "Si ya existe otra persona con ese DPI no deja guardar; con el mismo NIT pide confirmación.",
+   "Llena dirección, teléfonos y correo, información laboral, límite de crédito y cuenta contable, y los contactos.",
+   "Revisa los «Clientes asociados» con el mismo NIT o DPI.",
+   "Guarda."
+  ],
+  "campos": [
+   [
+    "Tipo de persona",
+    "Cliente",
+    "Rol de la persona."
+   ],
+   [
+    "DPI",
+    "2456 78901 0101",
+    "CUI validado."
+   ],
+   [
+    "NIT",
+    "1234567-8",
+    "Validado módulo 11."
+   ],
+   [
+    "Fecha de nacimiento",
+    "15/03/1985",
+    "Calcula la edad."
+   ],
+   [
+    "Límite de crédito",
+    "Q 10,000.00",
+    "Para ventas al crédito."
+   ]
+  ]
+ },
+ "consulta-personas": {
+  "puntos": [
+   "Resumen de las personas de la organización por tipo, estado, documento y empresa, con búsqueda, posibles duplicados, clientes asociados y reporte en Excel."
+  ],
+  "pasos": [
+   "Entra a Administración › Registros › Personas › Consulta Personas.",
+   "Elige la organización, el «Tipo de persona», el «Estado», el «Documento» (con DPI, con NIT, sin documento) y «Registradas en».",
+   "Elige el «Ordenar por».",
+   "Lee la síntesis: total, por tipo y posibles duplicados (coinciden en DPI, NIT o nombre).",
+   "Haz clic en «Ver ficha» para abrir la persona.",
+   "Genera el Excel."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Personas",
+   "columnas": [
+    "Código",
+    "Nombre",
+    "Tipo",
+    "DPI · NIT",
+    "Coincide en"
+   ],
+   "filas": [
+    [
+     "1001",
+     "Juan Pérez",
+     "Cliente",
+     "2456 78901 0101 · 1234567-8",
+     ""
+    ],
+    [
+     "1002",
+     "JUAN PEREZ",
+     "Paciente",
+     "— · 1234567-8",
+     "NIT"
+    ]
+   ]
+  },
+  "voz": "Consulta de personas: dos registros; hay un posible duplicado que coincide en el NIT."
+ },
+ "backup": {
+  "puntos": [
+   "Respaldo de la información por organización y localidad en un archivo: Base de datos (SQL), Aplicativo (archivos de la página) o Todo.",
+   "Programación automática (diaria, semanal o mensual) que hace el servidor, destino en una carpeta de la computadora o servidor e historial de respaldos."
+  ],
+  "pasos": [
+   "Entra a Administración › Procesos › Backup.",
+   "Elige la «Organización» y la «Localidad (empresa)» («Todas» solo administradores).",
+   "Elige el contenido: Base de datos, Aplicativo o Todo.",
+   "En «Directorio o ruta» indica la carpeta destino; en Chrome o Edge el navegador pide permiso una vez y la recuerda.",
+   "Presiona «Generar backup ahora»: lee cada tabla, arma el archivo y lo guarda; el historial muestra tablas, registros, tamaño y resultado.",
+   "Para respaldos automáticos elige frecuencia, «Día de la semana», «Semana del mes» y «Hora de ejecución» y presiona «Guardar programación»; «Probar ahora» lo verifica.",
+   "Los respaldos del servidor se copian a la carpeta con «Copiar a la carpeta» o se bajan con «Descargar»."
+  ],
+  "resultado": {
+   "titulo": "Ejemplo · Historial de respaldos",
+   "columnas": [
+    "Fecha y hora",
+    "Origen",
+    "Contenido",
+    "Tablas",
+    "Registros",
+    "Tamaño",
+    "Resultado"
+   ],
+   "filas": [
+    [
+     "{hoy} 23:00",
+     "Programado",
+     "Todo",
+     "186",
+     "412,880",
+     "38.4 MB",
+     "Exitoso"
+    ],
+    [
+     "14/11/{anio} 10:15",
+     "Manual",
+     "Base de datos",
+     "186",
+     "410,120",
+     "36.9 MB",
+     "Exitoso"
+    ]
+   ]
+  }
+ },
+ "reporte-organizaciones": {
+  "puntos": [
+   "Organizaciones con sus localidades: datos fiscales, venta de productos, ubicación y estado."
+  ],
+  "pasos": [
+   "Entra a Administración › Reportes y gráficas › Organizaciones y localidades.",
+   "Elige la «Organización» (una o todas) y la «Localidad».",
+   "Elige el «Formato» y presiona «Ejecutar reporte».",
+   "Revisa el resultado y presiona «Imprimir» (PDF) o descarga el Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Organización",
+    "Localidad",
+    "NIT",
+    "Venta de productos",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "{organizacion}",
+     "{empresa}",
+     "1234567-8",
+     "Sí",
+     "Activa"
+    ]
+   ]
+  },
+  "voz": "{organizacion} tiene sus localidades activas; {empresa} vende productos."
+ },
+ "reporte-modulos": {
+  "puntos": [
+   "Módulos, sub módulos y opciones del sistema con los usuarios que tienen acceso."
+  ],
+  "pasos": [
+   "Entra a Administración › Reportes y gráficas › Módulos y sub módulos.",
+   "Elige organización y localidad.",
+   "Presiona «Ejecutar reporte».",
+   "Imprime o descarga."
+  ],
+  "reporte": {
+   "columnas": [
+    "Módulo",
+    "Sub módulo",
+    "Opciones",
+    "Usuarios con acceso"
+   ],
+   "filas": [
+    [
+     "Caja y Bancos",
+     "Bancos",
+     "10",
+     "6"
+    ],
+    [
+     "Contabilidad",
+     "Registros",
+     "6",
+     "4"
+    ]
+   ]
+  },
+  "voz": "Caja y bancos tiene diez opciones en bancos con seis usuarios con acceso."
+ },
+ "reporte-roles": {
+  "puntos": [
+   "Roles con sus usuarios asignados y las opciones y permisos que dan."
+  ],
+  "pasos": [
+   "Entra a Administración › Reportes y gráficas › Roles módulos.",
+   "Elige organización y localidad.",
+   "Presiona «Ejecutar reporte».",
+   "Imprime o descarga."
+  ],
+  "reporte": {
+   "columnas": [
+    "Rol",
+    "Usuarios",
+    "Opciones",
+    "Permisos"
+   ],
+   "filas": [
+    [
+     "Contador",
+     "3",
+     "58",
+     "Ver, crear, modificar, imprimir"
+    ],
+    [
+     "Cajero",
+     "2",
+     "12",
+     "Ver, crear, imprimir"
+    ]
+   ]
+  },
+  "voz": "El rol contador tiene tres usuarios y cincuenta y ocho opciones."
+ },
+ "reporte-usuarios": {
+  "puntos": [
+   "Usuarios por organización y localidad con su rol, roles funcionales y estado."
+  ],
+  "pasos": [
+   "Entra a Administración › Reportes y gráficas › Listado de usuarios.",
+   "Elige organización, localidad y, si aplica, «Fecha inicial» y «Fecha final» de creación.",
+   "Presiona «Ejecutar reporte».",
+   "Imprime o descarga."
+  ],
+  "reporte": {
+   "columnas": [
+    "Usuario",
+    "Nombre",
+    "Localidad",
+    "Rol",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "JPerez",
+     "Juan Pérez",
+     "{empresa}",
+     "Contador",
+     "Activo"
+    ],
+    [
+     "MLopez",
+     "María López",
+     "{empresa}",
+     "Administrador",
+     "Activo"
+    ]
+   ]
+  },
+  "voz": "{empresa} tiene dos usuarios activos: un contador y un administrador."
+ },
+ "tickets-generacion": {
+  "puntos": [
+   "Creación de tickets de solicitud o soporte: solicitante, fecha, módulo, requerimiento, prioridad, estado, recurso asignado, adjuntos e historial."
+  ],
+  "pasos": [
+   "Entra a Administración › Tickets › Generación.",
+   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». Elige también el «Estado».",
+   "Presiona «Nuevo ticket».",
+   "Elige el módulo y escribe la «Descripción del requerimiento *» (ej. No cuadra la conciliación de octubre).",
+   "Elige la «Prioridad» y adjunta capturas o archivos.",
+   "Guarda: el ticket toma su número y queda NUEVO; la gráfica del proceso muestra en qué etapa está.",
+   "«Descartar» cancela lo que no se guardó."
+  ],
+  "campos": [
+   [
+    "Módulo",
+    "Caja y Bancos",
+    "Dónde está el problema."
+   ],
+   [
+    "Descripción *",
+    "No cuadra la conciliación de octubre",
+    "Qué se necesita."
+   ],
+   [
+    "Prioridad",
+    "Alta",
+    "Urgencia."
+   ]
+  ]
+ },
+ "tickets-asignacion": {
+  "puntos": [
+   "Asigna cada ticket a su responsable con fecha estimada de entrega y define los procesos de la solución."
+  ],
+  "pasos": [
+   "Entra a Administración › Tickets › Asignación.",
+   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». En «Asignación» elige pendientes o asignados.",
+   "Elige el ticket.",
+   "Elige el «Usuario asignado *», la «Fecha estimada de entrega» y escribe la «Descripción / observaciones de la asignación».",
+   "Agrega los procesos de la solución con su «Responsable», «Estado» y «Observaciones».",
+   "Guarda: la fecha, hora y quien asigna se graban solos.",
+   "Para cambiar de responsable usa «Modificar asignación» o «Reasignar en su lugar»."
+  ]
+ },
+ "tickets-seguimiento": {
+  "puntos": [
+   "Estado y avance de los tickets: descripción, estado por color, asignación, tiempo transcurrido, procesos y bitácora de observaciones."
+  ],
+  "pasos": [
+   "Entra a Administración › Tickets › Seguimiento.",
+   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». Elige el «Estado».",
+   "Elige el ticket: ves la gráfica del proceso, los tiempos y los procesos.",
+   "Presiona «Agregar observación», escribe el avance y «Guardar cambios» (fecha y usuario se graban solos)."
+  ],
+  "reporte": {
+   "columnas": [
+    "Ticket",
+    "Descripción",
+    "Estado",
+    "Asignado a",
+    "Tiempo transcurrido"
+   ],
+   "filas": [
+    [
+     "T-0128",
+     "No cuadra la conciliación",
+     "EN PROCESO",
+     "JPerez",
+     "2 d 4 h"
+    ],
+    [
+     "T-0127",
+     "Nuevo usuario bodega",
+     "ASIGNADO",
+     "MLopez",
+     "5 h"
+    ]
+   ]
+  },
+  "voz": "Hay dos tickets en seguimiento: uno en proceso con dos días y uno asignado hace cinco horas."
+ },
+ "tickets-cierre": {
+  "puntos": [
+   "Cierre de los tickets resueltos: quién entrega, quién recibe, tipo de pruebas, observaciones y archivos de prueba."
+  ],
+  "pasos": [
+   "Entra a Administración › Tickets › Cierre.",
+   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». En «Cierre» elige pendientes o cerrados.",
+   "Elige el ticket.",
+   "Elige «Usuario que entrega *», «Usuario que recibe *» y «Tipo de pruebas o cierre *».",
+   "Escribe las observaciones y adjunta las pruebas.",
+   "Presiona «Cerrar ticket»: pasa a CERRADO con fecha, hora y usuario.",
+   "«Modificar cierre» corrige los datos del cierre."
+  ]
+ },
+ "tickets-visualizacion": {
+  "puntos": [
+   "Todos los tickets de la organización en una tabla: ticket, fecha, solicitante, módulo, requerimiento, prioridad, estado, recurso, asignación, tiempo transcurrido y entrega."
+  ],
+  "pasos": [
+   "Entra a Administración › Tickets › Visualización General.",
+   "Elige «Localidad», fechas, «Módulo», «Prioridad» y «Estado».",
+   "Elige «Ordenar por» y «Orden» (o toca el encabezado de una columna).",
+   "Presiona «Imprimir» para PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Ticket",
+    "Fecha",
+    "Módulo",
+    "Prioridad",
+    "Estado",
+    "Recurso",
+    "Tiempo"
+   ],
+   "filas": [
+    [
+     "T-0128",
+     "13/11/{anio}",
+     "Caja y Bancos",
+     "Alta",
+     "EN PROCESO",
+     "JPerez",
+     "2 d 4 h"
+    ],
+    [
+     "T-0126",
+     "10/11/{anio}",
+     "Ventas",
+     "Media",
+     "CERRADO",
+     "MLopez",
+     "1 d 2 h"
+    ]
+   ]
+  },
+  "voz": "Visualización de tickets: uno en proceso de prioridad alta en caja y bancos y uno cerrado de ventas."
+ }
+}

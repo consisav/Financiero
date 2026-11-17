@@ -1,0 +1,2248 @@
+{
+ "parametros": {
+  "puntos": [
+   "Un registro por localidad con los parámetros de tiempo, uso de pantallas, impuestos (IVA, ISR, retenciones), monedas, nómina, cuentas de estados financieros, versión actual de la nomenclatura y las personas que firman.",
+   "Todo se edita en la misma pantalla y se guarda con «Guardar cambios»."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Parámetros › Parámetros generales.",
+   "Elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Revisa cada bloque: tiempo (año y mes de trabajo), impuestos (IVA 12 %, ISR, retenciones), monedas (moneda local y de integración).",
+   "En «Versión actual nomenclatura» elige la versión vigente del catálogo de cuentas: es la que usan las partidas nuevas.",
+   "Revisa las cuentas que usan los estados financieros (resultado del ejercicio, utilidades acumuladas).",
+   "En «Firmantes» presiona «Agregar firmante» y llena «Firma como» (Representante legal, Contador, Revisó), «Persona que firma», «Cargo», «# Registro» (colegiado o registro de contador) y «Usuario».",
+   "Los firmantes salen al pie del Balance general, Estado de resultados y libros.",
+   "Presiona «Guardar cambios»."
+  ],
+  "campos": [
+   [
+    "Versión actual nomenclatura",
+    "{anio} · versión 1",
+    "Catálogo de cuentas vigente."
+   ],
+   [
+    "IVA",
+    "12 %",
+    "Tasa del impuesto."
+   ],
+   [
+    "Moneda de integración",
+    "Quetzales",
+    "Moneda de los estados financieros."
+   ],
+   [
+    "Firma como",
+    "Contador",
+    "Rol del firmante."
+   ],
+   [
+    "Persona que firma",
+    "Lic. María López",
+    "Nombre impreso."
+   ],
+   [
+    "# Registro",
+    "CPA-12345",
+    "Registro profesional."
+   ]
+  ]
+ },
+ "monedas-y-tipos-de-cambio": {
+  "puntos": [
+   "Monedas que maneja el sistema (maestro) y su tipo de cambio por fecha (detalle): tasa de venta y de compra.",
+   "«Tasa cambio actual» graba la compra y venta del día de todas las monedas; la actualización automática lo hace a diario, semanal o mensual desde el servidor."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Parámetros › Tipos de cambio.",
+   "En el maestro elige la moneda (ej. Dólares); si falta, presiona «+ Moneda».",
+   "Abajo se listan sus tipos de cambio del más reciente al más antiguo.",
+   "Para registrar uno a mano presiona «+ Tipo de cambio», escribe «Fecha», «Hora», «Tasa venta» y «Tasa compra» y guarda.",
+   "Para traer la tasa del día presiona «Tasa cambio actual».",
+   "En la actualización automática elige la frecuencia, «Día de la semana», «Semana del mes» y «Hora de ejecución» y presiona «Guardar».",
+   "Presiona «Probar ahora» para verificar; el historial muestra fecha y hora, origen, usuario y resultado (exitoso o error).",
+   "Los depósitos, cheques y facturas en dólares proponen el tipo de cambio de su fecha."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Tipos de cambio del dólar",
+   "columnas": [
+    "Fecha",
+    "Hora",
+    "Tasa venta",
+    "Tasa compra"
+   ],
+   "filas": [
+    [
+     "{hoy}",
+     "08:00",
+     "7.7850",
+     "7.7350"
+    ],
+    [
+     "14/11/{anio}",
+     "08:00",
+     "7.7830",
+     "7.7330"
+    ]
+   ]
+  }
+ },
+ "tipos-cuenta": {
+  "puntos": [
+   "Naturaleza de cada tipo de cuenta (debe-haber o haber-debe) y su efecto en el resultado del ejercicio.",
+   "Cada empresa tiene sus propios tipos; se pueden copiar de otra empresa."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cuentas y CC › Tipos de cuentas.",
+   "Elige «Organización» y «Localidad / empresa».",
+   "Si la empresa es nueva, presiona «Copiar de otra empresa» y elige la empresa de origen.",
+   "Para agregar uno presiona «+ Tipo de cuenta»: escribe código y nombre (Activo, Pasivo, Capital, Ingresos, Costos, Gastos).",
+   "Elige la naturaleza: Activo, Costos y Gastos son debe-haber; Pasivo, Capital e Ingresos son haber-debe.",
+   "Indica si afecta el resultado del ejercicio (Ingresos, Costos y Gastos sí; Balance no).",
+   "Guarda; las cuentas contables toman su naturaleza de este tipo."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Tipos de cuentas",
+   "columnas": [
+    "Código",
+    "Tipo",
+    "Naturaleza",
+    "Afecta resultado"
+   ],
+   "filas": [
+    [
+     "1",
+     "Activo",
+     "Debe-Haber",
+     "No"
+    ],
+    [
+     "2",
+     "Pasivo",
+     "Haber-Debe",
+     "No"
+    ],
+    [
+     "3",
+     "Capital",
+     "Haber-Debe",
+     "No"
+    ],
+    [
+     "4",
+     "Ingresos",
+     "Haber-Debe",
+     "Sí"
+    ],
+    [
+     "5",
+     "Costos",
+     "Debe-Haber",
+     "Sí"
+    ],
+    [
+     "6",
+     "Gastos",
+     "Debe-Haber",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "cuentas": {
+  "puntos": [
+   "Catálogo de cuentas por organización, localidad y versión: árbol de cuentas en niveles (mayor, submayor, auxiliar) con su tipo, naturaleza y si es de movimiento.",
+   "Solo las cuentas de movimiento (último nivel) se usan en partidas y documentos."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cuentas y CC › Cuentas contables.",
+   "Elige la organización, la localidad ({empresa}) y la versión del catálogo.",
+   "El árbol muestra tres bloques: elige la cuenta mayor (ej. 1 Activo), luego la submayor y ves sus subcuentas.",
+   "Para crear una subcuenta selecciona la cuenta padre y usa «Bajar nivel»: el código se propone con el siguiente correlativo (ej. 1.1.1.03).",
+   "En la ficha escribe el nombre, elige el tipo de cuenta y marca si es de movimiento.",
+   "Guarda; la cuenta aparece en el árbol y en las listas de cuentas.",
+   "Para cambiar el nombre o el tipo selecciona la cuenta y presiona «Modificar».",
+   "Una cuenta con movimientos no se elimina: desactívala.",
+   "Exporta el catálogo a Excel desde el botón de impresión."
+  ],
+  "campos": [
+   [
+    "Código",
+    "1.1.1.03",
+    "Correlativo bajo la cuenta padre."
+   ],
+   [
+    "Nombre",
+    "Bancos · cuenta de ahorro",
+    "Nombre de la cuenta."
+   ],
+   [
+    "Tipo",
+    "Activo",
+    "Define la naturaleza."
+   ],
+   [
+    "Movimiento",
+    "Sí",
+    "Solo estas reciben partidas."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Árbol de cuentas",
+   "columnas": [
+    "Código",
+    "Cuenta",
+    "Nivel",
+    "Movimiento"
+   ],
+   "filas": [
+    [
+     "1",
+     "ACTIVO",
+     "1",
+     "No"
+    ],
+    [
+     "1.1",
+     "Activo corriente",
+     "2",
+     "No"
+    ],
+    [
+     "1.1.1",
+     "Caja y bancos",
+     "3",
+     "No"
+    ],
+    [
+     "1.1.1.01",
+     "Caja chica",
+     "4",
+     "Sí"
+    ],
+    [
+     "1.1.1.02",
+     "Bancos",
+     "4",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "centros-costo": {
+  "puntos": [
+   "Centros de costo de la organización en niveles (área, departamento, unidad): permiten ver ingresos y gastos por área.",
+   "Se asignan en cada línea de partida, depósito, cheque y caja."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cuentas y CC › Centros de costos.",
+   "Elige la organización, la localidad y la versión.",
+   "Elige el centro principal (ej. 01 Administración) y ve sus subcentros.",
+   "Para crear uno selecciona el padre y presiona «Bajar nivel»; escribe el nombre y marca si es de movimiento.",
+   "Guarda; el centro aparece en las listas de «Centro» de las partidas.",
+   "Usa «Modificar» para corregir el nombre; desactiva los que ya no se usan.",
+   "Consulta los resultados por centro en Reportes › Resultados por centro de costo."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Centros de costo",
+   "columnas": [
+    "Código",
+    "Centro",
+    "Nivel",
+    "Movimiento"
+   ],
+   "filas": [
+    [
+     "01",
+     "Administración",
+     "1",
+     "No"
+    ],
+    [
+     "01.01",
+     "Gerencia",
+     "2",
+     "Sí"
+    ],
+    [
+     "01.02",
+     "Contabilidad",
+     "2",
+     "Sí"
+    ],
+    [
+     "02",
+     "Ventas",
+     "1",
+     "No"
+    ],
+    [
+     "02.01",
+     "Sala de ventas",
+     "2",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "tipos-de-partida": {
+  "puntos": [
+   "Clasificación de las partidas del libro diario (apertura, operación, ajuste, provisión, cierre…) con sus siglas.",
+   "Las siglas identifican las partidas automáticas del cierre: PDC diferencial cambiario, PRV reversión, PCR cierre de resultados, PCE cierre, PA apertura."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cuentas y CC › Tipos de partida.",
+   "Elige la organización y la localidad.",
+   "Presiona «+ Tipo de partida».",
+   "Escribe las siglas (ej. PD), el nombre (Partida de diario) y su clase (apertura, operación, ajuste o cierre).",
+   "Guarda; el tipo aparece en «Tipo de partida» al registrar partidas y en los filtros de consulta.",
+   "Para cambiarlo edita la fila y guarda."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Tipos de partida",
+   "columnas": [
+    "Siglas",
+    "Nombre",
+    "Clase"
+   ],
+   "filas": [
+    [
+     "PA",
+     "Partida de apertura",
+     "Apertura"
+    ],
+    [
+     "PD",
+     "Partida de diario",
+     "Operación"
+    ],
+    [
+     "PAJ",
+     "Partida de ajuste",
+     "Ajuste"
+    ],
+    [
+     "PDC",
+     "Diferencial cambiario",
+     "Ajuste"
+    ],
+    [
+     "PCE",
+     "Partida de cierre",
+     "Cierre"
+    ]
+   ]
+  }
+ },
+ "rubros-presupuesto": {
+  "puntos": [
+   "Rubros que se presupuestan, por grupo: ingresos, personal, gastos financieros, administrativos, impuestos e inversiones.",
+   "Se usan en Registros › Presupuesto y en el reporte Presupuesto vs. ejecutado."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cuentas y CC › Rubros de presupuesto.",
+   "Elige la organización y la localidad.",
+   "Presiona «+ Rubro».",
+   "Escribe el código, el nombre (ej. Sueldos y salarios) y elige el grupo (Personal).",
+   "Relaciona las cuentas contables del rubro para calcular lo ejecutado.",
+   "Guarda; el rubro aparece al armar el presupuesto."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Rubros",
+   "columnas": [
+    "Código",
+    "Rubro",
+    "Grupo"
+   ],
+   "filas": [
+    [
+     "101",
+     "Ventas de productos",
+     "Ingresos"
+    ],
+    [
+     "201",
+     "Sueldos y salarios",
+     "Personal"
+    ],
+    [
+     "305",
+     "Energía eléctrica",
+     "Gastos administrativos"
+    ]
+   ]
+  }
+ },
+ "con-ejercicios": {
+  "puntos": [
+   "Cada ejercicio (año) con el estado de sus doce meses (abierto o cerrado), el número de partidas, el resultado y quién lo cerró."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cierre contable › Ejercicios y períodos contables.",
+   "Elige la organización y la localidad ({empresa}).",
+   "Revisa la fila de cada año: los meses cerrados salen marcados, el total de partidas y el resultado en quetzales.",
+   "Para empezar un año nuevo presiona «Abrir ejercicio».",
+   "Para cerrar o reabrir un mes usa Procesos › Cierre Mensual; el ejercicio se cierra en Procesos › Cierre Anual Fiscal.",
+   "Exporta la tabla en PDF o Excel."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Ejercicios",
+   "columnas": [
+    "Año",
+    "Ejercicio",
+    "Ene–Oct",
+    "Nov",
+    "Dic",
+    "Partidas",
+    "Resultado Q",
+    "Cerrado por"
+   ],
+   "filas": [
+    [
+     "{anio}",
+     "Abierto",
+     "Cerrados",
+     "Abierto",
+     "Abierto",
+     "1,284",
+     "Q 245,880.15",
+     ""
+    ],
+    [
+     "2025",
+     "Cerrado",
+     "Cerrados",
+     "Cerrado",
+     "Cerrado",
+     "1,540",
+     "Q 312,400.00",
+     "{usuario}"
+    ]
+   ]
+  },
+  "voz": "Ejercicio {anio} de {empresa}: abierto, con diez meses cerrados, mil doscientas ochenta y cuatro partidas y un resultado de doscientos cuarenta y cinco mil ochocientos ochenta quetzales."
+ },
+ "con-cuentas-integracion": {
+  "puntos": [
+   "Cuenta de control de cada auxiliar: CxC, CxP, inventario, IVA, retenciones, nómina, activos fijos y diferencial cambiario.",
+   "Las integraciones comparan el saldo de estas cuentas contra su auxiliar."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cierre contable › Cuentas de integración.",
+   "Elige la empresa ({empresa}).",
+   "Cada fila es un concepto con su uso; en «Cuenta contable» elige la cuenta del catálogo.",
+   "Presiona «Sugerir cuentas» para que el sistema proponga las cuentas por su nombre.",
+   "Revisa el «Estado» (completa o pendiente) y guarda."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Cuentas de integración",
+   "columnas": [
+    "Concepto",
+    "Uso",
+    "Cuenta contable",
+    "Nombre"
+   ],
+   "filas": [
+    [
+     "Clientes",
+     "Cuentas por cobrar",
+     "1.1.2.01",
+     "Clientes"
+    ],
+    [
+     "Proveedores",
+     "Cuentas por pagar",
+     "2.1.1.01",
+     "Proveedores"
+    ],
+    [
+     "IVA por cobrar",
+     "Crédito fiscal",
+     "1.1.4.01",
+     "IVA por cobrar"
+    ]
+   ]
+  }
+ },
+ "con-cuentas-cierre": {
+  "puntos": [
+   "Cuentas que usa el cierre anual: resultado del ejercicio, utilidades acumuladas, pérdidas acumuladas y reserva legal (5 %)."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cierre contable › Cuentas de cierre.",
+   "Elige la empresa.",
+   "En cada concepto elige su cuenta contable (o «Sugerir cuentas»).",
+   "Revisa que todas queden completas: el Cierre Anual no se ejecuta si falta alguna.",
+   "Guarda."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Cuentas de cierre",
+   "columnas": [
+    "Concepto",
+    "Cuenta",
+    "Nombre"
+   ],
+   "filas": [
+    [
+     "Resultado del ejercicio",
+     "3.3.01",
+     "Utilidad del ejercicio"
+    ],
+    [
+     "Utilidades acumuladas",
+     "3.2.01",
+     "Utilidades retenidas"
+    ],
+    [
+     "Reserva legal",
+     "3.1.02",
+     "Reserva legal"
+    ]
+   ]
+  }
+ },
+ "con-libros-sat": {
+  "puntos": [
+   "Libros habilitados por la SAT (diario, mayor, inventarios y balances, compras, ventas) con su resolución, forma y folios autorizados, usados y disponibles."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Cierre contable › Libros autorizados SAT.",
+   "Elige la empresa.",
+   "Agrega una fila por libro: «Libro», «Resolución SAT», «Autorizado» (fecha), «Forma» (hojas móviles, empastado o electrónico) y los folios autorizados.",
+   "El sistema descuenta los folios usados al imprimir el libro de inventarios y balances y muestra los disponibles.",
+   "Guarda; cuando queden pocos folios solicita la nueva habilitación."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Libros autorizados",
+   "columnas": [
+    "Libro",
+    "Resolución SAT",
+    "Forma",
+    "Folios",
+    "Usados",
+    "Disponibles"
+   ],
+   "filas": [
+    [
+     "Diario",
+     "2024-1-45-1234",
+     "Hojas móviles",
+     "1–500",
+     "312",
+     "188"
+    ],
+    [
+     "Inventarios y balances",
+     "2024-1-45-1235",
+     "Hojas móviles",
+     "1–100",
+     "14",
+     "86"
+    ]
+   ]
+  }
+ },
+ "objetos-definicion": {
+  "puntos": [
+   "Objetos contables (depósitos, cheques, notas, compras, ventas, cajas…) de cada empresa con sus cuentas y sus transacciones.",
+   "Cada transacción de un objeto puede llevar la cuenta bancaria con que se usa."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Objetos contables › Definición de objetos.",
+   "Elige «Organización» y «Localidad».",
+   "En el maestro revisa los objetos: número de cuentas, cuentas del sistema anterior, versión y número de transacciones.",
+   "Para crear uno presiona «Nuevo objeto»: «Código *», «Descripción *» y «Estado».",
+   "En el detalle presiona «Agregar cuenta» para las cuentas que usa el objeto.",
+   "Presiona «Agregar transacción» y elige las transacciones del objeto con su cuenta bancaria.",
+   "Guarda; «Imprimir plantillas» saca el listado."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Objeto DEPÓSITOS",
+   "columnas": [
+    "Línea",
+    "Transacción",
+    "Cuenta bancaria"
+   ],
+   "filas": [
+    [
+     "1",
+     "{transaccion}",
+     "{cuentaBancaria}"
+    ],
+    [
+     "2",
+     "Depósito por anticipo de clientes",
+     "{cuentaBancaria}"
+    ]
+   ]
+  }
+ },
+ "objetos-transacciones": {
+  "puntos": [
+   "Transacciones contables: plantillas de partida con sus cuentas, si van al Debe o al Haber, orden, operación, centro de costo y columna de nómina.",
+   "Al «Contabilizar» un documento se usa su transacción para armar el detalle."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Objetos contables › Transacciones.",
+   "Elige la organización y la localidad.",
+   "Presiona «Nueva transacción»: escribe la descripción, marca «Aplica póliza» y el «Tipo operación».",
+   "Presiona «Agregar línea» por cada cuenta: cuenta, D/H, orden, operación (valor total, IVA, base, retención) y centro de costo.",
+   "En nóminas indica la «Columna» de la planilla que alimenta la línea.",
+   "Guarda y revisa que las líneas cuadren.",
+   "«Imprimir plantillas» saca las transacciones con sus cuentas."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Transacción de depósito",
+   "columnas": [
+    "Orden",
+    "Cuenta",
+    "Nombre",
+    "D/H",
+    "Operación",
+    "Centro"
+   ],
+   "filas": [
+    [
+     "1",
+     "1.1.1.02",
+     "Bancos",
+     "D",
+     "Valor total",
+     "01.02"
+    ],
+    [
+     "2",
+     "1.1.2.01",
+     "Clientes",
+     "H",
+     "Valor total",
+     "01.02"
+    ]
+   ]
+  }
+ },
+ "con-transacciones-modulo": {
+  "puntos": [
+   "Agrupa las transacciones contables por módulo (ventas, compras, inventarios, caja y bancos, nóminas…); el Cierre Preliminar usa esta asignación."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Objetos contables › Transacciones por módulo.",
+   "Elige la empresa.",
+   "Revisa cada transacción (#Trans, descripción, estado y módulo).",
+   "Presiona «Asignar sin módulo» para que el sistema proponga el módulo de las que no tienen, según su descripción y documentos.",
+   "Cambia el módulo a mano en la columna «Módulo» si hace falta; «Reasignar todas» vuelve a proponer todas.",
+   "Usa «Buscar» para encontrar una transacción."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Transacciones por módulo",
+   "columnas": [
+    "#Trans",
+    "Descripción",
+    "Módulo",
+    "Aplica póliza"
+   ],
+   "filas": [
+    [
+     "15",
+     "Depósitos de clientes",
+     "Caja y bancos",
+     "Sí"
+    ],
+    [
+     "22",
+     "Ventas al contado",
+     "Ventas",
+     "Sí"
+    ],
+    [
+     "31",
+     "Compras locales",
+     "Compras",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "replicacion-empresa": {
+  "puntos": [
+   "Replica la empresa y sus parámetros generales de una empresa origen a una empresa destino, con comparación previa."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Replicación › Empresa y parámetros.",
+   "Presiona «Nueva» y elige la «Empresa origen *» y la «Empresa destino *».",
+   "Escribe la «Descripción» y el rango de fechas si aplica.",
+   "Presiona «Comparación de parámetros»: ves cada parámetro con el valor de origen y el actual del destino.",
+   "Marca los parámetros a copiar («Marcar todos» / «Desmarcar todos»).",
+   "Presiona «Guardar» y luego «Aplicar réplica».",
+   "Si te equivocaste usa «Desaplicar réplica»; «Resumen» muestra lo aplicado."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Comparación de parámetros",
+   "columnas": [
+    "Parámetro",
+    "Origen",
+    "Destino actual"
+   ],
+   "filas": [
+    [
+     "IVA",
+     "12 %",
+     "12 %"
+    ],
+    [
+     "Moneda de integración",
+     "Quetzales",
+     "—"
+    ],
+    [
+     "Versión nomenclatura",
+     "1",
+     "—"
+    ]
+   ]
+  }
+ },
+ "replicacion-nomenclatura": {
+  "puntos": [
+   "Copia el catálogo de cuentas contables de una empresa fuente a otras empresas de una organización destino."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Replicación › Nomenclatura.",
+   "Elige la «Organización fuente» y la «Empresa fuente».",
+   "Elige la «Organización destino» y el rango «De la empresa No.» «A la empresa No.».",
+   "Presiona «Replicar parámetros»: se copian las cuentas con sus niveles y tipos.",
+   "Para deshacer usa «Eliminar parámetros» (solo si el destino no tiene movimientos); «Limpiar» borra la selección."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Nomenclatura replicada",
+   "columnas": [
+    "Empresa destino",
+    "Cuentas copiadas",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "3-02",
+     "412",
+     "Replicada"
+    ],
+    [
+     "3-03",
+     "412",
+     "Replicada"
+    ]
+   ]
+  }
+ },
+ "replicacion-centros": {
+  "puntos": [
+   "Copia la estructura de centros de costo de una empresa fuente a otras empresas."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Catálogos › Replicación › Centros de costos.",
+   "Elige organización y empresa fuente.",
+   "Elige la organización destino y el rango de empresas.",
+   "Presiona «Replicar parámetros».",
+   "Revisa los centros en Cuentas y CC › Centros de costos de cada empresa destino."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Centros replicados",
+   "columnas": [
+    "Empresa destino",
+    "Centros copiados",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "3-02",
+     "18",
+     "Replicada"
+    ]
+   ]
+  }
+ },
+ "partidas-contables": {
+  "puntos": [
+   "Pólizas de {empresa}: a la izquierda los parámetros (empresa, año, mes, tipo y estado), el estado del mes y las partidas; a la derecha la partida elegida.",
+   "Cada partida tiene período y número, moneda, control (aprobación y definitiva), tipo, descripción, clasificación, detalle contable, soporte y procesos.",
+   "Solo se modifica si el mes está abierto y la partida está vigente y no es definitiva."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Registros › Partidas › Partidas contables.",
+   "Elige la «Empresa» ({empresa}), el «Año» ({anio}) y el «Mes»; revisa que el mes diga ABIERTO.",
+   "Presiona «Nueva».",
+   "Elige el «Tipo de partida (transacción) *» (ej. PD Partida de diario) y escribe la «Descripción *» (ej. Provisión alquiler noviembre).",
+   "Elige la «Clasificación», la «Moneda» y el «Cambio».",
+   "Si es una partida modelo, en «Generar transacción» elige la transacción y presiona «Obtener»: se cargan sus cuentas.",
+   "Si no, presiona «Agregar línea» por cada cuenta: escribe el código de cuenta de movimiento (se llena el nombre), el «Concepto», el valor en «Debe» o en «Haber» y el «Centro de costo».",
+   "Revisa los totales: la partida debe quedar cuadrada (Debe = Haber); el sistema avisa si está descuadrada.",
+   "En la pestaña de soporte escribe la «Justificación» y adjunta el documento si aplica.",
+   "Presiona «Registrar partida»: toma su número correlativo del mes (ej. 11-0045) y queda POR APROBAR.",
+   "El responsable la revisa y la aprueba; al cerrar el mes las partidas aprobadas pasan a DEFINITIVAS.",
+   "Para corregir usa «Modificar» y «Guardar cambios»; «Replicar» copia la partida a otro mes; «Anular» la deja sin efecto; «Imprimir» saca la póliza con firmas."
+  ],
+  "nota": "Las partidas de depósitos, cheques, compras y ventas se generan desde su documento; aquí se registran los ajustes y provisiones.",
+  "campos": [
+   [
+    "Tipo de partida *",
+    "PD · Partida de diario",
+    "Clasifica la póliza."
+   ],
+   [
+    "Descripción *",
+    "Provisión alquiler noviembre",
+    "Concepto general."
+   ],
+   [
+    "Moneda / Cambio",
+    "Quetzales · 1",
+    "Moneda de la partida."
+   ],
+   [
+    "Cuenta",
+    "6.1.3.01",
+    "Cuenta de movimiento."
+   ],
+   [
+    "Concepto",
+    "Alquiler oficina noviembre",
+    "Detalle de la línea."
+   ],
+   [
+    "Centro de costo",
+    "01.01 · Gerencia",
+    "Área del gasto."
+   ],
+   [
+    "Justificación",
+    "Contrato de arrendamiento 2025",
+    "Soporte de la partida."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo de registro · Partida 11-0045",
+   "columnas": [
+    "Cuenta",
+    "Nombre de la cuenta",
+    "Concepto",
+    "Debe",
+    "Haber",
+    "Centro"
+   ],
+   "filas": [
+    [
+     "6.1.3.01",
+     "Alquileres",
+     "Alquiler oficina noviembre",
+     "Q 5,000.00",
+     "",
+     "01.01"
+    ],
+    [
+     "1.1.4.01",
+     "IVA por cobrar",
+     "IVA factura 7781",
+     "Q 600.00",
+     "",
+     ""
+    ],
+    [
+     "2.1.1.01",
+     "Proveedores",
+     "Inmobiliaria Central",
+     "",
+     "Q 5,600.00",
+     ""
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales",
+    "Q 5,600.00",
+    "Q 5,600.00",
+    "Cuadrada"
+   ],
+   "nota": "Códigos ilustrativos."
+  }
+ },
+ "consulta-de-partidas": {
+  "puntos": [
+   "Reporte de las partidas de {empresa} por tipo, clasificación, fechas y estado (por aprobar, aprobadas, definitivas, anuladas, descuadradas).",
+   "Al elegir una partida se ven su detalle contable y los documentos que la generaron (depósitos, cheques, notas, cajas chicas)."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Registros › Partidas › Consulta de Partidas.",
+   "Elige la empresa ({empresa}).",
+   "Elige el «Tipo de partida» y la «Clasificación» (o todas).",
+   "Revisa «Fecha inicial» (por omisión la primera partida) y «Fecha final».",
+   "Elige el «Estado» y el «Ordenar por»; presiona «Consultar».",
+   "Lee los totales y haz clic en una partida para ver sus líneas y el documento de origen.",
+   "Abre la partida en Partidas contables con el botón de la fila.",
+   "Genera el PDF o Excel, resumido o detallado."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo del reporte · Partidas de noviembre",
+   "columnas": [
+    "Partida",
+    "Fecha",
+    "Tipo",
+    "Descripción · usuario",
+    "Origen",
+    "Total",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "11-0045",
+     "{hoy}",
+     "PD",
+     "Provisión alquiler · {usuario}",
+     "Manual",
+     "Q 5,600.00",
+     "POR APROBAR"
+    ],
+    [
+     "11-0044",
+     "12/11/{anio}",
+     "PD",
+     "Nota de crédito ACH-558120",
+     "Notas",
+     "Q 8,900.00",
+     "APROBADA"
+    ],
+    [
+     "11-0043",
+     "10/11/{anio}",
+     "PD",
+     "Cheque 1012 viáticos",
+     "Cheques",
+     "Q 600.00",
+     "APROBADA"
+    ]
+   ],
+   "totales": [
+    "3 partidas",
+    "",
+    "",
+    "",
+    "",
+    "Q 15,100.00",
+    ""
+   ]
+  },
+  "voz": "Consulta de partidas de {empresa} de noviembre: tres partidas por quince mil cien quetzales; dos aprobadas y una por aprobar. No hay partidas descuadradas."
+ },
+ "presupuesto": {
+  "puntos": [
+   "Presupuestos de {empresa} por año: número, fecha, tipo, frecuencia, período, estado y descripción; elaboró y aprobó se llenan solos.",
+   "Los rubros muestran lo presupuestado, lo ejecutado (de la contabilidad), la variación y el % de ejecución por grupo."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Registros › Presupuestos › Presupuesto.",
+   "Elige «Organización», «Localidad», «Año», «Tipo de presupuesto» y «Estado».",
+   "Presiona «Nuevo presupuesto».",
+   "Escribe la «Fecha», elige el «Tipo de presupuesto *» (operativo, inversión), la «Frecuencia» (mensual, anual) y el «Período».",
+   "Escribe la «Descripción».",
+   "Presiona «Agregar todos» para cargar todos los rubros, o agrégalos uno a uno.",
+   "En cada rubro escribe lo presupuestado y las «Observaciones».",
+   "Guarda; lo ejecutado se calcula con las partidas del período.",
+   "Revisa la «Variación» y la «Ejecución» %; «Imprimir» saca el presupuesto."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Presupuesto {anio}",
+   "columnas": [
+    "Código",
+    "Rubro",
+    "Presupuestado",
+    "Ejecutado",
+    "Variación",
+    "Ejecución"
+   ],
+   "filas": [
+    [
+     "101",
+     "Ventas de productos",
+     "Q 1,200,000.00",
+     "Q 1,050,400.00",
+     "Q -149,600.00",
+     "87.5%"
+    ],
+    [
+     "201",
+     "Sueldos y salarios",
+     "Q 360,000.00",
+     "Q 300,000.00",
+     "Q -60,000.00",
+     "83.3%"
+    ]
+   ]
+  }
+ },
+ "con-recurrentes": {
+  "puntos": [
+   "Plantillas de partidas que se repiten cada mes (alquileres, cuotas, servicios) con su vigencia y sus líneas.",
+   "Se generan cada mes en Procesos › Recurrentes y amortizaciones."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Registros › Automáticas › Partidas recurrentes.",
+   "Elige la empresa.",
+   "Presiona «Nueva plantilla».",
+   "Escribe la «Descripción» (ej. Alquiler oficina), elige el «Tipo de partida» y la vigencia: «Desde (año)», «Desde (mes)», «Hasta (año)», «Hasta (mes)».",
+   "Presiona «Agregar línea» por cada cuenta: cuenta, concepto, debe o haber.",
+   "Revisa que cuadre y guarda.",
+   "Para dejar de usarla cambia «Hasta» o presiona «Eliminar plantilla»."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Plantilla Alquiler oficina",
+   "columnas": [
+    "Cuenta",
+    "Nombre",
+    "Concepto",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "6.1.3.01",
+     "Alquileres",
+     "Alquiler mensual",
+     "Q 5,000.00",
+     ""
+    ],
+    [
+     "2.1.2.05",
+     "Acreedores",
+     "Inmobiliaria Central",
+     "",
+     "Q 5,000.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales",
+    "Q 5,000.00",
+    "Q 5,000.00"
+   ]
+  }
+ },
+ "con-diferidos": {
+  "puntos": [
+   "Gastos pagados por anticipado, provisiones, ingresos diferidos y amortizaciones con su monto, número de cuotas y saldo por aplicar.",
+   "La cuota de cada mes se genera en Procesos › Recurrentes y amortizaciones."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Registros › Automáticas › Provisiones y diferidos.",
+   "Elige la empresa.",
+   "Agrega una fila: «No.», «Descripción» (ej. Seguro anual vehículos), «Tipo» (gasto diferido, provisión, ingreso diferido, amortización).",
+   "Escribe el monto total, el número de cuotas, el mes de inicio y las cuentas (la del diferido y la del gasto o ingreso).",
+   "Guarda; el saldo por aplicar baja con cada cuota generada."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Seguro anual",
+   "columnas": [
+    "No.",
+    "Descripción",
+    "Tipo",
+    "Monto",
+    "Cuotas",
+    "Aplicadas",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "3",
+     "Seguro anual vehículos",
+     "GASTO DIFERIDO",
+     "Q 12,000.00",
+     "12",
+     "4",
+     "Q 8,000.00"
+    ]
+   ]
+  }
+ },
+ "con-intercompania": {
+  "puntos": [
+   "Pares de cuentas recíprocas entre localidades de {organizacion} (por cobrar en una, por pagar en otra) y su conciliación a una fecha."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Registros › Automáticas › Cuentas intercompañía.",
+   "Agrega un par: «Descripción», «Localidad A» con su cuenta y «Localidad B» con su cuenta recíproca.",
+   "Guarda.",
+   "En «Conciliar al» elige la fecha: ves el saldo de cada lado y la diferencia.",
+   "Si hay diferencia, revisa las partidas de cada empresa y ajusta."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Conciliación intercompañía",
+   "columnas": [
+    "Par",
+    "Saldo localidad A",
+    "Saldo localidad B",
+    "Diferencia"
+   ],
+   "filas": [
+    [
+     "Préstamo 3-01 a 3-02",
+     "Q 50,000.00",
+     "Q 50,000.00",
+     "Q 0.00"
+    ],
+    [
+     "Servicios administrativos",
+     "Q 12,500.00",
+     "Q 11,900.00",
+     "Q 600.00"
+    ]
+   ]
+  },
+  "voz": "Conciliación intercompañía: dos pares de cuentas; uno cuadrado y otro con una diferencia de seiscientos quetzales."
+ },
+ "con-revision-cierre": {
+  "puntos": [
+   "Semáforo del mes antes de cerrarlo: partidas descuadradas o sin aprobar, cuentas que agrupan con movimiento, documentos sin contabilizar, automáticas y reversiones pendientes."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Revisión Preliminar › Revisión previa al cierre.",
+   "Elige la empresa, el año y el mes.",
+   "Revisa cada verificación: área, verificación, estado (verde, amarillo o rojo) y detalle.",
+   "Corrige lo que esté en rojo (por ejemplo genera la partida de los depósitos sin partida).",
+   "Vuelve a consultar hasta que todo esté en verde y continúa con el Cierre Mensual.",
+   "Exporta la revisión en PDF o Excel."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Revisión de noviembre",
+   "columnas": [
+    "Área",
+    "Verificación",
+    "Estado",
+    "Detalle"
+   ],
+   "filas": [
+    [
+     "Partidas",
+     "Descuadradas",
+     "OK",
+     "0"
+    ],
+    [
+     "Partidas",
+     "Sin aprobar",
+     "Pendiente",
+     "1 partida (11-0045)"
+    ],
+    [
+     "Bancos",
+     "Documentos sin partida",
+     "Pendiente",
+     "1 depósito"
+    ],
+    [
+     "Automáticas",
+     "Recurrentes del mes",
+     "OK",
+     "Generadas"
+    ]
+   ]
+  },
+  "voz": "Revisión del cierre de noviembre de {empresa}: dos pendientes. Una partida sin aprobar y un depósito sin partida contable."
+ },
+ "con-mayorizacion": {
+  "puntos": [
+   "Valida mes por mes el cuadre de las partidas, los totales contra sus líneas y las cuentas usadas; recalcula los totales de los meses abiertos."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Revisión Preliminar › Mayorización y validación.",
+   "Elige la empresa y el año.",
+   "Ejecuta la validación: por cada mes ves partidas, debe, haber y diferencias.",
+   "Si un mes abierto tiene totales distintos de sus líneas, el sistema los recalcula.",
+   "Revisa las cuentas usadas que no son de movimiento o están inactivas y corrígelas.",
+   "Exporta el resultado."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Mayorización {anio}",
+   "columnas": [
+    "Mes",
+    "Partidas",
+    "Debe",
+    "Haber",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "Octubre",
+     "118",
+     "Q 845,230.10",
+     "Q 845,230.10",
+     "Cuadrado"
+    ],
+    [
+     "Noviembre",
+     "45",
+     "Q 312,400.00",
+     "Q 312,400.00",
+     "Cuadrado"
+    ]
+   ]
+  }
+ },
+ "con-automaticas": {
+  "puntos": [
+   "Genera, aprobadas, las partidas recurrentes del mes y la cuota del mes de las provisiones y diferidos, una sola vez por mes."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Revisión Preliminar › Recurrentes y amortizaciones.",
+   "Elige la empresa, el año y el mes.",
+   "Revisa la lista: origen (recurrente o diferido), descripción, tipo, cuota, monto y estado.",
+   "Marca las que quieras generar.",
+   "Presiona «Generar seleccionadas»: cada una queda como partida aprobada con su número.",
+   "Si una ya se generó en el mes aparece con su partida y no se repite."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Automáticas de noviembre",
+   "columnas": [
+    "Origen",
+    "Descripción",
+    "Cuota",
+    "Monto Q",
+    "Partida"
+   ],
+   "filas": [
+    [
+     "Recurrente",
+     "Alquiler oficina",
+     "—",
+     "Q 5,000.00",
+     "11-0046"
+    ],
+    [
+     "Diferido",
+     "Seguro anual vehículos",
+     "5 de 12",
+     "Q 1,000.00",
+     "11-0047"
+    ]
+   ],
+   "totales": [
+    "",
+    "2 partidas",
+    "",
+    "Q 6,000.00",
+    ""
+   ]
+  }
+ },
+ "con-diferencial": {
+  "puntos": [
+   "Revalúa las cuentas bancarias en moneda extranjera al tipo de cambio de cierre y registra la diferencia con una partida PDC."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Revisión Preliminar › Diferencial cambiario.",
+   "Elige la empresa, el año y el mes.",
+   "Revisa el «Tipo de cambio» de cierre propuesto (cámbialo si es necesario).",
+   "Revisa cada cuenta: saldo en moneda, saldo revaluado en Q, saldo contable en Q y diferencial.",
+   "Presiona «Generar partida PDC»: la ganancia o pérdida cambiaria queda registrada."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Diferencial de noviembre",
+   "columnas": [
+    "Cuenta bancaria",
+    "Saldo en moneda",
+    "Tipo de cambio",
+    "Saldo revaluado Q",
+    "Saldo contable Q",
+    "Diferencial Q"
+   ],
+   "filas": [
+    [
+     "0990067890 · Monetaria dólares",
+     "US$ 15,420.00",
+     "7.7850",
+     "Q 120,044.70",
+     "Q 119,505.00",
+     "Q 539.70"
+    ]
+   ],
+   "nota": "Ganancia cambiaria de Q 539.70 en la partida PDC."
+  }
+ },
+ "con-reversion": {
+  "puntos": [
+   "Revierte el primer día del mes siguiente las provisiones y estimaciones (PPR y PEV) con una partida PRV."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Revisión Preliminar › Reversión de provisiones.",
+   "Elige la empresa, el año y el mes de las provisiones.",
+   "Revisa las partidas de provisión: partida, descripción, monto, estado y si ya tiene reversión.",
+   "Marca las que se revierten y presiona «Revertir seleccionadas».",
+   "Se crea una partida PRV con el día 1 del mes siguiente y las cuentas invertidas."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Reversión",
+   "columnas": [
+    "Partida",
+    "Descripción",
+    "Monto Q",
+    "Reversión"
+   ],
+   "filas": [
+    [
+     "10-0110",
+     "Provisión energía octubre",
+     "Q 3,200.00",
+     "PRV 11-0001"
+    ]
+   ]
+  }
+ },
+ "con-cierre-preliminar": {
+  "puntos": [
+   "Elige el mes y el módulo y genera, por transacción, la póliza que integra los documentos del mes que aún no tienen partida.",
+   "Se puede reversar mientras el mes no esté cerrado."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Generación de Cierres › Cierres › Cierre Preliminar.",
+   "Elige la empresa, el «Año», el mes y el módulo (ventas, compras, caja y bancos…).",
+   "Revisa cada transacción: #Trans, descripción, documentos pendientes y valor.",
+   "Usa «Marcar» / «Desmarcar» para elegir las transacciones.",
+   "Presiona «Generar pólizas»: se crea una póliza integrada por transacción y los documentos quedan con su partida.",
+   "Si algo salió mal presiona «Reversar» en la transacción."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Pólizas integradas de noviembre",
+   "columnas": [
+    "#Trans",
+    "Descripción",
+    "Documentos",
+    "Valor",
+    "Póliza"
+   ],
+   "filas": [
+    [
+     "22",
+     "Ventas al contado",
+     "84",
+     "Q 125,430.00",
+     "11-0050"
+    ],
+    [
+     "15",
+     "Depósitos de clientes",
+     "12",
+     "Q 98,200.00",
+     "11-0051"
+    ]
+   ]
+  }
+ },
+ "cierre-de-mes": {
+  "puntos": [
+   "Cierra o reabre cada mes de {empresa}: con el mes cerrado sus partidas ya no se modifican y pasan a definitivas."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Generación de Cierres › Cierres › Cierre Mensual.",
+   "Elige la «Empresa» y el «Año».",
+   "Antes, revisa la Revisión previa al cierre (todo en verde).",
+   "En el mes a cerrar presiona «Cerrar mes» y confirma.",
+   "El mes queda CERRADO con usuario y fecha; sus partidas ya no se modifican.",
+   "Si hay que corregir algo, presiona «Reabrir» y escribe el motivo (queda en la Bitácora de cierres)."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Meses de {anio}",
+   "columnas": [
+    "Mes",
+    "Estado",
+    "Cerró",
+    "Fecha"
+   ],
+   "filas": [
+    [
+     "Septiembre",
+     "CERRADO",
+     "{usuario}",
+     "05/10/{anio}"
+    ],
+    [
+     "Octubre",
+     "CERRADO",
+     "{usuario}",
+     "06/11/{anio}"
+    ],
+    [
+     "Noviembre",
+     "ABIERTO",
+     "",
+     ""
+    ]
+   ]
+  }
+ },
+ "con-cierre-anual": {
+  "puntos": [
+   "Cierre del ejercicio: revisión, partida de cierre de resultados (PCR), reserva legal 5 % y traslado a utilidades, cierre (PCE) y apertura del año siguiente (PA); se puede reabrir."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Generación de Cierres › Cierres › Cierre Anual Fiscal.",
+   "Elige la empresa y el año.",
+   "Revisa los requisitos: los doce meses cerrados, cuentas de cierre configuradas, sin partidas descuadradas.",
+   "Revisa la partida propuesta: cuentas de resultados que se cancelan contra el resultado del ejercicio.",
+   "Revisa la reserva legal (5 % de la utilidad) y el traslado a utilidades acumuladas.",
+   "Presiona «Cerrar el ejercicio»: se generan PCR, la reserva, PCE y la apertura PA del año siguiente.",
+   "Para corregir usa «Reabrir el ejercicio» (elimina esas partidas)."
+  ],
+  "resultado": {
+   "titulo": "Resultado · Cierre 2025",
+   "columnas": [
+    "Partida",
+    "Concepto",
+    "Monto"
+   ],
+   "filas": [
+    [
+     "PCR",
+     "Cierre de resultados",
+     "Q 312,400.00"
+    ],
+    [
+     "Reserva",
+     "5 % reserva legal",
+     "Q 15,620.00"
+    ],
+    [
+     "PCE",
+     "Cierre de cuentas de balance",
+     "Q 2,450,800.00"
+    ],
+    [
+     "PA",
+     "Apertura {anio}",
+     "Q 2,450,800.00"
+    ]
+   ]
+  }
+ },
+ "con-int-cuenta": {
+  "puntos": [
+   "Partidas del período donde aparece una cuenta, con saldo anterior, debe, haber y saldo actual."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Generación de Cierres › Integraciones › Integración por cuenta.",
+   "Elige la empresa, el período y la «Cuenta» (ej. {cuenta}).",
+   "Revisa el saldo anterior, cada partida con su debe y haber, y el saldo actual.",
+   "Genera el PDF o Excel."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Integración de la cuenta {cuenta}",
+   "columnas": [
+    "Partida",
+    "Fecha",
+    "Descripción",
+    "Debe",
+    "Haber",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "",
+     "",
+     "Saldo anterior",
+     "",
+     "",
+     "Q 12,000.00"
+    ],
+    [
+     "11-0046",
+     "01/11/{anio}",
+     "Alquiler oficina",
+     "Q 5,000.00",
+     "",
+     "Q 17,000.00"
+    ]
+   ]
+  },
+  "voz": "Integración de la cuenta {cuenta}: saldo anterior doce mil quetzales, movimientos por cinco mil, saldo actual diecisiete mil quetzales."
+ },
+ "con-int-movimientos": {
+  "puntos": [
+   "Detalle por documento (cheques, depósitos, notas, compras, facturas, recibos, cajas, pólizas…) de una cuenta, eligiendo los módulos a desglosar."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Generación de Cierres › Integraciones › Integración de movimientos contables.",
+   "Elige la empresa, el período y la cuenta.",
+   "Presiona «Módulos» y marca los módulos a desglosar («Todos» o «Ninguno»).",
+   "Revisa cada documento con su número, fecha, tercero y valor.",
+   "Genera el PDF o Excel."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Movimientos de Bancos",
+   "columnas": [
+    "Módulo",
+    "Documento",
+    "Fecha",
+    "Tercero",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "Depósitos",
+     "100245871",
+     "30/10/{anio}",
+     "{cliente}",
+     "Q 3,450.00",
+     ""
+    ],
+    [
+     "Cheques",
+     "1013",
+     "{hoy}",
+     "{proveedor}",
+     "",
+     "Q 4,480.00"
+    ]
+   ]
+  },
+  "voz": "Integración de movimientos de la cuenta de bancos: un depósito por tres mil cuatrocientos cincuenta quetzales y un cheque por cuatro mil cuatrocientos ochenta."
+ },
+ "con-int-centro": {
+  "puntos": [
+   "Detalle por documento de un centro de costo, agrupado por cuenta, con saldo anterior y total."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Generación de Cierres › Integraciones › Integración de movimientos por centro de costo.",
+   "Elige la empresa, el período y el «Centro de costo».",
+   "Revisa cada cuenta con sus documentos y total.",
+   "Genera el PDF o Excel."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Centro 01.01 Gerencia",
+   "columnas": [
+    "Cuenta",
+    "Documento",
+    "Fecha",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "6.1.3.01 Alquileres",
+     "Partida 11-0046",
+     "01/11/{anio}",
+     "Q 5,000.00"
+    ],
+    [
+     "6.1.2.05 Combustibles",
+     "Caja 46",
+     "08/11/{anio}",
+     "Q 269.79"
+    ]
+   ],
+   "totales": [
+    "Total del centro",
+    "",
+    "",
+    "Q 5,269.79"
+   ]
+  },
+  "voz": "El centro de costo Gerencia suma cinco mil doscientos sesenta y nueve quetzales con setenta y nueve centavos en noviembre."
+ },
+ "con-integraciones": {
+  "puntos": [
+   "Saldo contable de cada cuenta de control contra su auxiliar (bancos, CxC, CxP, inventario, IVA, sueldos), resumido o detallado por cuenta."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Integraciones contables › Integraciones contables.",
+   "Elige la empresa y la fecha de corte.",
+   "Revisa cada concepto: saldo contable, saldo del auxiliar y diferencia.",
+   "Abre el detalle de un concepto con diferencia para ver qué documentos la causan.",
+   "Genera el PDF o Excel."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Integraciones al 31/10",
+   "columnas": [
+    "Concepto",
+    "Saldo contable",
+    "Saldo auxiliar",
+    "Diferencia"
+   ],
+   "filas": [
+    [
+     "Bancos",
+     "Q 198,325.40",
+     "Q 198,325.40",
+     "Q 0.00"
+    ],
+    [
+     "Clientes",
+     "Q 84,200.00",
+     "Q 83,600.00",
+     "Q 600.00"
+    ],
+    [
+     "Proveedores",
+     "Q 46,330.00",
+     "Q 46,330.00",
+     "Q 0.00"
+    ]
+   ]
+  },
+  "voz": "Integraciones contables al treinta y uno de octubre: bancos y proveedores cuadran; clientes tiene una diferencia de seiscientos quetzales contra su auxiliar."
+ },
+ "con-analisis-cuenta": {
+  "puntos": [
+   "Integración analítica de una cuenta: saldo inicial, movimientos por mes, por centro de costo, tipo, subcuenta o concepto, y saldo final."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Procesos › Integraciones contables › Análisis de cuenta.",
+   "Elige la empresa, el «Ejercicio» y la «Cuenta».",
+   "Elige cómo agrupar: por mes, centro, tipo, subcuenta o concepto.",
+   "Revisa el saldo inicial, los movimientos y el saldo final.",
+   "Genera el PDF o Excel."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Análisis por mes",
+   "columnas": [
+    "Mes",
+    "Debe",
+    "Haber",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "Septiembre",
+     "Q 5,000.00",
+     "",
+     "Q 7,000.00"
+    ],
+    [
+     "Octubre",
+     "Q 5,000.00",
+     "",
+     "Q 12,000.00"
+    ],
+    [
+     "Noviembre",
+     "Q 5,000.00",
+     "",
+     "Q 17,000.00"
+    ]
+   ]
+  },
+  "voz": "Análisis de la cuenta: cargos de cinco mil quetzales cada mes; saldo final de diecisiete mil quetzales."
+ },
+ "libro-diario": {
+  "puntos": [
+   "Partidas del período en orden cronológico con su detalle de cuentas (detallado) o una línea por partida (resumido); empresa o consolidado."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Libros contables › Libro diario.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Escribe el rango «Desde» y «Hasta» (ej. del 01/11/{anio} al 30/11/{anio}).",
+   "En «Contenido» elige Detallado (cada partida con sus cuentas) o Resumido (una línea por partida).",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Libro diario de noviembre",
+   "columnas": [
+    "Partida",
+    "Fecha",
+    "Cuenta",
+    "Descripción",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "11-0046",
+     "01/11/{anio}",
+     "6.1.3.01",
+     "Alquileres · Alquiler oficina",
+     "Q 5,000.00",
+     ""
+    ],
+    [
+     "",
+     "",
+     "2.1.2.05",
+     "Acreedores · Inmobiliaria Central",
+     "",
+     "Q 5,000.00"
+    ],
+    [
+     "11-0047",
+     "01/11/{anio}",
+     "6.1.4.02",
+     "Seguros · cuota 5 de 12",
+     "Q 1,000.00",
+     ""
+    ],
+    [
+     "",
+     "",
+     "1.1.5.01",
+     "Seguros pagados por anticipado",
+     "",
+     "Q 1,000.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "Totales",
+    "Q 6,000.00",
+    "Q 6,000.00"
+   ]
+  },
+  "voz": "Libro diario de {empresa} de noviembre: dos partidas con cargos y abonos por seis mil quetzales. El libro está cuadrado."
+ },
+ "libro-mayor": {
+  "puntos": [
+   "Movimientos de cada cuenta con saldo inicial, debe, haber y saldo acumulado; una cuenta o todas; detallado o resumido."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Libros contables › Libro mayor.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Escribe el rango de fechas.",
+   "En «Cuenta» elige una (ej. {cuenta}) o deja todas.",
+   "Elige el «Contenido»: detallado (cada partida) o resumido (totales por cuenta).",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Mayor de la cuenta 6.1.3.01 Alquileres",
+   "columnas": [
+    "Fecha",
+    "Partida",
+    "Concepto",
+    "Debe",
+    "Haber",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "",
+     "",
+     "Saldo inicial",
+     "",
+     "",
+     "Q 50,000.00"
+    ],
+    [
+     "01/11/{anio}",
+     "11-0046",
+     "Alquiler oficina",
+     "Q 5,000.00",
+     "",
+     "Q 55,000.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales",
+    "Q 5,000.00",
+    "Q 0.00",
+    "Q 55,000.00"
+   ]
+  },
+  "voz": "Mayor de la cuenta alquileres: saldo inicial cincuenta mil quetzales, cargos por cinco mil y saldo final de cincuenta y cinco mil quetzales."
+ },
+ "balanza-de-comprobacion": {
+  "puntos": [
+   "Saldos iniciales, movimientos y saldos finales deudores y acreedores por cuenta y nivel, con la comprobación de cuadre."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Libros contables › Balanza de comprobación.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Escribe el rango de fechas.",
+   "Elige el «Nivel» de cuentas (1 a 5).",
+   "Revisa la fila de comprobación: debe total = haber total y saldos deudores = acreedores.",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Balanza a nivel 1",
+   "columnas": [
+    "Cuenta",
+    "Nombre",
+    "Saldo inicial",
+    "Debe",
+    "Haber",
+    "Saldo final"
+   ],
+   "filas": [
+    [
+     "1",
+     "Activo",
+     "Q 2,450,800.00",
+     "Q 312,400.00",
+     "Q 280,100.00",
+     "Q 2,483,100.00"
+    ],
+    [
+     "2",
+     "Pasivo",
+     "Q -820,400.00",
+     "Q 120,000.00",
+     "Q 135,300.00",
+     "Q -835,700.00"
+    ],
+    [
+     "3",
+     "Capital",
+     "Q -1,630,400.00",
+     "",
+     "",
+     "Q -1,630,400.00"
+    ],
+    [
+     "4",
+     "Ingresos",
+     "",
+     "",
+     "Q 98,200.00",
+     "Q -98,200.00"
+    ],
+    [
+     "6",
+     "Gastos",
+     "",
+     "Q 81,200.00",
+     "",
+     "Q 81,200.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "Comprobación",
+    "Q 0.00",
+    "Q 513,600.00",
+    "Q 513,600.00",
+    "Q 0.00"
+   ]
+  },
+  "voz": "Balanza de comprobación de {empresa}: cargos y abonos por quinientos trece mil seiscientos quetzales. La balanza cuadra."
+ },
+ "libro-inventarios-balances": {
+  "puntos": [
+   "Inventario de las cuentas de balance al cierre y resumen de resultados del ejercicio, con el folio del libro autorizado por la SAT."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Libros contables › Libro de inventarios y balances.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Elige el «Ejercicio» y el «Año».",
+   "Escribe el «Folio inicial» del libro autorizado (se descuenta en Libros autorizados SAT).",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Inventario al 31/12/2025",
+   "columnas": [
+    "Cuenta",
+    "Nombre",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "1.1.1",
+     "Caja y bancos",
+     "Q 198,325.40"
+    ],
+    [
+     "1.1.2",
+     "Cuentas por cobrar",
+     "Q 84,200.00"
+    ],
+    [
+     "2.1.1",
+     "Proveedores",
+     "Q 46,330.00"
+    ]
+   ]
+  },
+  "voz": "Libro de inventarios y balances del ejercicio dos mil veinticinco: caja y bancos ciento noventa y ocho mil trescientos veinticinco quetzales; cuentas por cobrar ochenta y cuatro mil doscientos."
+ },
+ "balance-general": {
+  "puntos": [
+   "Activo, pasivo y patrimonio a una fecha por nivel de cuenta, con el resultado del ejercicio, el cuadre, gráficas y firmas."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Estados financieros › Balance general.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Indica la fecha de corte (ej. el último día del mes cerrado).",
+   "Elige el «Nivel» (3 para presentación, 5 para detalle).",
+   "Revisa el indicador de cuadre: Activo = Pasivo + Patrimonio (incluye el resultado del ejercicio {anio}).",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Balance general al 31/10/{anio}",
+   "columnas": [
+    "Cuenta",
+    "Nombre",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "1",
+     "ACTIVO",
+     "Q 2,483,100.00"
+    ],
+    [
+     "2",
+     "PASIVO",
+     "Q 835,700.00"
+    ],
+    [
+     "3",
+     "PATRIMONIO",
+     "Q 1,630,400.00"
+    ],
+    [
+     "3.3.01",
+     "Resultado del ejercicio",
+     "Q 17,000.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "Pasivo + Patrimonio",
+    "Q 2,483,100.00"
+   ]
+  },
+  "voz": "Balance general de {empresa} al treinta y uno de octubre: activo total de dos millones cuatrocientos ochenta y tres mil cien quetzales, igual al pasivo más patrimonio. Resultado del ejercicio: diecisiete mil quetzales de utilidad."
+ },
+ "estado-de-resultados": {
+  "puntos": [
+   "Ingresos, costos y gastos del período con utilidad bruta, de operación y neta, % sobre ingresos y columnas por mes."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Estados financieros › Estado de resultados.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Escribe el rango «Desde» y «Hasta» (ej. 01/01/{anio} al 31/10/{anio}).",
+   "Elige el «Nivel» y en «Columnas» si quieres una columna por mes.",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Estado de resultados enero–octubre",
+   "columnas": [
+    "Concepto",
+    "Valor",
+    "% ingresos"
+   ],
+   "filas": [
+    [
+     "Ingresos",
+     "Q 1,050,400.00",
+     "100.0%"
+    ],
+    [
+     "(−) Costo de ventas",
+     "Q 620,000.00",
+     "59.0%"
+    ],
+    [
+     "Utilidad bruta",
+     "Q 430,400.00",
+     "41.0%"
+    ],
+    [
+     "(−) Gastos de operación",
+     "Q 413,400.00",
+     "39.4%"
+    ]
+   ],
+   "totales": [
+    "Utilidad neta",
+    "Q 17,000.00",
+    "1.6%"
+   ]
+  },
+  "voz": "Estado de resultados de {empresa} de enero a octubre: ingresos de un millón cincuenta mil cuatrocientos quetzales, utilidad bruta del cuarenta y uno por ciento y utilidad neta de diecisiete mil quetzales, el uno punto seis por ciento de los ingresos."
+ },
+ "estado-cambios-patrimonio": {
+  "puntos": [
+   "Saldo inicial, resultado, cierre, reserva legal, traslados y otros movimientos de cada cuenta del patrimonio."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Estados financieros › Estado de cambios en el patrimonio.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Elige el ejercicio.",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Cambios en el patrimonio 2025",
+   "columnas": [
+    "Cuenta",
+    "Saldo inicial",
+    "Resultado",
+    "Reserva legal",
+    "Saldo final"
+   ],
+   "filas": [
+    [
+     "Capital social",
+     "Q 1,000,000.00",
+     "",
+     "",
+     "Q 1,000,000.00"
+    ],
+    [
+     "Reserva legal",
+     "Q 40,000.00",
+     "",
+     "Q 15,620.00",
+     "Q 55,620.00"
+    ],
+    [
+     "Utilidades acumuladas",
+     "Q 278,000.00",
+     "Q 312,400.00",
+     "Q -15,620.00",
+     "Q 574,780.00"
+    ]
+   ]
+  },
+  "voz": "Cambios en el patrimonio de dos mil veinticinco: la reserva legal aumentó quince mil seiscientos veinte quetzales y las utilidades acumuladas cerraron en quinientos setenta y cuatro mil setecientos ochenta."
+ },
+ "estados-comparativos": {
+  "puntos": [
+   "Balance general o estado de resultados de dos fechas con variación absoluta y porcentual; empresa o consolidado."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Estados financieros › Estados financieros comparativos.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Elige el estado (balance o resultados) y las dos fechas a comparar.",
+   "Elige el nivel de cuentas.",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Resultados {anio} vs. 2025 (ene–oct)",
+   "columnas": [
+    "Concepto",
+    "{anio}",
+    "2025",
+    "Variación",
+    "%"
+   ],
+   "filas": [
+    [
+     "Ingresos",
+     "Q 1,050,400.00",
+     "Q 980,000.00",
+     "Q 70,400.00",
+     "7.2%"
+    ],
+    [
+     "Gastos de operación",
+     "Q 413,400.00",
+     "Q 390,000.00",
+     "Q 23,400.00",
+     "6.0%"
+    ]
+   ]
+  },
+  "voz": "Comparativo de resultados: los ingresos crecieron siete punto dos por ciento respecto al año anterior y los gastos de operación seis por ciento."
+ },
+ "resultados-centro-costo": {
+  "puntos": [
+   "Estado de resultados con una columna por centro de costo principal y su gráfica."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Estados financieros › Resultados por centro de costo.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Escribe el rango de fechas y el nivel de cuentas.",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Resultados por centro",
+   "columnas": [
+    "Concepto",
+    "Administración",
+    "Ventas",
+    "Total"
+   ],
+   "filas": [
+    [
+     "Ingresos",
+     "Q 0.00",
+     "Q 1,050,400.00",
+     "Q 1,050,400.00"
+    ],
+    [
+     "Gastos",
+     "Q 245,000.00",
+     "Q 168,400.00",
+     "Q 413,400.00"
+    ]
+   ]
+  },
+  "voz": "Resultados por centro de costo: ventas genera todos los ingresos; administración tiene doscientos cuarenta y cinco mil quetzales de gastos."
+ },
+ "presupuesto-vs-ejecutado": {
+  "puntos": [
+   "Rubros del presupuesto del año con lo presupuestado, ejecutado, variación y % de ejecución por grupo."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Estados financieros › Presupuesto vs. ejecutado.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Elige el «Año» y el «Presupuesto».",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Presupuesto vs. ejecutado {anio}",
+   "columnas": [
+    "Rubro",
+    "Presupuestado",
+    "Ejecutado",
+    "Variación",
+    "Ejecución"
+   ],
+   "filas": [
+    [
+     "Ventas de productos",
+     "Q 1,200,000.00",
+     "Q 1,050,400.00",
+     "Q -149,600.00",
+     "87.5%"
+    ],
+    [
+     "Sueldos y salarios",
+     "Q 360,000.00",
+     "Q 300,000.00",
+     "Q -60,000.00",
+     "83.3%"
+    ]
+   ]
+  },
+  "voz": "Presupuesto contra ejecutado de {anio}: las ventas llevan ochenta y siete punto cinco por ciento de lo presupuestado y los sueldos ochenta y tres punto tres por ciento."
+ },
+ "rep-integraciones": {
+  "puntos": [
+   "Saldos contables contra auxiliares, resumido o detallado por cuenta, con diferencias y gráfica."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Cierre y análisis › Integraciones contables.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Elige la fecha de corte y si será resumido o detallado.",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Integraciones",
+   "columnas": [
+    "Concepto",
+    "Contable",
+    "Auxiliar",
+    "Diferencia"
+   ],
+   "filas": [
+    [
+     "Bancos",
+     "Q 198,325.40",
+     "Q 198,325.40",
+     "Q 0.00"
+    ],
+    [
+     "Clientes",
+     "Q 84,200.00",
+     "Q 83,600.00",
+     "Q 600.00"
+    ]
+   ]
+  },
+  "voz": "Reporte de integraciones: una diferencia de seiscientos quetzales en clientes; las demás cuentas cuadran."
+ },
+ "bitacora-cierres": {
+  "puntos": [
+   "Cierres y reaperturas de meses y ejercicios con usuario, fecha y motivo, y las partidas de los procesos automáticos."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Cierre y análisis › Bitácora de cierres.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Elige el año.",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Bitácora {anio}",
+   "columnas": [
+    "Fecha",
+    "Evento",
+    "Período",
+    "Usuario",
+    "Motivo"
+   ],
+   "filas": [
+    [
+     "06/11/{anio}",
+     "Cierre de mes",
+     "Octubre",
+     "{usuario}",
+     ""
+    ],
+    [
+     "08/11/{anio}",
+     "Reapertura",
+     "Octubre",
+     "{usuario}",
+     "Ajuste de depreciación"
+    ],
+    [
+     "09/11/{anio}",
+     "Cierre de mes",
+     "Octubre",
+     "{usuario}",
+     ""
+    ]
+   ]
+  },
+  "voz": "Bitácora de cierres: octubre se cerró, se reabrió el ocho de noviembre por un ajuste de depreciación y se volvió a cerrar el nueve."
+ },
+ "sintesis-cierres": {
+  "puntos": [
+   "Cierres del sistema anterior por año, mes y tipo (maestro) y sus saldos por cuenta, con la cuenta mayor y sus subcuentas indentadas por nivel (detalle)."
+  ],
+  "pasos": [
+   "Entra a Contabilidad › Reportes y gráficas › Cierre y análisis › Síntesis de cierres.",
+   "En «Alcance» elige la empresa ({empresa}) o el consolidado de la organización ({organizacion}).",
+   "Elige el año y, en el maestro, el cierre (mes y tipo).",
+   "Abajo revisa los saldos por cuenta; filtra por «Cuenta» si buscas una.",
+   "Revisa la vista previa con sus totales.",
+   "Presiona «PDF» para imprimir (con encabezado y firmas) o «Excel» para descargar el reporte con los mismos parámetros."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Cierre diciembre 2024",
+   "columnas": [
+    "Cuenta",
+    "Nombre",
+    "Debe",
+    "Haber",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "1",
+     "ACTIVO",
+     "Q 2,300,000.00",
+     "",
+     "Q 2,300,000.00"
+    ],
+    [
+     "  1.1",
+     "Activo corriente",
+     "Q 980,000.00",
+     "",
+     "Q 980,000.00"
+    ]
+   ]
+  },
+  "voz": "Síntesis del cierre de diciembre de dos mil veinticuatro: activo total de dos millones trescientos mil quetzales."
+ }
+}
