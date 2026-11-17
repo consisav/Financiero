@@ -1,0 +1,1601 @@
+{
+ "cli-medicos": {
+  "puntos": [
+   "Médicos con colegiado, especialidad, tipo, NIT, % de la clínica y retención de ISR; sus horarios de atención por consultorio y día (minutos por cita), y las especialidades.",
+   "Secciones: Médicos, Horarios de atención y Especialidades. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Personal y pacientes › Médicos, especialidades y horarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila.",
+   "Marca «Activo» para que se pueda usar; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Médico",
+    "Consultorio",
+    "Día",
+    "Desde",
+    "Hasta",
+    "Min. por cita"
+   ],
+   "filas": [
+    [
+     "Dra. Elena Paz (Pediatría)",
+     "C-2",
+     "Lunes",
+     "08:00",
+     "12:00",
+     "20"
+    ],
+    [
+     "Dr. Mario Soto (Medicina interna)",
+     "C-1",
+     "Martes",
+     "14:00",
+     "18:00",
+     "30"
+    ]
+   ]
+  }
+ },
+ "cli-consultorios": {
+  "puntos": [
+   "Consultorios con su sede, especialidad y equipo.",
+   "Secciones: Consultorios. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Clínica › Clínicas y consultorios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila.",
+   "Marca «Activo» para que se pueda usar; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Consultorio",
+    "Sede",
+    "Especialidad",
+    "Equipo"
+   ],
+   "filas": [
+    [
+     "C-1",
+     "Consultorio 1",
+     "Zona 10",
+     "Medicina interna",
+     "Electrocardiógrafo"
+    ],
+    [
+     "C-2",
+     "Consultorio 2",
+     "Zona 10",
+     "Pediatría",
+     "Báscula pediátrica"
+    ]
+   ]
+  }
+ },
+ "cli-servicios": {
+  "puntos": [
+   "Servicios con tipo, especialidad, precio, honorario e insumo; tarifas y copagos por aseguradora; aseguradoras; paquetes y membresías con sus sesiones y vigencia.",
+   "Secciones: Servicios, Tarifas por aseguradora, Aseguradoras y Paquetes y membresías. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Clínica › Servicios, tarifas y paquetes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila.",
+   "Marca «Activo» para que se pueda usar; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Servicio",
+    "Tipo",
+    "Precio Q",
+    "Honorario",
+    "Copago Seguros El Roble"
+   ],
+   "filas": [
+    [
+     "Consulta pediatría",
+     "Consulta",
+     "Q 350.00",
+     "Q 250.00",
+     "Q 100.00"
+    ],
+    [
+     "Nebulización",
+     "Procedimiento",
+     "Q 120.00",
+     "Q 0.00",
+     "Q 40.00"
+    ]
+   ]
+  }
+ },
+ "cli-diagnosticos": {
+  "puntos": [
+   "Diagnósticos CIE-10 con capítulo; se eligen en la consulta.",
+   "Secciones: Diagnósticos. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Clínico › Diagnósticos CIE-10 y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila.",
+   "Marca «Activo» para que se pueda usar; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Descripción",
+    "Capítulo"
+   ],
+   "filas": [
+    [
+     "J06.9",
+     "Infección aguda de las vías respiratorias superiores",
+     "X"
+    ],
+    [
+     "I10",
+     "Hipertensión esencial",
+     "IX"
+    ]
+   ]
+  }
+ },
+ "cli-vademecum": {
+  "puntos": [
+   "Vademécum (medicamento, presentación, concentración, vía, dosis habitual) y plantillas clínicas por especialidad (historia, examen físico y plan).",
+   "Secciones: Vademécum y Plantillas clínicas. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Clínico › Medicamentos y plantillas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila.",
+   "Marca «Activo» para que se pueda usar; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Medicamento",
+    "Presentación",
+    "Concentración",
+    "Vía",
+    "Dosis habitual"
+   ],
+   "filas": [
+    [
+     "Amoxicilina",
+     "Suspensión",
+     "250 mg/5 ml",
+     "Oral",
+     "50 mg/kg/día c/8 h"
+    ],
+    [
+     "Losartán",
+     "Tableta",
+     "50 mg",
+     "Oral",
+     "50 mg c/24 h"
+    ]
+   ]
+  }
+ },
+ "med-procedimientos": {
+  "puntos": [
+   "Procedimientos CIE-9-MC (especialidad, minutos, precio, si requiere consentimiento), paquetes quirúrgicos de precio cerrado (días, cama, honorarios, qué incluye y excluye) y kits de insumos por procedimiento con los artículos del inventario.",
+   "Secciones: Procedimientos, Paquetes quirúrgicos, Kits por procedimiento y Artículos de los kits. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Procedimientos y apoyo › Procedimientos, paquetes y kits y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Paquete",
+    "Días",
+    "Cama",
+    "Hon. cirujano",
+    "Hon. anestesia",
+    "Precio Q"
+   ],
+   "filas": [
+    [
+     "Colecistectomía laparoscópica",
+     "2",
+     "Privada",
+     "Q 6,000.00",
+     "Q 2,000.00",
+     "Q 18,500.00"
+    ]
+   ]
+  }
+ },
+ "med-laboratorio": {
+  "puntos": [
+   "Pruebas y perfiles con área, unidad, valores de referencia y críticos, muestra, horas de entrega y precio; estudios de imagen con modalidad, preparación y plantilla de informe.",
+   "Secciones: Pruebas de laboratorio, Pruebas de cada perfil y Estudios de imagen. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Procedimientos y apoyo › Pruebas de laboratorio e imagen y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Prueba",
+    "Unidad",
+    "Ref. mín.",
+    "Ref. máx.",
+    "Crítico",
+    "Precio Q"
+   ],
+   "filas": [
+    [
+     "Glucosa",
+     "mg/dL",
+     "70",
+     "100",
+     "< 40 o > 400",
+     "Q 35.00"
+    ],
+    [
+     "Hemoglobina",
+     "g/dL",
+     "12",
+     "16",
+     "< 7",
+     "Q 40.00"
+    ]
+   ]
+  }
+ },
+ "med-convenios": {
+  "puntos": [
+   "Planes de aseguradoras (deducible, coaseguro, tope anual, copago, preautorización), empresas con convenio (descuento, días de crédito, vigencia) y médicos referentes con su comisión.",
+   "Secciones: Planes de aseguradoras, Empresas con convenio y Médicos referentes. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Procedimientos y apoyo › Planes, convenios y referentes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Aseguradora",
+    "Plan",
+    "Deducible Q",
+    "Coaseguro %",
+    "Tope anual Q",
+    "Preautorización"
+   ],
+   "filas": [
+    [
+     "Seguros El Roble",
+     "Oro",
+     "Q 1,000.00",
+     "10 %",
+     "Q 500,000.00",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "cli-vacunas": {
+  "puntos": [
+   "Esquema de vacunación: vacuna, dosis, edad en meses, vía, producto del inventario y precio.",
+   "Secciones: Vacunas. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Catálogos › Procedimientos y apoyo › Esquema de vacunación y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila.",
+   "Marca «Activo» para que se pueda usar; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Vacuna",
+    "Dosis",
+    "Edad (meses)",
+    "Vía",
+    "Precio Q"
+   ],
+   "filas": [
+    [
+     "Pentavalente",
+     "1",
+     "2",
+     "IM",
+     "Q 250.00"
+    ],
+    [
+     "SPR",
+     "1",
+     "12",
+     "SC",
+     "Q 300.00"
+    ]
+   ]
+  }
+ },
+ "cli-expediente": {
+  "puntos": [
+   "Pacientes y su expediente clínico: datos personales, fecha de nacimiento, sexo, aseguradora, antecedentes, alergias y todas sus consultas, órdenes, vacunas y documentos."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Atención › Pacientes y expediente clínico y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el paciente por nombre o DPI; si no existe presiona «Nuevo».",
+   "Escribe nombres, apellidos, DPI, «Fecha de nacimiento», «Sexo», teléfono y dirección.",
+   "Elige la «Aseguradora» si tiene.",
+   "Registra antecedentes personales y familiares y alergias.",
+   "Guarda; abre el expediente para ver su historia completa."
+  ],
+  "campos": [
+   [
+    "Nombre",
+    "Sofía Hernández",
+    ""
+   ],
+   [
+    "Fecha de nacimiento",
+    "03/02/2022",
+    "Edad para dosis pediátricas."
+   ],
+   [
+    "Aseguradora",
+    "Seguros El Roble",
+    "Copagos y reclamos."
+   ],
+   [
+    "Alergias",
+    "Ninguna conocida",
+    ""
+   ]
+  ]
+ },
+ "cli-agenda": {
+  "puntos": [
+   "Agenda de citas por fecha y médico: paciente, hora, minutos, consultorio, servicio, cobertura y motivo."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Atención › Agenda de citas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Fecha» y el «Médico»: ves sus espacios según su horario.",
+   "Presiona «Nuevo»: «Paciente *», «Médico *», «Hora», «Minutos», «Consultorio», «Servicio», «Cobertura» (particular o aseguradora) y «Motivo».",
+   "Guarda: la cita queda PROGRAMADA.",
+   "Confírmala en Confirmación de citas."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Hora",
+    "Paciente",
+    "Servicio",
+    "Cobertura",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "08:00",
+     "Sofía Hernández",
+     "Consulta pediatría",
+     "Seguros El Roble",
+     "Confirmada"
+    ],
+    [
+     "08:20",
+     "Diego Ramos",
+     "Consulta pediatría",
+     "Particular",
+     "Programada"
+    ]
+   ]
+  }
+ },
+ "cli-recepcion": {
+  "puntos": [
+   "Recepción del paciente: llegada, signos vitales (peso, talla, presión, temperatura) y paso al consultorio."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Atención › Recepción y signos vitales y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Ves las citas del día; cuando el paciente llega presiona «Llegó».",
+   "Presiona «Signos» y registra peso, talla, presión, frecuencia, temperatura y el «Motivo de consulta».",
+   "Presiona «Pasar» cuando el médico lo llame."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Hora",
+    "Paciente",
+    "Peso",
+    "Talla",
+    "T °C",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "08:00",
+     "Sofía Hernández",
+     "14.2 kg",
+     "96 cm",
+     "38.1",
+     "En consulta"
+    ]
+   ]
+  }
+ },
+ "cli-consulta": {
+  "puntos": [
+   "Consulta médica en formato SOAP: historia, examen físico, diagnósticos CIE-10, receta (medicamento, dosis, frecuencia, duración, vía y cantidad), órdenes de laboratorio e imagen, interconsulta y próxima cita."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Atención › Consulta médica y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige al paciente en consulta; revisa sus signos y antecedentes.",
+   "Elige la «Plantilla» de la especialidad para precargar la historia, el examen físico y el plan.",
+   "Escribe el motivo, la historia y el examen físico.",
+   "Presiona «Agregar diagnóstico» y elige el CIE-10 con su «Tipo» (principal o secundario) y «Condición».",
+   "En la receta agrega cada «Medicamento» con «Dosis», «Frecuencia», «Duración», «Vía» y «Cantidad».",
+   "En «Ordenar» agrega laboratorios, imágenes o interconsulta / referencia.",
+   "Escribe la «Próxima cita» y guarda; imprime la receta."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Receta",
+   "columnas": [
+    "Medicamento",
+    "Dosis",
+    "Frecuencia",
+    "Duración",
+    "Cantidad"
+   ],
+   "filas": [
+    [
+     "Amoxicilina 250 mg/5 ml",
+     "5 ml",
+     "Cada 8 h",
+     "7 días",
+     "1 frasco"
+    ],
+    [
+     "Acetaminofén 160 mg/5 ml",
+     "6 ml",
+     "Cada 6 h si fiebre",
+     "3 días",
+     "1 frasco"
+    ]
+   ]
+  },
+  "campos": [
+   [
+    "Diagnóstico",
+    "J06.9 Infección respiratoria aguda",
+    "CIE-10 principal."
+   ],
+   [
+    "Orden",
+    "Hematología completa",
+    "Laboratorio."
+   ],
+   [
+    "Próxima cita",
+    "24/11/{anio}",
+    "Control."
+   ]
+  ]
+ },
+ "cli-ordenes": {
+  "puntos": [
+   "Órdenes de laboratorio, imagen y procedimientos de las consultas con su resultado."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Atención › Órdenes y resultados y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde» y el «Estado» (pendiente, realizada).",
+   "Al recibir el resultado presiona «Resultado» y escríbelo o adjúntalo.",
+   "Para procedimientos presiona «Realizada»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Orden",
+    "Paciente",
+    "Estudio",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "ORD-221",
+     "Sofía Hernández",
+     "Hematología completa",
+     "Con resultado"
+    ]
+   ]
+  }
+ },
+ "cli-documentos": {
+  "puntos": [
+   "Constancias médicas, incapacidades y referencias con texto propuesto que se puede editar."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Atención › Constancias y referencias y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo» y elige el «Tipo» (constancia, incapacidad, referencia).",
+   "Elige el «Paciente *» y el «Médico».",
+   "Para incapacidad escribe los «Días», «Desde» y «Hasta»; para referencia el «Destino».",
+   "Escribe el «Diagnóstico o motivo» y revisa el «Texto» propuesto.",
+   "Guarda e imprime."
+  ],
+  "campos": [
+   [
+    "Tipo",
+    "Incapacidad",
+    ""
+   ],
+   [
+    "Días",
+    "3",
+    ""
+   ],
+   [
+    "Desde / Hasta",
+    "17/11 · 19/11/{anio}",
+    ""
+   ]
+  ]
+ },
+ "cli-cobro": {
+  "puntos": [
+   "Cobro de la consulta y servicios: cobertura (particular o aseguradora con copago), forma de pago y factura FEL."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Caja › Cobro de consulta y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Fecha» y el paciente atendido.",
+   "Revisa la «Cobertura»: con aseguradora el paciente paga el copago.",
+   "Elige la «Forma de pago» y escribe la «Referencia».",
+   "Escribe el «NIT» y el «Nombre factura».",
+   "Guarda: se genera la «Factura (DTE)»; «Anular» revierte el cobro."
+  ],
+  "resultado": {
+   "columnas": [
+    "Servicio",
+    "Precio",
+    "Copago paciente",
+    "A la aseguradora"
+   ],
+   "filas": [
+    [
+     "Consulta pediatría",
+     "Q 350.00",
+     "Q 100.00",
+     "Q 250.00"
+    ]
+   ]
+  }
+ },
+ "med-resultados-lab": {
+  "puntos": [
+   "Órdenes con sus pruebas, resultados con alerta bajo, alto o crítico, validación por químico biólogo e informe impreso."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Apoyo diagnóstico › Resultados de laboratorio y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige el «Paciente», el «Origen», la «Admisión» y el «Médico que solicita».",
+   "Agrega la «Prueba o perfil»; registra la «Toma de muestra».",
+   "Escribe cada «Resultado»: se compara con la referencia y marca la «Alerta» (bajo, alto, crítico).",
+   "El químico biólogo valida («Validado por») y se registra la «Entrega».",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Paciente",
+    "Ana María García",
+    ""
+   ],
+   [
+    "Origen",
+    "Hospitalización",
+    "Externo, consulta, emergencia."
+   ],
+   [
+    "Prueba o perfil",
+    "Química básica",
+    ""
+   ],
+   [
+    "Validado por",
+    "QB. Marta Díaz",
+    "Químico biólogo."
+   ]
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Prueba",
+    "Resultado",
+    "Unidad",
+    "Referencia",
+    "Alerta"
+   ],
+   "filas": [
+    [
+     "Glucosa",
+     "182",
+     "mg/dL",
+     "70–100",
+     "ALTO"
+    ],
+    [
+     "Hemoglobina",
+     "13.4",
+     "g/dL",
+     "12–16",
+     ""
+    ]
+   ]
+  }
+ },
+ "med-informes-imagen": {
+  "puntos": [
+   "Estudios realizados con hallazgos y conclusión del radiólogo; informe impreso."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Apoyo diagnóstico › Informes de imagen y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige «Paciente», «Estudio», «Origen», «Admisión» y «Médico que solicita».",
+   "El radiólogo escribe «Hallazgos» y «Conclusión / impresión diagnóstica» (puede partir de la plantilla del estudio).",
+   "Cambia el «Estado» a informado.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Estudio",
+    "Ultrasonido abdominal",
+    ""
+   ],
+   [
+    "Radiólogo",
+    "Dr. Jorge Cano",
+    ""
+   ],
+   [
+    "Hallazgos",
+    "Vesícula con litos múltiples",
+    ""
+   ],
+   [
+    "Conclusión",
+    "Colelitiasis",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "cli-controles": {
+  "puntos": [
+   "Control prenatal y niño sano: peso, talla, perímetro cefálico, presión, altura uterina, frecuencia cardíaca fetal, glucosa y próximo control."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Programas y documentos › Control prenatal y niño sano y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Paciente», «Programa» (prenatal o niño sano) y «Fecha».",
+   "Prenatal: «Semanas de gestación», «Presión arterial», «Altura uterina (cm)», «FCF (lpm)» y «Glucosa».",
+   "Niño sano: «Edad (meses)», «Peso (kg)», «Talla (cm)» y «Perímetro cefálico (cm)».",
+   "Escribe el «Médico», el «Próximo control» y las «Observaciones»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Fecha",
+    "SG / meses",
+    "Peso",
+    "Talla",
+    "PA",
+    "FCF",
+    "Próximo"
+   ],
+   "filas": [
+    [
+     "{hoy}",
+     "28 SG",
+     "68 kg",
+     "",
+     "110/70",
+     "142",
+     "01/12/{anio}"
+    ]
+   ]
+  }
+ },
+ "cli-vacunacion": {
+  "puntos": [
+   "Vacunas aplicadas con lote, quién la aplicó y próxima dosis."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Programas y documentos › Vacunación y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Paciente», «Vacuna y dosis», «Fecha», «Lote» y «Aplicada por».",
+   "Revisa la «Próxima dosis» propuesta por el esquema.",
+   "Guarda; se descuenta del inventario y se cobra si aplica."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Paciente",
+    "Vacuna",
+    "Dosis",
+    "Lote",
+    "Próxima"
+   ],
+   "filas": [
+    [
+     "Sofía Hernández",
+     "SPR",
+     "1",
+     "SPR-2207",
+     "03/02/2026"
+    ]
+   ]
+  }
+ },
+ "med-consentimientos": {
+  "puntos": [
+   "Consentimientos quirúrgicos, anestésicos, de transfusión u hospitalización para firma."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Programas y documentos › Consentimientos informados y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige «Paciente», «Tipo», «Procedimiento» y el «Médico que informa».",
+   "Escribe los «Riesgos explicados» y las «Alternativas».",
+   "Escribe quién firma (paciente o representante), «Parentesco», «DPI del firmante» y «Testigo».",
+   "Imprime el documento para la firma.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Tipo",
+    "Quirúrgico",
+    ""
+   ],
+   [
+    "Procedimiento",
+    "Colecistectomía laparoscópica",
+    ""
+   ],
+   [
+    "Riesgos explicados",
+    "Sangrado, infección, conversión a cirugía abierta",
+    ""
+   ],
+   [
+    "Firmante / Parentesco",
+    "Ana María García · Paciente",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "med-cotizaciones": {
+  "puntos": [
+   "Presupuestos al paciente por paquete o procedimiento con vigencia y conversión en admisión."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Programas y documentos › Cotizaciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige el «Paciente» o escribe «A nombre de»; escribe «Fecha» y «Vigencia (días)».",
+   "Elige el «Paquete quirúrgico» o el «Procedimiento» y la «Aseguradora».",
+   "Ajusta el «Detalle» (concepto y valor por línea); se calcula el «Total Q».",
+   "Cambia el «Estado» a aceptada cuando el paciente se interna.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "A nombre de",
+    "Ana María García",
+    ""
+   ],
+   [
+    "Paquete quirúrgico",
+    "Colecistectomía laparoscópica",
+    ""
+   ],
+   [
+    "Vigencia (días)",
+    "15",
+    ""
+   ],
+   [
+    "Total Q",
+    "Q 18,500.00",
+    ""
+   ]
+  ],
+  "ejemplo": {
+   "columnas": [
+    "No.",
+    "Paciente",
+    "Paquete / procedimiento",
+    "Total Q",
+    "Vence",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "COT-0088",
+     "Ana María García",
+     "Colecistectomía laparoscópica",
+     "Q 18,500.00",
+     "30/11/{anio}",
+     "ACEPTADA"
+    ]
+   ]
+  }
+ },
+ "med-garantias": {
+  "puntos": [
+   "Preautorizaciones de aseguradoras: monto solicitado, autorizado, número de autorización y vencimiento; incluye control prenatal y niño sano."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Registros › Programas y documentos › Cartas de garantía y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige «Paciente», «Aseguradora», «Plan», «Admisión», «Procedimiento» y «Diagnóstico».",
+   "Escribe la fecha «Solicitada» y el «Monto solicitado Q».",
+   "Cuando responda la aseguradora escribe el «No. de autorización», el «Monto autorizado Q» y «Vence».",
+   "Actualiza el «Estado» (solicitada, autorizada, rechazada).",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Aseguradora / Plan",
+    "Seguros El Roble · Oro",
+    ""
+   ],
+   [
+    "Monto solicitado Q",
+    "Q 18,500.00",
+    ""
+   ],
+   [
+    "No. de autorización",
+    "AUT-778812",
+    ""
+   ],
+   [
+    "Monto autorizado Q",
+    "Q 16,650.00",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "cli-confirmacion": {
+  "puntos": [
+   "Confirmación de las citas del día siguiente y lista de espera por especialidad, médico, preferencia y prioridad."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Clínica › Confirmación de citas y lista de espera y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «Citas del» elige la fecha.",
+   "Llama a cada paciente y marca «Confirmó» o «Canceló».",
+   "Los espacios cancelados se ofrecen a la lista de espera.",
+   "Agrega a la lista: «Paciente», «Especialidad», «Médico», «Preferencia» y «Prioridad»; «Descartar» la quita."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Hora",
+    "Paciente",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "08:00",
+     "Sofía Hernández",
+     "Confirmó"
+    ],
+    [
+     "08:20",
+     "Diego Ramos",
+     "Canceló → lista de espera"
+    ]
+   ]
+  }
+ },
+ "cli-paquetes": {
+  "puntos": [
+   "Venta de paquetes y membresías (varias sesiones con vigencia) con su factura y control de sesiones usadas."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Clínica › Paquetes y membresías y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Paciente», «Paquete», «Forma de pago» y «Referencia».",
+   "Guarda: se genera la «Factura» y el ingreso diferido.",
+   "Cada sesión atendida descuenta una del paquete."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Paciente",
+    "Paquete",
+    "Sesiones",
+    "Usadas",
+    "Vence"
+   ],
+   "filas": [
+    [
+     "Diego Ramos",
+     "Terapia respiratoria x 10",
+     "10",
+     "3",
+     "15/02/2026"
+    ]
+   ]
+  }
+ },
+ "cli-caja": {
+  "puntos": [
+   "Cierre de caja diario de la clínica: cobros por forma de pago y efectivo contado."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Clínica › Cierre de caja diario y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Fecha».",
+   "Revisa los cobros por forma de pago.",
+   "Escribe el «Efectivo contado Q» y las «Observaciones»; se calcula la diferencia.",
+   "Guarda el cierre; deposítalo en Depósito de cierres de caja."
+  ],
+  "resultado": {
+   "columnas": [
+    "Forma",
+    "Sistema",
+    "Contado",
+    "Diferencia"
+   ],
+   "filas": [
+    [
+     "Efectivo",
+     "Q 1,450.00",
+     "Q 1,450.00",
+     "Q 0.00"
+    ],
+    [
+     "Tarjeta",
+     "Q 2,100.00",
+     "",
+     ""
+    ]
+   ]
+  }
+ },
+ "cli-honorarios": {
+  "puntos": [
+   "Liquidación de honorarios de los médicos de la clínica: consultas y procedimientos menos el % de la clínica y la retención de ISR."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Clínica › Liquidación de honorarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde» y «Hasta».",
+   "Revisa por médico el detalle de honorarios.",
+   "Presiona «Liquidar»; al pagar marca «Pagada»."
+  ],
+  "resultado": {
+   "columnas": [
+    "Médico",
+    "Honorarios",
+    "% clínica",
+    "Ret. ISR",
+    "Neto"
+   ],
+   "filas": [
+    [
+     "Dra. Elena Paz",
+     "Q 5,000.00",
+     "Q 1,000.00",
+     "Q 250.00",
+     "Q 3,750.00"
+    ]
+   ]
+  }
+ },
+ "cli-reclamos": {
+  "puntos": [
+   "Reclamos a aseguradoras por las consultas y servicios cubiertos, con su glosa."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Clínica › Reclamos a aseguradoras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde» y «Hasta».",
+   "Presiona «Generar reclamo» por aseguradora: agrupa los servicios cubiertos.",
+   "Actualiza su estado y registra la glosa si la hay."
+  ],
+  "reporte": {
+   "columnas": [
+    "Aseguradora",
+    "Servicios",
+    "Reclamado",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "Seguros El Roble",
+     "18",
+     "Q 4,500.00",
+     "ENVIADO"
+    ]
+   ]
+  },
+  "voz": "Reclamo a Seguros El Roble por cuatro mil quinientos quetzales enviado."
+ },
+ "cli-contabilidad": {
+  "puntos": [
+   "Integración contable diaria de la clínica: ingresos, cuentas por cobrar a aseguradoras, honorarios por pagar e ingreso diferido de paquetes (neto de IVA)."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Integración contable › Integración contable y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Día».",
+   "Revisa los conceptos y sus cuentas.",
+   "Genera la partida del día."
+  ],
+  "resultado": {
+   "columnas": [
+    "Concepto",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "Caja clínica",
+     "Q 3,550.00",
+     ""
+    ],
+    [
+     "Cuentas por cobrar aseguradoras",
+     "Q 4,500.00",
+     ""
+    ],
+    [
+     "Ingresos por consultas",
+     "",
+     "Q 7,187.50"
+    ],
+    [
+     "IVA por pagar",
+     "",
+     "Q 862.50"
+    ]
+   ],
+   "totales": [
+    "Totales",
+    "Q 8,050.00",
+    "Q 8,050.00"
+   ]
+  }
+ },
+ "med-facturacion": {
+  "puntos": [
+   "Factura la cuenta al paciente (contado) y a la aseguradora (crédito) en Facturación/Ventas, lista para certificar."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Caja y cartera › Facturación de cuentas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Origen» (hospital o clínica) y en «Mostrar» las cuentas por facturar.",
+   "Elige la cuenta y revisa la distribución paciente / aseguradora.",
+   "Presiona «Facturar»: se crean las facturas en Facturación/Ventas.",
+   "Certifica cada factura desde Facturas Ventas."
+  ],
+  "resultado": {
+   "columnas": [
+    "Factura",
+    "Cliente",
+    "Pago",
+    "Total"
+   ],
+   "filas": [
+    [
+     "FE-7090",
+     "Ana María García",
+     "Contado",
+     "Q 2,900.00"
+    ],
+    [
+     "FE-7091",
+     "Seguros El Roble",
+     "Crédito 45 días",
+     "Q 17,100.00"
+    ]
+   ]
+  }
+ },
+ "med-glosas": {
+  "puntos": [
+   "Preautorizaciones por atender y glosas de aseguradoras (montos que no reconocen) con su apelación y recuperación."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Caja y cartera › Preautorizaciones y glosas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Origen», «Aseguradora», «No. de reclamo», «Paciente» y «Fecha de la glosa».",
+   "Escribe el «Concepto glosado», el «Motivo» y el «Monto glosado Q».",
+   "Si se apela, escribe la «Fecha de apelación» y el «Argumento de la apelación».",
+   "Al resolverse escribe el «Monto recuperado Q» y cambia el «Estado»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Reclamo",
+    "Concepto",
+    "Glosado Q",
+    "Recuperado Q",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "REC-0221",
+     "Medicamento no cubierto",
+     "Q 450.00",
+     "Q 300.00",
+     "APELADA"
+    ]
+   ]
+  }
+ },
+ "med-incobrables": {
+  "puntos": [
+   "Saldos vencidos de pacientes y aseguradoras: estimación y castigo con su partida contable."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Caja y cartera › Cuentas incobrables y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe la «Antigüedad mínima (días)» (ej. 180).",
+   "Revisa los saldos vencidos.",
+   "Presiona «Estimar» para registrar la estimación de cuentas incobrables.",
+   "Para dar de baja definitivamente presiona «Castigar»: se genera la partida contable."
+  ],
+  "resultado": {
+   "columnas": [
+    "Deudor",
+    "Antigüedad",
+    "Saldo",
+    "Acción"
+   ],
+   "filas": [
+    [
+     "Pedro Gómez",
+     "240 días",
+     "Q 1,350.00",
+     "Estimada"
+    ]
+   ]
+  }
+ },
+ "med-mantenimiento": {
+  "puntos": [
+   "Mantenimiento preventivo, correctivo, calibración y verificación del equipo médico con costo y próximo servicio."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Caja y cartera › Mantenimiento de equipo médico y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Equipo», «Código de activo fijo», «Área» y «Tipo».",
+   "Escribe fechas «Programado» y «Realizado», «Proveedor», «Técnico» y «Costo Q».",
+   "Describe la «Falla reportada» y el «Trabajo realizado»; marca si el equipo quedó fuera de servicio.",
+   "Escribe el «Próximo servicio»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Equipo",
+    "Tipo",
+    "Realizado",
+    "Costo Q",
+    "Próximo"
+   ],
+   "filas": [
+    [
+     "Monitor de signos SOP-1",
+     "Preventivo",
+     "10/11/{anio}",
+     "Q 450.00",
+     "10/05/2027"
+    ]
+   ]
+  }
+ },
+ "med-depositos": {
+  "puntos": [
+   "Depósito del efectivo y cheques de los cierres de caja en una cuenta bancaria de Caja y Bancos."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Procesos › Integración financiera › Depósito de cierres de caja y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Caja» y los cierres a depositar.",
+   "Elige la «Cuenta bancaria», la «Fecha del depósito» y escribe el «No. de boleta».",
+   "Presiona «Registrar depósito»: se crea el depósito en Caja y Bancos."
+  ],
+  "resultado": {
+   "columnas": [
+    "Cierre",
+    "Efectivo",
+    "Cheques",
+    "Depósito"
+   ],
+   "filas": [
+    [
+     "{hoy}",
+     "Q 4,850.00",
+     "Q 2,900.00",
+     "100246001"
+    ]
+   ]
+  }
+ },
+ "cli-rep-productividad": {
+  "puntos": [
+   "Agenda y productividad por médico: citas, atendidas, no asistió, minutos y consultas por hora."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes › Agenda y productividad por médico y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta».",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Médico",
+    "Citas",
+    "Atendidas",
+    "No asistió",
+    "Consultas/hora"
+   ],
+   "filas": [
+    [
+     "Dra. Elena Paz",
+     "96",
+     "88",
+     "8",
+     "2.8"
+    ]
+   ]
+  },
+  "voz": "La doctora Elena Paz atendió ochenta y ocho de noventa y seis citas."
+ },
+ "cli-rep-morbilidad": {
+  "puntos": [
+   "Morbilidad CIE-10: diagnósticos más frecuentes."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes › Morbilidad CIE-10 y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta».",
+   "En «Primeros» elige cuántos (10, 20).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "CIE-10",
+    "Diagnóstico",
+    "Casos",
+    "%"
+   ],
+   "filas": [
+    [
+     "J06.9",
+     "Infección respiratoria aguda",
+     "64",
+     "22%"
+    ],
+    [
+     "A09",
+     "Diarrea y gastroenteritis",
+     "31",
+     "11%"
+    ]
+   ]
+  },
+  "voz": "La primera causa de consulta es la infección respiratoria aguda con el veintidós por ciento."
+ },
+ "cli-rep-ingresos": {
+  "puntos": [
+   "Ingresos por servicio, médico y forma de pago."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes › Ingresos por servicio, médico y forma de pago y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta».",
+   "Elige «Agrupar por».",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Servicio",
+    "Cantidad",
+    "Ingresos Q"
+   ],
+   "filas": [
+    [
+     "Consulta pediatría",
+     "88",
+     "Q 30,800.00"
+    ],
+    [
+     "Nebulización",
+     "40",
+     "Q 4,800.00"
+    ]
+   ]
+  },
+  "voz": "Ingresos del mes: la consulta de pediatría aporta treinta mil ochocientos quetzales."
+ },
+ "cli-rep-ocupacion": {
+  "puntos": [
+   "Ocupación de consultorios: horas disponibles contra horas usadas."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes › Ocupación de consultorios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta».",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Consultorio",
+    "Horas disponibles",
+    "Horas usadas",
+    "Ocupación"
+   ],
+   "filas": [
+    [
+     "C-1",
+     "160",
+     "118",
+     "74%"
+    ],
+    [
+     "C-2",
+     "160",
+     "132",
+     "83%"
+    ]
+   ]
+  },
+  "voz": "El consultorio dos tiene ochenta y tres por ciento de ocupación."
+ },
+ "cli-rep-cartera": {
+  "puntos": [
+   "Cartera de aseguradoras y honorarios por pagar."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes › Cartera de aseguradoras y honorarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta».",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Aseguradora",
+    "0-30",
+    "31-60",
+    "+60",
+    "Total"
+   ],
+   "filas": [
+    [
+     "Seguros El Roble",
+     "Q 4,500.00",
+     "Q 1,200.00",
+     "Q 0.00",
+     "Q 5,700.00"
+    ]
+   ]
+  },
+  "voz": "Cartera de aseguradoras: cinco mil setecientos quetzales; mil doscientos de treinta y uno a sesenta días."
+ },
+ "cli-rep-indicadores": {
+  "puntos": [
+   "Indicadores de la clínica: consultas, ausentismo, ingreso por consulta, ocupación y cartera."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes › Indicadores de la clínica y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta».",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Indicador",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "Consultas del mes",
+     "412"
+    ],
+    [
+     "Ausentismo",
+     "8.3%"
+    ],
+    [
+     "Ingreso por consulta",
+     "Q 342.00"
+    ]
+   ]
+  },
+  "voz": "Indicadores de la clínica: cuatrocientas doce consultas, ausentismo de ocho punto tres por ciento."
+ },
+ "med-rep-apoyo": {
+  "puntos": [
+   "Volumen por área y prueba, críticos, tiempo de entrega y estudios de imagen por modalidad."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes financieros y gerenciales › Laboratorio e imagen y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Área",
+    "Pruebas",
+    "Críticos",
+    "Entrega prom."
+   ],
+   "filas": [
+    [
+     "Química",
+     "1,240",
+     "14",
+     "3.5 h"
+    ],
+    [
+     "Hematología",
+     "980",
+     "6",
+     "2.0 h"
+    ]
+   ]
+  },
+  "voz": "Laboratorio: dos mil doscientas veinte pruebas y veinte resultados críticos en el mes."
+ },
+ "med-rep-rentabilidad": {
+  "puntos": [
+   "Ingresos, costo directo (farmacia y honorarios) y contribución por línea de servicio."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes financieros y gerenciales › Rentabilidad por servicio y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Línea",
+    "Ingresos",
+    "Costo directo",
+    "Contribución",
+    "%"
+   ],
+   "filas": [
+    [
+     "Cirugía",
+     "Q 420,000.00",
+     "Q 210,000.00",
+     "Q 210,000.00",
+     "50%"
+    ]
+   ]
+  },
+  "voz": "La línea de cirugía contribuye con el cincuenta por ciento de sus ingresos."
+ },
+ "med-rep-aseguradoras": {
+  "puntos": [
+   "Reclamado, aprobado, pagado, glosas y saldo por antigüedad de cada aseguradora."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes financieros y gerenciales › Facturación y cartera por aseguradora y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Aseguradora",
+    "Reclamado",
+    "Aprobado",
+    "Pagado",
+    "Glosas",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "Seguros El Roble",
+     "Q 17,100.00",
+     "Q 16,650.00",
+     "Q 0.00",
+     "Q 450.00",
+     "Q 16,650.00"
+    ]
+   ]
+  },
+  "voz": "Seguros El Roble debe dieciséis mil seiscientos cincuenta quetzales y glosó cuatrocientos cincuenta."
+ },
+ "med-rep-retenciones": {
+  "puntos": [
+   "Honorarios liquidados y retención de ISR por médico y NIT para la SAT."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes financieros y gerenciales › Retenciones de ISR a médicos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Médico",
+    "NIT",
+    "Honorarios",
+    "ISR retenido"
+   ],
+   "filas": [
+    [
+     "Dr. Luis Méndez",
+     "5678901-2",
+     "Q 6,000.00",
+     "Q 300.00"
+    ]
+   ]
+  },
+  "voz": "Retenciones de ISR a médicos del mes: trescientos quetzales."
+ },
+ "med-tablero": {
+  "puntos": [
+   "Ocupación, estancia, giro de cama, ingreso por paciente-día, consultas, ausentismo, ingresos y cartera en un tablero."
+  ],
+  "pasos": [
+   "Entra a Clínicas Médicas › Reportes y gráficas › Reportes financieros y gerenciales › Tablero gerencial y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Indicador",
+    "Mes",
+    "Meta",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "Ocupación",
+     "75.4%",
+     "80%",
+     "Amarillo"
+    ],
+    [
+     "Ingreso por paciente-día",
+     "Q 2,140.00",
+     "Q 2,000.00",
+     "Verde"
+    ],
+    [
+     "Cartera +60 días",
+     "Q 0.00",
+     "Q 0.00",
+     "Verde"
+    ]
+   ]
+  },
+  "voz": "Tablero gerencial: ocupación setenta y cinco por ciento, debajo de la meta de ochenta; ingreso por paciente día de dos mil ciento cuarenta quetzales."
+ }
+}

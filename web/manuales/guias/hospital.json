@@ -1,0 +1,2328 @@
+{
+ "hos-pacientes": {
+  "puntos": [
+   "Expediente del paciente: datos personales, fecha de nacimiento, género, alergias, contacto de emergencia, aseguradora y estado.",
+   "El mismo paciente se usa en Hospital y en Clínicas."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Pacientes y médicos › Pacientes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el paciente por nombre o DPI; si no existe presiona «Nuevo paciente».",
+   "Escribe nombres, apellidos, DPI, «Fecha de nacimiento» (calcula la edad) y «Género».",
+   "Escribe teléfono, dirección y el contacto de emergencia.",
+   "Anota las alergias y antecedentes importantes.",
+   "Elige la «Aseguradora» si tiene seguro y escribe su número de póliza.",
+   "Presiona «Guardar»."
+  ],
+  "campos": [
+   [
+    "Nombre",
+    "Ana María García",
+    "Nombre completo."
+   ],
+   [
+    "Fecha de nacimiento",
+    "12/04/1988",
+    "Calcula la edad."
+   ],
+   [
+    "Género",
+    "Femenino",
+    ""
+   ],
+   [
+    "Alergias",
+    "Penicilina",
+    "Alerta en órdenes y kardex."
+   ],
+   [
+    "Aseguradora",
+    "Seguros El Roble",
+    "Para cartas de garantía y reclamos."
+   ]
+  ]
+ },
+ "hos-medicos": {
+  "puntos": [
+   "Médicos con colegiado, especialidad, tipo (de planta o externo), NIT, participación del hospital y retención de ISR; y el catálogo de especialidades.",
+   "Secciones: Médicos y Especialidades. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Pacientes y médicos › Médicos y especialidades y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Nombre",
+    "Colegiado",
+    "Especialidad",
+    "% hospital",
+    "% ret. ISR"
+   ],
+   "filas": [
+    [
+     "M01",
+     "Dr. Luis Méndez",
+     "12345",
+     "Cirugía general",
+     "20 %",
+     "5 %"
+    ],
+    [
+     "M02",
+     "Dra. Sofía Ruiz",
+     "23456",
+     "Anestesiología",
+     "15 %",
+     "5 %"
+    ]
+   ]
+  }
+ },
+ "hos-camas": {
+  "puntos": [
+   "Áreas (encamamiento, intensivo, pediatría) y camas con su habitación, tipo, tarifa diaria y estado (libre, ocupada, mantenimiento).",
+   "Secciones: Camas y Áreas. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Instalaciones y tarifas › Áreas, habitaciones y camas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Cama",
+    "Área",
+    "Habitación",
+    "Tipo",
+    "Tarifa diaria Q",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "201-A",
+     "Encamamiento",
+     "201",
+     "Privada",
+     "Q 850.00",
+     "Ocupada"
+    ],
+    [
+     "201-B",
+     "Encamamiento",
+     "201",
+     "Privada",
+     "Q 850.00",
+     "Libre"
+    ]
+   ]
+  }
+ },
+ "hos-servicios": {
+  "puntos": [
+   "Procedimientos, laboratorio, imagenología, honorarios, quirófano e insumos con su precio.",
+   "Secciones: Servicios. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Instalaciones y tarifas › Servicios y tarifas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Servicio",
+    "Tipo",
+    "Precio Q"
+   ],
+   "filas": [
+    [
+     "LAB01",
+     "Hematología completa",
+     "Laboratorio",
+     "Q 85.00"
+    ],
+    [
+     "IMG03",
+     "Rayos X de tórax",
+     "Imagen",
+     "Q 250.00"
+    ],
+    [
+     "QX01",
+     "Sala de operaciones (hora)",
+     "Quirófano",
+     "Q 1,200.00"
+    ]
+   ]
+  }
+ },
+ "hos-aseguradoras": {
+  "puntos": [
+   "Aseguradoras con NIT, contacto, deducible, coaseguro y días de crédito.",
+   "Secciones: Aseguradoras. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Instalaciones y tarifas › Aseguradoras y convenios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Aseguradora",
+    "NIT",
+    "Deducible Q",
+    "Coaseguro %",
+    "Días crédito"
+   ],
+   "filas": [
+    [
+     "Seguros El Roble",
+     "1234567-8",
+     "Q 1,000.00",
+     "20 %",
+     "45"
+    ]
+   ]
+  }
+ },
+ "med-procedimientos": {
+  "puntos": [
+   "Procedimientos CIE-9-MC (especialidad, minutos, precio, si requiere consentimiento), paquetes quirúrgicos de precio cerrado (días, cama, honorarios, qué incluye y excluye) y kits de insumos por procedimiento con los artículos del inventario.",
+   "Secciones: Procedimientos, Paquetes quirúrgicos, Kits por procedimiento y Artículos de los kits. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Procedimientos y apoyo › Procedimientos, paquetes y kits y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Paquete",
+    "Días",
+    "Cama",
+    "Hon. cirujano",
+    "Hon. anestesia",
+    "Precio Q"
+   ],
+   "filas": [
+    [
+     "Colecistectomía laparoscópica",
+     "2",
+     "Privada",
+     "Q 6,000.00",
+     "Q 2,000.00",
+     "Q 18,500.00"
+    ]
+   ]
+  }
+ },
+ "med-laboratorio": {
+  "puntos": [
+   "Pruebas y perfiles con área, unidad, valores de referencia y críticos, muestra, horas de entrega y precio; estudios de imagen con modalidad, preparación y plantilla de informe.",
+   "Secciones: Pruebas de laboratorio, Pruebas de cada perfil y Estudios de imagen. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Procedimientos y apoyo › Pruebas de laboratorio e imagen y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Prueba",
+    "Unidad",
+    "Ref. mín.",
+    "Ref. máx.",
+    "Crítico",
+    "Precio Q"
+   ],
+   "filas": [
+    [
+     "Glucosa",
+     "mg/dL",
+     "70",
+     "100",
+     "< 40 o > 400",
+     "Q 35.00"
+    ],
+    [
+     "Hemoglobina",
+     "g/dL",
+     "12",
+     "16",
+     "< 7",
+     "Q 40.00"
+    ]
+   ]
+  }
+ },
+ "med-convenios": {
+  "puntos": [
+   "Planes de aseguradoras (deducible, coaseguro, tope anual, copago, preautorización), empresas con convenio (descuento, días de crédito, vigencia) y médicos referentes con su comisión.",
+   "Secciones: Planes de aseguradoras, Empresas con convenio y Médicos referentes. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Procedimientos y apoyo › Planes, convenios y referentes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Aseguradora",
+    "Plan",
+    "Deducible Q",
+    "Coaseguro %",
+    "Tope anual Q",
+    "Preautorización"
+   ],
+   "filas": [
+    [
+     "Seguros El Roble",
+     "Oro",
+     "Q 1,000.00",
+     "10 %",
+     "Q 500,000.00",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "hos-recursos": {
+  "puntos": [
+   "Formulario terapéutico y medicamentos controlados, dietas con precio por día, salas de operaciones y partos con tarifa por hora, personal de enfermería y apoyo por área y turno, y esquema de vacunación.",
+   "Secciones: Formulario terapéutico, Dietas, Salas de operaciones y partos, Personal de enfermería y apoyo, Esquema de vacunación. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Recursos del hospital › Formulario, dietas, salas y personal y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Sala",
+    "Tipo",
+    "Tarifa hora Q",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "SOP-1",
+     "Quirófano",
+     "Q 1,200.00",
+     "Disponible"
+    ],
+    [
+     "SP-1",
+     "Sala de partos",
+     "Q 900.00",
+     "Disponible"
+    ]
+   ]
+  }
+ },
+ "ceye-paquetes": {
+  "puntos": [
+   "Paquetes que se esterilizan con su contenido, método (vapor, óxido de etileno, plasma) y vigencia en días.",
+   "Secciones: Paquetes. Cada sección es una lista editable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Catálogos › Recursos del hospital › Paquetes de esterilización y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la sección (pestaña) que vas a trabajar.",
+   "Presiona «Nuevo» para agregar una fila o haz clic en una existente para editarla.",
+   "Llena las columnas de la fila (las obligatorias tienen *).",
+   "Marca «Activo» para que se pueda usar en las atenciones; desmárcalo para darlo de baja sin perder la historia.",
+   "Presiona «Guardar».",
+   "Exporta la lista con «PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Paquete",
+    "Contenido",
+    "Método",
+    "Vigencia (días)"
+   ],
+   "filas": [
+    [
+     "Equipo de cirugía menor",
+     "12 piezas",
+     "Vapor",
+     "30"
+    ]
+   ]
+  }
+ },
+ "hos-admision": {
+  "puntos": [
+   "Ingreso del paciente por emergencia, consulta externa, hospitalización o cirugía ambulatoria, con su médico tratante, cama, aseguradora y diagnóstico de ingreso.",
+   "Al admitir se abre la cuenta del paciente; estados ABIERTA, EGRESADA, FACTURADA o ANULADA."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Atención › Admisión y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «Estado» deja ABIERTA para ver los pacientes internados.",
+   "Elige el «Paciente *» (o créalo en Pacientes).",
+   "Elige el «Tipo» (emergencia, consulta externa, hospitalización, ambulatoria).",
+   "Elige el «Médico tratante» y la «Cama» libre.",
+   "Si tiene seguro elige la «Aseguradora» (y luego tramita la carta de garantía).",
+   "Escribe el «Diagnóstico de ingreso».",
+   "Presiona «Admitir»: la cama pasa a ocupada y se abre la cuenta."
+  ],
+  "campos": [
+   [
+    "Paciente *",
+    "Ana María García",
+    "Paciente que ingresa."
+   ],
+   [
+    "Tipo",
+    "Hospitalización",
+    "Forma de ingreso."
+   ],
+   [
+    "Médico tratante",
+    "Dr. Luis Méndez",
+    "Responsable."
+   ],
+   [
+    "Cama",
+    "201-A",
+    "Cama asignada."
+   ],
+   [
+    "Diagnóstico de ingreso",
+    "Colelitiasis",
+    "Motivo del ingreso."
+   ]
+  ],
+  "resultado": {
+   "columnas": [
+    "Admisión",
+    "Paciente",
+    "Cama",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "ADM-0412",
+     "Ana María García",
+     "201-A",
+     "ABIERTA"
+    ]
+   ]
+  }
+ },
+ "hos-citas": {
+  "puntos": [
+   "Agenda diaria por médico con el estado de cada cita (programada, confirmada, atendida, no asistió)."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Atención › Citas y agenda médica y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige la «Fecha» y el «Médico»: ves su agenda del día.",
+   "Escribe la «Hora», el «Paciente *», la «Duración min» y el «Motivo».",
+   "Presiona «Agendar»; cambia el estado cuando el paciente llegue o no asista; desde la cita puedes abrir la «Admisión».",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Fecha / Hora",
+    "{hoy} · 09:00",
+    "Cuándo."
+   ],
+   [
+    "Médico",
+    "Dr. Luis Méndez",
+    "Agenda del médico."
+   ],
+   [
+    "Paciente *",
+    "Ana María García",
+    ""
+   ],
+   [
+    "Duración min",
+    "30",
+    "Bloque de agenda."
+   ],
+   [
+    "Motivo",
+    "Control postoperatorio",
+    ""
+   ]
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Hora",
+    "Paciente",
+    "Motivo",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "09:00",
+     "Ana María García",
+     "Control postoperatorio",
+     "Confirmada"
+    ],
+    [
+     "09:30",
+     "Pedro Gómez",
+     "Primera consulta",
+     "Programada"
+    ]
+   ]
+  }
+ },
+ "hos-cuenta": {
+  "puntos": [
+   "Cargos del paciente (servicios, honorarios, días-cama, farmacia), anticipos y estado de cuenta."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Atención › Cuenta del paciente y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Admisión» abierta.",
+   "Para cargar un servicio elige el «Tipo» y el «Servicio» (o «Medicamento, insumo o servicio»), la «Cantidad» y revisa el «Precio Q»; para honorarios elige el «Médico (honorarios)».",
+   "Presiona «Cargar».",
+   "Para un anticipo escribe la «Fecha», la «Forma» de pago, el «Monto Q» y la «Referencia» y presiona «Registrar pago».",
+   "Revisa el estado de cuenta: cargos, pagos y saldo."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Estado de cuenta ADM-0412",
+   "columnas": [
+    "Fecha",
+    "Concepto",
+    "Cantidad",
+    "Cargo",
+    "Pago"
+   ],
+   "filas": [
+    [
+     "15/11/{anio}",
+     "Día-cama privada",
+     "2",
+     "Q 1,700.00",
+     ""
+    ],
+    [
+     "15/11/{anio}",
+     "Hematología completa",
+     "1",
+     "Q 85.00",
+     ""
+    ],
+    [
+     "16/11/{anio}",
+     "Honorarios Dr. Luis Méndez",
+     "1",
+     "Q 6,000.00",
+     ""
+    ],
+    [
+     "15/11/{anio}",
+     "Anticipo (tarjeta)",
+     "",
+     "",
+     "Q 3,000.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "Saldo",
+    "",
+    "Q 7,785.00",
+    "Q 3,000.00"
+   ]
+  }
+ },
+ "hos-ordenes": {
+  "puntos": [
+   "Órdenes médicas y despacho de medicamentos e insumos desde la bodega (farmacia) a la cuenta del paciente."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Atención › Órdenes médicas y farmacia y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Admisión».",
+   "Escribe la orden: «Medicamento, insumo o servicio», «Cantidad», «Médico» e «Indicaciones».",
+   "Presiona «Registrar orden».",
+   "Farmacia despacha desde su bodega: sale del inventario y se carga a la cuenta."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Orden",
+    "Medicamento",
+    "Cantidad",
+    "Indicaciones",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "OR-1180",
+     "Ceftriaxona 1 g",
+     "3",
+     "1 g IV cada 24 h",
+     "Despachada"
+    ]
+   ]
+  }
+ },
+ "hos-quirofanos": {
+  "puntos": [
+   "Programación de cirugías por sala, cirujano y anestesiólogo."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Atención › Programación de quirófanos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige el rango «Desde» / «Hasta» para ver la programación.",
+   "Elige la «Sala», «Fecha», «Hora» y «Duración min».",
+   "Elige el «Paciente *», el «Cirujano», el «Anestesiólogo» y el «Procedimiento *».",
+   "Presiona «Programar»: el sistema evita choques en la misma sala.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Sala",
+    "SOP-1",
+    ""
+   ],
+   [
+    "Fecha / Hora",
+    "18/11/{anio} · 07:00",
+    ""
+   ],
+   [
+    "Duración min",
+    "120",
+    ""
+   ],
+   [
+    "Paciente *",
+    "Ana María García",
+    ""
+   ],
+   [
+    "Procedimiento *",
+    "Colecistectomía laparoscópica",
+    ""
+   ]
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Hora",
+    "Sala",
+    "Paciente",
+    "Procedimiento",
+    "Cirujano"
+   ],
+   "filas": [
+    [
+     "07:00",
+     "SOP-1",
+     "Ana María García",
+     "Colecistectomía laparoscópica",
+     "Dr. Luis Méndez"
+    ]
+   ]
+  }
+ },
+ "hos-triaje": {
+  "puntos": [
+   "Clasificación por prioridad, tiempos de espera, atención, diagnóstico y destino del paciente de emergencia."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Atención clínica › Emergencia y triaje y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Escribe el «Paciente (si está registrado)» o el «Nombre provisional» y la hora de «Llegada».",
+   "Elige la «Prioridad» y escribe el «Motivo de consulta».",
+   "Registra «Presión arterial», «Frec. cardíaca», «Temperatura °C», «Saturación %», «Glasgow (3-15)» y «Dolor (0-10)».",
+   "Al atender escribe el «Médico que atiende», el «Inicio de atención», el «Diagnóstico» y el «Destino».",
+   "Si se interna presiona «Abrir admisión».",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Paciente / Nombre provisional",
+    "Paciente no identificado 1",
+    "Si llega sin identificar."
+   ],
+   [
+    "Prioridad",
+    "II · Naranja",
+    "Escala de triaje."
+   ],
+   [
+    "Signos",
+    "PA 150/95 · FC 110 · T 38.5 · SpO₂ 94 %",
+    ""
+   ],
+   [
+    "Glasgow / Dolor",
+    "15 · 7",
+    ""
+   ],
+   [
+    "Destino",
+    "Hospitalización",
+    "Alta, observación, ingreso, traslado."
+   ]
+  ],
+  "ejemplo": {
+   "columnas": [
+    "No.",
+    "Paciente",
+    "Prioridad",
+    "Espera (min)",
+    "Destino"
+   ],
+   "filas": [
+    [
+     "E-0981",
+     "Paciente no identificado 1",
+     "II",
+     "8",
+     "Hospitalización"
+    ]
+   ]
+  }
+ },
+ "hos-notas": {
+  "puntos": [
+   "Notas por turno con signos vitales, glucosa, ingesta y excreta (balance), dieta, interconsultas y la nota del médico o enfermería."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Atención clínica › Notas de evolución y enfermería y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige la «Admisión», el «Tipo» (evolución, enfermería, interconsulta), la «Fecha y hora» y el «Turno».",
+   "Registra «Presión», «FC», «FR», «T °C», «SpO₂ %» y «Glucosa».",
+   "Escribe «Ingesta ml» y «Excreta ml» (calcula el balance) y la «Dieta».",
+   "Escribe la «Nota» y el «Responsable».",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Admisión",
+    "ADM-0412",
+    ""
+   ],
+   [
+    "Tipo / Turno",
+    "Enfermería · Mañana",
+    ""
+   ],
+   [
+    "Signos",
+    "PA 120/80 · FC 78 · FR 18 · T 36.8",
+    ""
+   ],
+   [
+    "Ingesta / Excreta ml",
+    "1,800 · 1,500",
+    "Balance +300 ml."
+   ],
+   [
+    "Nota",
+    "Paciente estable, tolera dieta líquida",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "hos-kardex": {
+  "puntos": [
+   "Dosis programadas y administradas por paciente con responsable; las dosis vencidas sin administrar salen resaltadas."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Atención clínica › Kardex de medicamentos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige la «Admisión».",
+   "Programa cada dosis: «Medicamento», «Dosis», «Vía» y «Hora programada»; «Programar siguientes» repite según la frecuencia.",
+   "Al dar el medicamento presiona «Administrada» y escribe el «Responsable» y la «Observación».",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Medicamento",
+    "Ceftriaxona 1 g",
+    ""
+   ],
+   [
+    "Dosis / Vía",
+    "1 g · IV",
+    ""
+   ],
+   [
+    "Hora programada",
+    "08:00",
+    ""
+   ],
+   [
+    "Responsable",
+    "Enf. Carmen López",
+    ""
+   ]
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Programada",
+    "Medicamento",
+    "Dosis / vía",
+    "Administrada",
+    "Responsable"
+   ],
+   "filas": [
+    [
+     "08:00",
+     "Ceftriaxona 1 g",
+     "1 g IV",
+     "08:05",
+     "Enf. Carmen López"
+    ],
+    [
+     "14:00",
+     "Ketorolaco 30 mg",
+     "30 mg IV",
+     "VENCIDA",
+     ""
+    ]
+   ]
+  }
+ },
+ "med-resultados-lab": {
+  "puntos": [
+   "Órdenes con sus pruebas, resultados con alerta bajo, alto o crítico, validación por químico biólogo e informe impreso."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Apoyo diagnóstico › Resultados de laboratorio y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige el «Paciente», el «Origen», la «Admisión» y el «Médico que solicita».",
+   "Agrega la «Prueba o perfil»; registra la «Toma de muestra».",
+   "Escribe cada «Resultado»: se compara con la referencia y marca la «Alerta» (bajo, alto, crítico).",
+   "El químico biólogo valida («Validado por») y se registra la «Entrega».",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Paciente",
+    "Ana María García",
+    ""
+   ],
+   [
+    "Origen",
+    "Hospitalización",
+    "Externo, consulta, emergencia."
+   ],
+   [
+    "Prueba o perfil",
+    "Química básica",
+    ""
+   ],
+   [
+    "Validado por",
+    "QB. Marta Díaz",
+    "Químico biólogo."
+   ]
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Prueba",
+    "Resultado",
+    "Unidad",
+    "Referencia",
+    "Alerta"
+   ],
+   "filas": [
+    [
+     "Glucosa",
+     "182",
+     "mg/dL",
+     "70–100",
+     "ALTO"
+    ],
+    [
+     "Hemoglobina",
+     "13.4",
+     "g/dL",
+     "12–16",
+     ""
+    ]
+   ]
+  }
+ },
+ "med-informes-imagen": {
+  "puntos": [
+   "Estudios realizados con hallazgos y conclusión del radiólogo; informe impreso."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Apoyo diagnóstico › Informes de imagen y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige «Paciente», «Estudio», «Origen», «Admisión» y «Médico que solicita».",
+   "El radiólogo escribe «Hallazgos» y «Conclusión / impresión diagnóstica» (puede partir de la plantilla del estudio).",
+   "Cambia el «Estado» a informado.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Estudio",
+    "Ultrasonido abdominal",
+    ""
+   ],
+   [
+    "Radiólogo",
+    "Dr. Jorge Cano",
+    ""
+   ],
+   [
+    "Hallazgos",
+    "Vesícula con litos múltiples",
+    ""
+   ],
+   [
+    "Conclusión",
+    "Colelitiasis",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "hos-hoja-quirurgica": {
+  "puntos": [
+   "Equipo quirúrgico, anestesia y ASA, tiempos (ingreso, inicio de anestesia, incisión, cierre, salida), lista de verificación de cirugía segura de la OMS, diagnósticos, protocolo operatorio, complicaciones, sangrado y conteo de gasas."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Quirófano y obstetricia › Hoja quirúrgica y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige «Paciente», «Admisión», «Fecha», «Sala» y «Procedimiento».",
+   "Llena el equipo: «Cirujano», «Ayudante», «Anestesiólogo», «Instrumentista», «Circulante»; «Anestesia» y «ASA».",
+   "Registra los tiempos: «Ingreso a sala», «Inicio anestesia», «Incisión», «Cierre», «Salida de sala».",
+   "Marca cada punto de la lista de verificación OMS (entrada, pausa, salida).",
+   "Escribe diagnósticos pre y postoperatorio, «Hallazgos», «Protocolo operatorio», «Complicaciones» y «Sangrado ml»; marca el conteo completo y el envío de muestras.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Procedimiento",
+    "Colecistectomía laparoscópica",
+    ""
+   ],
+   [
+    "Equipo",
+    "Cirujano, ayudante, anestesiólogo, instrumentista, circulante",
+    ""
+   ],
+   [
+    "Anestesia / ASA",
+    "General · ASA II",
+    ""
+   ],
+   [
+    "Tiempos",
+    "Incisión 07:25 · Cierre 08:40",
+    ""
+   ],
+   [
+    "Sangrado ml",
+    "50",
+    ""
+   ],
+   [
+    "Conteo completo",
+    "Sí",
+    "Gasas e instrumental."
+   ]
+  ],
+  "ejemplo": null
+ },
+ "hos-partos": {
+  "puntos": [
+   "Partos y cesáreas con datos del recién nacido (sexo, peso, talla, APGAR) y constancia de nacimiento para el RENAP."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Quirófano y obstetricia › Partos y recién nacidos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige la «Madre» y la «Admisión»; escribe la «Fecha y hora del nacimiento».",
+   "Elige el «Tipo de parto» y escribe «Semanas de gestación», «Gesta» y «Para».",
+   "Registra «Sexo del RN», «Peso (g)», «Talla (cm)», «APGAR 1 min», «APGAR 5 min» y la «Condición del RN».",
+   "Escribe el «Médico que atiende» y las «Complicaciones»; imprime la constancia para el RENAP.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Tipo de parto",
+    "Eutócico",
+    "Eutócico o cesárea."
+   ],
+   [
+    "Semanas de gestación",
+    "39",
+    ""
+   ],
+   [
+    "Peso (g) / Talla (cm)",
+    "3,250 · 50",
+    ""
+   ],
+   [
+    "APGAR 1 / 5 min",
+    "8 · 9",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "med-consentimientos": {
+  "puntos": [
+   "Consentimientos quirúrgicos, anestésicos, de transfusión u hospitalización para firma."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Documentos clínicos › Consentimientos informados y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige «Paciente», «Tipo», «Procedimiento» y el «Médico que informa».",
+   "Escribe los «Riesgos explicados» y las «Alternativas».",
+   "Escribe quién firma (paciente o representante), «Parentesco», «DPI del firmante» y «Testigo».",
+   "Imprime el documento para la firma.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Tipo",
+    "Quirúrgico",
+    ""
+   ],
+   [
+    "Procedimiento",
+    "Colecistectomía laparoscópica",
+    ""
+   ],
+   [
+    "Riesgos explicados",
+    "Sangrado, infección, conversión a cirugía abierta",
+    ""
+   ],
+   [
+    "Firmante / Parentesco",
+    "Ana María García · Paciente",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "hos-epicrisis": {
+  "puntos": [
+   "Resumen de egreso con diagnósticos, procedimientos, condición, tratamiento y recomendaciones."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Documentos clínicos › Epicrisis y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige la «Admisión».",
+   "Escribe «Motivo de ingreso», «Diagnóstico de ingreso», «Resumen de la evolución» y «Procedimientos realizados».",
+   "Escribe «Diagnóstico de egreso», «CIE-10 de egreso» y la «Condición al egreso».",
+   "Escribe el «Tratamiento al egreso», las «Recomendaciones», la fecha de «Control (cita)» y el «Médico tratante».",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Diagnóstico de egreso",
+    "Colelitiasis resuelta",
+    ""
+   ],
+   [
+    "CIE-10 de egreso",
+    "K80.2",
+    ""
+   ],
+   [
+    "Condición al egreso",
+    "Mejorado",
+    ""
+   ],
+   [
+    "Control (cita)",
+    "25/11/{anio}",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "hos-defunciones": {
+  "puntos": [
+   "Fallecimientos con su cadena de causas CIE-10, si fue antes o después de 48 horas del ingreso y el certificado."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Documentos clínicos › Defunciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige «Paciente» y «Admisión» y escribe «Fecha y hora».",
+   "Escribe «Causa directa», «Causa intermedia» y «Causa básica CIE-10»; agrega otras condiciones.",
+   "Marca si falleció antes de 48 horas del ingreso y si hubo «Necropsia».",
+   "Escribe el «Médico que certifica» y el «No. de certificado».",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Causa directa",
+    "Choque séptico",
+    ""
+   ],
+   [
+    "Causa básica CIE-10",
+    "K65.0 Peritonitis aguda",
+    ""
+   ],
+   [
+    "Antes de 48 horas",
+    "No",
+    "Mortalidad bruta o neta."
+   ],
+   [
+    "No. de certificado",
+    "CD-2026-0045",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "med-cotizaciones": {
+  "puntos": [
+   "Presupuestos al paciente por paquete o procedimiento con vigencia y conversión en admisión."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Comercial › Cotizaciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige el «Paciente» o escribe «A nombre de»; escribe «Fecha» y «Vigencia (días)».",
+   "Elige el «Paquete quirúrgico» o el «Procedimiento» y la «Aseguradora».",
+   "Ajusta el «Detalle» (concepto y valor por línea); se calcula el «Total Q».",
+   "Cambia el «Estado» a aceptada cuando el paciente se interna.",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "A nombre de",
+    "Ana María García",
+    ""
+   ],
+   [
+    "Paquete quirúrgico",
+    "Colecistectomía laparoscópica",
+    ""
+   ],
+   [
+    "Vigencia (días)",
+    "15",
+    ""
+   ],
+   [
+    "Total Q",
+    "Q 18,500.00",
+    ""
+   ]
+  ],
+  "ejemplo": {
+   "columnas": [
+    "No.",
+    "Paciente",
+    "Paquete / procedimiento",
+    "Total Q",
+    "Vence",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "COT-0088",
+     "Ana María García",
+     "Colecistectomía laparoscópica",
+     "Q 18,500.00",
+     "30/11/{anio}",
+     "ACEPTADA"
+    ]
+   ]
+  }
+ },
+ "med-garantias": {
+  "puntos": [
+   "Preautorizaciones de aseguradoras: monto solicitado, autorizado, número de autorización y vencimiento; incluye control prenatal y niño sano."
+  ],
+  "pasos": [
+   "Entra a Hospital › Registros › Comercial › Cartas de garantía y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Arriba revisa el listado (filtra por fechas y estado) y presiona «Nuevo».",
+   "Elige «Paciente», «Aseguradora», «Plan», «Admisión», «Procedimiento» y «Diagnóstico».",
+   "Escribe la fecha «Solicitada» y el «Monto solicitado Q».",
+   "Cuando responda la aseguradora escribe el «No. de autorización», el «Monto autorizado Q» y «Vence».",
+   "Actualiza el «Estado» (solicitada, autorizada, rechazada).",
+   "Presiona «Guardar»: el registro toma su número correlativo.",
+   "Haz clic en un registro para ver su detalle; «Imprimir» saca el documento firmado.",
+   "Exporta el listado con «PDF» o «Excel»."
+  ],
+  "campos": [
+   [
+    "Aseguradora / Plan",
+    "Seguros El Roble · Oro",
+    ""
+   ],
+   [
+    "Monto solicitado Q",
+    "Q 18,500.00",
+    ""
+   ],
+   [
+    "No. de autorización",
+    "AUT-778812",
+    ""
+   ],
+   [
+    "Monto autorizado Q",
+    "Q 16,650.00",
+    ""
+   ]
+  ],
+  "ejemplo": null
+ },
+ "hos-censo": {
+  "puntos": [
+   "Mapa de camas por área (libre, ocupada, mantenimiento), censo del día con los pacientes internados y carga automática del día-cama a cada cuenta."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Hospital › Censo diario y día-cama y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Revisa el mapa de camas: cada cama muestra su paciente y estado.",
+   "Revisa el censo del día: ingresos, egresos y pacientes que pasan la noche.",
+   "Presiona «Cargar día-cama a hoy»: a cada cuenta abierta se carga su tarifa diaria (una vez por día)."
+  ],
+  "resultado": {
+   "columnas": [
+    "Área",
+    "Camas",
+    "Ocupadas",
+    "Libres",
+    "Ocupación",
+    "Día-cama cargado"
+   ],
+   "filas": [
+    [
+     "Encamamiento",
+     "20",
+     "15",
+     "5",
+     "75%",
+     "Q 12,750.00"
+    ],
+    [
+     "Intensivo",
+     "6",
+     "4",
+     "2",
+     "67%",
+     "Q 10,000.00"
+    ]
+   ]
+  }
+ },
+ "hos-egreso": {
+  "puntos": [
+   "Egreso del paciente con la distribución de la cuenta entre aseguradora (según deducible y coaseguro) y paciente, reclamo automático y registro de facturas."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Hospital › Egreso y facturación y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «Mostrar» elige las admisiones abiertas.",
+   "Elige la admisión: revisa el total de la cuenta.",
+   "Si tiene seguro, el sistema reparte: aseguradora = total − deducible − coaseguro; paciente = deducible + coaseguro.",
+   "Confirma el egreso: la cama queda libre, se crea el reclamo a la aseguradora y se registran las facturas (paciente al contado, aseguradora al crédito)."
+  ],
+  "resultado": {
+   "titulo": "Ejemplo · Distribución de la cuenta Q 20,000.00",
+   "columnas": [
+    "Concepto",
+    "Paciente",
+    "Aseguradora"
+   ],
+   "filas": [
+    [
+     "Deducible",
+     "Q 1,000.00",
+     ""
+    ],
+    [
+     "Coaseguro 10 % de Q 19,000.00",
+     "Q 1,900.00",
+     ""
+    ],
+    [
+     "Resto",
+     "",
+     "Q 17,100.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "Q 2,900.00",
+    "Q 17,100.00"
+   ]
+  }
+ },
+ "hos-honorarios": {
+  "puntos": [
+   "Honorarios médicos del período menos la participación del hospital y la retención de ISR."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Hospital › Liquidación de honorarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde» y «Hasta».",
+   "Revisa por médico: honorarios cargados, % hospital, retención de ISR y neto a pagar.",
+   "Genera la liquidación y pásala a pago (cheque o transferencia)."
+  ],
+  "resultado": {
+   "columnas": [
+    "Médico",
+    "Honorarios",
+    "% hospital",
+    "Ret. ISR 5 %",
+    "Neto"
+   ],
+   "filas": [
+    [
+     "Dr. Luis Méndez",
+     "Q 6,000.00",
+     "Q 1,200.00",
+     "Q 300.00",
+     "Q 4,500.00"
+    ]
+   ]
+  }
+ },
+ "hos-reclamos": {
+  "puntos": [
+   "Seguimiento de reclamos a aseguradoras: revisión, aprobación, pago o rechazo."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Hospital › Reclamos a aseguradoras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «Mostrar» elige el estado (enviado, en revisión, aprobado, pagado, rechazado).",
+   "Abre el reclamo y actualiza su estado, monto aprobado y fecha de pago.",
+   "Las diferencias se manejan como glosas."
+  ],
+  "reporte": {
+   "columnas": [
+    "Reclamo",
+    "Paciente",
+    "Aseguradora",
+    "Reclamado",
+    "Aprobado",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "REC-0221",
+     "Ana María García",
+     "Seguros El Roble",
+     "Q 17,100.00",
+     "Q 16,650.00",
+     "APROBADO"
+    ]
+   ]
+  },
+  "voz": "Reclamos: uno aprobado por dieciséis mil seiscientos cincuenta quetzales; hay una glosa de cuatrocientos cincuenta."
+ },
+ "hos-caja": {
+  "puntos": [
+   "Pagos del día por forma de pago y arqueo del efectivo."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Hospital › Cierre de caja hospitalaria y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Fecha».",
+   "Revisa los pagos por forma: efectivo, tarjeta, cheque, transferencia.",
+   "Cuenta el efectivo y compáralo con el sistema.",
+   "Presiona «Cerrar caja»; el depósito se registra en Depósito de cierres de caja."
+  ],
+  "resultado": {
+   "columnas": [
+    "Forma de pago",
+    "Pagos",
+    "Monto"
+   ],
+   "filas": [
+    [
+     "Efectivo",
+     "12",
+     "Q 4,850.00"
+    ],
+    [
+     "Tarjeta",
+     "8",
+     "Q 9,300.00"
+    ],
+    [
+     "Cheque",
+     "1",
+     "Q 2,900.00"
+    ]
+   ],
+   "totales": [
+    "Total del día",
+    "21",
+    "Q 17,050.00"
+   ]
+  }
+ },
+ "hos-kits-paquetes": {
+  "puntos": [
+   "Aplica paquetes quirúrgicos a la cuenta, carga kits de insumos con salida de inventario y registra devoluciones de farmacia."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Cuenta del paciente › Kits, paquetes y devoluciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Admisión abierta»: ves la «Cuenta del paciente».",
+   "Para un paquete elige el «Paquete quirúrgico», el «Cirujano» y el «Anestesiólogo» y presiona «Aplicar paquete»: se cobra el precio cerrado.",
+   "Para un kit elige el «Kit» y la «Bodega (farmacia)» y presiona «Cargar kit»: salen los artículos del inventario a la cuenta.",
+   "Para devolver un artículo no usado presiona «Devolver»: regresa a la bodega y se acredita."
+  ],
+  "resultado": {
+   "columnas": [
+    "Concepto",
+    "Cantidad",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "Paquete colecistectomía",
+     "1",
+     "Q 18,500.00"
+    ],
+    [
+     "Kit laparoscopía (12 artículos)",
+     "1",
+     "incluido"
+    ],
+    [
+     "Devolución gasas",
+     "-2",
+     "Q -24.00"
+    ]
+   ]
+  }
+ },
+ "hos-auditoria-cuenta": {
+  "puntos": [
+   "Hallazgos de cada cuenta antes de facturar: cargos sin precio, duplicados, sin orden médica, medicamentos sin administrar, días-cama faltantes."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Cuenta del paciente › Auditoría de cuenta médica y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la admisión y presiona «Auditar».",
+   "Revisa cada hallazgo y corrígelo en la cuenta.",
+   "Vuelve a auditar hasta que no haya hallazgos y pasa a Facturación de cuentas."
+  ],
+  "resultado": {
+   "columnas": [
+    "Hallazgo",
+    "Cargo",
+    "Acción"
+   ],
+   "filas": [
+    [
+     "Duplicado",
+     "Hematología completa (2)",
+     "Quitar uno"
+    ],
+    [
+     "Sin administrar",
+     "Ketorolaco 30 mg",
+     "Devolver o registrar en kardex"
+    ]
+   ]
+  }
+ },
+ "med-facturacion": {
+  "puntos": [
+   "Factura la cuenta al paciente (contado) y a la aseguradora (crédito) en Facturación/Ventas, lista para certificar."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Cuenta del paciente › Facturación de cuentas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Origen» (hospital o clínica) y en «Mostrar» las cuentas por facturar.",
+   "Elige la cuenta y revisa la distribución paciente / aseguradora.",
+   "Presiona «Facturar»: se crean las facturas en Facturación/Ventas.",
+   "Certifica cada factura desde Facturas Ventas."
+  ],
+  "resultado": {
+   "columnas": [
+    "Factura",
+    "Cliente",
+    "Pago",
+    "Total"
+   ],
+   "filas": [
+    [
+     "FE-7090",
+     "Ana María García",
+     "Contado",
+     "Q 2,900.00"
+    ],
+    [
+     "FE-7091",
+     "Seguros El Roble",
+     "Crédito 45 días",
+     "Q 17,100.00"
+    ]
+   ]
+  }
+ },
+ "med-glosas": {
+  "puntos": [
+   "Preautorizaciones por atender y glosas de aseguradoras (montos que no reconocen) con su apelación y recuperación."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Aseguradoras y cartera › Preautorizaciones y glosas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Origen», «Aseguradora», «No. de reclamo», «Paciente» y «Fecha de la glosa».",
+   "Escribe el «Concepto glosado», el «Motivo» y el «Monto glosado Q».",
+   "Si se apela, escribe la «Fecha de apelación» y el «Argumento de la apelación».",
+   "Al resolverse escribe el «Monto recuperado Q» y cambia el «Estado»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Reclamo",
+    "Concepto",
+    "Glosado Q",
+    "Recuperado Q",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "REC-0221",
+     "Medicamento no cubierto",
+     "Q 450.00",
+     "Q 300.00",
+     "APELADA"
+    ]
+   ]
+  }
+ },
+ "med-incobrables": {
+  "puntos": [
+   "Saldos vencidos de pacientes y aseguradoras: estimación y castigo con su partida contable."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Aseguradoras y cartera › Cuentas incobrables y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe la «Antigüedad mínima (días)» (ej. 180).",
+   "Revisa los saldos vencidos.",
+   "Presiona «Estimar» para registrar la estimación de cuentas incobrables.",
+   "Para dar de baja definitivamente presiona «Castigar»: se genera la partida contable."
+  ],
+  "resultado": {
+   "columnas": [
+    "Deudor",
+    "Antigüedad",
+    "Saldo",
+    "Acción"
+   ],
+   "filas": [
+    [
+     "Pedro Gómez",
+     "240 días",
+     "Q 1,350.00",
+     "Estimada"
+    ]
+   ]
+  }
+ },
+ "far-botiquines": {
+  "puntos": [
+   "Consumo por área y cantidad a reponer en cada botiquín de piso."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Farmacia y servicios › Botiquines de piso y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde», «Hasta» y los «Días de cobertura».",
+   "Revisa el consumo por área y la cantidad a reponer.",
+   "Imprime la reposición y despacha desde farmacia."
+  ],
+  "reporte": {
+   "columnas": [
+    "Área",
+    "Medicamento",
+    "Consumo",
+    "Existencia",
+    "A reponer"
+   ],
+   "filas": [
+    [
+     "Encamamiento",
+     "Ketorolaco 30 mg",
+     "40",
+     "10",
+     "30"
+    ]
+   ]
+  },
+  "voz": "Reposición de botiquines: encamamiento necesita treinta ampollas de ketorolaco."
+ },
+ "far-controlados": {
+  "puntos": [
+   "Entradas, salidas y existencia de medicamentos controlados con paciente y médico; libro foliado."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Farmacia y servicios › Libro de medicamentos controlados y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde», «Hasta» y el «Folio inicial».",
+   "Revisa cada movimiento con paciente, médico y receta.",
+   "Imprime el libro foliado."
+  ],
+  "reporte": {
+   "columnas": [
+    "Fecha",
+    "Medicamento",
+    "Entrada",
+    "Salida",
+    "Existencia",
+    "Paciente",
+    "Médico"
+   ],
+   "filas": [
+    [
+     "15/11/{anio}",
+     "Morfina 10 mg",
+     "",
+     "2",
+     "18",
+     "Ana María García",
+     "Dr. Luis Méndez"
+    ]
+   ]
+  },
+  "voz": "Libro de controlados: quedan dieciocho ampollas de morfina."
+ },
+ "ceye-esterilizacion": {
+  "puntos": [
+   "Ciclos del autoclave con indicadores químico y biológico; paquetes esterilizados con lote, vencimiento y destino."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Farmacia y servicios › Esterilización (CEYE) y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Fecha y hora», «Equipo», «Método», «Temperatura °C», «Presión» y «Minutos».",
+   "Registra el «Indicador químico» y el «Indicador biológico» y el «Operador».",
+   "En «Paquetes del ciclo» agrega cada paquete con cantidad, lote, vencimiento y destino.",
+   "Guarda; el ciclo queda aprobado si los indicadores pasan."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Ciclo",
+    "Método",
+    "T °C",
+    "Min.",
+    "Químico",
+    "Biológico"
+   ],
+   "filas": [
+    [
+     "C-0441",
+     "Vapor",
+     "134",
+     "18",
+     "Pasa",
+     "Pasa"
+    ]
+   ]
+  }
+ },
+ "med-mantenimiento": {
+  "puntos": [
+   "Mantenimiento preventivo, correctivo, calibración y verificación del equipo médico con costo y próximo servicio."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Farmacia y servicios › Mantenimiento de equipo médico y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Equipo», «Código de activo fijo», «Área» y «Tipo».",
+   "Escribe fechas «Programado» y «Realizado», «Proveedor», «Técnico» y «Costo Q».",
+   "Describe la «Falla reportada» y el «Trabajo realizado»; marca si el equipo quedó fuera de servicio.",
+   "Escribe el «Próximo servicio»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Equipo",
+    "Tipo",
+    "Realizado",
+    "Costo Q",
+    "Próximo"
+   ],
+   "filas": [
+    [
+     "Monitor de signos SOP-1",
+     "Preventivo",
+     "10/11/{anio}",
+     "Q 450.00",
+     "10/05/2027"
+    ]
+   ]
+  }
+ },
+ "hos-contabilidad": {
+  "puntos": [
+   "Partida diaria del hospital: ingresos, costo de farmacia, pagos, aseguradoras y honorarios por centro de costo."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Integración financiera › Integración contable del hospital y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Día».",
+   "Revisa el resumen por concepto y centro de costo.",
+   "Presiona «Generar partida del día»: queda en Contabilidad."
+  ],
+  "resultado": {
+   "columnas": [
+    "Cuenta",
+    "Concepto",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "1.1.1.01",
+     "Caja hospital",
+     "Q 17,050.00",
+     ""
+    ],
+    [
+     "1.1.2.03",
+     "Aseguradoras por cobrar",
+     "Q 17,100.00",
+     ""
+    ],
+    [
+     "4.1.3.01",
+     "Ingresos hospitalarios",
+     "",
+     "Q 34,150.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "Totales",
+    "Q 34,150.00",
+    "Q 34,150.00"
+   ]
+  }
+ },
+ "med-depositos": {
+  "puntos": [
+   "Depósito del efectivo y cheques de los cierres de caja en una cuenta bancaria de Caja y Bancos."
+  ],
+  "pasos": [
+   "Entra a Hospital › Procesos › Integración financiera › Depósito de cierres de caja y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Caja» y los cierres a depositar.",
+   "Elige la «Cuenta bancaria», la «Fecha del depósito» y escribe el «No. de boleta».",
+   "Presiona «Registrar depósito»: se crea el depósito en Caja y Bancos."
+  ],
+  "resultado": {
+   "columnas": [
+    "Cierre",
+    "Efectivo",
+    "Cheques",
+    "Depósito"
+   ],
+   "filas": [
+    [
+     "{hoy}",
+     "Q 4,850.00",
+     "Q 2,900.00",
+     "100246001"
+    ]
+   ]
+  }
+ },
+ "hos-rep-ocupacion": {
+  "puntos": [
+   "Ocupación por área con días-cama ocupados y disponibles."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes › Censo y ocupación y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Área",
+    "Días-cama disponibles",
+    "Ocupados",
+    "Ocupación"
+   ],
+   "filas": [
+    [
+     "Encamamiento",
+     "600",
+     "462",
+     "77%"
+    ],
+    [
+     "Intensivo",
+     "180",
+     "126",
+     "70%"
+    ]
+   ]
+  },
+  "voz": "Ocupación del mes: encamamiento setenta y siete por ciento e intensivo setenta por ciento."
+ },
+ "hos-rep-ingresos": {
+  "puntos": [
+   "Ingresos del período por tipo de servicio y por médico."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes › Ingresos por servicio y médico y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Elige agrupar por servicio o por médico.",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Servicio",
+    "Cargos",
+    "Ingresos Q",
+    "%"
+   ],
+   "filas": [
+    [
+     "Día-cama",
+     "588",
+     "Q 499,800.00",
+     "38%"
+    ],
+    [
+     "Quirófano",
+     "64",
+     "Q 230,400.00",
+     "18%"
+    ]
+   ]
+  },
+  "voz": "Ingresos por servicio: el día-cama aporta el treinta y ocho por ciento."
+ },
+ "hos-rep-cuentas": {
+  "puntos": [
+   "Admisiones abiertas y egresadas con su saldo."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes › Cuentas abiertas de pacientes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Admisión",
+    "Paciente",
+    "Días",
+    "Cargos",
+    "Pagos",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "ADM-0412",
+     "Ana María García",
+     "2",
+     "Q 7,785.00",
+     "Q 3,000.00",
+     "Q 4,785.00"
+    ]
+   ]
+  },
+  "voz": "Hay una cuenta abierta con saldo de cuatro mil setecientos ochenta y cinco quetzales."
+ },
+ "hos-rep-cartera": {
+  "puntos": [
+   "Reclamos pendientes por aseguradora y antigüedad."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes › Cartera de aseguradoras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Aseguradora",
+    "0-30",
+    "31-60",
+    "61-90",
+    "+90",
+    "Total"
+   ],
+   "filas": [
+    [
+     "Seguros El Roble",
+     "Q 16,650.00",
+     "Q 0.00",
+     "Q 0.00",
+     "Q 0.00",
+     "Q 16,650.00"
+    ]
+   ]
+  },
+  "voz": "Cartera de aseguradoras: dieciséis mil seiscientos cincuenta quetzales, todo de cero a treinta días."
+ },
+ "hos-rep-indicadores": {
+  "puntos": [
+   "Ocupación, estancia promedio, giro de cama, intervalo de sustitución, ingreso por egreso y mortalidad."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes › Indicadores hospitalarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Indicador",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "% ocupación",
+     "75.4%"
+    ],
+    [
+     "Estancia promedio",
+     "3.2 días"
+    ],
+    [
+     "Giro de cama",
+     "7.1"
+    ],
+    [
+     "Mortalidad neta",
+     "0.8%"
+    ]
+   ]
+  },
+  "voz": "Indicadores: ocupación setenta y cinco por ciento, estancia promedio de tres punto dos días y mortalidad neta de cero punto ocho por ciento."
+ },
+ "med-rep-egresos": {
+  "puntos": [
+   "Egresos por diagnóstico con estancia, edad, sexo y fallecidos."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes clínicos › Morbilidad de egresos y estancia y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Diagnóstico CIE-10",
+    "Egresos",
+    "Estancia prom.",
+    "Fallecidos"
+   ],
+   "filas": [
+    [
+     "K80 Colelitiasis",
+     "18",
+     "2.1",
+     "0"
+    ],
+    [
+     "J18 Neumonía",
+     "12",
+     "5.4",
+     "1"
+    ]
+   ]
+  },
+  "voz": "La primera causa de egreso es colelitiasis con dieciocho egresos."
+ },
+ "med-rep-mortalidad": {
+  "puntos": [
+   "Tasa bruta y neta por mes y por causa básica."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes clínicos › Mortalidad hospitalaria y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Mes",
+    "Egresos",
+    "Fallecidos",
+    "Bruta",
+    "Neta"
+   ],
+   "filas": [
+    [
+     "Octubre",
+     "245",
+     "3",
+     "1.2%",
+     "0.8%"
+    ]
+   ]
+  },
+  "voz": "Mortalidad de octubre: bruta uno punto dos por ciento y neta cero punto ocho."
+ },
+ "med-rep-obstetricia": {
+  "puntos": [
+   "Nacimientos, % de cesárea, bajo peso, prematuros y APGAR bajo por mes."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes clínicos › Partos y cesáreas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Mes",
+    "Nacimientos",
+    "% cesárea",
+    "Bajo peso",
+    "Prematuros"
+   ],
+   "filas": [
+    [
+     "Octubre",
+     "42",
+     "38%",
+     "3",
+     "2"
+    ]
+   ]
+  },
+  "voz": "En octubre hubo cuarenta y dos nacimientos con treinta y ocho por ciento de cesáreas."
+ },
+ "med-rep-emergencia": {
+  "puntos": [
+   "Pacientes por prioridad, espera contra la meta y destino."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes clínicos › Emergencia y triaje y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Prioridad",
+    "Pacientes",
+    "Espera prom.",
+    "Meta",
+    "Cumple"
+   ],
+   "filas": [
+    [
+     "II Naranja",
+     "45",
+     "9 min",
+     "10 min",
+     "Sí"
+    ],
+    [
+     "III Amarillo",
+     "120",
+     "38 min",
+     "30 min",
+     "No"
+    ]
+   ]
+  },
+  "voz": "Emergencia: la prioridad tres esperó treinta y ocho minutos, sobre la meta de treinta."
+ },
+ "med-rep-cirugias": {
+  "puntos": [
+   "Cirugías por cirujano, procedimiento, sala o anestesia con tiempos, complicaciones y lista de verificación."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes quirúrgicos y de apoyo › Cirugías y uso de salas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Elige «Agrupar por».",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Cirujano",
+    "Cirugías",
+    "Minutos prom.",
+    "Complicaciones",
+    "Lista OMS completa"
+   ],
+   "filas": [
+    [
+     "Dr. Luis Méndez",
+     "22",
+     "95",
+     "1",
+     "100%"
+    ]
+   ]
+  },
+  "voz": "El doctor Luis Méndez realizó veintidós cirugías con la lista de verificación completa."
+ },
+ "med-rep-apoyo": {
+  "puntos": [
+   "Volumen por área y prueba, críticos, tiempo de entrega y estudios de imagen por modalidad."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes quirúrgicos y de apoyo › Laboratorio e imagen y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Área",
+    "Pruebas",
+    "Críticos",
+    "Entrega prom."
+   ],
+   "filas": [
+    [
+     "Química",
+     "1,240",
+     "14",
+     "3.5 h"
+    ],
+    [
+     "Hematología",
+     "980",
+     "6",
+     "2.0 h"
+    ]
+   ]
+  },
+  "voz": "Laboratorio: dos mil doscientas veinte pruebas y veinte resultados críticos en el mes."
+ },
+ "med-rep-farmacia": {
+  "puntos": [
+   "Despachos a pacientes con venta, costo y margen por producto, paciente o mes."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes quirúrgicos y de apoyo › Consumo de farmacia y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Elige «Agrupar por».",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto",
+    "Despachado",
+    "Venta Q",
+    "Costo Q",
+    "Margen"
+   ],
+   "filas": [
+    [
+     "Ceftriaxona 1 g",
+     "310",
+     "Q 15,500.00",
+     "Q 6,200.00",
+     "60%"
+    ]
+   ]
+  },
+  "voz": "Consumo de farmacia: la ceftriaxona generó quince mil quinientos quetzales con sesenta por ciento de margen."
+ },
+ "med-rep-rentabilidad": {
+  "puntos": [
+   "Ingresos, costo directo (farmacia y honorarios) y contribución por línea de servicio."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes financieros › Rentabilidad por servicio y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Línea",
+    "Ingresos",
+    "Costo directo",
+    "Contribución",
+    "%"
+   ],
+   "filas": [
+    [
+     "Cirugía",
+     "Q 420,000.00",
+     "Q 210,000.00",
+     "Q 210,000.00",
+     "50%"
+    ]
+   ]
+  },
+  "voz": "La línea de cirugía contribuye con el cincuenta por ciento de sus ingresos."
+ },
+ "med-rep-aseguradoras": {
+  "puntos": [
+   "Reclamado, aprobado, pagado, glosas y saldo por antigüedad de cada aseguradora."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes financieros › Facturación y cartera por aseguradora y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Aseguradora",
+    "Reclamado",
+    "Aprobado",
+    "Pagado",
+    "Glosas",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "Seguros El Roble",
+     "Q 17,100.00",
+     "Q 16,650.00",
+     "Q 0.00",
+     "Q 450.00",
+     "Q 16,650.00"
+    ]
+   ]
+  },
+  "voz": "Seguros El Roble debe dieciséis mil seiscientos cincuenta quetzales y glosó cuatrocientos cincuenta."
+ },
+ "med-rep-retenciones": {
+  "puntos": [
+   "Honorarios liquidados y retención de ISR por médico y NIT para la SAT."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes financieros › Retenciones de ISR a médicos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Médico",
+    "NIT",
+    "Honorarios",
+    "ISR retenido"
+   ],
+   "filas": [
+    [
+     "Dr. Luis Méndez",
+     "5678901-2",
+     "Q 6,000.00",
+     "Q 300.00"
+    ]
+   ]
+  },
+  "voz": "Retenciones de ISR a médicos del mes: trescientos quetzales."
+ },
+ "hos-rep-personal": {
+  "puntos": [
+   "Personal por área, cargo y turno con su enlace a Nóminas."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Reportes financieros › Personal por área y turno y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Área",
+    "Mañana",
+    "Tarde",
+    "Noche",
+    "Total"
+   ],
+   "filas": [
+    [
+     "Encamamiento",
+     "6",
+     "5",
+     "4",
+     "15"
+    ]
+   ]
+  },
+  "voz": "Encamamiento tiene quince personas en los tres turnos."
+ },
+ "med-tablero": {
+  "puntos": [
+   "Ocupación, estancia, giro de cama, ingreso por paciente-día, consultas, ausentismo, ingresos y cartera en un tablero."
+  ],
+  "pasos": [
+   "Entra a Hospital › Reportes y gráficas › Tablero › Tablero gerencial y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango «Desde» / «Hasta» (o el mes).",
+   "Revisa la vista previa con sus totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Indicador",
+    "Mes",
+    "Meta",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "Ocupación",
+     "75.4%",
+     "80%",
+     "Amarillo"
+    ],
+    [
+     "Ingreso por paciente-día",
+     "Q 2,140.00",
+     "Q 2,000.00",
+     "Verde"
+    ],
+    [
+     "Cartera +60 días",
+     "Q 0.00",
+     "Q 0.00",
+     "Verde"
+    ]
+   ]
+  },
+  "voz": "Tablero gerencial: ocupación setenta y cinco por ciento, debajo de la meta de ochenta; ingreso por paciente día de dos mil ciento cuarenta quetzales."
+ }
+}
