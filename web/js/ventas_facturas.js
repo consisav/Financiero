@@ -28,6 +28,7 @@
     // Listado de facturas del cliente: null = sin consultar; vista FACTURAS o PRODUCTOS (productos vendidos).
     let listado = null, listaTexto = '', listaVista = 'FACTURAS', vendidos = null;
     let poliza = null, guiaTamano = 'COMPLETA';
+    let envioOrigen = null; // envío (Envíos de productos) que se está facturando: queda OPERADO al registrar la factura
     let ventaVI = null; // venta de Ventas Inteligentes que se está facturando (queda FACTURADA al registrar la factura)
 
     const cliente = (id) => clientes.find((c) => c.id === id);
@@ -55,7 +56,7 @@
       if (extra === 'inteligente') {
         try { vi = JSON.parse(sessionStorage.getItem('fin-venta-inteligente') || 'null'); sessionStorage.removeItem('fin-venta-inteligente'); } catch { /* sin almacenamiento */ }
         vi = vi || window.VENTA_INTELIGENTE || null; window.VENTA_INTELIGENTE = null;
-        if (vi) { ctx.sel.org = vi.org; ctx.sel.loc = vi.loc; ventaVI = vi.venta_id || null; }
+        if (vi) { ctx.sel.org = vi.org; ctx.sel.loc = vi.loc; ventaVI = vi.venta_id || null; envioOrigen = vi.envio_id || null; }
       }
       pintarFiltros();
       await cargarLocalidad();
@@ -65,7 +66,7 @@
         const fecha = new Date(`${vi.fecha}T${new Date().toTimeString().slice(0, 5)}:00`).toISOString();
         lineas = vi.lineas.map((x) => ({ ...nuevaLinea(), ...x }));
         pintar({ ...valoresNuevos(), fecha_emision: fecha, ...(c ? datosCliente(c, fecha) : {}) });
-        window.FIN.aviso('Venta trasladada desde Ventas Inteligentes: revisa la factura y guárdala');
+        window.FIN.aviso(vi.origen === 'ENVIO' ? `Envío ${vi.envio_numero || ''} trasladado: revisa la factura y guárdala` : 'Venta trasladada desde Ventas Inteligentes: revisa la factura y guárdala');
         return;
       }
       if (extra && /^\d+$/.test(String(extra))) {
@@ -636,6 +637,7 @@
         if (r1.error) throw r1.error;
         if (cs.length) { const r2 = await sb.from('factura_venta_contable').insert(cs.map((x, i) => ({ factura_id: id, linea: i + 1, cuenta_id: x.cuenta_id, centro_id: x.centro_id, concepto: x.concepto || null, debe: x.debe, haber: x.haber, debe_mi: miConta(x, 'debe', Number(h.tipo_cambio || 1) || 1), haber_mi: miConta(x, 'haber', Number(h.tipo_cambio || 1) || 1) }))); if (r2.error) throw r2.error; }
         if (ps.length) { const r3 = await sb.from('factura_venta_pagos').insert(ps.map((x) => ({ factura_id: id, fecha: x.fecha || fmt.hoy(), forma: x.forma, documento: x.documento || null, banco: x.banco || null, valor: x.valor, usuario: (ctx.yo.usuario || '').toUpperCase() }))); if (r3.error) throw r3.error; }
+        if (!actual && envioOrigen) { const u = await sb.from('envios_venta').update({ factura_id: id }).eq('id', envioOrigen); if (!u.error) envioOrigen = null; }
         if (!actual && ventaVI) { const u = await sb.from('ventas_inteligentes').update({ estado: 'FACTURADA', factura_id: id }).eq('id', ventaVI); if (!u.error) ventaVI = null; }
         window.FIN.aviso(actual ? 'Factura guardada' : 'Factura registrada');
         const { data } = await sb.from('facturas_venta').select('*').eq('id', id).single();

@@ -5,13 +5,20 @@
 //   Pestaña «Listado de envíos» para abrir los anteriores.
 (function () {
   const { esc } = window.UI;
-  const { montar, fmt, imprimir } = window.BANCOS;
+  const { montar, fmt } = window.BANCOS;
   window.PANTALLAS = window.PANTALLAS || {};
 
+  // Estado que se muestra: VIGENTE (emitido, sin factura), OPERADO (ya facturado) o ANULADO.
+  const estadoEnvio = (e) => (!e ? '' : e.estado === 'ANULADO' ? 'ANULADO' : e.factura_id ? 'OPERADO' : 'VIGENTE');
+  const MARCA_ESTADO = { VIGENTE: 'aprobada', OPERADO: 'definitiva', ANULADO: 'anulada' };
+  window.ENVIOS = { estadoEnvio, MARCA_ESTADO };
+
+  // extra: número de envío (id), o { id, nuevo, volver, grupo } cuando lo abre «Envíos de productos» (maestro).
   window.PANTALLAS.envios = function (cont, m, extra) {
-    const ctx = montar(cont, { titulo: 'Envíos', icono: 'ti-truck', clase: 'bk-movimientos bm-solo vf-facturas ve-envios', grupo: 'Ventas · Mantenimientos' });
+    const op = extra && typeof extra === 'object' ? extra : { id: extra };
+    const ctx = montar(cont, { titulo: op.volver ? 'Envío de productos' : 'Envíos', icono: 'ti-truck', clase: 'bk-movimientos bm-solo vf-facturas ve-envios', grupo: op.grupo || 'Ventas · Mantenimientos' });
     const { sb } = ctx;
-    let clientes = [], bodegas = [], precios = [], productos = [], preciosProd = [], locCargada = null;
+    let clientes = [], bodegas = [], precios = [], productos = [], preciosProd = [], vendedores = [], locCargada = null;
     let actual = null, modificando = false, pestana = 'PRODUCTOS', lineaSel = 0, lineas = [], listado = null;
 
     const cliente = (id) => clientes.find((c) => c.id === id);
@@ -27,7 +34,8 @@
       if (prueba.error) { ctx.espacio.innerHTML = `<section class="panel"><p class="vacio">${/envios_venta/.test(prueba.error.message) ? 'Falta instalar el script 138 (series, correlativos, envíos y despachos) en Supabase.' : esc(prueba.error.message)}</p></section>`; return; }
       pintarFiltros();
       await cargarLocalidad();
-      if (/^\d+$/.test(String(extra || ''))) { const { data } = await sb.from('envios_venta').select('*').eq('id', Number(extra)).maybeSingle(); if (data) return abrir(data); }
+      if (/^\d+$/.test(String(op.id || ''))) { const { data } = await sb.from('envios_venta').select('*').eq('id', Number(op.id)).maybeSingle(); if (data) return abrir(data); }
+      if (op.nuevo) return abrir(null);
       // Abre con el último envío y el listado (incluye los migrados del sistema anterior).
       const { data: ult } = await sb.from('envios_venta').select('*').eq('localidad_id', ctx.sel.loc || 0).order('numero', { ascending: false }).limit(500);
       if (ult?.length) { listado = ult; pestana = 'LISTADO'; return abrir(ult[0]); }
@@ -36,14 +44,15 @@
     function pintarFiltros() { ctx.filtros(`<label class="campo vr-ir"><span>Envío No.</span><input name="ir_envio" inputmode="numeric" placeholder="Número" autocomplete="off"></label>`, ''); }
     async function cargarLocalidad() {
       const loc = ctx.sel.loc || 0; locCargada = loc;
-      const [c, b, p, pr, pp] = await Promise.all([
+      const [c, b, p, pr, pp, vd] = await Promise.all([
         window.UI.todo(sb.from('clientes').select('*').eq('localidad_id', loc).order('nombre').order('id')),
         sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo'),
         sb.from('tipos_precio').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
         sb.from('productos').select('id, codigo, nombre, estado, lote').eq('localidad_id', loc).order('codigo'),
-        sb.from('producto_precios').select('producto_id, tipo_precio_id, precio').eq('localidad_id', loc)
+        sb.from('producto_precios').select('producto_id, tipo_precio_id, precio').eq('localidad_id', loc),
+        sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo')
       ]);
-      clientes = c.data || []; bodegas = b.data || []; precios = pr.data || []; productos = p.data || []; preciosProd = pp.data || [];
+      clientes = c.data || []; bodegas = b.data || []; precios = pr.data || []; productos = p.data || []; preciosProd = pp.data || []; vendedores = vd.data || [];
     }
     async function abrir(e) {
       if (e && e.localidad_id !== locCargada) { ctx.sel.loc = e.localidad_id; ctx.sel.org = e.organizacion_id; pintarFiltros(); await cargarLocalidad(); }
@@ -52,7 +61,9 @@
       else lineas = [nuevaLinea()];
       pintar();
     }
-    const nuevos = () => ({ fecha: fmt.hoy(), bodega_id: null, cliente_id: null, cliente_codigo: '', nombre: '', nit: '', telefono: '', contacto: '', direccion: '', forma_pago: 'CONTADO', dias_credito: 0, tipo_precio_id: null, fecha_cobro: '', observaciones: '' });
+    const gtq = () => ctx.monedas.find((x) => String(x.iso || '').toUpperCase() === 'GTQ') || ctx.monedas[0];
+    const monedaDe = (id) => ctx.monedas.find((x) => x.id === id) || gtq();
+    const nuevos = () => ({ fecha: fmt.hoy(), moneda_id: gtq()?.id || null, tipo_cambio: 1, vendedor_id: null, responsable: '', bodega_id: null, cliente_id: null, cliente_codigo: '', nombre: '', nit: '', telefono: '', contacto: '', direccion: '', forma_pago: 'CONTADO', dias_credito: 0, tipo_precio_id: null, fecha_cobro: '', observaciones: '' });
     const opt = (l, id) => `<option value="">—</option>${l.filter((x) => x.activo !== false && (!x.estado || x.estado === 'ACTIVO' || x.estado === 'A') || x.id === id).map((x) => `<option value="${x.id}" ${x.id === id ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}`;
 
     function pintar(v0) {
@@ -61,15 +72,18 @@
       const v = v0 || (e ? { ...e } : nuevos());
       const total = fmt.redondear(lineas.reduce((t, l) => t + Number(l.cantidad || 0) * Number(l.precio || 0), 0));
       const l = lineas[lineaSel] || null;
-      const puede = ctx.admin && e && e.estado !== 'ANULADO' && !modificando;
+      const puede = ctx.admin && e && estadoEnvio(e) === 'VIGENTE' && !modificando;
       ctx.pDet.innerHTML = `
         <form class="tk-form ta-form bm-form vf-form ve-form" novalidate>
           <header class="tk-titulo bm-titulo">
             <div class="tk-titulo-texto"><small>Envíos · ${esc(ctx.localidad(ctx.sel.loc)?.codigo || '')} ${esc(ctx.localidad(ctx.sel.loc)?.nombre_comercial || '')}</small><h2>${e ? `Envío ${e.numero}` : 'Nuevo envío'}</h2></div>
-            <div class="tk-marcas">${e ? (e.estado === 'ANULADO' ? '<span class="pc-marca anulada">Anulado</span>' : '<span class="pc-marca aprobada">Emitido</span>') : '<span class="pc-marca pendiente">Sin registrar</span>'}</div>
+            <div class="tk-marcas">${e ? `<span class="pc-marca ${MARCA_ESTADO[estadoEnvio(e)]}">${estadoEnvio(e).charAt(0) + estadoEnvio(e).slice(1).toLowerCase()}</span>` : '<span class="pc-marca pendiente">Sin registrar</span>'}</div>
             <div class="tk-titulo-acciones">
+              ${op.volver ? '<button type="button" class="boton secundario-sm" data-accion="volver"><i class="ti ti-arrow-left" aria-hidden="true"></i> Listado</button>' : ''}
               <button type="button" class="boton secundario-sm" data-accion="imp-factura" ${e ? '' : 'disabled'}><i class="ti ti-file-invoice" aria-hidden="true"></i> Imprimir tipo factura</button>
               <button type="button" class="boton secundario-sm" data-accion="imp-envio" ${e ? '' : 'disabled'}><i class="ti ti-truck" aria-hidden="true"></i> Imprimir tipo envío</button>
+              ${e && estadoEnvio(e) === 'VIGENTE' && ctx.admin && !modificando ? '<button type="button" class="boton secundario-sm" data-accion="facturar"><i class="ti ti-file-invoice" aria-hidden="true"></i> Generar factura</button>' : ''}
+              ${e && e.factura_id ? '<button type="button" class="boton secundario-sm" data-accion="ver-factura"><i class="ti ti-external-link" aria-hidden="true"></i> Ver factura</button>' : ''}
               ${ctx.admin && !modificando ? `<button type="button" class="boton ${ed ? 'secundario-sm' : 'primario-sm'}" data-accion="nuevo"><i class="ti ti-plus" aria-hidden="true"></i> Nuevo</button>` : ''}
               ${puede ? '<button type="button" class="boton secundario-sm rp-peligro" data-accion="anular"><i class="ti ti-ban" aria-hidden="true"></i> Anular</button><button type="button" class="boton primario-sm" data-accion="modificar"><i class="ti ti-pencil" aria-hidden="true"></i> Modificar</button>' : ''}
               ${modificando ? '<button type="button" class="boton secundario-sm" data-accion="cancelar"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>' : ''}
@@ -93,6 +107,12 @@
                   <label class="campo ve-c2"><span>Contacto</span><input name="contacto" value="${esc(v.contacto || '')}" maxlength="100" ${dis}></label>
                   <label class="campo ve-c3"><span>Dirección</span><input name="direccion" value="${esc(v.direccion || '')}" maxlength="300" ${dis}></label>
                 </div>
+                <div class="ve-g ve-g4">
+                  <label class="campo ve-c2"><span>Responsable</span><select name="vendedor_id" ${dis}><option value="">${esc(v.responsable && !v.vendedor_id ? v.responsable : '—')}</option>${vendedores.filter((x) => x.activo !== false || x.id === v.vendedor_id).map((x) => `<option value="${x.id}" ${x.id === v.vendedor_id ? 'selected' : ''}>${x.codigo} · ${esc(x.nombre)}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((x) => `<option value="${x.id}" ${(v.moneda_id || gtq()?.id) === x.id ? 'selected' : ''}>${esc(x.nombre)}</option>`).join('')}</select></label>
+                  <label class="campo"><span>Valor cambio</span><input type="number" step="0.00001" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
+                  <label class="campo ve-c2"><span>Factura</span><input value="${e && e.factura_id ? 'Facturado' : 'Sin facturar'}" disabled></label>
+                </div>
                 <div class="ve-g ve-g3">
                   <label class="campo"><span>Forma de pago</span><select name="forma_pago" ${dis}>${['CONTADO', 'CRÉDITO'].map((x) => `<option ${v.forma_pago === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
                   <label class="campo"><span>Días crédito</span><input type="number" min="0" max="365" name="dias_credito" value="${esc(String(v.dias_credito ?? 0))}" ${dis}></label>
@@ -103,7 +123,7 @@
                 <datalist id="ve-clientes">${clientes.map((c) => `<option ${c.estado === 'INACTIVO' ? 'label="Inactivo" ' : ''}value="${esc(c.nombre)}${c.tipo_documento !== 'CF' && c.documento ? ` · NIT ${esc(c.documento)}` : ''} — ${c.codigo}"></option>`).join('')}</datalist>
               </section>
               <section class="vfb-card vfb-resumen vfa-resumen">
-                <div class="vfb-total"><span>Total</span><b data-calc="total">Q ${fmt.monto(total)}</b></div>
+                <div class="vfb-total"><span>Total</span><b data-calc="total">${esc(monedaDe(v.moneda_id)?.simbolo || 'Q')} ${fmt.monto(total)}</b></div>
                 <div><span>Productos</span><b>${lineas.filter((x) => x.descripcion).length}</b></div>
                 <div><span>Unidades</span><b data-calc="cant">${fmt.monto(lineas.reduce((t, x) => t + Number(x.cantidad || 0), 0))}</b></div>
                 <div><span>Usuario</span><b>${esc(e?.usuario || (ctx.yo.usuario || '').toUpperCase())}</b></div>
@@ -151,7 +171,9 @@
       const id = (k) => el[k] && el[k].value ? Number(el[k].value) : null;
       const c = clientes.find((x) => String(x.codigo) === String(el.cliente_codigo.value).trim());
       return { fecha: t('fecha') || fmt.hoy(), bodega_id: id('bodega_id'), cliente_id: c ? c.id : (actual?.cliente_id || null), cliente_codigo: t('cliente_codigo'), nombre: t('nombre') || '', nit: t('nit'), telefono: t('telefono'),
-        contacto: t('contacto'), direccion: t('direccion'), forma_pago: el.forma_pago.value, dias_credito: Number(el.dias_credito.value) || 0, tipo_precio_id: id('tipo_precio_id'), fecha_cobro: t('fecha_cobro'), observaciones: t('observaciones') };
+        contacto: t('contacto'), direccion: t('direccion'), forma_pago: el.forma_pago.value, dias_credito: Number(el.dias_credito.value) || 0, tipo_precio_id: id('tipo_precio_id'), fecha_cobro: t('fecha_cobro'), observaciones: t('observaciones'),
+        moneda_id: id('moneda_id'), tipo_cambio: Number(el.tipo_cambio?.value) || 1, vendedor_id: id('vendedor_id'),
+        responsable: (vendedores.find((x) => x.id === id('vendedor_id'))?.nombre) || (id('vendedor_id') ? null : actual?.responsable || null) };
     }
     function leer() {
       ctx.pDet.querySelectorAll('tr[data-linea]').forEach((tr) => {
@@ -166,7 +188,7 @@
       const total = lineas.reduce((t, l) => t + l.cantidad * l.precio, 0);
       form.querySelectorAll('tr[data-linea]').forEach((tr) => { const x = lineas[Number(tr.dataset.linea)]; const td = tr.querySelector('[data-tq]'); if (x && td) td.textContent = fmt.monto(x.cantidad * x.precio); });
       const s = (k, t) => { const e = form.querySelector(`[data-calc=${k}]`); if (e) e.textContent = t; };
-      s('total', `Q ${fmt.monto(total)}`); s('tq', fmt.monto(total)); s('cant', fmt.monto(lineas.reduce((t, x) => t + x.cantidad, 0)));
+      s('total', `${esc(monedaDe(Number(form.elements.moneda_id?.value) || null)?.simbolo || 'Q')} ${fmt.monto(total)}`); s('tq', fmt.monto(total)); s('cant', fmt.monto(lineas.reduce((t, x) => t + x.cantidad, 0)));
     }
     async function guardar(form) {
       const error = form.querySelector('.tk-error'); error.textContent = ''; leer();
@@ -186,19 +208,16 @@
         window.FIN.aviso(actual ? 'Envío guardado' : 'Envío registrado');
         listado = null;
         const { data } = await sb.from('envios_venta').select('*').eq('id', id).single(); await abrir(data);
-      } catch (err) { error.textContent = window.UI.traducirError(err); }
+      } catch (err) { error.textContent = /moneda_id|vendedor_id|tipo_cambio|responsable/.test(err?.message || '') ? 'Falta instalar el script 219 (moneda y responsable de los envíos) en Supabase.' : window.UI.traducirError(err); }
     }
-    function imprimirEnvio(tipo) {
-      const e = actual; if (!e) return; const b = bodegas.find((x) => x.id === e.bodega_id); const tp = precios.find((x) => x.id === e.tipo_precio_id);
-      imprimir(`Envío ${e.numero}`, `<h1>Envío ${e.numero}${tipo === 'FACTURA' ? ' · tipo factura' : ' · tipo envío'}${e.estado === 'ANULADO' ? ' · ANULADO' : ''}</h1>
-        <h2>${esc([`Fecha: ${fmt.fechaDia(e.fecha)}`, `Cliente: ${e.cliente_codigo || ''} · ${e.nombre}`, `NIT: ${e.nit || ''}`, `Bodega: ${b ? b.nombre : '—'}`, ...(tipo === 'FACTURA' ? [`Pago: ${e.forma_pago}${e.forma_pago === 'CRÉDITO' ? ` ${e.dias_credito} días` : ''}`, `Tipo de precio: ${tp ? tp.nombre : '—'}`, `Fecha de cobro: ${e.fecha_cobro ? fmt.fechaDia(e.fecha_cobro) : '—'}`] : [`Contacto: ${e.contacto || '—'}`, `Teléfono: ${e.telefono || '—'}`])].join(' · '))}</h2>
-        ${e.direccion ? `<p><b>Dirección:</b> ${esc(e.direccion)}</p>` : ''}
-        <table><thead><tr><th>#</th><th>Código</th><th>Descripción</th><th>Lote</th><th>Vence</th><th class="n">Cantidad</th>${tipo === 'FACTURA' ? '<th class="n">Valor unitario</th><th class="n">Valor total</th>' : ''}</tr></thead><tbody>
-        ${lineas.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(String(x.producto_codigo ?? ''))}</td><td>${esc(x.descripcion)}</td><td>${esc(x.lote || '')}</td><td>${esc(x.fecha_vencimiento ? fmt.fechaDia(x.fecha_vencimiento) : '')}</td><td class="n">${fmt.monto(x.cantidad)}</td>${tipo === 'FACTURA' ? `<td class="n">${fmt.monto(x.precio)}</td><td class="n">${fmt.monto(x.cantidad * x.precio)}</td>` : ''}</tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="5">Total</td><td class="n">${fmt.monto(lineas.reduce((t, x) => t + x.cantidad, 0))}</td>${tipo === 'FACTURA' ? `<td></td><td class="n">${fmt.monto(e.total)}</td>` : ''}</tr></tfoot></table>
-        <div class="firmas"><div>Entregó: ${esc(e.usuario || '')}</div><div>Recibió conforme</div></div>`, { locId: e.localidad_id, orgId: e.organizacion_id });
+    // Impresión tipo factura (con precios, total y valor en letras) o tipo envío (sin precios), con el logo y los datos de la empresa.
+    async function imprimirDoc(tipo) {
+      const e = actual; if (!e) return;
+      window.FIN.aviso('Preparando la impresión…');
+      const emp = await window.ENVIOS_IMPRESION.empresa(sb, e.localidad_id, e.organizacion_id);
+      const vend = vendedores.find((x) => x.id === e.vendedor_id);
+      window.ENVIOS_IMPRESION.imprimir(tipo, { ...e, responsable: vend?.nombre || e.responsable || '' }, lineas.filter((x) => x.descripcion), emp, monedaDe(e.moneda_id));
     }
-
     // Listas de valores «descripción — código»: el campo queda con el código.
     cont.addEventListener('change', (e) => { const i = e.target; if (i && i.matches && i.matches('input[list]')) { const k = i.value.lastIndexOf(' — '); if (k >= 0) i.value = i.value.slice(k + 3).trim(); } }, true);
     cont.addEventListener('change', async (e) => {
@@ -208,7 +227,7 @@
       const form = e.target.closest('.ve-form'); if (!form) return;
       leer();
       const k = e.target.name;
-      if (k === 'cliente_codigo') { const c = clientes.find((x) => String(x.codigo) === e.target.value.trim()); if (c) return repintar({ cliente_id: c.id, cliente_codigo: c.codigo, nombre: c.nombre, nit: c.tipo_documento === 'CF' ? 'CF' : c.documento, telefono: c.telefono || '', contacto: c.contacto || '', direccion: c.direccion_envio || c.direccion || '', forma_pago: c.forma_pago || 'CONTADO', dias_credito: c.dias_credito || 0, tipo_precio_id: c.tipo_precio_id || null, bodega_id: c.bodega_id || null, fecha_cobro: c.forma_pago === 'CRÉDITO' ? sumar(c.dias_credito, form.elements.fecha.value) : '' }); }
+      if (k === 'cliente_codigo') { const c = clientes.find((x) => String(x.codigo) === e.target.value.trim()); if (c) return repintar({ cliente_id: c.id, cliente_codigo: c.codigo, nombre: c.nombre, nit: c.tipo_documento === 'CF' ? 'CF' : c.documento, telefono: c.telefono || '', contacto: c.contacto || '', direccion: c.direccion_envio || c.direccion || '', forma_pago: c.forma_pago || 'CONTADO', dias_credito: c.dias_credito || 0, tipo_precio_id: c.tipo_precio_id || null, bodega_id: c.bodega_id || null, vendedor_id: c.vendedor_id || null, fecha_cobro: c.forma_pago === 'CRÉDITO' ? sumar(c.dias_credito, form.elements.fecha.value) : '' }); }
       if (k === 'dias_credito' || k === 'forma_pago' || k === 'fecha') { const h = encabezado(form); return repintar({ fecha_cobro: h.forma_pago === 'CRÉDITO' ? sumar(h.dias_credito, h.fecha) : '' }); }
       const prod = e.target.closest('[data-l=producto]');
       if (prod) { const x = lineas[Number(prod.closest('tr').dataset.linea)]; const p = porCodigoProd(prod.value); if (p) { x.producto_id = p.id; x.producto_codigo = p.codigo; x.descripcion = p.nombre; x.lote = x.lote || p.lote || ''; const tp = Number(form.elements.tipo_precio_id.value) || null; const pr = tp ? precioDe(p.id, tp) : 0; if (pr) x.precio = pr; } else { x.producto_id = null; x.producto_codigo = prod.value.trim(); } return repintar(); }
@@ -226,8 +245,20 @@
       if (a === 'modificar') { modificando = true; return pintar(); }
       if (a === 'cancelar') return abrir(actual);
       if (a === 'linea') { leer(); lineas.push(nuevaLinea()); lineaSel = lineas.length - 1; return repintar(); }
-      if (a === 'imp-factura') return imprimirEnvio('FACTURA');
-      if (a === 'imp-envio') return imprimirEnvio('ENVIO');
+      if (a === 'imp-factura') return imprimirDoc('FACTURA');
+      if (a === 'imp-envio') return imprimirDoc('ENVIO');
+      if (a === 'volver') return op.volver();
+      if (a === 'ver-factura') { location.hash = `#/facturacion/facturas-ventas/${actual.factura_id}`; return; }
+      if (a === 'facturar') {
+        // Pasa el envío a Facturas Ventas como factura nueva ya llenada; al registrarla, el envío queda OPERADO.
+        const datos = { origen: 'ENVIO', envio_id: actual.id, envio_numero: actual.numero, org: actual.organizacion_id, loc: actual.localidad_id, cliente_id: actual.cliente_id, fecha: fmt.hoy(),
+          lineas: lineas.filter((x) => x.descripcion).map((x) => ({ producto_id: x.producto_id, producto_codigo: x.producto_codigo, descripcion: x.descripcion, cantidad: Number(x.cantidad), precio: Number(x.precio),
+            unidad_medida: x.unidad_medida || '', lote: x.lote || '', registro_sanitario: x.registro_sanitario || '', fecha_vencimiento: x.fecha_vencimiento || '', fecha_fabricacion: x.fecha_fabricacion || '' })) };
+        try { sessionStorage.setItem('fin-venta-inteligente', JSON.stringify(datos)); } catch { /* sin almacenamiento */ }
+        window.VENTA_INTELIGENTE = datos;
+        location.hash = '#/facturacion/facturas-ventas/inteligente';
+        return;
+      }
       if (a === 'anular') {
         if (!confirm(`¿Anular el envío ${actual.numero}?`)) return;
         const r = await sb.from('envios_venta').update({ estado: 'ANULADO', anulado_por: (ctx.yo.usuario || '').toUpperCase(), anulado_en: new Date().toISOString() }).eq('id', actual.id);

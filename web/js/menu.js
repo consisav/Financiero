@@ -388,6 +388,7 @@ window.MODULOS = [
           icono: 'ti-file-invoice',
           pantallas: [
             { id: 'facturas-ventas', nombre: 'Facturas Ventas', icono: 'ti-file-invoice', descripcion: 'Factura electrónica (FEL, certificador COFIDI): cliente, venta y crédito, impuestos, productos con lote y vencimiento, detalle contable, inventario y pagos.' },
+            { id: 'envios-productos', nombre: 'Envíos de Productos', icono: 'ti-truck-delivery', descripcion: 'Envíos de productos a clientes: listado por fechas con estado (vigente, operado, anulado), moneda, valor y responsable; el envío con sus productos, impresión tipo factura o tipo envío y generación de la factura.' },
             { id: 'consulta-de-facturas', nombre: 'Consulta de Facturas', icono: 'ti-file-search', descripcion: 'Resumen de las facturas de venta por cliente, vendedor, forma de pago, fechas y estado (con saldo, pagadas, anuladas, sin certificar), con sus productos, detalle contable y pagos.', separador: true }
           ]
         },

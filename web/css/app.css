@@ -6696,3 +6696,20 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
 .ci-res .pr-tabla th:nth-child(6), .ci-res .pr-tabla th:nth-child(7) { width: 11% !important; }
 .ci-res .pr-tabla th:nth-child(8) { width: 6% !important; }
 .ci-res .pr-tabla th:nth-child(9) { width: auto !important; }
+/* Envíos de productos: fila de responsable y moneda en el envío; maestro con indicadores y tabla. */
+.ve-g4 { grid-template-columns: repeat(2, minmax(0, 1fr)) 150px 120px repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1600px) { .ve-g4 { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.ep-vista { display: contents; }
+.ep-form { gap: 10px; }
+.ep-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 2fr); gap: 10px; }
+.ep-tabla { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.ep-tabla table { width: 100%; table-layout: fixed; }
+.ep-tabla th:nth-child(1) { width: 7%; } .ep-tabla th:nth-child(2) { width: 9%; } .ep-tabla th:nth-child(3) { width: 27%; }
+.ep-tabla th:nth-child(4) { width: 10%; } .ep-tabla th:nth-child(5) { width: 9%; } .ep-tabla th:nth-child(6) { width: 10%; }
+.ep-tabla th:nth-child(7) { width: 10%; } .ep-tabla th:nth-child(8) { width: 18%; }
+.ep-tabla td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-tabla tbody tr[data-envio] { cursor: pointer; }
+.ep-tabla tbody tr[data-envio]:hover td { background: var(--cl-azul); }
+.ep-tabla td.ep-num { font-weight: 700; color: var(--acento); }
+.ep-tabla tr.ep-anulado td { color: var(--suave); }
+@media (max-width: 900px) { .ep-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ep-tabla table { min-width: 820px; } }
