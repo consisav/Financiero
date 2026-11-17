@@ -1,0 +1,1228 @@
+{
+ "clasificaciones-compra": {
+  "puntos": [
+   "Clasificaciones fiscales de las compras: siglas, si van al libro de compras y si aplican IVA (bienes, servicios, combustible, importación, pequeño contribuyente…)."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Generales › Clasificación compras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar»: el número es automático.",
+   "Escribe la descripción y las siglas (ej. COMB · Combustibles).",
+   "Marca si va al libro de compras y si aplica IVA.",
+   "Presiona «Guardar cambios»; se elige en cada compra y en la Carga Facturas SAT."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "No.",
+    "Descripción",
+    "Siglas",
+    "Libro de compras",
+    "IVA"
+   ],
+   "filas": [
+    [
+     "1",
+     "Bienes",
+     "BIEN",
+     "Sí",
+     "Sí"
+    ],
+    [
+     "2",
+     "Servicios",
+     "SERV",
+     "Sí",
+     "Sí"
+    ],
+    [
+     "3",
+     "Combustibles",
+     "COMB",
+     "Sí",
+     "Sí"
+    ],
+    [
+     "4",
+     "Pequeño contribuyente",
+     "PEQ",
+     "Sí",
+     "No"
+    ]
+   ]
+  }
+ },
+ "tipos-documento-compra": {
+  "puntos": [
+   "Tipos de documento de las compras (factura, factura especial, recibo, DUCA…) y cómo se calcula su IVA."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Generales › Tipo documento y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar» y escribe la descripción.",
+   "Marca cómo se calcula el IVA (incluido, sin IVA) y si es recibo.",
+   "Presiona «Guardar cambios»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "No.",
+    "Tipo",
+    "Cálculo IVA",
+    "Recibo"
+   ],
+   "filas": [
+    [
+     "1",
+     "Factura electrónica",
+     "Incluido 12 %",
+     "No"
+    ],
+    [
+     "2",
+     "Factura especial",
+     "Retiene IVA",
+     "No"
+    ],
+    [
+     "3",
+     "Recibo",
+     "Sin IVA",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "tipos-de-medida": {
+  "puntos": [
+   "Unidades de medida de los productos (unidad, caja, frasco, kilo, litro…)."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Productos › Tipos de medida y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar» y escribe el código y la descripción (ej. CJ · Caja).",
+   "Presiona «Guardar».",
+   "La medida se elige en la ficha de cada producto y sale en facturas y kardex."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Descripción"
+   ],
+   "filas": [
+    [
+     "UN",
+     "Unidad"
+    ],
+    [
+     "CJ",
+     "Caja"
+    ],
+    [
+     "FR",
+     "Frasco"
+    ]
+   ]
+  }
+ },
+ "clasificaciones-y-tipos": {
+  "puntos": [
+   "Clasificaciones de productos y servicios (descripción, tipo, cuenta, tipo de servicio, inventario y laboratorio) y, abajo, los tipos de productos de cada clasificación con sus cuentas de inventario y facturación."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Productos › Clasificaciones y tipos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En la lista de arriba agrega una clasificación (ej. Medicamentos) con su tipo (bien o servicio), cuenta y si maneja inventario.",
+   "Elige la clasificación: abajo aparecen sus tipos.",
+   "Agrega cada tipo con «Siglas», «Descripción», cuenta de inventarios y cuenta de facturación.",
+   "Presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Clasificación",
+    "Tipo",
+    "Siglas",
+    "Cuenta inventario",
+    "Cuenta ventas"
+   ],
+   "filas": [
+    [
+     "Medicamentos",
+     "Genéricos",
+     "GEN",
+     "1.1.3.01",
+     "4.1.1.01"
+    ],
+    [
+     "Servicios",
+     "Consultas",
+     "CON",
+     "—",
+     "4.1.2.01"
+    ]
+   ]
+  }
+ },
+ "presentaciones-productos": {
+  "puntos": [
+   "Presentaciones en que vienen los productos (caja x 10, frasco 120 ml, blíster…)."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Productos › Presentación productos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar» y escribe la presentación.",
+   "Presiona «Guardar»; se elige en la ficha del producto."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Presentación"
+   ],
+   "filas": [
+    [
+     "1",
+     "Caja x 10 tabletas"
+    ],
+    [
+     "2",
+     "Frasco 120 ml"
+    ]
+   ]
+  }
+ },
+ "tipos-de-precio": {
+  "puntos": [
+   "Listas de precio: % de utilidad, % de descuento, factor y estado; cada cliente tiene un tipo de precio."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Productos › Tipos de precio y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar»: código y nombre (ej. MAYORISTA).",
+   "Escribe el % de utilidad sobre el costo y el % de descuento.",
+   "Escribe el factor si se usa en el cálculo y marca el estado.",
+   "Presiona «Guardar»; el precio sugerido de cada producto = costo + utilidad − descuento."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Tipo de precio",
+    "% utilidad",
+    "% descuento",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "1",
+     "PÚBLICO",
+     "40 %",
+     "0 %",
+     "Activo"
+    ],
+    [
+     "2",
+     "MAYORISTA",
+     "25 %",
+     "5 %",
+     "Activo"
+    ]
+   ]
+  }
+ },
+ "productos-y-servicios": {
+  "puntos": [
+   "Artículos de {empresa}: clasificación y tipo, código y código de barras, marca, principio activo, unidad, presentación, proveedor principal, costo en Q y US$, bodega, mínimo y máximo, ubicación (estante, fila, bloque), precios e imagen."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Productos › Productos y servicios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el artículo en la lista o presiona «Nuevo artículo».",
+   "Elige la «Clasificación» y el «Tipo producto».",
+   "Escribe el «Nombre *», el «Código producto» y el «Código de barras».",
+   "Escribe «Marca» y «Principio activo» (medicamentos).",
+   "Elige «Unidad de medida», «Presentación» y el «Proveedor principal» (o «Proveedor» para crearlo).",
+   "Escribe el «Precio costo Q» (y «Costo US$» si se importa).",
+   "Elige la «Bodega» y escribe «Mínimo» y «Máximo» (alertas de reorden).",
+   "Escribe la ubicación: «Estante», «Fila» y «Bloque».",
+   "Sube la imagen y guarda.",
+   "Asigna sus precios en Precios de venta; «Imprimir» saca el catálogo."
+  ],
+  "campos": [
+   [
+    "Nombre *",
+    "{producto}",
+    "Nombre en facturas."
+   ],
+   [
+    "Código producto",
+    "{codigoProducto}",
+    "Código interno."
+   ],
+   [
+    "Unidad de medida",
+    "Caja",
+    "Unidad de venta."
+   ],
+   [
+    "Precio costo Q",
+    "Q 32.15",
+    "Costo para margen y kardex."
+   ],
+   [
+    "Bodega",
+    "{bodega}",
+    "Bodega principal."
+   ],
+   [
+    "Mínimo / Máximo",
+    "20 · 200",
+    "Reorden."
+   ],
+   [
+    "Estante / Fila / Bloque",
+    "E3 · F2 · B1",
+    "Ubicación física."
+   ]
+  ]
+ },
+ "precios-de-venta": {
+  "puntos": [
+   "Precio de cada producto en cada tipo de precio: fecha, precio, margen sobre el costo, precio sugerido y vigencia; lista de precios en PDF o Excel."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Productos › Precios de venta y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el producto arriba (incluye inactivos si hace falta); ves su costo y cuántos precios tiene.",
+   "Elige el producto: abajo aparece una fila por tipo de precio.",
+   "Escribe el precio o presiona «Aplicar sugeridos» (costo + % utilidad − % descuento).",
+   "Revisa el margen sobre el costo y marca la vigencia.",
+   "Presiona «Guardar precios»; usa «Subir» / «Bajar» para moverte entre productos.",
+   "Imprime la lista completa con «Lista de precios PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Precios de {producto}",
+   "columnas": [
+    "Tipo de precio",
+    "Precio",
+    "Margen",
+    "Sugerido",
+    "Vigente"
+   ],
+   "filas": [
+    [
+     "PÚBLICO",
+     "Q 45.00",
+     "40.0%",
+     "Q 45.01",
+     "Sí"
+    ],
+    [
+     "MAYORISTA",
+     "Q 38.20",
+     "18.8%",
+     "Q 38.18",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "parametros-compras": {
+  "puntos": [
+   "Parámetros del módulo de compras de la empresa: encargados de compras, pedidos y facturación (con su usuario), quién recibe traslados, la transacción principal de ventas y los avisos por correo."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Generales › Parámetros módulo y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «Encargado de compras», «de pedidos» y «de facturación» elige el «Usuario» de cada uno.",
+   "Elige quién «Recibe traslados» de inventario.",
+   "Elige la «Transacción principal de ventas».",
+   "Marca los avisos por correo: «Orden cotizada» y «Orden autorizada».",
+   "Presiona «Guardar» («Descartar» deshace)."
+  ]
+ },
+ "proveedores": {
+  "puntos": [
+   "Proveedores de {empresa}: lista (código, NIT, nombre comercial, estado) y ficha con datos generales (nombre fiscal SAT, dirección, teléfonos, contacto, nacional, servicio crítico, tipo, régimen ISR, bodega).",
+   "Pestañas: Datos contables (días de crédito, retención, cuenta de gastos, transacción), Datos de pago (banco y cuenta para transferencias) y Varias cuentas."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Proveedores › Proveedores y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el proveedor o presiona «Nuevo proveedor».",
+   "Escribe el NIT, el nombre fiscal (como en la SAT) y el nombre comercial.",
+   "Llena dirección, teléfonos, contacto y el concepto de gastos; marca nacional o extranjero y si es servicio crítico.",
+   "Elige el tipo de proveedor (productos o servicios), el régimen ISR y la bodega.",
+   "Pestaña Datos contables: días de crédito, % de retención, cuenta de gastos y la transacción contable.",
+   "Pestaña Datos de pago: banco y número de cuenta (se usan en Generación transferencias).",
+   "Guarda; «Imprimir listado» saca el listado por tipo en PDF o Excel."
+  ],
+  "campos": [
+   [
+    "NIT",
+    "4521789-0",
+    "Identificación tributaria."
+   ],
+   [
+    "Nombre fiscal",
+    "{proveedor}",
+    "Como en la SAT."
+   ],
+   [
+    "Tipo",
+    "Productos",
+    "Productos o servicios."
+   ],
+   [
+    "Régimen ISR",
+    "Sobre utilidades",
+    "Define retenciones."
+   ],
+   [
+    "Días de crédito",
+    "30",
+    "Plazo de pago."
+   ],
+   [
+    "Banco / cuenta",
+    "Banco Industrial · 0450012233",
+    "Para transferencias."
+   ]
+  ]
+ },
+ "bodegas": {
+  "puntos": [
+   "Bodegas generales y sub-bodegas (árbol): tipo, bodega mayor, dirección, siglas, permisos (carga directa, consignación, licitación, ventas), modalidad, encargado, tipo de precio, estado y definiciones contables por bodega."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Catálogos › Proveedores › Bodegas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige una bodega del árbol o presiona «Nueva bodega».",
+   "Escribe nombre y siglas, elige el tipo y la bodega mayor (para sub-bodegas) y la dirección.",
+   "Marca los permisos: carga directa, consignación, licitación y ventas.",
+   "Elige la modalidad, el encargado y el tipo de precio.",
+   "En definiciones contables elige las transacciones de entrada, salida y reversión, y la cuenta de producto terminado.",
+   "Guarda."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Bodega",
+    "Siglas",
+    "Tipo",
+    "Ventas",
+    "Encargado"
+   ],
+   "filas": [
+    [
+     "{bodega}",
+     "BP",
+     "General",
+     "Sí",
+     "Encargado de bodega"
+    ],
+    [
+     "Sala de ventas",
+     "SV",
+     "Sub-bodega",
+     "Sí",
+     "Vendedor"
+    ]
+   ]
+  }
+ },
+ "entradas": {
+  "puntos": [
+   "Productos que ingresan por compras y por ajustes de compras (notas de proveedores; la devolución al proveedor resta).",
+   "Vistas: detalle, por producto, por proveedor y por documento."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Registros › Movimientos › Entradas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe «Fecha inicial» y «Fecha final».",
+   "Elige el proveedor (o todos) y uno o varios productos («Todos»).",
+   "Elige la «Bodega» y el «Tipo documento» (compras, notas).",
+   "En «Vista» elige detalle, por producto, por proveedor o por documento.",
+   "Revisa cantidades y valores; «Regresar» vuelve a los parámetros.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Proveedor",
+    "Producto",
+    "Cantidad",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "02/11/{anio}",
+     "Compra C-0981",
+     "{proveedor}",
+     "{producto}",
+     "100",
+     "Q 3,215.00"
+    ],
+    [
+     "{hoy}",
+     "NC proveedor",
+     "{proveedor}",
+     "{producto}",
+     "-10",
+     "Q -321.50"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "Total",
+    "90",
+    "Q 2,893.50"
+   ]
+  },
+  "voz": "Entradas del período: noventa unidades netas por dos mil ochocientos noventa y tres quetzales con cincuenta centavos."
+ },
+ "salidas": {
+  "puntos": [
+   "Productos que salen por ventas (facturas vigentes) y ajustes de ventas (notas; la devolución del cliente resta, los descuentos solo ajustan el valor)."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Registros › Movimientos › Salidas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe las fechas.",
+   "Elige el cliente (o todos), los productos, la bodega y el tipo de documento.",
+   "Elige la «Vista».",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Cliente",
+    "Producto",
+    "Cantidad",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "{hoy}",
+     "FE-7082",
+     "{cliente}",
+     "{producto}",
+     "10",
+     "Q 450.00"
+    ],
+    [
+     "{hoy}",
+     "NC-215",
+     "{cliente}",
+     "{producto}",
+     "-2",
+     "Q -90.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "Total",
+    "8",
+    "Q 360.00"
+   ]
+  },
+  "voz": "Salidas del período: ocho unidades netas por trescientos sesenta quetzales."
+ },
+ "vencimiento-productos": {
+  "puntos": [
+   "Productos vencidos y por vencer (3, 6, 12 o 18 meses) por bodega, con lote, vencimiento, fabricación, días para vencer, existencia del lote, costo y valor."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Registros › Movimientos › Vencimiento de productos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Bodega» y el horizonte (vencidos, 3, 6, 12 o 18 meses).",
+   "Usa «Buscar» para un producto.",
+   "Revisa los lotes en rojo (vencidos) y los próximos a vencer; programa devoluciones o promociones.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto",
+    "Lote",
+    "Vence",
+    "Días",
+    "Existencia",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "Jarabe 120 ml",
+     "J1180",
+     "31/01/2027",
+     "75",
+     "42",
+     "Q 1,113.00"
+    ],
+    [
+     "Crema 30 g",
+     "C0911",
+     "30/09/{anio}",
+     "-48",
+     "6",
+     "Q 84.00"
+    ]
+   ]
+  },
+  "voz": "Vencimientos: un lote ya vencido de crema con seis unidades y un lote de jarabe que vence en setenta y cinco días."
+ },
+ "traslados-entre-bodegas": {
+  "puntos": [
+   "Traslado de productos de una bodega a otra con el mismo lote y vencimiento.",
+   "Estados: REGISTRADO (se modifica) → OPERADO («Operar» mueve el inventario); «Revertir» lo deshace; «Anular» con motivo."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Registros › Traslados y ajustes › Traslados entre bodegas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: revisa «Fecha» y «Usuario».",
+   "Elige la «Bodega origen *» y la «Bodega destino *».",
+   "Presiona «Productos» y agrega cada artículo con su lote y cantidad.",
+   "Guarda (REGISTRADO).",
+   "Presiona «Operar»: sale de origen y entra a destino; si la existencia del lote no alcanza, avisa y pide confirmación.",
+   "Imprime el traslado; si hubo error usa «Revertir» o «Anular»."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Traslado de {bodega} a Sala de ventas",
+   "columnas": [
+    "Producto",
+    "Lote",
+    "Vence",
+    "Cantidad",
+    "Costo",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "L2406",
+     "06/2028",
+     "20",
+     "Q 32.15",
+     "Q 643.00"
+    ]
+   ]
+  },
+  "resultado": {
+   "columnas": [
+    "Bodega",
+    "Producto",
+    "Antes",
+    "Movimiento",
+    "Después"
+   ],
+   "filas": [
+    [
+     "{bodega}",
+     "{producto}",
+     "108",
+     "−20",
+     "88"
+    ],
+    [
+     "Sala de ventas",
+     "{producto}",
+     "5",
+     "+20",
+     "25"
+    ]
+   ]
+  }
+ },
+ "ajustes-por-lotes": {
+  "puntos": [
+   "Cambia el lote (fabricación y vencimiento) de una cantidad de producto en la bodega, con su motivo y costo."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Registros › Traslados y ajustes › Ajustes al inventario por lotes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo» y elige la «Bodega *».",
+   "En «Productos» elige el producto, el lote actual, la cantidad y el lote nuevo con su fabricación y vencimiento.",
+   "Escribe el motivo y guarda.",
+   "Presiona «Operar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Producto",
+    "Lote anterior",
+    "Lote nuevo",
+    "Vence nuevo",
+    "Cantidad"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "L2406",
+     "L2406B",
+     "06/2028",
+     "12"
+    ]
+   ]
+  }
+ },
+ "ajustes-por-producto": {
+  "puntos": [
+   "Añade o disminuye existencias de una bodega con su motivo, justificación, lote y costo."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Registros › Traslados y ajustes › Ajustes al inventario por producto y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo», elige la «Bodega *» y el «Movimiento» (aumento o disminución).",
+   "Marca «Aplica conta» si debe generar partida.",
+   "En «Productos» agrega cada artículo con lote, cantidad y costo.",
+   "Escribe el motivo y la justificación; guarda.",
+   "Presiona «Operar»."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Ajuste por merma",
+   "columnas": [
+    "Producto",
+    "Lote",
+    "Movimiento",
+    "Cantidad",
+    "Costo",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "L2406",
+     "Disminución",
+     "3",
+     "Q 32.15",
+     "Q 96.45"
+    ]
+   ]
+  }
+ },
+ "devoluciones-reingresos": {
+  "puntos": [
+   "Notas por devolución o reingreso de productos: tipo de nota, justificación, compra de ingreso y referencias."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Registros › Traslados y ajustes › Devoluciones y reingresos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo» y elige el tipo de nota y la bodega.",
+   "Escribe la «Compra ingreso» y la «Referencia».",
+   "Agrega los productos con lote y cantidad; escribe la justificación.",
+   "Guarda y presiona «Operar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Producto",
+    "Lote",
+    "Cantidad",
+    "Referencia"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "L2406",
+     "4",
+     "C-0981"
+    ]
+   ]
+  }
+ },
+ "kardex-con-costos": {
+  "puntos": [
+   "Movimientos de cada producto en bodega con existencias, costo unitario, costo del movimiento, costo promedio y costo total."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Mantenimientos › Kardex › Movimiento de Kardex › Kardex con costos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el producto («Subir» / «Bajar»), la «Bodega» y las fechas.",
+   "Revisa cada movimiento con su costo y el promedio.",
+   "Presiona «Imprimir»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Entrada",
+    "Salida",
+    "Existencia",
+    "Costo prom.",
+    "Costo total"
+   ],
+   "filas": [
+    [
+     "02/11/{anio}",
+     "C-0981",
+     "100",
+     "",
+     "118",
+     "Q 32.15",
+     "Q 3,793.70"
+    ],
+    [
+     "{hoy}",
+     "FE-7082",
+     "",
+     "10",
+     "108",
+     "Q 32.15",
+     "Q 3,472.20"
+    ]
+   ]
+  },
+  "voz": "Kardex con costos de {producto}: ciento ocho unidades con un costo total de tres mil cuatrocientos setenta y dos quetzales con veinte centavos."
+ },
+ "kardex-sin-costos": {
+  "puntos": [
+   "Movimientos de cada producto en bodega con lote, fabricación, vencimiento y existencias por lote y producto."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Mantenimientos › Kardex › Movimiento de Kardex › Kardex sin costos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el producto, la bodega y las fechas.",
+   "Revisa entradas y salidas por lote.",
+   "Imprime en PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Lote",
+    "Vence",
+    "Entrada",
+    "Salida",
+    "Exist. lote"
+   ],
+   "filas": [
+    [
+     "02/11/{anio}",
+     "C-0981",
+     "L2406",
+     "06/2028",
+     "100",
+     "",
+     "100"
+    ],
+    [
+     "{hoy}",
+     "FE-7082",
+     "L2406",
+     "06/2028",
+     "",
+     "10",
+     "90"
+    ]
+   ]
+  },
+  "voz": "Del lote L dos cuatro cero seis quedan noventa unidades."
+ },
+ "analisis-costos-local": {
+  "puntos": [
+   "Compras locales de cada producto con costo unitario, promedio ponderado, descuentos, bonificaciones, notas de crédito y costo neto."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Mantenimientos › Kardex › Análisis de Costos › Análisis de costos local y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige proveedor, producto y «Compras desde» / «Compras hasta».",
+   "Revisa cada compra y el promedio ponderado.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Compra",
+    "Cantidad",
+    "Costo unit.",
+    "Descuento",
+    "Costo neto"
+   ],
+   "filas": [
+    [
+     "C-0981",
+     "100",
+     "Q 32.15",
+     "Q 0.00",
+     "Q 32.15"
+    ],
+    [
+     "C-0940",
+     "80",
+     "Q 33.00",
+     "Q 1.00",
+     "Q 32.00"
+    ]
+   ],
+   "totales": [
+    "Promedio",
+    "180",
+    "",
+    "",
+    "Q 32.08"
+   ]
+  },
+  "voz": "Costo neto promedio de {producto} en compras locales: treinta y dos quetzales con ocho centavos."
+ },
+ "analisis-costo-importacion": {
+  "puntos": [
+   "Compras importadas (en dólares) con sus gastos extras prorrateados por valor: costo unitario, gasto por unidad y costo con gastos en Q y US$.",
+   "Reportes detallado, resumido y consolidado."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Mantenimientos › Kardex › Análisis de Costos › Análisis costo importación y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige las fechas, «Compras en» (dólares), proveedor y documento o producto.",
+   "Escribe los «Gastos extras GTQ» y «Gastos extras USD» (flete, seguro, aduana).",
+   "El sistema calcula «Gasto por producto» y «% gasto».",
+   "Elige «Detallado», «Resumido» o «Consolidado» y presiona «Guardar».",
+   "Genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto",
+    "Cantidad",
+    "Costo US$",
+    "Gasto por unidad Q",
+    "Costo con gastos Q"
+   ],
+   "filas": [
+    [
+     "Equipo X",
+     "10",
+     "US$ 120.00",
+     "Q 85.40",
+     "Q 1,019.60"
+    ]
+   ]
+  },
+  "voz": "Costo de importación del equipo X: mil diecinueve quetzales con sesenta centavos por unidad, incluyendo ochenta y cinco quetzales de gastos."
+ },
+ "minimos-y-maximos": {
+  "puntos": [
+   "Existencia contra puntos mínimos y máximos por producto y bodega: estado, cantidad y valor a pedir; los mínimos y máximos se editan en la tabla."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Mantenimientos › Control de inventario › Mínimos y máximos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Bodega», la «Clasificación» y el «Estado» (bajo mínimo, normal, sobre máximo).",
+   "Revisa la cantidad y el valor a pedir.",
+   "Corrige los mínimos y máximos en la tabla y presiona «Guardar».",
+   "Genera PDF o Excel para la solicitud de compra."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto",
+    "Existencia",
+    "Mínimo",
+    "Máximo",
+    "Estado",
+    "A pedir",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "Jarabe 120 ml",
+     "12",
+     "15",
+     "60",
+     "BAJO MÍNIMO",
+     "48",
+     "Q 1,272.00"
+    ],
+    [
+     "{producto}",
+     "108",
+     "20",
+     "200",
+     "NORMAL",
+     "0",
+     "Q 0.00"
+    ]
+   ]
+  },
+  "voz": "Mínimos y máximos: un producto bajo su mínimo, jarabe ciento veinte mililitros; hay que pedir cuarenta y ocho unidades por mil doscientos setenta y dos quetzales."
+ },
+ "costos": {
+  "puntos": [
+   "Costo del catálogo contra el último costo y el promedio ponderado de compras, con la diferencia; actualización del costo."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Mantenimientos › Control de inventario › Costos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la clasificación, el producto y «Compras desde / hasta».",
+   "Revisa costo catálogo, último costo, promedio y diferencia.",
+   "Actualiza con «Últ.» o «Prom.» por producto, o «Aplicar a los visibles».",
+   "Presiona «Guardar»; genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto",
+    "Costo catálogo",
+    "Último costo",
+    "Promedio",
+    "Diferencia"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "Q 31.50",
+     "Q 32.15",
+     "Q 32.08",
+     "Q 0.58"
+    ]
+   ]
+  },
+  "voz": "El costo de catálogo de {producto} está cincuenta y ocho centavos debajo del promedio de compras."
+ },
+ "toma-fisica": {
+  "puntos": [
+   "Fotografía de existencias de una bodega a una fecha de corte, conteo físico (ciego si se quiere), diferencias valuadas y ajustes automáticos de sobrantes y faltantes al cerrar; acta con firmas."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Procesos › Procesos de inventario › Toma física y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva toma física»: elige la «Bodega *», la «Fecha de corte *», el «Responsable del conteo» y la «Descripción».",
+   "Presiona «Abrir toma física»: se toma la fotografía de existencias.",
+   "Registra el conteo de cada producto y lote (en conteo ciego no se ve la existencia del sistema).",
+   "Revisa las diferencias valuadas al costo.",
+   "Presiona «Cerrar y ajustar»: se generan y operan los ajustes de sobrantes y faltantes.",
+   "«Imprimir» saca el acta con firmas; «Anular» la cancela."
+  ],
+  "resultado": {
+   "columnas": [
+    "Producto",
+    "Lote",
+    "Sistema",
+    "Conteo",
+    "Diferencia",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "L2406",
+     "88",
+     "86",
+     "-2",
+     "Q -64.30"
+    ],
+    [
+     "Jarabe 120 ml",
+     "J1180",
+     "42",
+     "43",
+     "1",
+     "Q 26.50"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "",
+    "Neto",
+    "Q -37.80"
+   ]
+  }
+ },
+ "recalcular-costo-promedio": {
+  "puntos": [
+   "Promedio ponderado perpetuo de cada producto (toda la empresa, sin traslados ni cambios de lote) contra el costo del catálogo; se aplica a los productos elegidos y queda el historial."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Procesos › Procesos de inventario › Recalcular costo promedio y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la «Fecha de corte», «Mostrar» (con diferencia o todos) y el «Producto».",
+   "Revisa el promedio calculado contra el costo del catálogo.",
+   "Marca los productos y presiona «Aplicar a los marcados».",
+   "Genera PDF o Excel del historial."
+  ],
+  "resultado": {
+   "columnas": [
+    "Producto",
+    "Costo catálogo",
+    "Promedio calculado",
+    "Aplicado"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "Q 31.50",
+     "Q 32.08",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "cierre-de-inventario": {
+  "puntos": [
+   "Cierre mensual con la fotografía de saldos por producto y bodega (libro de inventarios); un mes cerrado ya no acepta movimientos; se reabre con motivo."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Procesos › Procesos de inventario › Cierre de inventario y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año» y el mes.",
+   "Revisa que no haya documentos REGISTRADOS sin operar.",
+   "Presiona «Cerrar»: se guardan los saldos del mes.",
+   "«Libro» imprime el libro de inventarios en el «Formato del libro» elegido.",
+   "Para corregir, «Reabrir» con motivo."
+  ],
+  "resultado": {
+   "columnas": [
+    "Mes",
+    "Estado",
+    "Productos",
+    "Valor del inventario"
+   ],
+   "filas": [
+    [
+     "Octubre",
+     "CERRADO",
+     "412",
+     "Q 284,300.00"
+    ],
+    [
+     "Noviembre",
+     "ABIERTO",
+     "",
+     ""
+    ]
+   ]
+  }
+ },
+ "existencias-inventario": {
+  "puntos": [
+   "Existencias a una fecha por bodega, producto y lote, con vencimiento."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Reportes y gráficas › Reportes de inventario › Existencias y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «A la fecha» escribe la fecha de corte (hoy por omisión).",
+   "En «Producto» elige uno o deja todos.",
+   "Revisa la vista previa.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Bodega",
+    "Producto",
+    "Lote",
+    "Vence",
+    "Existencia"
+   ],
+   "filas": [
+    [
+     "{bodega}",
+     "{producto}",
+     "L2406",
+     "06/2028",
+     "86"
+    ],
+    [
+     "Sala de ventas",
+     "{producto}",
+     "L2406",
+     "06/2028",
+     "25"
+    ]
+   ],
+   "totales": [
+    "",
+    "Total {producto}",
+    "",
+    "",
+    "111"
+   ]
+  },
+  "voz": "Existencia de {producto} al día de hoy: ciento once unidades, ochenta y seis en bodega principal y veinticinco en sala de ventas."
+ },
+ "kardex-por-producto": {
+  "puntos": [
+   "Movimientos del 1 de enero a la fecha con saldo inicial, entradas, salidas, saldo y costo promedio."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Reportes y gráficas › Reportes de inventario › Kardex por producto y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «A la fecha» escribe la fecha de corte (hoy por omisión).",
+   "En «Producto» elige uno o deja todos.",
+   "Revisa la vista previa.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto",
+    "Saldo inicial",
+    "Entradas",
+    "Salidas",
+    "Saldo",
+    "Costo prom."
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "40",
+     "480",
+     "409",
+     "111",
+     "Q 32.08"
+    ]
+   ]
+  },
+  "voz": "Kardex anual de {producto}: entraron cuatrocientas ochenta unidades, salieron cuatrocientas nueve y quedan ciento once."
+ },
+ "valuacion-de-inventario": {
+  "puntos": [
+   "Existencia a una fecha valuada al costo promedio ponderado, con el porcentaje de cada producto."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Reportes y gráficas › Reportes de inventario › Valuación de inventario y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «A la fecha» escribe la fecha de corte (hoy por omisión).",
+   "En «Producto» elige uno o deja todos.",
+   "Revisa la vista previa.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto",
+    "Existencia",
+    "Costo prom.",
+    "Valor",
+    "%"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "111",
+     "Q 32.08",
+     "Q 3,560.88",
+     "1.3%"
+    ],
+    [
+     "Equipo X",
+     "10",
+     "Q 1,019.60",
+     "Q 10,196.00",
+     "3.6%"
+    ]
+   ],
+   "totales": [
+    "Total inventario",
+    "",
+    "",
+    "Q 284,300.00",
+    "100%"
+   ]
+  },
+  "voz": "Valuación del inventario: doscientos ochenta y cuatro mil trescientos quetzales al costo promedio."
+ },
+ "rotacion-de-inventario": {
+  "puntos": [
+   "Rotación y días de inventario del 1 de enero a la fecha; clasificación alta, media, baja y sin movimiento."
+  ],
+  "pasos": [
+   "Entra a Inventarios › Reportes y gráficas › Reportes de inventario › Rotación y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «A la fecha» escribe la fecha de corte (hoy por omisión).",
+   "En «Producto» elige uno o deja todos.",
+   "Revisa la vista previa.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto",
+    "Salidas",
+    "Inventario prom.",
+    "Rotación",
+    "Días",
+    "Clase"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "409",
+     "75",
+     "5.5",
+     "66",
+     "ALTA"
+    ],
+    [
+     "Crema 30 g",
+     "4",
+     "10",
+     "0.4",
+     "912",
+     "BAJA"
+    ]
+   ]
+  },
+  "voz": "Rotación: {producto} rota cinco punto cinco veces, rotación alta; la crema de treinta gramos tiene rotación baja."
+ }
+}
