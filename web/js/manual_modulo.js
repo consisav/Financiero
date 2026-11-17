@@ -19,7 +19,7 @@
   // Generación con IA desde el visor (Edge Function con clave de Anthropic): apagada; los manuales
   // escritos viven en web/manuales/<módulo>.json y se completan con ejemplos de la información actual.
   const CON_IA = false;
-  const TIPO_ICONO = { registro: 'ti-forms', resultado: 'ti-notebook', reporte: 'ti-report-analytics', portada: 'ti-book', indice: 'ti-list', concepto: 'ti-route', pantalla: 'ti-app-window', pasos: 'ti-list-numbers', ejemplo: 'ti-table', consejos: 'ti-bulb', cierre: 'ti-flag', grupo: 'ti-folders', opcion: 'ti-app-window', desarrollo: 'ti-hourglass' };
+  const TIPO_ICONO = { elementos: 'ti-layout-list', parametros: 'ti-adjustments', registro: 'ti-forms', resultado: 'ti-notebook', reporte: 'ti-report-analytics', portada: 'ti-book', indice: 'ti-list', concepto: 'ti-route', pantalla: 'ti-app-window', pasos: 'ti-list-numbers', ejemplo: 'ti-table', consejos: 'ti-bulb', cierre: 'ti-flag', grupo: 'ti-folders', opcion: 'ti-app-window', desarrollo: 'ti-hourglass' };
 
   async function ejemplos(sb, loc) {
     const m = window.MANUAL._modulo;
@@ -156,13 +156,22 @@
         const pasos = (gu.pasos || pasosGenerales(g, p, ruta, m)).map((t) => llenar(t, v));
         // Guía detallada (paso a paso largo, ejemplo de registro, resultado o reporte de ejemplo): la opción con su
         // pantalla en vivo y, aparte, una diapositiva para cada parte.
-        const detallada = pasos.length > 6 || gu.campos || gu.ejemplo || gu.resultado || gu.reporte;
+        const detallada = pasos.length > 6 || gu.campos || gu.ejemplo || gu.resultado || gu.reporte || gu.elementos || gu.parametros;
         dia({ tipo: 'opcion', titulo: p.nombre, subtitulo: sub, vista: window.PANTALLAS?.[p.id] ? p.id : '',
           puntos: (gu.puntos || [p.descripcion]).filter(Boolean).map((t) => llenar(t, v)),
           pasos: detallada ? [] : pasos,
           nota: llenar(detallada ? gu.notaPantalla || '' : gu.nota || '', v) });
         if (!detallada) return;
         dia({ tipo: 'pasos', titulo: `Paso a paso · ${p.nombre}`, subtitulo: sub, pasos, nota: llenar(gu.nota || '', v) });
+        // Elementos (filtros, campos, botones, columnas…) y parámetros: tablas repartidas en varias diapositivas si son largas.
+        if (gu.elementos?.length) {
+          const filas = gu.elementos.flatMap((gr) => [{ grupo: llenar(gr.grupo || '', v) }, ...(gr.filas || []).map((x) => x.map((t) => llenar(String(t ?? ''), v)))]);
+          partir(filas, POR_DIA).forEach((tr, k, todas) => dia({ tipo: 'elementos', titulo: `Elementos${todas.length > 1 ? ` (${k + 1}/${todas.length})` : ''} · ${p.nombre}`, subtitulo: sub, elementos: tr, nota: k === 0 ? llenar(gu.notaElementos || '', v) : '' }));
+        }
+        if (gu.parametros?.length) {
+          const filas = gu.parametros.map((x) => x.map((t) => llenar(String(t ?? ''), v)));
+          partir(filas, POR_DIA).forEach((tr, k, todas) => dia({ tipo: 'parametros', titulo: `Parámetros${todas.length > 1 ? ` (${k + 1}/${todas.length})` : ''} · ${p.nombre}`, subtitulo: sub, parametros: tr, nota: k === 0 ? llenar(gu.notaParametros || '', v) : '' }));
+        }
         if (gu.campos || gu.ejemplo) dia({ tipo: 'registro', titulo: gu.ejemplo?.titulo ? llenar(gu.ejemplo.titulo, v) : `Ejemplo de registro · ${p.nombre}`, subtitulo: sub,
           campos: (gu.campos || []).map((f) => f.map((t) => llenar(t, v))), ejemplo: tablaEj(gu.ejemplo, v), nota: llenar(gu.ejemplo?.nota || '', v) });
         if (gu.resultado) dia({ tipo: 'resultado', titulo: llenar(gu.resultado.titulo || `Resultado del proceso · ${p.nombre}`, v), subtitulo: sub,
@@ -199,6 +208,19 @@
     marco._ro = ro;
   }
 
+  // Reparte filas en grupos de n; un encabezado de grupo nunca queda solo al final, y la continuación repite su grupo.
+  const POR_DIA = 13;
+  function partir(filas, n) {
+    const out = []; let act = [], grupo = null;
+    filas.forEach((f) => {
+      if (f.grupo !== undefined) grupo = f;
+      if (act.length >= n || (f.grupo !== undefined && act.length >= n - 1)) { out.push(act); act = grupo && f.grupo === undefined ? [{ grupo: `${grupo.grupo} (continuación)` }] : []; }
+      act.push(f);
+    });
+    if (act.length) out.push(act);
+    return out;
+  }
+
   // ---------- Visor ----------
   let estado = null;
   // Lee en voz alta el ejemplo de un reporte (voz en español del navegador, como Reportes gerenciales).
@@ -225,6 +247,8 @@
     const td = (v) => `<td class="${/^-?(Q|US\$|\$)?\s?-?[\d,]+\.\d{2}$/.test(String(v).trim()) ? 'mm-num' : ''}">${esc(v)}</td>`;
     const ej = s.ejemplo && s.ejemplo.columnas?.length ? `<div class="mm-tabla"><table><thead><tr>${s.ejemplo.columnas.map((c, k) => `<th class="${/mm-num/.test(td((s.ejemplo.filas || [])[0]?.[k] ?? '')) ? 'mm-num' : ''}">${esc(c)}</th>`).join('')}</tr></thead><tbody>${(s.ejemplo.filas || []).map((f) => `<tr>${f.map(td).join('')}</tr>`).join('')}</tbody>${s.ejemplo.totales ? `<tfoot><tr>${s.ejemplo.totales.map(td).join('')}</tr></tfoot>` : ''}</table></div>` : '';
     const campos = s.campos?.length ? `<div class="mm-tabla mm-campos"><table><thead><tr><th>Campo</th><th>Ejemplo</th><th>Qué se escribe o para qué sirve</th></tr></thead><tbody>${s.campos.map(([c, e, x]) => `<tr><td><b>${esc(c)}</b></td><td class="mm-valor">${esc(e || '')}</td><td>${esc(x || '')}</td></tr>`).join('')}</tbody></table></div>` : '';
+    const tablaElem = s.elementos?.length ? `<div class="mm-tabla mm-elementos"><table><thead><tr><th>Elemento</th><th>Tipo</th><th>Ejemplo</th><th>Para qué sirve</th></tr></thead><tbody>${s.elementos.map((f) => f.grupo !== undefined ? `<tr class="mm-grupo"><td colspan="4">${esc(f.grupo)}</td></tr>` : `<tr><td><b>${esc(f[0])}</b></td><td class="mm-tipo-el">${esc(f[1] || '')}</td><td class="mm-valor">${esc(f[2] || '')}</td><td>${esc(f[3] || '')}</td></tr>`).join('')}</tbody></table></div>` : '';
+    const tablaPar = s.parametros?.length ? `<div class="mm-tabla mm-parametros"><table><thead><tr><th>Parámetro</th><th>Valores posibles</th><th>Por omisión</th><th>Efecto</th></tr></thead><tbody>${s.parametros.map(([a, b, c, d2]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b || '')}</td><td class="mm-valor">${esc(c || '')}</td><td>${esc(d2 || '')}</td></tr>`).join('')}</tbody></table></div>` : '';
     const voz = s.voz ? `<div class="mm-voz"><span class="mm-voz-ico"><i class="ti ti-volume" aria-hidden="true"></i></span><div><small>Ejemplo de la lectura en voz del reporte</small><p>«${esc(s.voz)}»</p></div>${estado.imprimiendo ? '' : '<button type="button" class="boton primario-sm" data-mm="voz"><i class="ti ti-player-play" aria-hidden="true"></i> Escuchar</button>'}</div>` : '';
     return `<article class="mm-dia mm-t-${esc(s.tipo)}">
         <header><span class="mm-tipo"><i class="ti ${TIPO_ICONO[s.tipo] || 'ti-point'}" aria-hidden="true"></i></span><div><h2>${esc(s.titulo)}</h2>${s.subtitulo ? `<p>${esc(s.subtitulo)}</p>` : ''}</div></header>
@@ -232,6 +256,8 @@
           ${s.puntos?.length ? `<ul>${s.puntos.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
           ${s.pasos?.length ? `<ol class="mm-pasos ${s.pasos.length > 7 ? 'mm-pasos-2' : ''}">${s.pasos.map((p) => `<li>${esc(p)}</li>`).join('')}</ol>` : ''}
           ${campos}
+          ${tablaElem}
+          ${tablaPar}
           ${ej}
           ${voz}
           ${s.vista ? `<figure class="mm-vista-fig"><figcaption><i class="ti ti-photo" aria-hidden="true"></i> Pantalla «${esc(s.titulo)}» con la información de ${esc(estado.v?.empresa || 'la empresa')}</figcaption>${estado.imprimiendo ? '<p class="mm-vista-nota">La pantalla en vivo se ve en el visor del manual.</p>' : `<div class="mm-vista" data-vista="${esc(s.vista)}" inert></div>`}</figure>` : ''}
