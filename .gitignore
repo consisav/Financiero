@@ -80,3 +80,9 @@ supabase/pendientes/205_fel_parte_*.sql
 # Envios de la organizacion 3 (clientes con NIT, direccion y contacto): solo local.
 supabase/migrations/20261117000220_envios_organizacion_3.sql
 supabase/pendientes/220_envios_organizacion_3.sql
+
+# Parametros (usuarios, NIT, firmantes) y cuentas bancarias de las organizaciones 4 y 7: solo local.
+supabase/migrations/20261117000221_parametros_organizaciones_4_y_7.sql
+supabase/pendientes/221_parametros_organizaciones_4_y_7.sql
+supabase/migrations/20261117000223_cuentas_bancarias_organizaciones_4_y_7.sql
+supabase/pendientes/223_cuentas_bancarias_organizaciones_4_y_7.sql
