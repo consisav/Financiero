@@ -54,6 +54,7 @@
     const ctx = montar(cont, { titulo: op.titulo, icono: op.icono, clase: 'bk-movimientos bm-solo cx-rep pr-rep cr-conta ci-integ', grupo: GRUPO });
     const f = op.f();
     let listas = { cuentas: [], centros: [] }, datos = null, clave = '', cfg = null;
+    const marcados = new Set(), docs = new Map(); // índice de la fila del RPC → documento leído
     async function iniciar() { if (!(await ctx.cargarBase())) return; await cargar(); }
     async function cargar() {
       if (!ctx.sel.loc) { ctx.filtros(''); ctx.pDet.innerHTML = ctx.vacio('Elige la empresa.', op.icono); return; }
@@ -71,13 +72,15 @@
         ctx.pDet.innerHTML = '<p class="vacio">Integrando los movimientos contables…</p>';
         const { data, error: e } = await ctx.sb.rpc(op.rpc, op.args(f, ctx));
         if (e) { cfg = null; return error(ctx, e); }
-        datos = data; clave = k;
+        datos = data; clave = k; marcados.clear(); docs.clear();
+        (datos?.filas || []).forEach((x, i) => { x._i = i; });
       }
       try { cfg = op.construir(ctx, f, datos); } catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(e.message)}</p>`; return; }
       cfg = { orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: op.titulo.slice(0, 30), archivo: op.archivo(f), titulo: op.titulo, ...cfg };
       // Diseño compacto: una sola barra con el título, los indicadores y el botón de módulos; la ayuda queda en el ícono (i).
-      const agrupado = op.tipos && (op.centros || !f.cuenta);
-      ctx.pDet.innerHTML = `<div class="bm-form cx-form cl-clasico ci-compacto ${agrupado ? 'ci-agrupado' : ''}">
+      const res = op.tipos && f.pres === 'RES';
+      const agrupado = op.tipos && !res && (op.centros || !f.cuenta);
+      ctx.pDet.innerHTML = `<div class="bm-form cx-form cl-clasico ci-compacto ${agrupado ? 'ci-agrupado' : ''} ${res ? 'ci-res' : ''}">
         <div class="ci-barra">
           <div class="ci-tit"><b>${esc(cfg.titulo)}</b> <span>${esc(cfg.parametros.slice(1, 3).join(' · '))}</span>${op.ayuda ? ` <i class="ti ti-info-circle" title="${esc(op.ayuda)}" aria-label="${esc(op.ayuda)}"></i>` : ''}</div>
           <div class="ci-kpis">${(cfg.kpis || []).map(([t, v, c]) => `<span class="ci-k ${c || ''}"><small>${esc(t)}</small> <b>${esc(String(v))}</b></span>`).join('')}</div>
@@ -86,61 +89,150 @@
         ${cfg.aviso ? `<p class="cp-aviso cp-error"><i class="ti ti-alert-triangle" aria-hidden="true"></i> ${esc(cfg.aviso)}</p>` : ''}
         <div class="ci-cuerpo">${C().tabla(cfg, false)}${op.tipos && f.mods ? panelTipos(f, datos) : ''}</div></div>`;
       window.CUENTAS_XLSX.ajustarAlto(cont);
+      // Casilla «Ver» en cada línea; las marcadas muestran el documento que las integra.
+      ctx.pDet.querySelectorAll('tr[data-k]').forEach((tr) => {
+        tr.cells[0].insertAdjacentHTML('afterbegin', `<input type="checkbox" class="ci-ver" title="Ver el documento que integra este movimiento" ${marcados.has(Number(tr.dataset.k)) ? 'checked' : ''}> `);
+        if (marcados.has(Number(tr.dataset.k))) mostrarDoc(tr);
+      });
     }
     cont.addEventListener('change', (e) => {
       const c = ctx.cambioOrgLoc(e); if (c === 'org' || c === 'loc') return cargar();
       const n = e.target.name; if (!n) return;
+      if (e.target.classList.contains('ci-ver')) return;
       if (n === 'tipo') { if (e.target.checked) f.tipos.add(e.target.value); else f.tipos.delete(e.target.value); return consultar(); }
       f[n] = n === 'cuenta' || n === 'centro' ? codigo(e.target.value) : e.target.value;
       if (n === 'cuenta' || n === 'centro') e.target.value = f[n];
       consultar();
     });
     cont.addEventListener('click', (e) => {
-      const ex = e.target.closest('[data-exp]'); if (ex) return C().exportar(cfg, ex.dataset.exp, false);
+      const ex = e.target.closest('[data-exp]'); if (ex) return exportar(ex.dataset.exp);
       if (e.target.closest('[data-mods]')) { f.mods = !f.mods; return consultar(); }
-      const fp = e.target.closest('tr[data-p]'); if (fp) return detalleOperacion(fp);
+      if (e.target.closest('[data-cerrar-det]')) { const d = e.target.closest('tr.ci-det'); const tr = d.previousElementSibling; marcados.delete(Number(tr.dataset.k)); tr.classList.remove('ci-abierto'); const cb = tr.querySelector('.ci-ver'); if (cb) cb.checked = false; d.remove(); return; }
+      if (e.target.closest('tr.ci-det')) return;
+      const fp = e.target.closest('tr[data-k]'); if (fp) return alternar(fp, e.target.classList.contains('ci-ver') ? e.target.checked : !marcados.has(Number(fp.dataset.k)));
       const t = e.target.closest('[data-tipos]'); if (!t) return;
       if (t.dataset.tipos === 'todos') TODOS.forEach((k) => f.tipos.add(k));
       else if (t.dataset.tipos === 'ninguno') f.tipos.clear();
       else { const g = TIPOS.find(([n]) => n === t.dataset.tipos); if (g) { const todos = g[1].every(([k]) => f.tipos.has(k)); g[1].forEach(([k]) => (todos ? f.tipos.delete(k) : f.tipos.add(k))); } }
       consultar();
     });
-    // Detalle de la operación: encabezado de la partida y todas sus líneas (la cuenta del renglón resaltada). Otro clic lo cierra.
-    async function detalleOperacion(tr) {
-      const sig = tr.nextElementSibling;
-      tr.closest('tbody').querySelectorAll('tr.ci-det').forEach((x) => x.remove());
-      tr.closest('tbody').querySelectorAll('tr.ci-abierto').forEach((x) => x.classList.remove('ci-abierto'));
-      if (sig && sig.classList.contains('ci-det') && sig.dataset.de === tr.dataset.p + '|' + tr.rowIndex) return;
-      const n = tr.cells.length, cta = tr.dataset.c;
-      const det = document.createElement('tr'); det.className = 'ci-det'; det.dataset.de = tr.dataset.p + '|' + tr.rowIndex;
-      det.innerHTML = `<td colspan="${n}"><p class="vacio">Leyendo la operación…</p></td>`;
-      tr.after(det); tr.classList.add('ci-abierto');
-      try {
-        const [p, ls] = await Promise.all([
-          ctx.sb.from('partidas').select('anio, mes, numero, fecha, descripcion, estado, aprobada, total_debe, total_haber, tipos_partida(siglas, descripcion)').eq('id', tr.dataset.p).maybeSingle(),
-          C().leerTodo(() => ctx.sb.from('partida_lineas').select('linea, concepto, debe, haber, cuentas(codigo, nombre), centros_costo(codigo, nombre)').eq('partida_id', tr.dataset.p).order('linea'))]);
-        if (p.error) throw p.error;
-        const x = p.data || {}, tp = x.tipos_partida || {};
-        const td = ls.reduce((a, l) => a + num(l.debe), 0), th = ls.reduce((a, l) => a + num(l.haber), 0);
-        const MAX = 300, vis = ls.slice(0, MAX);
-        det.innerHTML = `<td colspan="${n}"><div class="ci-detalle">
-          <div class="ci-dcab"><b>Póliza ${esc(tp.siglas || 'PD')} ${x.mes}-${x.numero}</b> <span>${esc(tp.descripcion || '')}</span> <span>Fecha ${x.fecha ? fmt.fechaDia(String(x.fecha).slice(0, 10)) : ''}</span> <span>${x.aprobada ? 'Aprobada' : 'Por aprobar'}</span>
-            <span class="ci-ddesc">${esc(x.descripcion || '')}</span><button type="button" class="ci-mini" data-cerrar-det>Cerrar</button></div>
-          <table><thead><tr><th>Línea</th><th>Cuenta</th><th>Nombre de la cuenta</th><th>Centro</th><th>Concepto</th><th class="num">Debe</th><th class="num">Haber</th></tr></thead>
-          <tbody>${vis.map((l) => `<tr class="${l.cuentas?.codigo === cta ? 'ci-esta' : ''}"><td>${l.linea ?? ''}</td><td>${esc(l.cuentas?.codigo || '')}</td><td>${esc(l.cuentas?.nombre || '')}</td><td>${esc(l.centros_costo?.codigo || '')}</td><td>${esc(l.concepto || '')}</td>
-            <td class="num">${num(l.debe) ? fmt.monto(l.debe) : ''}</td><td class="num">${num(l.haber) ? fmt.monto(l.haber) : ''}</td></tr>`).join('')}
-          ${ls.length > MAX ? `<tr><td colspan="7" class="tk-vacio">Se muestran ${MAX} de ${ls.length} líneas.</td></tr>` : ''}
-          <tr class="ci-tot"><td colspan="5">Total de la póliza (${ls.length} líneas)${Math.abs(td - th) >= 0.01 ? ' · descuadrada' : ''}</td><td class="num">${fmt.monto(td)}</td><td class="num">${fmt.monto(th)}</td></tr></tbody></table></div></td>`;
-      } catch (err) { det.innerHTML = `<td colspan="${n}"><p class="vacio">${esc(err.message || 'No se pudo leer la operación.')}</p></td>`; }
+    function alternar(tr, marcar) {
+      const k = Number(tr.dataset.k);
+      const cb = tr.querySelector('.ci-ver'); if (cb) cb.checked = marcar;
+      if (marcar) { marcados.add(k); return mostrarDoc(tr); }
+      marcados.delete(k); tr.classList.remove('ci-abierto');
+      const d = tr.nextElementSibling; if (d && d.classList.contains('ci-det')) d.remove();
     }
-    cont.addEventListener('click', (e) => { if (e.target.closest('[data-cerrar-det]')) { const d = e.target.closest('tr.ci-det'); d.previousElementSibling?.classList.remove('ci-abierto'); d.remove(); } }, true);
+    // Documento que integra el movimiento, debajo del renglón (la cuenta del renglón resaltada).
+    async function mostrarDoc(tr) {
+      const k = Number(tr.dataset.k), x = datos?.filas?.[k]; if (!x) return;
+      let det = tr.nextElementSibling;
+      if (!det || !det.classList.contains('ci-det')) { det = document.createElement('tr'); det.className = 'ci-det'; tr.after(det); }
+      tr.classList.add('ci-abierto');
+      const n = tr.cells.length;
+      det.innerHTML = `<td colspan="${n}"><p class="vacio">Leyendo el documento…</p></td>`;
+      try {
+        const D = await documentoDe(x);
+        if (!tr.isConnected || !marcados.has(k)) return;
+        det.innerHTML = `<td colspan="${n}">${htmlDoc(D, x.c)}</td>`;
+      } catch (err) { det.innerHTML = `<td colspan="${n}"><p class="vacio">${esc(err.message || 'No se pudo leer el documento.')}</p></td>`; }
+    }
+    function documentoDe(x) {
+      if (!docs.has(x._i)) docs.set(x._i, leerDocumento(ctx.sb, x).catch((e) => { docs.delete(x._i); throw e; }));
+      return docs.get(x._i);
+    }
+    // PDF y Excel: en «Detallado por cuenta» cada línea marcada lleva debajo el documento que la integra.
+    async function exportar(formato) {
+      if (!cfg) return;
+      if (!op.tipos || f.pres === 'RES' || !marcados.size) return C().exportar(cfg, formato, false);
+      window.FIN.aviso('Leyendo los documentos marcados…');
+      const ks = [...marcados].filter((k) => datos.filas[k]);
+      const leidos = new Map(await Promise.all(ks.map(async (k) => [k, await documentoDe(datos.filas[k]).catch(() => null)])));
+      const filas = [];
+      cfg.filas.forEach((r) => {
+        filas.push(r);
+        const D = r._k != null && leidos.get(r._k); if (!D) return;
+        filas.push({ valores: ['', '', '', `↳ ${D.titulo}`, D.fecha || '', D.poliza || '', '', '', '', '', '', D.campos.map(([t, v]) => `${t}: ${v}`).join(' · '), ''], tenue: true });
+        D.lineas.forEach((l) => filas.push({ valores: ['', l.cuenta || '', '', `   ${l.nombre || ''}`, '', '', l.centro || '', '', num(l.debe) ? r2(l.debe) : '', num(l.haber) ? r2(l.haber) : '', '', l.concepto || '', ''], tenue: true }));
+      });
+      C().exportar({ ...cfg, filas, parametros: [...cfg.parametros, `Con el documento de ${leidos.size} línea(s) marcada(s)`] }, formato, false);
+    }
     iniciar();
+  }
+
+  // Documento de origen de un movimiento: encabezado y sus líneas contables. Bancos, compras y facturas tienen líneas
+  // propias; los demás (y las pólizas sin documento) muestran las líneas de la póliza.
+  const TIPO_BANCO = { CHEQUE: 'Cheque', DEPOSITO: 'Depósito', NOTA_CREDITO: 'Nota de crédito bancaria', NOTA_DEBITO: 'Nota de débito bancaria' };
+  const pick = (o, ...ks) => { for (const k of ks) { const v = o?.[k]; if (v != null && v !== '') return v; } return null; };
+  const fdia = (v) => (v ? fmt.fechaDia(String(v).slice(0, 10)) : '');
+  const monto = (v) => (v == null || v === '' ? null : `Q ${fmt.monto(v)}`);
+  const ORIGEN = {
+    BANCO: { tabla: 'movimientos_bancarios', lineas: 'movimiento_lineas', fk: 'movimiento_id',
+      titulo: (m) => `${TIPO_BANCO[m.tipo] || 'Movimiento bancario'} ${pick(m, 'numero_documento', 'folio') ?? ''}`, fecha: (m) => m.fecha,
+      campos: (m) => [['Beneficiario', pick(m, 'tercero_nombre', 'beneficiario')], ['Monto', monto(pick(m, 'monto', 'valor', 'total'))], ['Transacción', m.transaccion_anterior], ['Estado', m.estado], ['Descripción', m.descripcion]] },
+    COMPRA: { tabla: 'compras', lineas: 'compra_lineas', fk: 'compra_id',
+      titulo: (c) => `Compra ${[c.serie, c.documento].filter(Boolean).join('-')}`, fecha: (c) => c.fecha_documento,
+      campos: (c) => [['Proveedor', c.proveedor_nombre], ['NIT', c.nit], ['Total', monto(c.valor_total)], ['IVA', monto(c.iva)], ['Transacción', c.transaccion_anterior], ['Descripción', c.descripcion]] },
+    VENTA: { tabla: 'facturas_venta', lineas: 'factura_venta_contable', fk: 'factura_id',
+      titulo: (v) => `Factura ${[v.serie, pick(v, 'numero_dte', 'numero')].filter(Boolean).join('-')}`, fecha: (v) => v.fecha_emision,
+      campos: (v) => [['Cliente', v.nombre], ['NIT', v.nit], ['Total', monto(v.total)], ['IVA', monto(v.iva)], ['Estado', v.estado]] },
+    NOTA_COMPRA: { tabla: 'notas_compra', titulo: (n) => `${n.tipo ? n.tipo.toLowerCase().replace(/^./, (c) => c.toUpperCase()) : 'Nota de compra'} ${[n.serie, n.documento].filter(Boolean).join('-')}`, fecha: (n) => n.fecha,
+      campos: (n) => [['Proveedor', n.proveedor_nombre], ['Total', monto(pick(n, 'total', 'valor_total'))], ['Estado', n.estado]] },
+    CAJA: { tabla: 'caja_periodos', titulo: (k) => `Liquidación de caja ${k.numero ?? ''}`, fecha: () => null, campos: (k) => [['Período', k.mes && k.anio ? `${MES[k.mes - 1]} ${k.anio}` : null], ['Estado', k.estado]] },
+    NOMINA: { tabla: 'nom_planillas', titulo: (n) => `Planilla ${n.numero ?? ''}`, fecha: (n) => n.fecha_pago, campos: (n) => [['Tipo', n.tipo], ['Descripción', n.descripcion], ['Estado', n.estado]] },
+    COBRO: { tabla: 'cli_cobros', titulo: (r) => `Recibo ${r.numero ?? ''}`, fecha: (r) => r.fecha, campos: (r) => [['Paciente / cliente', pick(r, 'nombre_factura', 'nombre')], ['Total', monto(r.total)], ['Forma de pago', r.forma], ['Estado', r.estado]] },
+  };
+  const linea = (l) => ({ cuenta: l.cuentas?.codigo || '', nombre: l.cuentas?.nombre || '', centro: l.centros_costo?.codigo || '', concepto: pick(l, 'concepto', 'descripcion') || '', debe: num(l.debe), haber: num(l.haber) });
+  // Líneas contables con su cuenta y centro; si la relación con centros no existe, sin ella.
+  async function lineasDe(sb, tabla, fk, id) {
+    for (const sel of ['*, cuentas(codigo, nombre), centros_costo(codigo, nombre)', '*, cuentas(codigo, nombre)']) {
+      const r = await sb.from(tabla).select(sel).eq(fk, id).order('linea');
+      if (!r.error) return (r.data || []).map(linea);
+    }
+    return null;
+  }
+  async function leerDocumento(sb, x) {
+    const [p, lp] = await Promise.all([
+      sb.from('partidas').select('anio, mes, numero, fecha, descripcion, aprobada, tipos_partida(siglas, descripcion)').eq('id', x.p).maybeSingle(),
+      C().leerTodo(() => sb.from('partida_lineas').select('linea, concepto, debe, haber, cuentas(codigo, nombre), centros_costo(codigo, nombre)').eq('partida_id', x.p).order('linea'))]);
+    if (p.error) throw p.error;
+    const pa = p.data || {}, tp = pa.tipos_partida || {};
+    const poliza = `${tp.siglas || 'PD'} ${pa.mes}-${pa.numero}`;
+    const dePoliza = { titulo: `Póliza ${poliza}`, fecha: fdia(pa.fecha), poliza, aprobada: pa.aprobada, campos: [['Tipo', tp.descripcion], ['Descripción', pa.descripcion]].filter(([, v]) => v), lineas: lp.map(linea), fuente: 'póliza' };
+    const O = ORIGEN[x.o];
+    if (!O || !x.oi) return dePoliza;
+    const h = await sb.from(O.tabla).select('*').eq('id', x.oi).maybeSingle();
+    if (h.error || !h.data) return { ...dePoliza, nota: 'No se pudo leer el documento de origen; se muestra la póliza.' };
+    const d = h.data;
+    let campos = O.campos(d);
+    if (x.o === 'BANCO' && d.cuenta_bancaria_id) {
+      const cb = await sb.from('cuentas_bancarias').select('*').eq('id', d.cuenta_bancaria_id).maybeSingle();
+      if (cb.data) campos = [['Cuenta bancaria', [cb.data.numero, pick(cb.data, 'nombre', 'descripcion')].filter(Boolean).join(' · ')], ...campos];
+    }
+    const propias = O.lineas ? await lineasDe(sb, O.lineas, O.fk, x.oi) : null;
+    const usarPoliza = !propias || !propias.length;
+    return { titulo: O.titulo(d), fecha: fdia(O.fecha(d)), poliza, aprobada: pa.aprobada, campos: campos.filter(([, v]) => v != null && v !== '').map(([t, v]) => [t, String(v)]),
+      lineas: usarPoliza ? dePoliza.lineas : propias, fuente: usarPoliza ? `póliza ${poliza}` : 'documento' };
+  }
+  function htmlDoc(D, cta) {
+    const td = D.lineas.reduce((a, l) => a + l.debe, 0), th = D.lineas.reduce((a, l) => a + l.haber, 0);
+    const MAX = 300, vis = D.lineas.slice(0, MAX);
+    return `<div class="ci-detalle">
+      <div class="ci-dcab"><b>${esc(D.titulo)}</b>${D.fecha ? ` <span>Fecha ${esc(D.fecha)}</span>` : ''} <span>Póliza ${esc(D.poliza)}${D.aprobada === false ? ' (por aprobar)' : ''}</span>
+        ${D.campos.map(([t, v]) => `<span><small>${esc(t)}:</small> ${esc(v)}</span>`).join('')}<button type="button" class="ci-mini" data-cerrar-det>Cerrar</button>
+        ${D.nota ? `<span class="ci-ddesc">${esc(D.nota)}</span>` : ''}</div>
+      <table><thead><tr><th>Cuenta</th><th>Nombre de la cuenta</th><th>Centro</th><th>Concepto</th><th class="num">Debe</th><th class="num">Haber</th></tr></thead>
+      <tbody>${vis.map((l) => `<tr class="${l.cuenta === cta ? 'ci-esta' : ''}"><td>${esc(l.cuenta)}</td><td>${esc(l.nombre)}</td><td>${esc(l.centro)}</td><td>${esc(l.concepto)}</td>
+        <td class="num">${l.debe ? fmt.monto(l.debe) : ''}</td><td class="num">${l.haber ? fmt.monto(l.haber) : ''}</td></tr>`).join('')}
+      ${D.lineas.length > MAX ? `<tr><td colspan="6" class="tk-vacio">Se muestran ${MAX} de ${D.lineas.length} líneas.</td></tr>` : ''}
+      <tr class="ci-tot"><td colspan="4">Total (${D.lineas.length} líneas, de ${esc(D.fuente)})${Math.abs(td - th) >= 0.01 ? ' · descuadrado' : ''}</td><td class="num">${fmt.monto(td)}</td><td class="num">${fmt.monto(th)}</td></tr></tbody></table></div>`;
   }
 
   const campoCuenta = (f, cuentas, opcional = false) => `<label class="campo cx-prov pr-prod"><span>Cuenta${opcional ? ' (opcional)' : ''}</span><input name="cuenta" list="ci-cuentas" value="${esc(f.cuenta)}" placeholder="${opcional ? 'Todas las cuentas' : 'Código de la cuenta'}" autocomplete="off"></label>
     <datalist id="ci-cuentas">${cuentas.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>`;
   const campoCentro = (f, centros) => `<label class="campo cx-prov pr-prod"><span>Centro de costo</span><input name="centro" list="ci-centros" value="${esc(f.centro)}" placeholder="Todos los centros" autocomplete="off"></label>
     <datalist id="ci-centros">${centros.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nombre)}</option>`).join('')}</datalist>`;
+  const campoPres = (f) => `<label class="campo"><span>Presentación</span><select name="pres"><option value="DET" ${f.pres !== 'RES' ? 'selected' : ''}>Detallado por cuenta</option><option value="RES" ${f.pres === 'RES' ? 'selected' : ''}>Resumido por documento</option></select></label>`;
   const nombreDe = (lista, cod) => lista.find((c) => c.codigo === cod)?.nombre || '';
 
   // Casillas de los tipos de documento a desglosar, con cuántos movimientos hay de cada uno.
@@ -168,7 +260,7 @@
       let s = ini, d = 0, h = 0;
       if (titulo) filas.push({ valores: [titulo], tipo: 'grupo', combinar: true });
       filas.push({ valores: ['', '', '', '', 'Saldo anterior', '', '', '', '', '', r2(ini), ''], tipo: 'nota' });
-      xs.forEach((x) => { const ant = s; s += (num(x.d) - num(x.h)) * nat(x.c); d += num(x.d); h += num(x.h); n++; filas.push({ valores: fila(x, ant, s), attr: `data-p="${x.p}" data-c="${esc(x.c)}" title="Clic para ver el detalle de la operación"` }); });
+      xs.forEach((x) => { const ant = s; s += (num(x.d) - num(x.h)) * nat(x.c); d += num(x.d); h += num(x.h); n++; filas.push({ valores: fila(x, ant, s), _k: x._i, attr: `data-k="${x._i}" data-c="${esc(x.c)}" title="Clic para ver el documento que integra este movimiento"` }); });
       tD += d; tH += h;
       return { ini, d, h, s };
     };
@@ -253,8 +345,8 @@
   window.PANTALLAS['con-int-movimientos'] = (cont) => pantalla(cont, {
     titulo: 'Integración de movimientos contables', icono: 'ti-list-details', rpc: 'con_integracion_movimientos', tipos: true,
     ayuda: 'Detalle por documento de los movimientos de la cuenta (o de todas, agrupadas por cuenta): el tipo y número salen del documento que generó la partida; las pólizas del Cierre Preliminar se abren en cada documento y las partidas sin documento salen como POL. El saldo corre con los módulos marcados.',
-    f: () => ({ cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS), mods: true }),
-    filtros: (f, L) => `${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
+    f: () => ({ cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS), mods: true, pres: 'DET' }),
+    filtros: (f, L) => `${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}${campoPres(f)}`,
     falta: (f) => (f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
     clave: (f) => `${f.cuenta}|${f.desde}|${f.al}`,
     args: (f, ctx) => ({ p_loc: ctx.sel.loc, p_desde: f.desde, p_hasta: f.al, p_cuenta: f.cuenta || null, p_centro: null }),
@@ -265,15 +357,46 @@
   window.PANTALLAS['con-int-centro'] = (cont) => pantalla(cont, {
     titulo: 'Integración de movimientos por centro de costo', icono: 'ti-sitemap', rpc: 'con_integracion_movimientos', tipos: true, centros: true,
     ayuda: 'Detalle por documento de los movimientos del centro de costo y sus subcentros (o de todos los centros), agrupado por centro y cuenta con su saldo anterior y su total. Si eliges una cuenta, solo esa cuenta y sus subcuentas.',
-    f: () => ({ centro: '', cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS), mods: true }),
-    filtros: (f, L) => `${campoCentro(f, L.centros)}${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
+    f: () => ({ centro: '', cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS), mods: true, pres: 'DET' }),
+    filtros: (f, L) => `${campoCentro(f, L.centros)}${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}${campoPres(f)}`,
     falta: (f) => (f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
     clave: (f) => `${f.centro}|${f.cuenta}|${f.desde}|${f.al}`,
     args: (f, ctx) => ({ p_loc: ctx.sel.loc, p_desde: f.desde, p_hasta: f.al, p_cuenta: f.cuenta || null, p_centro: f.centro || '*' }),
     construir: (ctx, f, D) => construirMov(ctx, f, D, true),
     archivo: (f) => `movimientos_centro_${f.centro || 'todos'}_${f.al}` });
 
+  // Resumido por documento: un renglón por documento (tipo, número, fecha y póliza) con el total de sus líneas en las
+  // cuentas consultadas, agrupado por tipo de documento con su subtotal.
+  function resumido(D, f) {
+    const xs = D.filas.filter((x) => f.tipos.has(x.t));
+    const filas = []; let tD = 0, tH = 0, nDocs = 0;
+    TODOS.filter((k) => xs.some((x) => x.t === k)).forEach((k) => {
+      const porDoc = new Map();
+      xs.filter((x) => x.t === k).forEach((x) => { const id = `${x.doc}|${x.fd}|${x.p}`; const a = porDoc.get(id) || { x, n: 0, d: 0, h: 0 }; a.n++; a.d += num(x.d); a.h += num(x.h); porDoc.set(id, a); });
+      const ds = [...porDoc.values()].sort((a, b) => String(a.x.fd).localeCompare(String(b.x.fd)) || String(a.x.doc).localeCompare(String(b.x.doc)));
+      filas.push({ valores: [`${k} · ${NOMBRE_TIPO.get(k) || k}`], tipo: 'grupo', combinar: true });
+      let d = 0, h = 0;
+      ds.forEach((a) => { d += a.d; h += a.h; filas.push({ valores: [k, a.x.doc, fmt.fechaDia(a.x.fd), a.x.pt, a.n, a.d ? r2(a.d) : '', a.h ? r2(a.h) : '', a.x.tr != null ? String(a.x.tr) : '', a.x.desc || ''], _k: a.x._i, attr: `data-k="${a.x._i}" data-c="${esc(a.x.c)}" title="Clic para ver el documento"` }); });
+      filas.push({ valores: ['', `Total ${NOMBRE_TIPO.get(k) || k} (${ds.length} documento(s))`, '', '', '', r2(d), r2(h), '', ''], tipo: 'subtotal' });
+      tD += d; tH += h; nDocs += ds.length;
+    });
+    filas.push({ valores: ['', 'Total de los documentos', '', '', '', r2(tD), r2(tH), '', ''], tipo: 'total' });
+    return { filas, tD, tH, nDocs, n: xs.length };
+  }
+  const COLS_RES = [col('Tipo', 'texto', 7), col('Documento', 'texto', 26), col('Fecha doc.', 'texto', 11), col('Póliza', 'texto', 11), col('Líneas', 'numero', 7), col('Debe', 'monto', 15), col('Haber', 'monto', 15), col('Transac.', 'texto', 9), col('Descripción', 'texto', 40)];
+
   function construirMov(ctx, f, D, porCentro) {
+    if (f.pres === 'RES') {
+      const S = resumido(D, f);
+      const ocultosR = TODOS.length - f.tipos.size;
+      const cuentaR = D.cuenta ? `Cuenta: ${D.cuenta} · ${D.cuenta_nombre || 'no encontrada'}` : 'Cuenta: todas';
+      const centroR = D.centro && D.centro !== '*' ? `Centro: ${D.centro} · ${D.centro_nombre || 'no encontrado'}` : 'Centro: todos';
+      return { titulo: porCentro ? 'Movimientos por centro de costo · resumido por documento' : 'Movimientos contables · resumido por documento',
+        parametros: [`Empresa: ${empresaDe(ctx)}`, porCentro ? centroR : cuentaR, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.al)}`, ...(porCentro ? [cuentaR] : []), ocultosR ? `Módulos: ${f.tipos.size} de ${TODOS.length}` : 'Módulos: todos', 'Presentación: resumido por documento', 'Moneda: quetzales'],
+        aviso: D.total > D.filas.length ? `Hay ${D.total.toLocaleString('es-GT')} movimientos; se resumen los primeros ${D.filas.length.toLocaleString('es-GT')}. Acorta el período o elige una cuenta.` : '',
+        kpis: [['Documentos', S.nDocs], ['Líneas', S.n], ['Debe', q(S.tD)], ['Haber', q(S.tH)]],
+        columnas: COLS_RES, filas: S.filas, firmas: ['Elaborado por', 'Revisado por', 'Contador general'] };
+    }
     const modo = porCentro ? 'centros' : f.cuenta ? 'cuenta' : 'cuentas';
     const M = movimientos(D, f, modo);
     const filas = [...M.filas];
@@ -290,7 +413,7 @@
     const movs = ['Movimientos', `${M.n}${M.n !== D.filas.length ? ` de ${D.filas.length}` : ''}`];
     return {
       titulo: porCentro ? 'Movimientos por centro de costo' : 'Movimientos contables',
-      parametros: [`Empresa: ${empresaDe(ctx)}`, porCentro ? centro : cuenta, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.al)}`, ...(porCentro ? [cuenta] : []), ocultos ? `Módulos: ${f.tipos.size} de ${TODOS.length}` : 'Módulos: todos', 'Moneda: quetzales'],
+      parametros: [`Empresa: ${empresaDe(ctx)}`, porCentro ? centro : cuenta, `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.al)}`, ...(porCentro ? [cuenta] : []), ocultos ? `Módulos: ${f.tipos.size} de ${TODOS.length}` : 'Módulos: todos', 'Presentación: detallado por cuenta', 'Moneda: quetzales'],
       aviso: D.total > D.filas.length ? `Hay ${D.total.toLocaleString('es-GT')} movimientos; se muestran los primeros ${D.filas.length.toLocaleString('es-GT')}. Acorta el período o elige una cuenta para verlos todos.` : '',
       kpis: modo === 'cuenta'
         ? [['Saldo anterior', q(M.tIni)], ['Debe', q(M.tD)], ['Haber', q(M.tH)], ['Saldo actual', q(M.tFin), 'ec-fin'], movs]
