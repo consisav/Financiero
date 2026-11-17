@@ -31,19 +31,21 @@
     return out;
   }
   const botonesExp = '<button type="button" class="boton secundario-sm" data-exp="PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-exp="EXCEL"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>';
+  // Sangría de la columna Cuenta según el nivel (r.sangria); el nombre ya trae su sangría en el texto.
+  const sangrar = (td, i, r) => (i === 0 && r.sangria > 0 ? td.replace('<td', `<td style="padding-left:calc(6px + ${(r.sangria * 1.1).toFixed(1)}em) !important"`) : td);
   function tabla(c, graficas = true) {
     const n = c.columnas.length;
     const celda = (v, x) => (v === '' || v == null ? '<td></td>' : typeof v === 'number' ? `<td class="num${v < 0 ? ' pc-rojo' : ''}">${x.tipo === 'monto' ? fmt.monto(v) : x.tipo === 'porcentaje' ? `${(v * 100).toFixed(1)} %` : v.toLocaleString('es-GT', { maximumFractionDigits: 2 })}</td>` : String(v).startsWith('¤') ? `<td>${marca(String(v).slice(1))}</td>` : `<td>${esc(String(v))}</td>`);
     const gs = graficas ? (c.graficas || []).filter(Boolean) : [];
     return `<div class="pc-lineas cx-tabla iv-tabla pr-tabla"><table><thead><tr>${c.columnas.map((x) => `<th class="${x.tipo === 'texto' ? '' : 'num'}">${esc(x.titulo)}</th>`).join('')}</tr></thead>
-      <tbody>${c.filas.length ? c.filas.map((r) => (r.tipo === 'grupo' && r.combinar ? `<tr class="pr-g"><td colspan="${n}">${esc(r.valores[0])}</td></tr>` : `<tr class="${r.tipo === 'grupo' ? 'pr-g' : r.tipo === 'subtotal' ? 'pr-s' : r.tipo === 'total' ? 'pr-t' : r.tipo === 'nota' ? 'pr-n' : ''}${r.resaltar ? ' pr-alerta' : ''}" ${r.attr || ''}>${c.columnas.map((x, i) => celda(r.valores[i], x)).join('')}</tr>`)).join('') : `<tr><td colspan="${n}" class="tk-vacio">${esc(c.vacio || 'Sin información.')}</td></tr>`}</tbody></table>
+      <tbody>${c.filas.length ? c.filas.map((r) => (r.tipo === 'grupo' && r.combinar ? `<tr class="pr-g"><td colspan="${n}">${esc(r.valores[0])}</td></tr>` : `<tr class="${r.tipo === 'grupo' ? 'pr-g' : r.tipo === 'subtotal' ? 'pr-s' : r.tipo === 'total' ? 'pr-t' : r.tipo === 'nota' ? 'pr-n' : ''}${r.resaltar ? ' pr-alerta' : ''}${r.negrita ? ' pr-m' : ''}" ${r.attr || ''}>${c.columnas.map((x, i) => sangrar(celda(r.valores[i], x), i, r)).join('')}</tr>`)).join('') : `<tr><td colspan="${n}" class="tk-vacio">${esc(c.vacio || 'Sin información.')}</td></tr>`}</tbody></table>
       ${gs.length && c.filas.length ? `<section class="pr-graficas"><h3><i class="ti ti-chart-bar" aria-hidden="true"></i> Gráficas</h3>${gs.join('')}</section>` : ''}</div>`;
   }
   function exportar(c, formato, graficas = true) {
     if (!c || !c.filas.length) return window.FIN.aviso('No hay información para imprimir');
     const gs = graficas ? (c.graficas || []).filter(Boolean) : [];
     const s = { ...c, filas: c.filas.map((r) => ({ ...r, resaltar: r.resaltar ? 1 : undefined, ...(r.tipo === 'nota' ? { tipo: undefined, tenue: true } : {}), valores: r.valores.map((v) => (typeof v === 'string' && v.startsWith('¤') ? v.slice(1) : v)) })) };
-    if (formato === 'PDF') return window.CUENTAS_XLSX.pdf({ ...s, graficas: gs.join('') });
+    if (formato === 'PDF') return window.CUENTAS_XLSX.pdf({ ...s, graficas: gs.join(''), bordes: true });
     Promise.all(gs.map((g) => G().png(g))).then((imagenes) => window.REPORTE_XLSX.generar({ ...s, imagenes })).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
   }
   const opt = (lst, sel, val, txt, vacio = '—') => `${vacio != null ? `<option value="">${vacio}</option>` : ''}${lst.map((x) => `<option value="${esc(String(x[val]))}" ${String(sel ?? '') === String(x[val]) ? 'selected' : ''}>${esc(txt(x))}</option>`).join('')}`;
@@ -155,7 +157,7 @@
     const cuenta = (k) => (filas.get(k)?.cuenta_codigo || '').trim() || (resp[k] || '').trim() || '';
     return { filas, resp, cuenta };
   }
-  window.CONTA = { leer, saldos, saldoCod, cuentasEmpresa, cuentasClave, CLAVES_INTEGRACION, CLAVES_CIERRE, tabla, exportar, botonesExp, marca, leerTodo, docPart, finMes, iniMes, MES, falta };
+  window.CONTA = { sangrar, leer, saldos, saldoCod, cuentasEmpresa, cuentasClave, CLAVES_INTEGRACION, CLAVES_CIERRE, tabla, exportar, botonesExp, marca, leerTodo, docPart, finMes, iniMes, MES, falta };
 
   // ===================== Ejercicios y períodos contables =====================
   window.PANTALLAS['con-ejercicios'] = function (cont) {

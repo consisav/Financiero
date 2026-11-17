@@ -229,7 +229,7 @@
       leer: (ctx, f) => leer(ctx, { locs: f.alcance === 'CONSOLIDADO' ? ctx.localidades.filter((l) => l.organizacion_id === ctx.sel.org).map((l) => l.id) : [ctx.sel.loc], hasta: f.a > f.b ? f.a : f.b }),
       construir: (ctx, f, base) => {
         const A = f.a, B = f.b, nivel = Number(f.nivel), filas = [];
-        const fila = (c, va, vb, tipo) => ({ valores: [c.codigo || '', `${sang((c.nivel || 1) - 1)}${c.nombre}`, r2(va), r2(vb), r2(va - vb), vb ? (va - vb) / Math.abs(vb) : 0], tipo: tipo || (c.nivel === 1 ? 'grupo' : c.nivel === 2 ? 'subtotal' : undefined) });
+        const fila = (c, va, vb, tipo) => ({ valores: [c.codigo || '', `${sang((c.nivel || 1) - 1)}${c.nombre}`, r2(va), r2(vb), r2(va - vb), vb ? (va - vb) / Math.abs(vb) : 0], tipo: tipo || (c.nivel === 1 ? 'grupo' : c.nivel === 2 ? 'subtotal' : undefined), sangria: (c.nivel || 1) - 1, negrita: !!c.integra });
         const visibles = (pred) => [...base.porCodigo.values()].filter((c) => c.nivel <= nivel && pred(c)).sort((x, y) => x.codigo.localeCompare(y.codigo));
         let kpis = [];
         if (f.estado === 'BALANCE') {
@@ -310,7 +310,7 @@
       const v = (m, cod) => { const x = m.get(cod); return x ? x.h - x.d : 0; };
       const cs = [...tot.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.nivel <= nivel).sort((a, b) => a.codigo.localeCompare(b.codigo));
       const filas = [];
-      cs.forEach((c) => { const sg = c.nat === -1 ? 1 : -1; filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, ...claves.map((k) => r2(sg * v(porK.get(k), c.codigo))), r2(sg * v(tot, c.codigo))], tipo: c.nivel === 1 ? 'grupo' : undefined }); });
+      cs.forEach((c) => { const sg = c.nat === -1 ? 1 : -1; filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, ...claves.map((k) => r2(sg * v(porK.get(k), c.codigo))), r2(sg * v(tot, c.codigo))], tipo: c.nivel === 1 ? 'grupo' : undefined, sangria: c.nivel - 1, negrita: !!c.integra }); });
       const res = (m) => sum(cs.filter((c) => c.nivel === 1).map((c) => v(m, c.codigo)));
       filas.push({ valores: ['', 'UTILIDAD (PÉRDIDA) DEL PERÍODO', ...claves.map((k) => r2(res(porK.get(k)))), r2(res(tot))], tipo: 'total' });
       const nom = (k) => (k === 'SIN' ? 'Sin centro' : k === 'OTROS' ? 'Otros centros' : `${centros.get(k)?.codigo || ''} ${centros.get(k)?.nombre || ''}`.trim());
@@ -334,7 +334,7 @@
       filas.push({ valores: ['INVENTARIO DE CUENTAS DE BALANCE'], tipo: 'grupo', combinar: true });
       let act = 0, pp = 0;
       clases.forEach((cl) => {
-        [...b.todo.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.codigo.startsWith(cl.codigo)).sort((x, y) => x.codigo.localeCompare(y.codigo)).forEach((c) => { const vv = valor(base, b.todo, c.codigo); if (Math.abs(vv) >= 0.005) filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, c.integra ? '' : r2(vv), c.integra ? r2(vv) : ''], tipo: c.nivel === 1 ? 'subtotal' : undefined }); });
+        [...b.todo.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.codigo.startsWith(cl.codigo)).sort((x, y) => x.codigo.localeCompare(y.codigo)).forEach((c) => { const vv = valor(base, b.todo, c.codigo); if (Math.abs(vv) >= 0.005) filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, c.integra ? '' : r2(vv), c.integra ? r2(vv) : ''], tipo: c.nivel === 1 ? 'subtotal' : undefined, sangria: c.nivel - 1, negrita: !!c.integra }); });
         let t = valor(base, b.todo, cl.codigo);
         if (esPatrimonio(cl)) { if (Math.abs(b.rAnt) >= 0.005) filas.push({ valores: ['', `${sang(1)}Resultados de ejercicios anteriores no cerrados`, r2(b.rAnt), ''] }); filas.push({ valores: ['', `${sang(1)}Resultado del ejercicio ${f.anio} no trasladado`, r2(b.rEj), ''] }); t += b.rAnt + b.rEj; }
         filas.push({ valores: [`TOTAL ${cl.nombre}`, '', '', r2(t)], tipo: 'total' });
@@ -344,7 +344,7 @@
       const per = C().saldos(base, (l) => l.dia >= `${f.anio}-01-01` && l.dia <= al && l.siglas !== 'PCR');
       const secs = [...per.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.reporte === 'E' && c.nivel <= 2).sort((x, y) => x.codigo.localeCompare(y.codigo));
       filas.push({ valores: [`ESTADO DE RESULTADOS DEL 01/01/${f.anio} AL ${fmt.fechaDia(al)}`], tipo: 'grupo', combinar: true });
-      let r = 0; secs.forEach((c) => { const x = per.get(c.codigo), vv = x ? x.h - x.d : 0; if (c.nivel === 1) r += vv; filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, c.nivel === 2 ? r2(Math.abs(vv)) : '', c.nivel === 1 ? r2(Math.abs(vv)) : ''], tipo: c.nivel === 1 ? 'subtotal' : undefined }); });
+      let r = 0; secs.forEach((c) => { const x = per.get(c.codigo), vv = x ? x.h - x.d : 0; if (c.nivel === 1) r += vv; filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, c.nivel === 2 ? r2(Math.abs(vv)) : '', c.nivel === 1 ? r2(Math.abs(vv)) : ''], tipo: c.nivel === 1 ? 'subtotal' : undefined, sangria: c.nivel - 1, negrita: !!c.integra }); });
       filas.push({ valores: ['UTILIDAD (PÉRDIDA) NETA DEL EJERCICIO', '', '', r2(r)], tipo: 'total' });
       const folio = Number(f.folio) || D.folio;
       return { parametros: [`Empresa: ${empresaDe(ctx)}`, `Al ${fmt.fechaDia(al)}`, D.libro ? `Libro autorizado: resolución ${D.libro.resolucion || '—'} · folio inicial ${folio}` : `Folio inicial ${folio} (registra el libro en Catálogos › Libros autorizados SAT)`],

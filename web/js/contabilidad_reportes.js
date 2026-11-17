@@ -144,7 +144,7 @@
     const fechaTxt = () => (R.periodo ? `Del ${fmt.fechaDia(f.desde)} al ${fmt.fechaDia(f.fecha)}` : `Al ${fmt.fechaDia(f.fecha)}`);
     const parametros = (extra = []) => [alcanceTxt(), fechaTxt(), ...(R.nivel ? [`Nivel ${f.nivel}`] : []), f.aprobadas ? 'Solo partidas aprobadas' : 'Partidas vigentes', ...extra];
     const docPart = (p) => `${base.tiposPart.get(p.tipo_partida_id)?.siglas || 'P'}-${p.numero}${p.anio ? `/${String(p.mes).padStart(2, '0')}-${p.anio}` : ''}`;
-    const filaCuenta = (c, valores, tipo) => ({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, ...valores], tipo: tipo || (c.nivel === 1 ? 'grupo' : undefined), resaltar: c.nivel === 1 ? false : c.nivel === 2 ? 2 : undefined });
+    const filaCuenta = (c, valores, tipo) => ({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, ...valores], tipo: tipo || (c.nivel === 1 ? 'grupo' : undefined), resaltar: c.nivel === 1 ? false : c.nivel === 2 ? 2 : undefined, sangria: c.nivel - 1, negrita: !!c.integra });
 
     function construir() {
       const b0 = { titulo: R.titulo, orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: R.titulo.slice(0, 30), archivo: `${id}_${f.fecha}` };
@@ -335,7 +335,7 @@
           <div class="pc-lineas cx-tabla iv-tabla pr-tabla"><table>
             <thead><tr>${c.columnas.map((x) => `<th class="${x.tipo === 'texto' ? '' : 'num'}">${esc(x.titulo)}</th>`).join('')}</tr></thead>
             <tbody>${c.n ? vista.map((r) => (r.tipo === 'grupo' && r.combinar ? `<tr class="pr-g"><td colspan="${n}">${esc(r.valores.filter(Boolean).join(' · '))}</td></tr>`
-              : `<tr class="${r.tipo === 'grupo' ? 'pr-g' : r.tipo === 'subtotal' ? 'pr-s' : r.tipo === 'total' ? 'pr-t cr-total' : r.tipo === 'nota' ? 'pr-n' : ''}${r.resaltar === true ? ' pr-alerta' : r.resaltar === 2 ? ' cr-n2' : ''}">${c.columnas.map((x, i) => celda(r.valores[i], x)).join('')}</tr>`)).join('')
+              : `<tr class="${r.tipo === 'grupo' ? 'pr-g' : r.tipo === 'subtotal' ? 'pr-s' : r.tipo === 'total' ? 'pr-t cr-total' : r.tipo === 'nota' ? 'pr-n' : ''}${r.resaltar === true ? ' pr-alerta' : r.resaltar === 2 ? ' cr-n2' : ''}${r.negrita ? ' pr-m' : ''}">${c.columnas.map((x, i) => window.CONTA.sangrar(celda(r.valores[i], x), i, r)).join('')}</tr>`)).join('')
               : `<tr><td colspan="${n}" class="tk-vacio">${vacio}</td></tr>`}
               ${c.filas.length > MAX_VISTA ? `<tr><td colspan="${n}" class="tk-vacio">Vista previa de ${MAX_VISTA} de ${c.filas.length} renglones: el PDF y el Excel llevan el reporte completo.</td></tr>` : ''}</tbody>
           </table>${gs.length && c.n ? `<section class="pr-graficas"><h3><i class="ti ti-chart-bar" aria-hidden="true"></i> Gráficas</h3>${gs.join('')}</section>` : ''}</div>
@@ -346,7 +346,7 @@
       if (!cfg || !cfg.n) return window.FIN.aviso('No hay información con esos parámetros');
       const gs = f.graficas ? graficasDe(cfg) : [];
       const salida = { ...cfg, filas: cfg.filas.map((r) => ({ ...r, resaltar: r.resaltar === true ? 1 : r.resaltar === 2 ? undefined : r.resaltar, ...(r.tipo === 'nota' ? { tipo: undefined, tenue: true } : {}) })) };
-      if (formato === 'PDF') return window.CUENTAS_XLSX.pdf({ ...salida, graficas: gs.join('') });
+      if (formato === 'PDF') return window.CUENTAS_XLSX.pdf({ ...salida, graficas: gs.join(''), bordes: true });
       salida.filas = salida.filas.map((r) => ({ ...r, valores: r.valores.map((v) => (typeof v === 'string' ? v.replace(/^ +/, (m) => m) : v)) }));
       Promise.all(gs.map((g) => G().png(g))).then((imagenes) => window.REPORTE_XLSX.generar({ ...salida, imagenes })).catch((e) => window.FIN.aviso(e.message || 'No se pudo generar el Excel'));
     }

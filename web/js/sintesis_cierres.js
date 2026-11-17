@@ -68,7 +68,10 @@
         const madre = [...niv.keys()].filter((c) => c !== s.cuenta_codigo && s.cuenta_codigo.startsWith(c)).sort((a, b) => b.length - a.length)[0];
         niv.set(s.cuenta_codigo, num(s.cuentas?.nivel) || (madre ? niv.get(madre) + 1 : 1));
       });
-      saldos = filas.map((s) => ({ ...s, codigo: s.cuenta_codigo, nombre: s.cuentas?.nombre || '(cuenta no encontrada en el catálogo)', nivel: niv.get(s.cuenta_codigo) }));
+      // Cuenta madre (va en negrilla): la que tiene alguna subcuenta en el cierre (código que la contiene y de mayor nivel).
+      const madres = new Set();
+      niv.forEach((n, c) => { for (let i = c.length - 1; i > 0; i -= 1) { const p = c.slice(0, i); if (niv.has(p) && niv.get(p) < n) madres.add(p); } });
+      saldos = filas.map((s) => ({ ...s, codigo: s.cuenta_codigo, nombre: s.cuentas?.nombre || '(cuenta no encontrada en el catálogo)', nivel: niv.get(s.cuenta_codigo), madre: madres.has(s.cuenta_codigo) }));
       claveSaldos = k;
     }
 
@@ -86,7 +89,7 @@
       const filas = xs.map((s) => {
         const top = raiz(s);
         if (top) { t.sa += v(s, 'saldo_anterior'); t.de += v(s, 'debitos'); t.cr += v(s, 'creditos'); t.sx += v(s, 'saldo_actual'); }
-        return { valores: [`${sang(s.nivel - base)}${s.codigo}`, `${sang(s.nivel - base)}${s.nombre}`, s.nivel, r2(v(s, 'saldo_anterior')), r2(v(s, 'debitos')), r2(v(s, 'creditos')), r2(v(s, 'saldo_actual'))],
+        return { sangria: s.nivel - base, negrita: s.madre, valores: [s.codigo, `${sang(s.nivel - base)}${s.nombre}`, s.nivel, r2(v(s, 'saldo_anterior')), r2(v(s, 'debitos')), r2(v(s, 'creditos')), r2(v(s, 'saldo_actual'))],
           tipo: s.nivel === base && xs.some((h) => h.nivel > s.nivel && h.codigo.startsWith(s.codigo)) ? 'subtotal' : undefined };
       });
       if (xs.length) filas.push({ valores: ['', `${f.cuenta ? `Total cuenta ${f.cuenta}` : solo ? `Total de las cuentas de nivel ${nN}` : 'Total de las cuentas de primer nivel'}${f.cuenta && solo ? ` (nivel ${nN})` : ''}`, '', f.cuenta ? r2(t.sa) : '', r2(t.de), r2(t.cr), f.cuenta ? r2(t.sx) : ''], tipo: 'total' });

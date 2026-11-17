@@ -195,7 +195,7 @@
     v.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(tituloRep || titulo)}</title><style>
       body{font:12px/1.4 Arial,sans-serif;color:#111;margin:24px}h1{font-size:16px;margin:0}h2{font-size:13px;margin:2px 0 12px;font-weight:normal;color:#444}h3{font-size:13px;margin:16px 0 6px;color:#1f3a5f}
       .rp-cab{display:grid;grid-template-columns:1fr 1.6fr 1fr;align-items:center;gap:14px;padding-bottom:8px;border-bottom:2.5px solid #1f3a5f;margin-bottom:14px}
-      .rp-emp{display:flex;align-items:center;gap:10px;min-width:0}.rp-emp img{max-height:56px;max-width:140px;object-fit:contain}.rp-emp img[hidden]{display:none}
+      .rp-emp{display:flex;align-items:center;gap:10px;min-width:0}.rp-emp{align-self:stretch}.rp-emp img{height:78px;max-width:210px;object-fit:contain}.rp-emp img[hidden]{display:none}
       .rp-emp b{display:block;font-size:14px;color:#1f3a5f}.rp-emp small{display:block;font-size:11px;color:#555}
       .rp-tit{text-align:center}.rp-tit b{display:block;font-size:16px;color:#1f3a5f}.rp-tit small{display:block;font-size:10.5px;color:#444;margin-top:1px}
       .rp-gen{text-align:right;font-size:10.5px;color:#444}.rp-gen div{white-space:nowrap}

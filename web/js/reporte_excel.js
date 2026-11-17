@@ -64,16 +64,20 @@
     // a) Izquierda: logo y nombre de la empresa.
     if (logo) {
       const id = wb.addImage({ base64: logo.base64, extension: logo.extension });
-      const alto = 64; const ancho = Math.round(alto * (logo.w / (logo.h || 1)));
-      ws.addImage(id, { tl: { col: 0.1, row: 0.15 }, ext: { width: Math.min(ancho, 150), height: alto } });
+      // Ocupa todo el alto del encabezado: filas 1 a 4 (22 + 3 × 15 puntos ≈ 89 píxeles).
+      const alto = 86; const ancho = Math.min(Math.round(alto * (logo.w / (logo.h || 1))), 220);
+      ws.addImage(id, { tl: { col: 0.05, row: 0.05 }, ext: { width: ancho, height: alto } });
+      logo.ancho = ancho;
     }
-    const izq = logo && L >= 3 ? 2 : 1;
-    const desdeTexto = logo ? Math.min(izq + 1, L) : 1;
+    // El nombre de la empresa empieza en la primera columna libre a la derecha del logo (ancho de columna ≈ 7 px por carácter).
+    // Si el logo cubre parte de esa columna, el texto se corre con sangría (una unidad ≈ 10 px, de más para no tocar el logo).
+    let desdeTexto = 1, sangTexto = 0;
+    if (logo) { let px = 0; desdeTexto = L; for (let c = 0; c < L; c += 1) { const w = (cols[c].ancho || 14) * 7 + 5; if (px + w > logo.ancho + 8) { desdeTexto = c + 1; sangTexto = Math.max(0, Math.ceil((logo.ancho + 8 - px) / 10)); break; } px += w; } }
     ws.mergeCells(1, desdeTexto, 1, L); ws.getCell(1, desdeTexto).value = org?.nombre || '';
     ws.getCell(1, desdeTexto).font = { bold: true, size: 13, color: { argb: AZUL } };
     ws.mergeCells(2, desdeTexto, 2, L); ws.getCell(2, desdeTexto).value = loc ? `${loc.codigo} · ${loc.nombre_comercial}` : '';
     ws.getCell(2, desdeTexto).font = { size: 10, color: { argb: 'FF555555' } };
-    [1, 2].forEach((r) => { ws.getCell(r, desdeTexto).alignment = { vertical: 'middle', wrapText: false }; });
+    [1, 2].forEach((r) => { ws.getCell(r, desdeTexto).alignment = { vertical: 'middle', wrapText: false, indent: sangTexto }; });
     // b) Centro: título y parámetros (en tres renglones).
     const par = (cfg.parametros || []).map(plano).filter(Boolean);
     const tercio = Math.ceil(par.length / 3) || 1;
@@ -117,6 +121,8 @@
       if (f.tipo === 'nota') r.font = { italic: true, size: 9.5, color: { argb: 'FF555555' } };
       if (f.resaltar) { r.font = { ...(r.font || {}), bold: true }; r.eachCell({ includeEmpty: true }, (x) => { x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: f.resaltar === 2 ? 'FFD6E2F3' : 'FFEAF0F7' } }; }); }
       if (f.tenue) r.font = { ...(r.font || {}), color: { argb: 'FF8A94A6' } };
+      // negrita: cuenta que integra subcuentas (cuenta madre).
+      if (f.negrita) r.font = { ...(r.font || {}), bold: true };
       // combinar: el texto de la primera celda ocupa todo el ancho del renglón (títulos de grupo y notas largas).
       if (f.combinar) { ws.mergeCells(fila, 1, fila, n); r.getCell(1).alignment = { vertical: 'middle', wrapText: f.tipo === 'nota' }; if (f.tipo === 'nota') r.height = 26; }
       fila += 1;
