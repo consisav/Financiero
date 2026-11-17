@@ -1,0 +1,1365 @@
+{
+ "tipos-de-medida": {
+  "puntos": [
+   "Unidades de medida de los productos (unidad, caja, frasco, kilo, litro…)."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Generales › Tipos de medida y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar» y escribe el código y la descripción (ej. CJ · Caja).",
+   "Presiona «Guardar».",
+   "La medida se elige en la ficha de cada producto y sale en facturas y kardex."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Descripción"
+   ],
+   "filas": [
+    [
+     "UN",
+     "Unidad"
+    ],
+    [
+     "CJ",
+     "Caja"
+    ],
+    [
+     "FR",
+     "Frasco"
+    ]
+   ]
+  }
+ },
+ "clasificaciones-y-tipos": {
+  "puntos": [
+   "Clasificaciones de productos y servicios (descripción, tipo, cuenta, tipo de servicio, inventario y laboratorio) y, abajo, los tipos de productos de cada clasificación con sus cuentas de inventario y facturación."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Generales › Clasificación de productos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En la lista de arriba agrega una clasificación (ej. Medicamentos) con su tipo (bien o servicio), cuenta y si maneja inventario.",
+   "Elige la clasificación: abajo aparecen sus tipos.",
+   "Agrega cada tipo con «Siglas», «Descripción», cuenta de inventarios y cuenta de facturación.",
+   "Presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Clasificación",
+    "Tipo",
+    "Siglas",
+    "Cuenta inventario",
+    "Cuenta ventas"
+   ],
+   "filas": [
+    [
+     "Medicamentos",
+     "Genéricos",
+     "GEN",
+     "1.1.3.01",
+     "4.1.1.01"
+    ],
+    [
+     "Servicios",
+     "Consultas",
+     "CON",
+     "—",
+     "4.1.2.01"
+    ]
+   ]
+  }
+ },
+ "presentaciones-productos": {
+  "puntos": [
+   "Presentaciones en que vienen los productos (caja x 10, frasco 120 ml, blíster…)."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Generales › Presentaciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar» y escribe la presentación.",
+   "Presiona «Guardar»; se elige en la ficha del producto."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Presentación"
+   ],
+   "filas": [
+    [
+     "1",
+     "Caja x 10 tabletas"
+    ],
+    [
+     "2",
+     "Frasco 120 ml"
+    ]
+   ]
+  }
+ },
+ "tipos-de-precio": {
+  "puntos": [
+   "Listas de precio: % de utilidad, % de descuento, factor y estado; cada cliente tiene un tipo de precio."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Generales › Tipos de precios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar»: código y nombre (ej. MAYORISTA).",
+   "Escribe el % de utilidad sobre el costo y el % de descuento.",
+   "Escribe el factor si se usa en el cálculo y marca el estado.",
+   "Presiona «Guardar»; el precio sugerido de cada producto = costo + utilidad − descuento."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Tipo de precio",
+    "% utilidad",
+    "% descuento",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "1",
+     "PÚBLICO",
+     "40 %",
+     "0 %",
+     "Activo"
+    ],
+    [
+     "2",
+     "MAYORISTA",
+     "25 %",
+     "5 %",
+     "Activo"
+    ]
+   ]
+  }
+ },
+ "productos-y-servicios": {
+  "puntos": [
+   "Artículos de {empresa}: clasificación y tipo, código y código de barras, marca, principio activo, unidad, presentación, proveedor principal, costo en Q y US$, bodega, mínimo y máximo, ubicación (estante, fila, bloque), precios e imagen."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Generales › Productos y servicios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el artículo en la lista o presiona «Nuevo artículo».",
+   "Elige la «Clasificación» y el «Tipo producto».",
+   "Escribe el «Nombre *», el «Código producto» y el «Código de barras».",
+   "Escribe «Marca» y «Principio activo» (medicamentos).",
+   "Elige «Unidad de medida», «Presentación» y el «Proveedor principal» (o «Proveedor» para crearlo).",
+   "Escribe el «Precio costo Q» (y «Costo US$» si se importa).",
+   "Elige la «Bodega» y escribe «Mínimo» y «Máximo» (alertas de reorden).",
+   "Escribe la ubicación: «Estante», «Fila» y «Bloque».",
+   "Sube la imagen y guarda.",
+   "Asigna sus precios en Precios de venta; «Imprimir» saca el catálogo."
+  ],
+  "campos": [
+   [
+    "Nombre *",
+    "{producto}",
+    "Nombre en facturas."
+   ],
+   [
+    "Código producto",
+    "{codigoProducto}",
+    "Código interno."
+   ],
+   [
+    "Unidad de medida",
+    "Caja",
+    "Unidad de venta."
+   ],
+   [
+    "Precio costo Q",
+    "Q 32.15",
+    "Costo para margen y kardex."
+   ],
+   [
+    "Bodega",
+    "{bodega}",
+    "Bodega principal."
+   ],
+   [
+    "Mínimo / Máximo",
+    "20 · 200",
+    "Reorden."
+   ],
+   [
+    "Estante / Fila / Bloque",
+    "E3 · F2 · B1",
+    "Ubicación física."
+   ]
+  ]
+ },
+ "carga-facturas-sat": {
+  "puntos": [
+   "Carga el archivo de facturas recibidas descargado del portal de la SAT (.xls, .xlsx o .csv) con las columnas «Clasificación» y «Cuenta», y genera las compras o los documentos de caja chica.",
+   "Pasos guiados: 1 Cargar, 2 Revisar (clasificación, cuenta y observaciones por fila), 3 Generar."
+  ],
+  "pasos": [
+   "Entra a Compras › Procesos › Carga Facturas SAT y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Descarga del portal SAT las facturas recibidas del mes y agrega al final las columnas «Clasificación» (siglas) y «Cuenta» (contable).",
+   "Presiona «Nueva carga» y elige el archivo; una factura ya cargada (misma autorización) solo se actualiza.",
+   "Revisa los totales y la tabla; elige en cada fila la clasificación, la cuenta y las observaciones (se proponen para las demás del mismo NIT).",
+   "Elige el destino: compras, o caja chica con su «Caja» y «Subcaja», «Año» y «Mes».",
+   "Genera: se crean las compras o los documentos de caja.",
+   "Si te equivocaste usa «Reversar facturas» o «Reversar carga»."
+  ],
+  "resultado": {
+   "columnas": [
+    "Autorización",
+    "Emisor",
+    "Total",
+    "Clasificación",
+    "Cuenta",
+    "Generado"
+   ],
+   "filas": [
+    [
+     "A1B2-3344",
+     "Gasolinera El Sol",
+     "Q 300.00",
+     "COMB",
+     "6.1.2.05",
+     "Caja 01 · 46"
+    ],
+    [
+     "F-4521",
+     "{proveedor}",
+     "Q 4,480.00",
+     "BIEN",
+     "1.1.3.01",
+     "Compra C-0981"
+    ]
+   ]
+  }
+ },
+ "clasificaciones-compra": {
+  "puntos": [
+   "Clasificaciones fiscales de las compras: siglas, si van al libro de compras y si aplican IVA (bienes, servicios, combustible, importación, pequeño contribuyente…)."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Generales › Clasificación compras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar»: el número es automático.",
+   "Escribe la descripción y las siglas (ej. COMB · Combustibles).",
+   "Marca si va al libro de compras y si aplica IVA.",
+   "Presiona «Guardar cambios»; se elige en cada compra y en la Carga Facturas SAT."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "No.",
+    "Descripción",
+    "Siglas",
+    "Libro de compras",
+    "IVA"
+   ],
+   "filas": [
+    [
+     "1",
+     "Bienes",
+     "BIEN",
+     "Sí",
+     "Sí"
+    ],
+    [
+     "2",
+     "Servicios",
+     "SERV",
+     "Sí",
+     "Sí"
+    ],
+    [
+     "3",
+     "Combustibles",
+     "COMB",
+     "Sí",
+     "Sí"
+    ],
+    [
+     "4",
+     "Pequeño contribuyente",
+     "PEQ",
+     "Sí",
+     "No"
+    ]
+   ]
+  }
+ },
+ "tipos-documento-compra": {
+  "puntos": [
+   "Tipos de documento de las compras (factura, factura especial, recibo, DUCA…) y cómo se calcula su IVA."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Generales › Tipo documento y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar» y escribe la descripción.",
+   "Marca cómo se calcula el IVA (incluido, sin IVA) y si es recibo.",
+   "Presiona «Guardar cambios»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "No.",
+    "Tipo",
+    "Cálculo IVA",
+    "Recibo"
+   ],
+   "filas": [
+    [
+     "1",
+     "Factura electrónica",
+     "Incluido 12 %",
+     "No"
+    ],
+    [
+     "2",
+     "Factura especial",
+     "Retiene IVA",
+     "No"
+    ],
+    [
+     "3",
+     "Recibo",
+     "Sin IVA",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "parametros-compras": {
+  "puntos": [
+   "Parámetros del módulo de compras de la empresa: encargados de compras, pedidos y facturación (con su usuario), quién recibe traslados, la transacción principal de ventas y los avisos por correo."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Generales › Parámetros módulo y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «Encargado de compras», «de pedidos» y «de facturación» elige el «Usuario» de cada uno.",
+   "Elige quién «Recibe traslados» de inventario.",
+   "Elige la «Transacción principal de ventas».",
+   "Marca los avisos por correo: «Orden cotizada» y «Orden autorizada».",
+   "Presiona «Guardar» («Descartar» deshace)."
+  ]
+ },
+ "proveedores": {
+  "puntos": [
+   "Proveedores de {empresa}: lista (código, NIT, nombre comercial, estado) y ficha con datos generales (nombre fiscal SAT, dirección, teléfonos, contacto, nacional, servicio crítico, tipo, régimen ISR, bodega).",
+   "Pestañas: Datos contables (días de crédito, retención, cuenta de gastos, transacción), Datos de pago (banco y cuenta para transferencias) y Varias cuentas."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Proveedores › Proveedores y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el proveedor o presiona «Nuevo proveedor».",
+   "Escribe el NIT, el nombre fiscal (como en la SAT) y el nombre comercial.",
+   "Llena dirección, teléfonos, contacto y el concepto de gastos; marca nacional o extranjero y si es servicio crítico.",
+   "Elige el tipo de proveedor (productos o servicios), el régimen ISR y la bodega.",
+   "Pestaña Datos contables: días de crédito, % de retención, cuenta de gastos y la transacción contable.",
+   "Pestaña Datos de pago: banco y número de cuenta (se usan en Generación transferencias).",
+   "Guarda; «Imprimir listado» saca el listado por tipo en PDF o Excel."
+  ],
+  "campos": [
+   [
+    "NIT",
+    "4521789-0",
+    "Identificación tributaria."
+   ],
+   [
+    "Nombre fiscal",
+    "{proveedor}",
+    "Como en la SAT."
+   ],
+   [
+    "Tipo",
+    "Productos",
+    "Productos o servicios."
+   ],
+   [
+    "Régimen ISR",
+    "Sobre utilidades",
+    "Define retenciones."
+   ],
+   [
+    "Días de crédito",
+    "30",
+    "Plazo de pago."
+   ],
+   [
+    "Banco / cuenta",
+    "Banco Industrial · 0450012233",
+    "Para transferencias."
+   ]
+  ]
+ },
+ "bodegas": {
+  "puntos": [
+   "Bodegas generales y sub-bodegas (árbol): tipo, bodega mayor, dirección, siglas, permisos (carga directa, consignación, licitación, ventas), modalidad, encargado, tipo de precio, estado y definiciones contables por bodega."
+  ],
+  "pasos": [
+   "Entra a Compras › Catálogos › Proveedores › Bodegas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige una bodega del árbol o presiona «Nueva bodega».",
+   "Escribe nombre y siglas, elige el tipo y la bodega mayor (para sub-bodegas) y la dirección.",
+   "Marca los permisos: carga directa, consignación, licitación y ventas.",
+   "Elige la modalidad, el encargado y el tipo de precio.",
+   "En definiciones contables elige las transacciones de entrada, salida y reversión, y la cuenta de producto terminado.",
+   "Guarda."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Bodega",
+    "Siglas",
+    "Tipo",
+    "Ventas",
+    "Encargado"
+   ],
+   "filas": [
+    [
+     "{bodega}",
+     "BP",
+     "General",
+     "Sí",
+     "Encargado de bodega"
+    ],
+    [
+     "Sala de ventas",
+     "SV",
+     "Sub-bodega",
+     "Sí",
+     "Vendedor"
+    ]
+   ]
+  }
+ },
+ "solicitudes-de-compra": {
+  "puntos": [
+   "Generación de órdenes de compra: folio, número, fecha, estado, proveedor (forma de pago, días, moneda, tipo), bodega y observaciones; productos con existencia, cantidad solicitada, precio, en tránsito, mínimo y máximo.",
+   "«Cargar» trae los productos del proveedor con la cantidad sugerida por su punto mínimo; «Generar orden» la envía a autorización."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Órdenes de compra › Solicitudes de compra y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva»: se asignan folio y fecha.",
+   "Elige el «Proveedor *» (ej. {proveedor}); se llenan tipo, forma de pago, días, moneda y cambio.",
+   "Elige la «Bodega *» destino.",
+   "Presiona «Cargar»: se traen sus productos con la cantidad sugerida (máximo − existencia − en tránsito); «Reversar carga» los quita.",
+   "En la pestaña Productos ajusta la cantidad solicitada y el precio de cada uno.",
+   "Escribe las «Observaciones internas» y las «Observaciones al proveedor»; en Otros llena fecha y lugar de entrega, contacto y condiciones.",
+   "En Cotizaciones adjunta las cotizaciones recibidas.",
+   "Presiona «Guardar» y luego «Generar orden»: pasa a autorización y se avisa por correo."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Productos de la orden OC-0152",
+   "columnas": [
+    "Producto",
+    "Existencia",
+    "Mínimo",
+    "En tránsito",
+    "Solicitado",
+    "Precio"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "18",
+     "20",
+     "0",
+     "100",
+     "Q 32.15"
+    ],
+    [
+     "Jarabe 120 ml",
+     "12",
+     "15",
+     "0",
+     "30",
+     "Q 26.50"
+    ]
+   ]
+  }
+ },
+ "autorizaciones-de-compras": {
+  "puntos": [
+   "Autorización de cada orden: la orden en solo lectura con la cantidad aprobada y la casilla «Aprueba» por producto; se aprueba, devuelve o rechaza."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Órdenes de compra › Autorizaciones compras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la orden pendiente.",
+   "Revisa proveedor, bodega, productos, precios y cotizaciones.",
+   "En cada producto escribe la cantidad aprobada y marca «Aprueba» («Marcar todo» / «Desmarcar todo»).",
+   "Presiona «Aprobar orden», «Devolver» (para que la corrijan) o «Rechazar».",
+   "Al aprobar se avisa por correo y la orden queda lista para recibir."
+  ]
+ },
+ "autorizar-ordenes": {
+  "puntos": [
+   "Lista de las órdenes en espera de autorización, con su botón «Ver»."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Órdenes de compra › Aprobación órdenes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Filtra por fechas y proveedor y presiona «Actualizar».",
+   "Presiona «Ver» en la orden: se abre en Autorizaciones compras."
+  ],
+  "reporte": {
+   "columnas": [
+    "Orden",
+    "Fecha",
+    "Proveedor",
+    "Total",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "OC-0152",
+     "{hoy}",
+     "{proveedor}",
+     "Q 4,010.00",
+     "EN AUTORIZACIÓN"
+    ]
+   ]
+  },
+  "voz": "Hay una orden de compra en espera de autorización por cuatro mil diez quetzales."
+ },
+ "ordenes-de-compra": {
+  "puntos": [
+   "Ingresos de compras basados en órdenes: se recibe lo autorizado por lote y vencimiento; «Aplicar inventario» lo carga a la bodega y genera la factura de compra."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Órdenes de compra › Órdenes de compra y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: elige la «Orden de compra *» autorizada y la «Fecha ingreso».",
+   "«Cargar saldos» trae lo pendiente de recibir.",
+   "Escribe lo recibido de cada producto con su lote, fecha de vencimiento y fabricación.",
+   "Llena los datos del documento del proveedor: «Serie doc.», «Documento», «Fecha doc.», «Transacción» y «Valor descuento».",
+   "Presiona «Aplicar inventario»: la mercadería entra a la bodega y se genera la compra.",
+   "Si hubo error usa «Revertir inventario» o «Anular»."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Ingreso de la OC-0152",
+   "columnas": [
+    "Producto",
+    "Lote",
+    "Vence",
+    "Cantidad",
+    "Costo unitario",
+    "Costo total"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "L2406",
+     "06/2028",
+     "100",
+     "Q 32.15",
+     "Q 3,215.00"
+    ],
+    [
+     "Jarabe 120 ml",
+     "J1180",
+     "01/2027",
+     "30",
+     "Q 26.50",
+     "Q 795.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "130",
+    "Subtotal",
+    "Q 4,010.00"
+   ]
+  },
+  "resultado": {
+   "titulo": "Resultado · Inventario y compra",
+   "columnas": [
+    "Producto",
+    "Bodega",
+    "Existencia antes",
+    "Entrada",
+    "Existencia después"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "{bodega}",
+     "18",
+     "100",
+     "118"
+    ],
+    [
+     "Jarabe 120 ml",
+     "{bodega}",
+     "12",
+     "30",
+     "42"
+    ]
+   ],
+   "nota": "Se genera la compra C-0981 por Q 4,491.20 (con IVA) pendiente de pago."
+  }
+ },
+ "consulta-de-ordenes": {
+  "puntos": [
+   "Órdenes de compra por proveedor, bodega, fechas y estado, con sus totales, lo recibido y por recibir, sus productos e ingresos."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Órdenes de compra › Consulta de Órdenes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige proveedor, bodega, «Fecha inicial», «Fecha final», estado y «Ordenar por».",
+   "Elige una orden para ver sus productos (solicitado, aprobado, recibido, saldo) e ingresos.",
+   "«Ver orden» la abre; genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Orden",
+    "Proveedor",
+    "Solicitado",
+    "Recibido",
+    "Por recibir",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "OC-0152",
+     "{proveedor}",
+     "Q 4,010.00",
+     "Q 4,010.00",
+     "Q 0.00",
+     "RECIBIDA"
+    ],
+    [
+     "OC-0150",
+     "Distribuidora Norte",
+     "Q 2,800.00",
+     "Q 1,400.00",
+     "Q 1,400.00",
+     "PARCIAL"
+    ]
+   ]
+  },
+  "voz": "Consulta de órdenes: una orden recibida completa y una parcial con mil cuatrocientos quetzales por recibir."
+ },
+ "recepcion-de-mercaderia": {
+  "puntos": [
+   "Recepción en bodega de lo comprado contra la orden de compra.",
+   "Mientras esta opción está en desarrollo, la recepción se hace en Órdenes de compra con «Aplicar inventario»."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Órdenes de compra › Órdenes de compra.",
+   "Elige la orden autorizada y presiona «Cargar saldos».",
+   "Escribe lo recibido con lote y vencimiento.",
+   "Presiona «Aplicar inventario»."
+  ]
+ },
+ "notas-de-credito-proveedores": {
+  "puntos": [
+   "Notas de crédito recibidas de los proveedores.",
+   "Se registran en Procesar Compras › Notas crédito compras."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Procesar Compras › Notas crédito compras.",
+   "Sigue los pasos de esa opción: proveedor, factura de referencia, productos y «Descargar»."
+  ]
+ },
+ "facturas-compra": {
+  "puntos": [
+   "Ingreso completo de la compra: proveedor (trae NIT, régimen, días de crédito, forma de pago, bodega y transacción), documento (tipo DTE, presentación, serie, número, fecha, días de crédito, fecha de pago), clasificación fiscal, desglose fiscal (combustibles con IDP, exento, no deducibles, IVA, INGUAT, DAI…), retención y totales.",
+   "Pestañas: Compras varias (detalle), Detalle contable, Documentos a liquidar, Otras funciones (forma de pago, cuentas, partida, anulación, contraseña), Órdenes de compra y Listado."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Procesar Compras › Ingreso de compras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva».",
+   "Elige el proveedor (ej. {proveedor}): se llenan NIT, régimen, días de crédito, forma de pago, bodega y transacción.",
+   "Elige el tipo de documento, el mes y «Año» de presentación, y escribe «# Serie», «# Documento *» y «Fecha *».",
+   "Revisa «Días de crédito» y «Fecha de pago».",
+   "Elige el «Régimen ISR», la clasificación (bienes, servicios, combustible…), el «Tipo de operación», el «Rubro» y la «Descripción».",
+   "Si es de inventario, en «Artículos» agrega cada producto con cantidad, costo, lote y vencimiento (o trae un ingreso de orden de compra).",
+   "Si no es inventario, en «Compras varias» agrega las líneas con «Línea» o usa «Usar el detalle como total».",
+   "Llena el desglose fiscal si aplica (IDP, exento, no deducible) y la retención (formulario, valor, fecha).",
+   "Pestaña Detalle contable: presiona «Contabilizar» y revisa el cuadre.",
+   "En Otras funciones elige la forma de pago, la cuenta bancaria y «Cuenta por pagar»; crea la «Contraseña» de pago.",
+   "Guarda y presiona «Generar partida».",
+   "La compra queda por pagar en Caja y Bancos › Facturas de compra por pagar; «Anular compra» la deja sin efecto."
+  ],
+  "campos": [
+   [
+    "Proveedor",
+    "{proveedor}",
+    "Emisor."
+   ],
+   [
+    "# Serie / # Documento *",
+    "A · 4521",
+    "Datos del DTE."
+   ],
+   [
+    "Fecha *",
+    "02/11/{anio}",
+    "Fecha del documento."
+   ],
+   [
+    "Presentación",
+    "Noviembre {anio}",
+    "Mes del libro de compras."
+   ],
+   [
+    "Clasificación",
+    "Bienes",
+    "Clasificación fiscal."
+   ],
+   [
+    "Días de crédito",
+    "30",
+    "Fecha de pago = fecha + días."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo de registro · Artículos de la compra",
+   "columnas": [
+    "Producto",
+    "Lote",
+    "Vence",
+    "Cantidad",
+    "Costo unitario",
+    "Costo total"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "L2406",
+     "06/2028",
+     "100",
+     "Q 32.15",
+     "Q 3,215.00"
+    ],
+    [
+     "Jarabe 120 ml",
+     "J1180",
+     "01/2027",
+     "30",
+     "Q 26.50",
+     "Q 795.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "130",
+    "Subtotal",
+    "Q 4,010.00"
+   ]
+  },
+  "resultado": {
+   "titulo": "Resultado · Partida de la compra C-0981",
+   "columnas": [
+    "Cuenta",
+    "Nombre",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "1.1.3.01",
+     "Inventario de mercaderías",
+     "Q 4,010.00",
+     ""
+    ],
+    [
+     "1.1.4.01",
+     "IVA por cobrar",
+     "Q 481.20",
+     ""
+    ],
+    [
+     "2.1.1.01",
+     "Proveedores · {proveedor}",
+     "",
+     "Q 4,491.20"
+    ]
+   ],
+   "totales": [
+    "",
+    "Totales",
+    "Q 4,491.20",
+    "Q 4,491.20"
+   ],
+   "nota": "Códigos ilustrativos."
+  }
+ },
+ "consultar-compras": {
+  "puntos": [
+   "Resumen de los ingresos de compras por empresa, proveedor y fechas (maestro con totales y detalle con artículos y contabilidad); permite modificar las que no están contabilizadas ni en un mes cerrado."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Procesar Compras › Consultar Compras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Proveedor», «Fecha inicial», «Fecha final», «Clasificación», «Ordenar por» y «Estado».",
+   "Presiona «Consultar».",
+   "Elige una compra para ver sus artículos y su detalle contable.",
+   "Para corregirla presiona «Modificar ingreso de compra» (solo si su mes está abierto y no tiene partida).",
+   "Genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Compra",
+    "Documento",
+    "Fecha",
+    "Proveedor",
+    "Total",
+    "IVA",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "C-0981",
+     "A-4521",
+     "02/11/{anio}",
+     "{proveedor}",
+     "Q 4,491.20",
+     "Q 481.20",
+     "ACTIVA"
+    ],
+    [
+     "C-0975",
+     "B-889",
+     "28/10/{anio}",
+     "Servicios Técnicos, S.A.",
+     "Q 1,850.00",
+     "Q 198.21",
+     "PAGADA"
+    ]
+   ],
+   "totales": [
+    "2 compras",
+    "",
+    "",
+    "",
+    "Q 6,341.20",
+    "Q 679.41",
+    ""
+   ]
+  },
+  "voz": "Consulta de compras: dos compras por seis mil trescientos cuarenta y un quetzales con veinte centavos y seiscientos setenta y nueve quetzales de IVA."
+ },
+ "regularizacion-anticipos": {
+  "puntos": [
+   "Liquida los anticipos a proveedores (cheques y notas de débito cargados a la cuenta de anticipo) contra las compras por pagar y genera su póliza (debe cuenta a operar, haber cuenta de anticipo)."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Procesar Compras › Regularización anticipos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva»: «Fecha inicial *», «Fecha final *», «Cuenta anticipo *», «Tipo» y «Cuenta a operar *».",
+   "Presiona «Obtener documentos»: trae los anticipos del período.",
+   "Con «Agregar compra» liga cada anticipo con la compra que liquida.",
+   "Escribe «Observaciones» y presiona «Procesar»: se genera la póliza con la fecha final.",
+   "«Reversar» anula la póliza; «Imprimir» saca la regularización."
+  ],
+  "resultado": {
+   "columnas": [
+    "Anticipo",
+    "Compra",
+    "Valor",
+    "Póliza"
+   ],
+   "filas": [
+    [
+     "Cheque 0998",
+     "C-0981",
+     "Q 2,000.00",
+     "11-0055"
+    ]
+   ]
+  }
+ },
+ "notas-credito-compras": {
+  "puntos": [
+   "Notas de crédito y débito de los proveedores: autorización, serie, número, fecha, moneda, proveedor, bodega destino, factura de referencia, motivo y tipo de ajuste, productos con lote, detalle contable y listado.",
+   "«Descargar» mueve el inventario, genera la póliza y rebaja (o aumenta) la compra."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Procesar Compras › Notas crédito compras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva» y elige el «Tipo de nota» (crédito o débito).",
+   "Escribe «Número de autorización», «Serie», «Número *» y «Fecha *».",
+   "Elige el «Proveedor *» y la compra de referencia; se ve su «Saldo».",
+   "Escribe el «Motivo de ajuste» y el «Tipo de ajuste» (devolución o descuento); si es devolución elige la «Bodega destino».",
+   "En «Detalle nota» usa «Traer de la factura» o agrega productos; para descuentos usa «Concepto».",
+   "En «Detalle contable» presiona «Contabilizar».",
+   "Guarda y descarga: se mueve el inventario, se genera la póliza y baja el saldo de la compra."
+  ],
+  "resultado": {
+   "columnas": [
+    "Concepto",
+    "Antes",
+    "Nota",
+    "Después"
+   ],
+   "filas": [
+    [
+     "Saldo compra C-0981",
+     "Q 4,491.20",
+     "Q 321.50",
+     "Q 4,169.70"
+    ],
+    [
+     "Existencia {producto}",
+     "118",
+     "−10",
+     "108"
+    ]
+   ]
+  }
+ },
+ "productos-consignacion": {
+  "puntos": [
+   "Partes de depósito de los proveedores: envío o devolución de mercadería en consignación y su carga al inventario, sin ser compra."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Procesar Compras › Productos en consignación y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo» y elige el «Tipo documento» (envío o devolución).",
+   "Escribe «Documento», «Fecha documento *» y elige el proveedor y la «Bodega *».",
+   "Elige la «Transacción» y escribe la «Descripción».",
+   "En «Productos» agrega cada artículo con lote y vencimiento.",
+   "Guarda: la mercadería entra (o sale) de la bodega marcada como consignación.",
+   "Revisa el «Listado de partes»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Parte",
+    "Tipo",
+    "Producto",
+    "Cantidad",
+    "Bodega"
+   ],
+   "filas": [
+    [
+     "PD-014",
+     "Envío",
+     "{producto}",
+     "50",
+     "{bodega}"
+    ]
+   ]
+  }
+ },
+ "contrasenas-pago": {
+  "puntos": [
+   "Recepción de facturas del proveedor: número, fecha, usuario, proveedor, tipo de compra (inmediato o crédito), fecha estimada de pago, estado y documentos recibidos.",
+   "Se autoriza, se imprime la contraseña, se liquida cuando sus compras ya están pagadas y se anula."
+  ],
+  "pasos": [
+   "Entra a Compras › Registros › Compras › Procesar Compras › Contraseñas de pago y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva recepción».",
+   "Elige el «Proveedor *», el «Tipo compra» y los «Días»; se calcula la «Fecha estimada pago».",
+   "En «Documentos recibidos» presiona «Agregar» por cada factura (serie, número, fecha, valor) o «Traer compras pendientes del proveedor».",
+   "Escribe «Observaciones» y presiona «Guardar cambios».",
+   "Autoriza e imprime la contraseña para el proveedor.",
+   "Cuando se paguen, presiona «Liquidar contraseñas»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Serie",
+    "Número",
+    "Fecha",
+    "Valor",
+    "Compra"
+   ],
+   "filas": [
+    [
+     "A",
+     "4521",
+     "02/11/{anio}",
+     "Q 4,491.20",
+     "C-0981"
+    ]
+   ]
+  }
+ },
+ "kardex-productos": {
+  "puntos": [
+   "Movimientos de inventario de cada producto por bodega: entradas, salidas, saldo y costo, con su documento de origen; en medicamentos y perecederos por lote con fabricación y vencimiento."
+  ],
+  "pasos": [
+   "Entra a Compras › Mantenimientos › Inventarios › Kardex de Productos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el producto en el catálogo de arriba («Subir» / «Bajar» para recorrerlo).",
+   "Elige la «Bodega» y las fechas.",
+   "Revisa cada movimiento: fecha, documento interno y físico, entrada, salida, existencia y costo promedio.",
+   "«Imprimir» saca el kardex."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Kardex de {producto}",
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Lote",
+    "Entrada",
+    "Salida",
+    "Existencia",
+    "Costo prom."
+   ],
+   "filas": [
+    [
+     "02/11/{anio}",
+     "Compra C-0981",
+     "L2406",
+     "100",
+     "",
+     "118",
+     "Q 32.15"
+    ],
+    [
+     "{hoy}",
+     "Factura FE-7082",
+     "L2406",
+     "",
+     "10",
+     "108",
+     "Q 32.15"
+    ]
+   ]
+  },
+  "voz": "Kardex de {producto}: entraron cien unidades con la compra C novecientos ochenta y uno y salieron diez con la factura siete mil ochenta y dos. Existencia actual: ciento ocho."
+ },
+ "analisis-costos": {
+  "puntos": [
+   "Compras de cada producto con su costo unitario, promedio ponderado, descuentos, bonificaciones, notas de crédito y costo neto."
+  ],
+  "pasos": [
+   "Entra a Compras › Mantenimientos › Inventarios › Análisis de Costos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el producto y el rango «Compras desde» / «Compras hasta».",
+   "Revisa cada compra: cantidad, costo, descuentos, bonificaciones y notas.",
+   "Compara el costo neto con el promedio; imprime."
+  ],
+  "reporte": {
+   "columnas": [
+    "Compra",
+    "Cantidad",
+    "Costo unit.",
+    "Descuento",
+    "Costo neto"
+   ],
+   "filas": [
+    [
+     "C-0981",
+     "100",
+     "Q 32.15",
+     "Q 0.00",
+     "Q 32.15"
+    ],
+    [
+     "C-0940",
+     "80",
+     "Q 33.00",
+     "Q 1.00",
+     "Q 32.00"
+    ]
+   ],
+   "totales": [
+    "Promedio ponderado",
+    "180",
+    "",
+    "",
+    "Q 32.08"
+   ]
+  },
+  "voz": "Costo promedio ponderado de {producto}: treinta y dos quetzales con ocho centavos."
+ },
+ "operaciones-sat-compras": {
+  "puntos": [
+   "Compras, notas de proveedores y retenciones del mes cruzadas con los DTE recibidos de la SAT."
+  ],
+  "pasos": [
+   "Entra a Compras › Procesos › Operaciones SAT y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año» y el «Mes».",
+   "Revisa qué DTE recibidos no tienen compra registrada y qué compras no aparecen en la SAT.",
+   "Registra o corrige las diferencias; genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Concepto",
+    "SAT",
+    "Sistema",
+    "Diferencia"
+   ],
+   "filas": [
+    [
+     "DTE recibidos",
+     "58",
+     "56",
+     "2"
+    ],
+    [
+     "Total Q",
+     "Q 98,450.00",
+     "Q 97,100.00",
+     "Q 1,350.00"
+    ]
+   ]
+  },
+  "voz": "Operaciones SAT de compras: hay dos documentos recibidos en la SAT que aún no están registrados, por mil trescientos cincuenta quetzales."
+ },
+ "cxp-mensual": {
+  "puntos": [
+   "Cuentas por pagar de un mes: proveedor, tipo de fecha, saldo, tipo de proveedor y días de mora."
+  ],
+  "pasos": [
+   "Entra a Compras › Procesos › Cuentas x Pagar › Consolidado CXP mensual y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Año pago», mes, «Proveedor», «Tipo fecha», «Saldo?», «Tipo proveedor» y orden.",
+   "Revisa cada compra con su saldo y días de mora.",
+   "«Resumen» por proveedor, «Est. cuenta» y Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Proveedor",
+    "Compra",
+    "Total",
+    "Pagado",
+    "Saldo",
+    "Días mora"
+   ],
+   "filas": [
+    [
+     "{proveedor}",
+     "C-0981",
+     "Q 4,491.20",
+     "Q 0.00",
+     "Q 4,169.70",
+     "0"
+    ],
+    [
+     "Distribuidora Norte",
+     "C-0960",
+     "Q 2,800.00",
+     "Q 1,400.00",
+     "Q 1,400.00",
+     "15"
+    ]
+   ]
+  },
+  "voz": "Cuentas por pagar de noviembre: cinco mil quinientos sesenta y nueve quetzales con setenta pendientes; una compra con quince días de mora."
+ },
+ "cxp-general": {
+  "puntos": [
+   "Cuentas por pagar en un rango de fechas, con su valor y saldo en quetzales."
+  ],
+  "pasos": [
+   "Entra a Compras › Procesos › Cuentas x Pagar › Consolidado general y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Fecha inicio», «Fecha final», proveedor y tipo.",
+   "Revisa valor y saldo; «Resumen» por proveedor; Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Proveedor",
+    "Compras",
+    "Valor Q",
+    "Saldo Q"
+   ],
+   "filas": [
+    [
+     "{proveedor}",
+     "6",
+     "Q 22,400.00",
+     "Q 4,169.70"
+    ]
+   ]
+  },
+  "voz": "Consolidado de cuentas por pagar: veintidós mil cuatrocientos quetzales comprados a {proveedor} con un saldo de cuatro mil ciento sesenta y nueve quetzales."
+ },
+ "cxp-periodo": {
+  "puntos": [
+   "Saldo de las compras a una fecha, con resumen por proveedor y estado de cuenta."
+  ],
+  "pasos": [
+   "Entra a Compras › Procesos › Cuentas x Pagar › CXP por periodo y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe la fecha de corte y elige el proveedor.",
+   "Revisa los saldos, «Resumen» y «Est. cuenta»; Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Proveedor",
+    "Saldo al corte"
+   ],
+   "filas": [
+    [
+     "{proveedor}",
+     "Q 4,169.70"
+    ],
+    [
+     "Distribuidora Norte",
+     "Q 1,400.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "Q 5,569.70"
+   ]
+  },
+  "voz": "Saldo por pagar al corte: cinco mil quinientos sesenta y nueve quetzales con setenta centavos."
+ },
+ "cxp-estado": {
+  "puntos": [
+   "Estado de cuenta de uno o todos los proveedores en un rango de fechas: saldo anterior, compras, pagos, saldo final y antigüedad, en PDF o Excel."
+  ],
+  "pasos": [
+   "Entra a Compras › Procesos › Cuentas x Pagar › Estado de cuenta proveedores y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige fechas y el proveedor (o todos).",
+   "Elige «Mostrar», orden y «Contenido» (detallado o resumido).",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Estado de cuenta de {proveedor}",
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Cargo",
+    "Abono",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "01/11/{anio}",
+     "Saldo anterior",
+     "",
+     "",
+     "Q 0.00"
+    ],
+    [
+     "02/11/{anio}",
+     "Compra C-0981",
+     "Q 4,491.20",
+     "",
+     "Q 4,491.20"
+    ],
+    [
+     "{hoy}",
+     "Nota NC prov.",
+     "",
+     "Q 321.50",
+     "Q 4,169.70"
+    ]
+   ]
+  },
+  "voz": "Estado de cuenta de {proveedor}: se le deben cuatro mil ciento sesenta y nueve quetzales con setenta centavos, aún no vencidos."
+ },
+ "compras-por-periodo": {
+  "puntos": [
+   "Compras del período por mes (resumido) o por documento (detallado), de un producto o de todos, con gráfica."
+  ],
+  "pasos": [
+   "Entra a Compras › Reportes y gráficas › Reportes de compras › Compras por período y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige las fechas, el producto y el contenido.",
+   "Revisa la vista previa con totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Mes",
+    "Compras",
+    "Valor Q",
+    "IVA"
+   ],
+   "filas": [
+    [
+     "Octubre",
+     "54",
+     "Q 92,300.00",
+     "Q 11,076.00"
+    ],
+    [
+     "Noviembre",
+     "21",
+     "Q 38,900.00",
+     "Q 4,668.00"
+    ]
+   ]
+  },
+  "voz": "Compras por período: octubre noventa y dos mil trescientos quetzales; noviembre lleva treinta y ocho mil novecientos."
+ },
+ "compras-por-proveedor": {
+  "puntos": [
+   "Compras del período por proveedor con su participación; detallado con sus documentos."
+  ],
+  "pasos": [
+   "Entra a Compras › Reportes y gráficas › Reportes de compras › Compras por proveedor y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige las fechas, el producto y el contenido.",
+   "Revisa la vista previa con totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Proveedor",
+    "Compras",
+    "Valor Q",
+    "Participación"
+   ],
+   "filas": [
+    [
+     "{proveedor}",
+     "6",
+     "Q 22,400.00",
+     "17.1%"
+    ],
+    [
+     "Distribuidora Norte",
+     "9",
+     "Q 30,100.00",
+     "23.0%"
+    ]
+   ]
+  },
+  "voz": "El principal proveedor del período es Distribuidora Norte con el veintitrés por ciento de las compras."
+ },
+ "reporte-cuentas-por-pagar": {
+  "puntos": [
+   "Saldo por pagar a una fecha con antigüedad (no vencido, 1-30, 31-60, 61-90, más de 90), por proveedor o por documento."
+  ],
+  "pasos": [
+   "Entra a Compras › Reportes y gráficas › Reportes de compras › Cuentas por pagar y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe la fecha de corte y el contenido.",
+   "Revisa la vista previa con totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Proveedor",
+    "No vencido",
+    "1-30",
+    "31-60",
+    "Total"
+   ],
+   "filas": [
+    [
+     "{proveedor}",
+     "Q 4,169.70",
+     "",
+     "",
+     "Q 4,169.70"
+    ],
+    [
+     "Distribuidora Norte",
+     "",
+     "Q 1,400.00",
+     "",
+     "Q 1,400.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "Q 4,169.70",
+    "Q 1,400.00",
+    "",
+    "Q 5,569.70"
+   ]
+  },
+  "voz": "Cuentas por pagar: cinco mil quinientos sesenta y nueve quetzales; mil cuatrocientos ya vencidos de uno a treinta días."
+ },
+ "grafica-de-compras": {
+  "puntos": [
+   "Compras por mes, proveedores principales y productos principales del período, con su tabla de datos."
+  ],
+  "pasos": [
+   "Entra a Compras › Reportes y gráficas › Reportes de compras › Gráfica de compras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige las fechas y el producto.",
+   "Revisa la vista previa con totales y gráficas.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto principal",
+    "Unidades",
+    "Compras Q"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "380",
+     "Q 12,217.00"
+    ]
+   ]
+  },
+  "voz": "El producto más comprado del período es {producto}, con trescientas ochenta unidades."
+ }
+}

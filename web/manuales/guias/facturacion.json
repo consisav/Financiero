@@ -1,0 +1,1746 @@
+{
+ "clientes": {
+  "puntos": [
+   "Clientes de {empresa}: a la izquierda el listado (número, tipo y número de documento, nombre, razón social, estado) y a la derecha la ficha.",
+   "La ficha tiene identificación (NIT y CUI validados), contacto, vendedor, tipo de precio, bodega, modo de entrega, crédito (forma de pago, días y monto máximo), ubicación y datos de exportación.",
+   "El crédito solo cambia con «Modificar crédito», que pide el motivo y queda en el historial."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Ventas › Clientes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el cliente en la lista (filtra por «Estado» y «Tipo de cliente»).",
+   "Presiona «Nuevo cliente».",
+   "Elige el «Tipo de documento» (NIT, CUI, pasaporte) y escribe el número: el sistema valida el NIT o el CUI.",
+   "Escribe «Nombre del cliente *», «Razón social», «Contacto», «Teléfono» y «Correo electrónico» (a donde llega la factura electrónica).",
+   "Elige el «Vendedor», el «Tipo de precio» (lista de precios que se aplicará), la «Bodega» y el «Modo de entrega».",
+   "En crédito elige la «Forma de pago» (contado o crédito), los «Días» y el «Monto máximo Q».",
+   "Llena la ubicación: «País», «Departamento», «Municipio», «Cód. postal» y «Dirección».",
+   "Si exporta, en «Datos de exportación» llena país de destino, Incoterm, código del comprador, consignatario y dirección en el exterior.",
+   "Guarda; el cliente aparece en Facturas, Recibos y Ventas Inteligentes.",
+   "Para cambiar el crédito presiona «Modificar crédito», escribe el «Motivo del cambio *» y «Aplicar».",
+   "«Duplicar» crea un cliente nuevo con los mismos datos; «Imprimir» saca el listado en PDF o Excel."
+  ],
+  "campos": [
+   [
+    "Tipo de documento",
+    "NIT",
+    "NIT, CUI o pasaporte."
+   ],
+   [
+    "Documento",
+    "1234567-8",
+    "Validado al escribir."
+   ],
+   [
+    "Nombre del cliente *",
+    "{cliente}",
+    "Nombre en la factura."
+   ],
+   [
+    "Tipo de precio",
+    "{tipoPrecio}",
+    "Lista de precios del cliente."
+   ],
+   [
+    "Vendedor",
+    "{vendedor}",
+    "Vendedor asignado."
+   ],
+   [
+    "Forma de pago / Días",
+    "Crédito · 30",
+    "Condición de pago."
+   ],
+   [
+    "Monto máximo Q",
+    "Q 25,000.00",
+    "Límite de crédito."
+   ]
+  ]
+ },
+ "vendedores": {
+  "puntos": [
+   "Vendedores de {empresa}: contacto, comisiones (general, crédito y contado), siglas y usuario del sistema."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Ventas › Vendedores y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo vendedor».",
+   "Escribe «Nombre del vendedor *», «Siglas», «Correo», «Celular» y «Teléfono».",
+   "Escribe los porcentajes de comisión general, al crédito y al contado.",
+   "Elige el «Usuario del sistema» si el vendedor entra al sistema (sus ventas se le asignan solas).",
+   "Elige el «Estado» y guarda.",
+   "Los vendedores se asignan a los clientes y a cada factura."
+  ],
+  "campos": [
+   [
+    "Nombre del vendedor *",
+    "{vendedor}",
+    "Nombre."
+   ],
+   [
+    "Siglas",
+    "VEN1",
+    "Abreviatura en reportes."
+   ],
+   [
+    "Comisión crédito / contado",
+    "3 % · 5 %",
+    "Porcentaje por tipo de venta."
+   ],
+   [
+    "Usuario del sistema",
+    "{usuario}",
+    "Usuario ligado."
+   ]
+  ]
+ },
+ "series-recibos": {
+  "puntos": [
+   "Series de los recibos, retenciones y exenciones: serie, recibo inicial, principal (una por tipo), tipo y si se muestra en la lista."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Ventas › Series Recibos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Agrega o edita una fila: «Serie» (ej. A), «Recibo inicial» (ej. 1001), tipo (recibo, retención o exención).",
+   "Marca «Principal» en la serie que se propone por omisión (una por tipo).",
+   "Marca si se muestra en la lista de Recibos, Retenciones o Exenciones.",
+   "Presiona «Guardar cambios»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Serie",
+    "Recibo inicial",
+    "Tipo",
+    "Principal",
+    "Se muestra"
+   ],
+   "filas": [
+    [
+     "A",
+     "1001",
+     "Recibo",
+     "Sí",
+     "Sí"
+    ],
+    [
+     "R",
+     "1",
+     "Retención",
+     "Sí",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "correlativo-dte": {
+  "puntos": [
+   "Correlativo interno de las facturas (FE) y de las notas de crédito (NC): el siguiente documento toma el número siguiente."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Ventas › Correlativo - DTE y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Revisa cada documento: descripción, serie y último correlativo.",
+   "Si migraste documentos o empiezas una serie nueva, corrige el último correlativo.",
+   "Presiona «Guardar cambios»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Documento",
+    "Descripción",
+    "Serie",
+    "Último correlativo"
+   ],
+   "filas": [
+    [
+     "FE",
+     "Factura electrónica",
+     "FE",
+     "7081"
+    ],
+    [
+     "NC",
+     "Nota de crédito",
+     "NC",
+     "214"
+    ]
+   ],
+   "nota": "La próxima factura será FE-7082."
+  }
+ },
+ "clasificaciones-y-tipos": {
+  "puntos": [
+   "Clasificaciones de productos y servicios (descripción, tipo, cuenta, tipo de servicio, inventario y laboratorio) y, abajo, los tipos de productos de cada clasificación con sus cuentas de inventario y facturación."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Productos › Clasificaciones y tipos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En la lista de arriba agrega una clasificación (ej. Medicamentos) con su tipo (bien o servicio), cuenta y si maneja inventario.",
+   "Elige la clasificación: abajo aparecen sus tipos.",
+   "Agrega cada tipo con «Siglas», «Descripción», cuenta de inventarios y cuenta de facturación.",
+   "Presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Clasificación",
+    "Tipo",
+    "Siglas",
+    "Cuenta inventario",
+    "Cuenta ventas"
+   ],
+   "filas": [
+    [
+     "Medicamentos",
+     "Genéricos",
+     "GEN",
+     "1.1.3.01",
+     "4.1.1.01"
+    ],
+    [
+     "Servicios",
+     "Consultas",
+     "CON",
+     "—",
+     "4.1.2.01"
+    ]
+   ]
+  }
+ },
+ "tipos-de-medida": {
+  "puntos": [
+   "Unidades de medida de los productos (unidad, caja, frasco, kilo, litro…)."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Productos › Tipos de medida y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar» y escribe el código y la descripción (ej. CJ · Caja).",
+   "Presiona «Guardar».",
+   "La medida se elige en la ficha de cada producto y sale en facturas y kardex."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Descripción"
+   ],
+   "filas": [
+    [
+     "UN",
+     "Unidad"
+    ],
+    [
+     "CJ",
+     "Caja"
+    ],
+    [
+     "FR",
+     "Frasco"
+    ]
+   ]
+  }
+ },
+ "tipos-de-precio": {
+  "puntos": [
+   "Listas de precio: % de utilidad, % de descuento, factor y estado; cada cliente tiene un tipo de precio."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Productos › Tipos de precio y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar»: código y nombre (ej. MAYORISTA).",
+   "Escribe el % de utilidad sobre el costo y el % de descuento.",
+   "Escribe el factor si se usa en el cálculo y marca el estado.",
+   "Presiona «Guardar»; el precio sugerido de cada producto = costo + utilidad − descuento."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Tipo de precio",
+    "% utilidad",
+    "% descuento",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "1",
+     "PÚBLICO",
+     "40 %",
+     "0 %",
+     "Activo"
+    ],
+    [
+     "2",
+     "MAYORISTA",
+     "25 %",
+     "5 %",
+     "Activo"
+    ]
+   ]
+  }
+ },
+ "presentaciones-productos": {
+  "puntos": [
+   "Presentaciones en que vienen los productos (caja x 10, frasco 120 ml, blíster…)."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Productos › Presentación productos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Agregar» y escribe la presentación.",
+   "Presiona «Guardar»; se elige en la ficha del producto."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código",
+    "Presentación"
+   ],
+   "filas": [
+    [
+     "1",
+     "Caja x 10 tabletas"
+    ],
+    [
+     "2",
+     "Frasco 120 ml"
+    ]
+   ]
+  }
+ },
+ "productos-y-servicios": {
+  "puntos": [
+   "Artículos de {empresa}: clasificación y tipo, código y código de barras, marca, principio activo, unidad, presentación, proveedor principal, costo en Q y US$, bodega, mínimo y máximo, ubicación (estante, fila, bloque), precios e imagen."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Productos › Productos y servicios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el artículo en la lista o presiona «Nuevo artículo».",
+   "Elige la «Clasificación» y el «Tipo producto».",
+   "Escribe el «Nombre *», el «Código producto» y el «Código de barras».",
+   "Escribe «Marca» y «Principio activo» (medicamentos).",
+   "Elige «Unidad de medida», «Presentación» y el «Proveedor principal» (o «Proveedor» para crearlo).",
+   "Escribe el «Precio costo Q» (y «Costo US$» si se importa).",
+   "Elige la «Bodega» y escribe «Mínimo» y «Máximo» (alertas de reorden).",
+   "Escribe la ubicación: «Estante», «Fila» y «Bloque».",
+   "Sube la imagen y guarda.",
+   "Asigna sus precios en Precios de venta; «Imprimir» saca el catálogo."
+  ],
+  "campos": [
+   [
+    "Nombre *",
+    "{producto}",
+    "Nombre en facturas."
+   ],
+   [
+    "Código producto",
+    "{codigoProducto}",
+    "Código interno."
+   ],
+   [
+    "Unidad de medida",
+    "Caja",
+    "Unidad de venta."
+   ],
+   [
+    "Precio costo Q",
+    "Q 32.15",
+    "Costo para margen y kardex."
+   ],
+   [
+    "Bodega",
+    "{bodega}",
+    "Bodega principal."
+   ],
+   [
+    "Mínimo / Máximo",
+    "20 · 200",
+    "Reorden."
+   ],
+   [
+    "Estante / Fila / Bloque",
+    "E3 · F2 · B1",
+    "Ubicación física."
+   ]
+  ]
+ },
+ "precios-de-venta": {
+  "puntos": [
+   "Precio de cada producto en cada tipo de precio: fecha, precio, margen sobre el costo, precio sugerido y vigencia; lista de precios en PDF o Excel."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Catálogos › Productos › Precios de venta y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Busca el producto arriba (incluye inactivos si hace falta); ves su costo y cuántos precios tiene.",
+   "Elige el producto: abajo aparece una fila por tipo de precio.",
+   "Escribe el precio o presiona «Aplicar sugeridos» (costo + % utilidad − % descuento).",
+   "Revisa el margen sobre el costo y marca la vigencia.",
+   "Presiona «Guardar precios»; usa «Subir» / «Bajar» para moverte entre productos.",
+   "Imprime la lista completa con «Lista de precios PDF» o «Excel»."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Precios de {producto}",
+   "columnas": [
+    "Tipo de precio",
+    "Precio",
+    "Margen",
+    "Sugerido",
+    "Vigente"
+   ],
+   "filas": [
+    [
+     "PÚBLICO",
+     "Q 45.00",
+     "40.0%",
+     "Q 45.01",
+     "Sí"
+    ],
+    [
+     "MAYORISTA",
+     "Q 38.20",
+     "18.8%",
+     "Q 38.18",
+     "Sí"
+    ]
+   ]
+  }
+ },
+ "facturas-ventas": {
+  "puntos": [
+   "Factura electrónica FEL (certificador COFIDI): franja de control, documento FEL con valor y saldo, cliente, venta y crédito, impuestos y cobro.",
+   "Pestañas: Detalle factura (productos con lote, registro sanitario y fechas), Detalle contable, Detalle inventario, Pagos y Procedimientos (certificar, anular, imprimir).",
+   "Totales, IVA, saldo y la salida del inventario los calcula el servidor."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Facturas › Facturas Ventas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva».",
+   "Escribe el «Código» o busca el «Cliente *» (ej. {cliente}); se llenan NIT, teléfono, contacto, dirección y correo.",
+   "Revisa «Tipo de factura», «Tipo DTE» (FACT, FCAM…) y la «Moneda» con su «Cambio».",
+   "Elige «Vendedor», «Tipo de precio» y «Bodega» de donde sale la mercadería.",
+   "En «Pago» elige contado o crédito y los «Días»; se calcula la fecha de «Cobro».",
+   "Si el cliente es agente retenedor llena «% ret. IVA» y «Ret. ISR».",
+   "Pestaña «Detalle factura»: presiona «Producto», busca el artículo, escribe la cantidad; el precio sale del tipo de precio. Elige el «Lote» (trae «Registro sanitario» y «Fecha de vencimiento»).",
+   "Revisa subtotal, IVA y total; guarda.",
+   "Pestaña «Procedimientos»: presiona «Certificar factura»: se envía a la SAT por COFIDI y regresan «No. de autorización», «Serie» y «No. DTE».",
+   "Presiona «Imprimir factura» (PDF con QR) y, si hay despacho, «Imprimir guía» o «Imprimir rep. salida».",
+   "En «Detalle contable» revisa la partida y en «Detalle inventario» la salida por lote.",
+   "Si la pagan en el momento registra el cobro en «Pagos» («Pago manual», «Guardar pagos»); si no, se cobra con un Recibo.",
+   "Para anular usa «Anular factura» (o Anulación de Documentos DTE)."
+  ],
+  "campos": [
+   [
+    "Cliente *",
+    "{cliente}",
+    "Receptor de la factura."
+   ],
+   [
+    "Tipo DTE",
+    "FACT",
+    "Factura normal (FCAM cambiaria)."
+   ],
+   [
+    "Bodega",
+    "{bodega}",
+    "De dónde sale el producto."
+   ],
+   [
+    "Pago / Días",
+    "Crédito · 30",
+    "Condición de pago."
+   ],
+   [
+    "Producto / Lote",
+    "{codigoProducto} · L2406",
+    "Artículo y lote."
+   ],
+   [
+    "No. de autorización",
+    "Lo da la SAT",
+    "Al certificar."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo de registro · Detalle de la factura",
+   "columnas": [
+    "Código",
+    "Producto",
+    "Lote",
+    "Cantidad",
+    "Precio",
+    "Total"
+   ],
+   "filas": [
+    [
+     "{codigoProducto}",
+     "{producto}",
+     "L2406",
+     "10",
+     "Q 45.00",
+     "Q 450.00"
+    ],
+    [
+     "P-0102",
+     "Jarabe 120 ml",
+     "J1180",
+     "5",
+     "Q 38.00",
+     "Q 190.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "15",
+    "Subtotal",
+    "Q 640.00"
+   ]
+  },
+  "resultado": {
+   "titulo": "Resultado del proceso · Factura FE-7082 certificada",
+   "puntos": [
+    "Autorización SAT y número DTE asignados; saldo por cobrar Q 716.80; salida de 15 unidades de {bodega}."
+   ],
+   "columnas": [
+    "Cuenta",
+    "Nombre",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "1.1.2.01",
+     "Clientes · {cliente}",
+     "Q 716.80",
+     ""
+    ],
+    [
+     "4.1.1.01",
+     "Ventas",
+     "",
+     "Q 640.00"
+    ],
+    [
+     "2.1.4.01",
+     "IVA por pagar",
+     "",
+     "Q 76.80"
+    ]
+   ],
+   "totales": [
+    "",
+    "Totales",
+    "Q 716.80",
+    "Q 716.80"
+   ],
+   "nota": "Códigos ilustrativos."
+  }
+ },
+ "consulta-de-facturas": {
+  "puntos": [
+   "Resumen de las facturas por cliente, vendedor, forma de pago, fechas y estado (con saldo, pagadas, anuladas, sin certificar), con sus productos, detalle contable y pagos."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Facturas › Consulta de Facturas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige cliente, vendedor y «Forma de pago».",
+   "Revisa «Fecha inicial» (primer día del mes) y «Fecha final».",
+   "Elige «Ordenar por» y «Estado»; presiona «Consultar» («Ver todas» quita filtros).",
+   "Lee los totales y elige una factura para ver productos, contabilidad y pagos.",
+   "Ábrela en Facturas Ventas con el botón de la fila.",
+   "Genera PDF o Excel, resumido o detallado."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Facturas de noviembre",
+   "columnas": [
+    "Factura",
+    "Fecha",
+    "Cliente",
+    "Total",
+    "Saldo",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "FE-7082",
+     "{hoy}",
+     "{cliente}",
+     "Q 716.80",
+     "Q 716.80",
+     "Certificada"
+    ],
+    [
+     "FE-7081",
+     "14/11/{anio}",
+     "Farmacia Central",
+     "Q 2,450.00",
+     "Q 0.00",
+     "Pagada"
+    ],
+    [
+     "FE-7080",
+     "12/11/{anio}",
+     "{cliente}",
+     "Q 8,900.00",
+     "Q 0.00",
+     "Pagada"
+    ]
+   ],
+   "totales": [
+    "3 facturas",
+    "",
+    "",
+    "Q 12,066.80",
+    "Q 716.80",
+    ""
+   ]
+  },
+  "voz": "Consulta de facturas de {empresa} de noviembre: tres facturas por doce mil sesenta y seis quetzales con ochenta centavos; dos pagadas y una con saldo de setecientos dieciséis quetzales con ochenta."
+ },
+ "recibos": {
+  "puntos": [
+   "Recibo de cobro de un cliente: serie y recibo físico, fecha, estado (EMITIDO, LIQUIDADO o ANULADO), moneda, valor, cliente, vendedor, forma y tipo de pago, banco y documento.",
+   "Pestaña «Facturas»: las facturas con saldo del cliente, el abono de cada una, retención y gastos administrativos; el saldo de cada factura baja al guardar."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Recibos › Recibos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: elige la «Serie» y revisa el «Recibo No.».",
+   "Escribe la «Fecha», elige la «Moneda» y el «Valor cambio».",
+   "Busca el cliente por «Código» o «Nombre *» (ej. {cliente}); «Ver saldos» muestra lo que debe.",
+   "Elige la «Forma de pago» (efectivo, cheque, transferencia, depósito), el «Banco», el «Documento» y su «Valor documento».",
+   "Escribe la «Descripción» y las «Observaciones».",
+   "Pestaña «Facturas»: presiona «Asignar facturas» y elige las facturas que paga; escribe el abono de cada una.",
+   "Si el cliente retuvo, llena «Tipo ret.», «% ret.» y «Valor ret.»; agrega gastos administrativos si aplica.",
+   "Guarda: el recibo queda EMITIDO y baja el saldo de las facturas.",
+   "«Liquidar facturas» lo marca LIQUIDADO cuando se deposita; «Imprimir» saca original o copia con firma y sello.",
+   "«Modificar», «Anular» o «Eliminar» según su estado."
+  ],
+  "campos": [
+   [
+    "Serie / Recibo No.",
+    "A · 1045",
+    "Numeración del recibo."
+   ],
+   [
+    "Cliente",
+    "{cliente}",
+    "Quien paga."
+   ],
+   [
+    "Forma de pago",
+    "Cheque",
+    "Medio de pago."
+   ],
+   [
+    "Banco / Documento",
+    "Banco Industrial · 55821",
+    "Datos del cheque o transferencia."
+   ],
+   [
+    "Valor",
+    "Q 3,450.00",
+    "Monto recibido."
+   ]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Facturas pagadas con el recibo A-1045",
+   "columnas": [
+    "Factura",
+    "Fecha",
+    "Saldo anterior",
+    "Abono",
+    "Saldo nuevo"
+   ],
+   "filas": [
+    [
+     "FE-7074",
+     "15/10/{anio}",
+     "Q 2,000.00",
+     "Q 2,000.00",
+     "Q 0.00"
+    ],
+    [
+     "FE-7075",
+     "18/10/{anio}",
+     "Q 1,450.00",
+     "Q 1,450.00",
+     "Q 0.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "Totales",
+    "Q 3,450.00",
+    "Q 3,450.00",
+    "Q 0.00"
+   ]
+  }
+ },
+ "consulta-de-recibos": {
+  "puntos": [
+   "Resumen de los recibos de cobro por cliente, vendedor, forma de pago, fechas y estado (emitidos, liquidados, anulados), con las facturas que pagó cada uno."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Recibos › Consulta de Recibos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige cliente, vendedor, «Forma de pago», fechas, «Ordenar por» y «Estado».",
+   "Presiona «Consultar».",
+   "Elige un recibo para ver las facturas que pagó.",
+   "Ábrelo en Recibos con el botón de la fila.",
+   "Genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Recibo",
+    "Fecha",
+    "Cliente",
+    "Forma de pago",
+    "Valor",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "A-1045",
+     "{hoy}",
+     "{cliente}",
+     "Cheque",
+     "Q 3,450.00",
+     "EMITIDO"
+    ],
+    [
+     "A-1044",
+     "13/11/{anio}",
+     "Farmacia Central",
+     "Transferencia",
+     "Q 2,450.00",
+     "LIQUIDADO"
+    ]
+   ],
+   "totales": [
+    "2 recibos",
+    "",
+    "",
+    "",
+    "Q 5,900.00",
+    ""
+   ]
+  },
+  "voz": "Consulta de recibos: dos recibos por cinco mil novecientos quetzales; uno emitido y uno liquidado."
+ },
+ "notas-de-credito-electronicas": {
+  "puntos": [
+   "Descuentos y devoluciones sobre una factura: bajan su saldo; la devolución regresa los productos a la bodega destino.",
+   "Datos FEL (autorización, serie, DTE), cliente, factura de referencia, tipo de ajuste, motivo y detalle de productos."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Notas electrónicas › Notas de Crédito y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva».",
+   "Busca el cliente (ej. {cliente}) y la factura de referencia: se llenan autorización, serie, DTE, fechas y «Saldo factura».",
+   "Elige el «Tipo de ajuste» (descuento o devolución) y escribe el motivo.",
+   "Si es devolución elige la «Bodega destino»; «Copiar productos» trae los de la factura.",
+   "Ajusta cantidades y precios de lo devuelto o descontado.",
+   "Guarda y presiona «Certificar nota».",
+   "«Imprimir nota» saca el PDF; el saldo de la factura baja y, si es devolución, el producto entra a la bodega."
+  ],
+  "campos": [
+   [
+    "Factura de referencia",
+    "FE-7082",
+    "Factura que se ajusta."
+   ],
+   [
+    "Tipo de ajuste",
+    "DEVOLUCIÓN",
+    "Descuento o devolución."
+   ],
+   [
+    "Bodega destino",
+    "{bodega}",
+    "A dónde regresa el producto."
+   ],
+   [
+    "Motivo",
+    "Producto dañado",
+    "Motivo del ajuste."
+   ]
+  ],
+  "resultado": {
+   "titulo": "Resultado · Nota NC-215",
+   "columnas": [
+    "Concepto",
+    "Antes",
+    "Nota",
+    "Después"
+   ],
+   "filas": [
+    [
+     "Saldo FE-7082",
+     "Q 716.80",
+     "Q 100.80",
+     "Q 616.00"
+    ],
+    [
+     "Existencia {codigoProducto}",
+     "120",
+     "+2",
+     "122"
+    ]
+   ]
+  }
+ },
+ "notas-de-debito-electronicas": {
+  "puntos": [
+   "Cargos adicionales sobre una factura (intereses, correcciones de precio): suben su saldo."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Notas electrónicas › Notas de Débito y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva».",
+   "Elige el cliente y la factura de referencia.",
+   "Escribe el motivo (ej. Intereses por mora).",
+   "Agrega la línea con el concepto y el valor («Producto» o «Línea contable»).",
+   "Guarda y presiona «Certificar nota».",
+   "Imprime la nota; el saldo de la factura sube."
+  ],
+  "resultado": {
+   "columnas": [
+    "Concepto",
+    "Antes",
+    "Nota",
+    "Después"
+   ],
+   "filas": [
+    [
+     "Saldo FE-7060",
+     "Q 1,200.00",
+     "Q 36.00",
+     "Q 1,236.00"
+    ]
+   ]
+  }
+ },
+ "notas-de-abono-electronicas": {
+  "puntos": [
+   "Abonos sobre una factura (devoluciones o ajustes a favor del cliente): bajan su saldo."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Notas electrónicas › Notas de Abono y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva».",
+   "Elige el cliente y la factura de referencia.",
+   "Escribe el motivo del abono y el valor.",
+   "Guarda y presiona «Certificar nota».",
+   "Imprime; el saldo de la factura baja."
+  ],
+  "resultado": {
+   "columnas": [
+    "Concepto",
+    "Antes",
+    "Nota",
+    "Después"
+   ],
+   "filas": [
+    [
+     "Saldo FE-7070",
+     "Q 900.00",
+     "Q 150.00",
+     "Q 750.00"
+    ]
+   ]
+  }
+ },
+ "consulta-de-notas": {
+  "puntos": [
+   "Resumen de las notas de crédito, débito o abono por cliente, vendedor, tipo de ajuste, fechas y estado, con sus productos, detalle contable y factura de referencia."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Notas electrónicas › Consulta de Notas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Tipo de nota» (todas, crédito, débito o abono).",
+   "Revisa las fechas, «Ordenar por» y «Estado»; presiona «Consultar».",
+   "Elige una nota para ver sus productos y su factura de referencia.",
+   "Ábrela con el botón de la fila; genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Nota",
+    "Fecha",
+    "Cliente",
+    "Factura",
+    "Tipo",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "NC-215",
+     "{hoy}",
+     "{cliente}",
+     "FE-7082",
+     "Crédito",
+     "Q 100.80"
+    ],
+    [
+     "ND-12",
+     "10/11/{anio}",
+     "Farmacia Central",
+     "FE-7060",
+     "Débito",
+     "Q 36.00"
+    ]
+   ]
+  },
+  "voz": "Consulta de notas: una nota de crédito por cien quetzales con ochenta y una nota de débito por treinta y seis quetzales."
+ },
+ "anulacion-de-documentos-dte": {
+  "puntos": [
+   "Anula una factura o una nota con su motivo, deja registro de quién y cuándo, y puede duplicar la factura anulada.",
+   "La factura anulada queda con saldo cero y devuelve su inventario; la nota deja de afectar su factura."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Registros › Notas electrónicas › Anulación de Documentos DTE y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva anulación».",
+   "Elige el «Documento» (factura o nota) y escribe su «No. interno»: se llenan autorización, serie, DTE, fechas, valor y cliente.",
+   "Escribe el «Motivo de anulación *».",
+   "Presiona «Anular documento»: se anula ante la SAT y queda ANULADO.",
+   "Si hay que volver a facturar, presiona «Duplicar documento»: se crea una factura nueva igual, sin certificar.",
+   "«Imprimir documento» saca la constancia; abajo está la lista de anulaciones."
+  ],
+  "resultado": {
+   "columnas": [
+    "Anulación",
+    "Documento",
+    "Motivo",
+    "Usuario",
+    "Factura nueva"
+   ],
+   "filas": [
+    [
+     "AN-031",
+     "FE-7079",
+     "NIT incorrecto",
+     "{usuario}",
+     "FE-7083"
+    ]
+   ]
+  }
+ },
+ "envios": {
+  "puntos": [
+   "Envíos de productos a un cliente: bodega, cliente, forma de pago, precios y productos con lote y vencimiento; impresión tipo factura o tipo envío."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Mantenimientos › Ventas › Envíos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: revisa «Envío No.», «Fecha» y elige la «Bodega».",
+   "Busca el «Cliente» (se llenan nombre, NIT, teléfono, contacto y dirección).",
+   "Elige «Forma de pago», «Días crédito», «Tipo de precio» y la «Fecha cobro».",
+   "Presiona «Producto» para cada artículo: cantidad, lote y fechas.",
+   "Escribe «Observaciones» y guarda.",
+   "Imprime con «Imprimir tipo factura» o «Imprimir tipo envío».",
+   "«Modificar» o «Anular» según corresponda; el listado está en su pestaña."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Envío 0045",
+   "columnas": [
+    "Código",
+    "Producto",
+    "Lote",
+    "Cantidad",
+    "Precio",
+    "Total"
+   ],
+   "filas": [
+    [
+     "{codigoProducto}",
+     "{producto}",
+     "L2406",
+     "10",
+     "Q 45.00",
+     "Q 450.00"
+    ],
+    [
+     "P-0102",
+     "Jarabe 120 ml",
+     "J1180",
+     "5",
+     "Q 38.00",
+     "Q 190.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "",
+    "15",
+    "Subtotal",
+    "Q 640.00"
+   ]
+  }
+ },
+ "contrasenas-cobros": {
+  "puntos": [
+   "Recepción de facturas por el cliente: contraseña de cobro (C-n), días de crédito y fecha estimada de cobro de cada factura."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Mantenimientos › Ventas › Contraseñas de Cobro y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva» y elige el «Cliente».",
+   "Revisa «Días crédito» y la «Fecha estimada cobro».",
+   "Presiona «Asignar facturas»: trae las facturas con saldo sin contraseña.",
+   "Escribe «Observaciones» y guarda: cada factura toma la contraseña.",
+   "«Autorizar» la confirma; «Anular» quita la contraseña de las facturas; «Imprimir» saca la constancia."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Factura",
+    "Fecha",
+    "Valor",
+    "Observaciones"
+   ],
+   "filas": [
+    [
+     "FE-7082",
+     "{hoy}",
+     "Q 716.80",
+     ""
+    ],
+    [
+     "FE-7078",
+     "05/11/{anio}",
+     "Q 1,520.00",
+     ""
+    ]
+   ],
+   "totales": [
+    "Total",
+    "",
+    "Q 2,236.80",
+    ""
+   ]
+  }
+ },
+ "despachos": {
+  "puntos": [
+   "Facturas por despachar por fechas, cliente y estado; despacho con guías, reportes de salida y de envío, mensajero y entrega."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Mantenimientos › Ventas › Despachos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Fecha inicial», «Fecha final», «Cliente» y «Estado despacho».",
+   "Marca «Despachar» en la factura y elígela.",
+   "Revisa contacto, teléfono, «Modo entrega» y «Dirección de envío» y presiona «Guardar».",
+   "Pestaña Guías: «Imprimir despacho», «Imprimir rep. salida» (con «Mensajero» y «DPI»), «Imprimir rep. envío» e «Imprimir guía».",
+   "Al entregar presiona «Aplicar entrega»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Factura",
+    "Cliente",
+    "Modo entrega",
+    "Mensajero",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "FE-7082",
+     "{cliente}",
+     "Mensajería",
+     "Carlos Ruiz",
+     "ENTREGADO"
+    ],
+    [
+     "FE-7081",
+     "Farmacia Central",
+     "Recoge",
+     "",
+     "PENDIENTE"
+    ]
+   ]
+  },
+  "voz": "Despachos: una factura entregada y una pendiente de despacho."
+ },
+ "retenciones": {
+  "puntos": [
+   "Constancias de retención (IVA o ISR) recibidas del cliente y aplicadas a sus facturas."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Mantenimientos › Ventas › Retenciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo» y elige la serie de retención.",
+   "Elige el cliente y escribe el número de constancia y la fecha.",
+   "Elige el «Tipo ret.» (IVA o ISR) y el «% ret.».",
+   "Presiona «Asignar facturas» y escribe el «Valor ret.» de cada una.",
+   "Guarda: el saldo de las facturas baja por la retención."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Constancia",
+    "Factura",
+    "Tipo",
+    "%",
+    "Valor ret."
+   ],
+   "filas": [
+    [
+     "RET-55410",
+     "FE-7080",
+     "IVA",
+     "15 %",
+     "Q 143.04"
+    ]
+   ]
+  }
+ },
+ "exenciones": {
+  "puntos": [
+   "Constancias de exención del cliente aplicadas a sus facturas."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Mantenimientos › Ventas › Exenciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo» y elige la serie de exención.",
+   "Elige el cliente, el número de constancia y la fecha.",
+   "Asigna las facturas y el valor exento.",
+   "Guarda."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Constancia",
+    "Factura",
+    "Valor exento"
+   ],
+   "filas": [
+    [
+     "EX-2201",
+     "FE-7066",
+     "Q 1,200.00"
+    ]
+   ]
+  }
+ },
+ "generar-ventas": {
+  "puntos": [
+   "Venta guiada por cliente, también por voz: productos con su precio (del tipo de precio del cliente y el último que pagó), existencia y lo que más compra; avisa su saldo vencido.",
+   "Estados: GENERADA → CONFIRMADA → FACTURA PRELIMINAR → FACTURADA (o ELIMINADA). Al aceptar la factura preliminar pasa a Facturas Ventas ya llenada.",
+   "«Por voz» pregunta cliente, productos y cantidades; «Dictado voz» recibe instrucciones libres y responde en voz."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Ventas Inteligentes › Generar Ventas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva venta», escribe el «Nombre del cliente» (ej. {cliente}) y la «Fecha».",
+   "Revisa las sugerencias: lo que más compra y su saldo vencido.",
+   "Presiona «Agregar producto»: elige el artículo y la cantidad; ves el precio, el último precio pagado y la existencia (el botón muestra existencias por bodega y lote).",
+   "Repite por cada producto; quita los que no van.",
+   "Para vender por voz presiona «Por voz»: el sistema pregunta el cliente, luego cada producto y su cantidad; responde hablando.",
+   "Con «Dictado voz» puedes decir: «vender 10 cajas de {producto}», «verificar existencias», «saldo del cliente», «guardar», «confirmar».",
+   "Guarda (GENERADA) y confirma con el cliente (CONFIRMADA); «Dejar pendiente» la guarda para después.",
+   "Presiona «Trasladar a factura»: se arma la FACTURA PRELIMINAR; revísala y presiona «Aceptar» o «Generar la factura».",
+   "Se abre Facturas Ventas con todo llenado: certifica la factura; la venta pasa a FACTURADA."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Venta para {cliente}",
+   "columnas": [
+    "Producto",
+    "Cantidad",
+    "Precio",
+    "Último precio",
+    "Existencia",
+    "Total"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "10",
+     "Q 45.00",
+     "Q 44.00",
+     "120",
+     "Q 450.00"
+    ],
+    [
+     "Jarabe 120 ml",
+     "5",
+     "Q 38.00",
+     "Q 38.00",
+     "42",
+     "Q 190.00"
+    ]
+   ],
+   "totales": [
+    "",
+    "15",
+    "",
+    "",
+    "",
+    "Q 640.00"
+   ]
+  },
+  "reporte": {
+   "titulo": "Ejemplo de diálogo por voz",
+   "columnas": [
+    "Quién",
+    "Dice"
+   ],
+   "filas": [
+    [
+     "Sistema",
+     "¿Para qué cliente es la venta?"
+    ],
+    [
+     "Usuario",
+     "{cliente}"
+    ],
+    [
+     "Sistema",
+     "¿Qué producto?"
+    ],
+    [
+     "Usuario",
+     "{producto}, diez cajas"
+    ],
+    [
+     "Sistema",
+     "Agregado. Hay ciento veinte en existencia. ¿Algo más?"
+    ]
+   ]
+  },
+  "voz": "Venta para {cliente}: quince unidades por seiscientos cuarenta quetzales. El cliente tiene una factura vencida por mil doscientos quetzales."
+ },
+ "consulta-ventas": {
+  "puntos": [
+   "Ventas inteligentes por organización, localidad, fechas, cliente y estado, con sus totales, productos y factura."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Ventas Inteligentes › Consulta de Ventas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Fecha inicial», «Fecha final», «Cliente», «Estado» y «Ordenar».",
+   "Revisa los totales por estado.",
+   "Elige una venta para ver sus productos; «Abrir venta» la lleva a Generar Ventas y «Ver factura» abre su factura.",
+   "«Modificar» o «Eliminar» según su estado; genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Venta",
+    "Fecha",
+    "Cliente",
+    "Total",
+    "Estado",
+    "Factura"
+   ],
+   "filas": [
+    [
+     "V-0031",
+     "{hoy}",
+     "{cliente}",
+     "Q 640.00",
+     "FACTURADA",
+     "FE-7082"
+    ],
+    [
+     "V-0030",
+     "14/11/{anio}",
+     "Farmacia Central",
+     "Q 1,180.00",
+     "CONFIRMADA",
+     ""
+    ]
+   ]
+  },
+  "voz": "Ventas inteligentes: dos ventas por mil ochocientos veinte quetzales; una facturada y una confirmada pendiente de facturar."
+ },
+ "carga-facturas-sat": {
+  "puntos": [
+   "Carga el archivo de facturas recibidas descargado del portal de la SAT (.xls, .xlsx o .csv) con las columnas «Clasificación» y «Cuenta», y genera las compras o los documentos de caja chica.",
+   "Pasos guiados: 1 Cargar, 2 Revisar (clasificación, cuenta y observaciones por fila), 3 Generar."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Carga Facturas SAT y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Descarga del portal SAT las facturas recibidas del mes y agrega al final las columnas «Clasificación» (siglas) y «Cuenta» (contable).",
+   "Presiona «Nueva carga» y elige el archivo; una factura ya cargada (misma autorización) solo se actualiza.",
+   "Revisa los totales y la tabla; elige en cada fila la clasificación, la cuenta y las observaciones (se proponen para las demás del mismo NIT).",
+   "Elige el destino: compras, o caja chica con su «Caja» y «Subcaja», «Año» y «Mes».",
+   "Genera: se crean las compras o los documentos de caja.",
+   "Si te equivocaste usa «Reversar facturas» o «Reversar carga»."
+  ],
+  "resultado": {
+   "columnas": [
+    "Autorización",
+    "Emisor",
+    "Total",
+    "Clasificación",
+    "Cuenta",
+    "Generado"
+   ],
+   "filas": [
+    [
+     "A1B2-3344",
+     "Gasolinera El Sol",
+     "Q 300.00",
+     "COMB",
+     "6.1.2.05",
+     "Caja 01 · 46"
+    ],
+    [
+     "F-4521",
+     "{proveedor}",
+     "Q 4,480.00",
+     "BIEN",
+     "1.1.3.01",
+     "Compra C-0981"
+    ]
+   ]
+  }
+ },
+ "operaciones-sat-ventas": {
+  "puntos": [
+   "Facturas, notas (ajustes) y retenciones del mes con su estado FEL ante la SAT y el resumen por tipo de DTE."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Operaciones SAT y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año» y el «Mes».",
+   "Filtra por «Estado» (certificado, pendiente, anulado) y «Tipo».",
+   "Revisa el resumen por tipo de DTE y la lista; certifica los pendientes desde su pantalla.",
+   "Genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Tipo DTE",
+    "Certificados",
+    "Anulados",
+    "Pendientes",
+    "Total"
+   ],
+   "filas": [
+    [
+     "FACT",
+     "82",
+     "1",
+     "1",
+     "Q 125,430.00"
+    ],
+    [
+     "NCRE",
+     "3",
+     "0",
+     "0",
+     "Q 1,250.00"
+    ]
+   ]
+  },
+  "voz": "Operaciones SAT de noviembre: ochenta y dos facturas certificadas, una anulada y una pendiente de certificar."
+ },
+ "cxc-mensual": {
+  "puntos": [
+   "Cuentas por cobrar de un mes de todas las ventas: cliente, tipo de fecha, saldo, tipo de cliente y días de mora."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Cuentas x Cobrar › Consolidado CXC mensual y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año venta» y el mes, el «Cliente» o todos y el «Tipo fecha».",
+   "En «Saldo?» elige solo con saldo o todas; elige «Tipo cliente», «Ordenar por» y «Orden».",
+   "Revisa cada factura con su total, notas, retenciones, cobros, saldo y días de mora.",
+   "«Resumen» agrupa por cliente y «Est. cuenta» abre el estado de cuenta; genera Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Cliente",
+    "Factura",
+    "Total",
+    "Cobros",
+    "Saldo",
+    "Días mora"
+   ],
+   "filas": [
+    [
+     "{cliente}",
+     "FE-7060",
+     "Q 1,200.00",
+     "Q 0.00",
+     "Q 1,236.00",
+     "45"
+    ],
+    [
+     "Farmacia Central",
+     "FE-7066",
+     "Q 2,400.00",
+     "Q 1,200.00",
+     "Q 1,200.00",
+     "12"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Q 3,600.00",
+    "Q 1,200.00",
+    "Q 2,436.00",
+    ""
+   ]
+  },
+  "voz": "Cuentas por cobrar de octubre: saldo pendiente de dos mil cuatrocientos treinta y seis quetzales; {cliente} tiene cuarenta y cinco días de mora."
+ },
+ "cxc-general": {
+  "puntos": [
+   "Cuentas por cobrar de todas las ventas en un rango de fechas, con su valor y saldo en quetzales."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Cuentas x Cobrar › Consolidado general y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Fecha inicio» y «Fecha final», cliente y tipo de cliente.",
+   "Revisa cada factura con su valor y saldo en Q.",
+   "Usa «Resumen» por cliente; genera Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Cliente",
+    "Facturas",
+    "Valor Q",
+    "Saldo Q"
+   ],
+   "filas": [
+    [
+     "{cliente}",
+     "12",
+     "Q 45,200.00",
+     "Q 1,952.80"
+    ],
+    [
+     "Farmacia Central",
+     "8",
+     "Q 18,900.00",
+     "Q 1,200.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "20",
+    "Q 64,100.00",
+    "Q 3,152.80"
+   ]
+  },
+  "voz": "Consolidado general: veinte facturas por sesenta y cuatro mil cien quetzales con un saldo pendiente de tres mil ciento cincuenta y dos quetzales con ochenta."
+ },
+ "cxc-periodo": {
+  "puntos": [
+   "Saldo de las ventas a una fecha, con resumen por cliente y estado de cuenta."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Cuentas x Cobrar › CXC por periodo y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe «Saldo al» (fecha de corte).",
+   "Elige el cliente y el tipo de cliente.",
+   "Revisa los saldos; «Resumen» por cliente y «Est. cuenta» para el detalle; «Regresar» vuelve a la lista.",
+   "Genera Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Cliente",
+    "Saldo al corte"
+   ],
+   "filas": [
+    [
+     "{cliente}",
+     "Q 1,952.80"
+    ],
+    [
+     "Farmacia Central",
+     "Q 1,200.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "Q 3,152.80"
+   ]
+  },
+  "voz": "Saldo por cobrar al corte: tres mil ciento cincuenta y dos quetzales con ochenta centavos entre dos clientes."
+ },
+ "cxc-estado": {
+  "puntos": [
+   "Estado de cuenta de uno o todos los clientes en un rango de fechas: saldo anterior, facturas, notas, retenciones, cobros, saldo final y antigüedad; detallado o resumido."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Cuentas x Cobrar › Estado de cuenta clientes y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Fecha inicial» y «Fecha final» y el cliente (o todos).",
+   "Elige el tipo, «Mostrar» y el orden.",
+   "En «Contenido» elige detallado (movimientos) o resumido (una línea por cliente).",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Estado de cuenta de {cliente}",
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Cargo",
+    "Abono",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "01/10/{anio}",
+     "Saldo anterior",
+     "",
+     "",
+     "Q 3,450.00"
+    ],
+    [
+     "30/10/{anio}",
+     "Recibo A-1045",
+     "",
+     "Q 3,450.00",
+     "Q 0.00"
+    ],
+    [
+     "{hoy}",
+     "FE-7082",
+     "Q 716.80",
+     "",
+     "Q 716.80"
+    ]
+   ],
+   "totales": [
+    "",
+    "Saldo final",
+    "Q 716.80",
+    "Q 3,450.00",
+    "Q 716.80"
+   ]
+  },
+  "voz": "Estado de cuenta de {cliente}: saldo anterior tres mil cuatrocientos cincuenta quetzales, pagó con el recibo A mil cuarenta y cinco y su saldo actual es de setecientos dieciséis quetzales con ochenta centavos, aún no vencido."
+ },
+ "cxc-antiguedad": {
+  "puntos": [
+   "Saldo de los clientes a una fecha por días de mora (vigente, 1-30, 31-60, 61-90 y 91 o más), detallado por factura o resumido por cliente."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Procesos › Cuentas x Cobrar › Antigüedad de Saldos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe «Saldo al».",
+   "Elige «Cliente», «Tipo cliente» y «Vence según» (fecha estimada de cobro o emisión).",
+   "Elige el «Período de vencimiento», el «Contenido» y el orden.",
+   "Revisa la vista y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Cliente",
+    "Vigente",
+    "1-30",
+    "31-60",
+    "61-90",
+    "91+",
+    "Total"
+   ],
+   "filas": [
+    [
+     "{cliente}",
+     "Q 716.80",
+     "Q 0.00",
+     "Q 1,236.00",
+     "Q 0.00",
+     "Q 0.00",
+     "Q 1,952.80"
+    ],
+    [
+     "Farmacia Central",
+     "Q 0.00",
+     "Q 1,200.00",
+     "Q 0.00",
+     "Q 0.00",
+     "Q 0.00",
+     "Q 1,200.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "Q 716.80",
+    "Q 1,200.00",
+    "Q 1,236.00",
+    "Q 0.00",
+    "Q 0.00",
+    "Q 3,152.80"
+   ]
+  },
+  "voz": "Antigüedad de saldos: setecientos dieciséis quetzales vigentes, mil doscientos de uno a treinta días y mil doscientos treinta y seis de treinta y uno a sesenta días. No hay saldos de más de noventa días."
+ },
+ "ventas-por-periodo": {
+  "puntos": [
+   "Ventas del período por mes (resumido) o por factura (detallado), de un producto o de todos, con gráfica."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Reportes y gráficas › Reportes de ventas › Ventas por período y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde» (1 de enero) y la fecha final.",
+   "Elige un «Producto» o todos y el «Contenido» (resumido o detallado).",
+   "Revisa la vista previa con totales y gráficas.",
+   "Presiona «PDF» o «Excel» (las gráficas van al final)."
+  ],
+  "reporte": {
+   "columnas": [
+    "Mes",
+    "Facturas",
+    "Ventas Q",
+    "IVA",
+    "Total"
+   ],
+   "filas": [
+    [
+     "Septiembre",
+     "96",
+     "Q 110,200.00",
+     "Q 13,224.00",
+     "Q 123,424.00"
+    ],
+    [
+     "Octubre",
+     "104",
+     "Q 118,640.00",
+     "Q 14,236.80",
+     "Q 132,876.80"
+    ]
+   ]
+  },
+  "voz": "Ventas por período: octubre cerró con ciento dieciocho mil seiscientos cuarenta quetzales sin IVA, siete punto seis por ciento más que septiembre."
+ },
+ "ventas-por-cliente": {
+  "puntos": [
+   "Ventas del período por cliente con su participación, de un producto o de todos; detallado con sus facturas."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Reportes y gráficas › Reportes de ventas › Ventas por cliente y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango de fechas, el producto y el contenido.",
+   "Elige el orden (valor o nombre).",
+   "Revisa la vista previa con totales y gráficas.",
+   "Presiona «PDF» o «Excel» (las gráficas van al final)."
+  ],
+  "reporte": {
+   "columnas": [
+    "Cliente",
+    "Facturas",
+    "Ventas Q",
+    "Participación"
+   ],
+   "filas": [
+    [
+     "{cliente}",
+     "12",
+     "Q 45,200.00",
+     "38.1%"
+    ],
+    [
+     "Farmacia Central",
+     "8",
+     "Q 18,900.00",
+     "15.9%"
+    ]
+   ]
+  },
+  "voz": "Ventas por cliente: {cliente} es el principal con el treinta y ocho por ciento de las ventas."
+ },
+ "reporte-cuentas-por-cobrar": {
+  "puntos": [
+   "Saldo por cobrar a una fecha con antigüedad (no vencido, 1-30, 31-60, 61-90 y más de 90 días), por cliente o por factura."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Reportes y gráficas › Reportes de ventas › Cuentas por cobrar y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe la fecha de corte y elige el contenido (por cliente o por factura).",
+   "Revisa la vista previa con totales y gráficas.",
+   "Presiona «PDF» o «Excel» (las gráficas van al final)."
+  ],
+  "reporte": {
+   "columnas": [
+    "Cliente",
+    "No vencido",
+    "1-30",
+    "31-60",
+    "61-90",
+    "+90",
+    "Total"
+   ],
+   "filas": [
+    [
+     "{cliente}",
+     "Q 716.80",
+     "",
+     "Q 1,236.00",
+     "",
+     "",
+     "Q 1,952.80"
+    ],
+    [
+     "Farmacia Central",
+     "",
+     "Q 1,200.00",
+     "",
+     "",
+     "",
+     "Q 1,200.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "Q 716.80",
+    "Q 1,200.00",
+    "Q 1,236.00",
+    "",
+    "",
+    "Q 3,152.80"
+   ]
+  },
+  "voz": "Cuentas por cobrar al día de hoy: tres mil ciento cincuenta y dos quetzales con ochenta centavos; el sesenta y uno por ciento ya está vencido."
+ },
+ "grafica-de-ventas": {
+  "puntos": [
+   "Ventas por mes, clientes principales y productos principales del período, con su tabla de datos."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Reportes y gráficas › Reportes de ventas › Gráfica de ventas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rango de fechas y el producto.",
+   "Revisa la vista previa con totales y gráficas.",
+   "Presiona «PDF» o «Excel» (las gráficas van al final)."
+  ],
+  "reporte": {
+   "columnas": [
+    "Producto principal",
+    "Unidades",
+    "Ventas Q"
+   ],
+   "filas": [
+    [
+     "{producto}",
+     "1,240",
+     "Q 55,800.00"
+    ],
+    [
+     "Jarabe 120 ml",
+     "610",
+     "Q 23,180.00"
+    ]
+   ]
+  },
+  "voz": "El producto más vendido del período es {producto}, con mil doscientas cuarenta unidades y cincuenta y cinco mil ochocientos quetzales."
+ },
+ "reportes-gerenciales": {
+  "puntos": [
+   "Reportes del módulo por organización, localidad y usuario con sus salidas (PDF, Excel, voz, WhatsApp y correo), generados manual o automáticamente con su frecuencia.",
+   "El asistente por voz pregunta en voz alta qué reporte generar y con qué parámetros."
+  ],
+  "pasos": [
+   "Entra a Facturación/Ventas › Reportes y gráficas › Reportes de ventas › Reportes Gerenciales y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Marca los usuarios a los que se aplica la generación.",
+   "Ordena los reportes por prioridad (1 … n) y marca sus salidas: PDF, Excel, voz, WhatsApp y correo.",
+   "Elige la «Frecuencia» (cada hora, diaria, semanal, quincenal o mensual), el «Día» o «Día del mes» y la hora; presiona «Guardar».",
+   "Para generar ya, presiona «Generar ahora» y llena los parámetros que pide cada reporte («Empresa», «Período», «Fecha inicial», «Producto»…).",
+   "Con salida «voz» el sistema lee en voz alta el resumen de cada reporte.",
+   "Con «Asistente por voz» el sistema pregunta qué reporte y sus parámetros; responde hablando o escribiendo y presiona «Responder».",
+   "WhatsApp y correo usan el teléfono y el correo para reportes del usuario."
+  ],
+  "reporte": {
+   "titulo": "Ejemplo · Configuración de reportes",
+   "columnas": [
+    "Prioridad",
+    "Reporte",
+    "PDF",
+    "Excel",
+    "Voz",
+    "WhatsApp",
+    "Correo"
+   ],
+   "filas": [
+    [
+     "1",
+     "Ventas por período",
+     "✔",
+     "✔",
+     "✔",
+     "",
+     "✔"
+    ],
+    [
+     "2",
+     "Cuentas por cobrar",
+     "✔",
+     "",
+     "✔",
+     "✔",
+     ""
+    ],
+    [
+     "3",
+     "Antigüedad de saldos",
+     "✔",
+     "✔",
+     "",
+     "",
+     "✔"
+    ]
+   ]
+  },
+  "voz": "Reportes gerenciales de {empresa}. Uno: ventas por período, octubre cerró con ciento dieciocho mil seiscientos cuarenta quetzales. Dos: cuentas por cobrar, tres mil ciento cincuenta y dos quetzales pendientes, el sesenta y uno por ciento vencido."
+ }
+}
