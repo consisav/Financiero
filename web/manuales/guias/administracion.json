@@ -81,19 +81,378 @@
      "Por crear"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "Todas",
+      "Muestra solo los usuarios de la organización elegida; al cambiarla se reinicia la localidad."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "{empresa}",
+      "Muestra los usuarios que tienen acceso a esa localidad (como empresa activa o adicional)."
+     ],
+     [
+      "Buscar usuario, nombre o correo",
+      "Campo",
+      "jperez",
+      "Filtra la lista mientras escribes."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "usuarios",
+      "Indicador",
+      "24",
+      "Total de usuarios visibles con los filtros, incluidos los por crear."
+     ],
+     [
+      "activos",
+      "Indicador",
+      "21",
+      "Usuarios con la casilla «Activo» marcada."
+     ],
+     [
+      "por crear",
+      "Indicador",
+      "3",
+      "Usuarios migrados del sistema anterior que aún no tienen cuenta (solo administradores)."
+     ],
+     [
+      "clave vencida",
+      "Indicador",
+      "2",
+      "Usuarios cuya fecha de vencimiento de clave ya pasó."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Usuario",
+      "Columna",
+      "JPerez",
+      "Código con el que entra al sistema."
+     ],
+     [
+      "Nombre",
+      "Columna",
+      "Juan Pérez",
+      "Nombre completo del usuario."
+     ],
+     [
+      "Correo",
+      "Columna",
+      "usuario@empresa.com",
+      "Correo de la cuenta; en las filas «Por crear» es un campo para escribirlo."
+     ],
+     [
+      "Empresa",
+      "Columna",
+      "{empresa} +2",
+      "Localidad activa; «+N» indica otras empresas con su rol (al pasar el puntero)."
+     ],
+     [
+      "Rol",
+      "Columna",
+      "Contador",
+      "Rol en la empresa activa; en las filas por crear, la fecha de creación en el sistema anterior."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activo · Clave vencida",
+      "Activo/Inactivo, «Clave vencida» o «Por crear»."
+     ],
+     [
+      "Lápiz (Modificar)",
+      "Botón",
+      "",
+      "Abre el formulario del usuario (si tienes permiso)."
+     ],
+     [
+      "Crear",
+      "Botón",
+      "",
+      "En una fila «Por crear»: crea la cuenta con el correo escrito y muestra la clave una sola vez."
+     ],
+     [
+      "Papelera (fila por crear)",
+      "Botón",
+      "",
+      "Elimina el usuario por crear (solo Super Administrador Global)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Aviso de cuenta creada",
+    "filas": [
+     [
+      "Clave",
+      "Texto",
+      "Kp7xT92m",
+      "Clave temporal de la cuenta recién creada; se muestra una sola vez y vence hoy."
+     ],
+     [
+      "Copiar",
+      "Botón",
+      "",
+      "Copia la clave al portapapeles."
+     ],
+     [
+      "X (Cerrar)",
+      "Botón",
+      "",
+      "Oculta el aviso."
+     ]
+    ]
+   },
+   {
+    "grupo": "Ficha del usuario",
+    "filas": [
+     [
+      "Empresa activa · rol",
+      "Texto",
+      "01 · EMP1 {empresa} · Contador",
+      "Organización, localidad activa y rol."
+     ],
+     [
+      "Empresas y roles",
+      "Texto",
+      "EMP1 Contador · EMP2 Consulta",
+      "Otras empresas del usuario con su rol; la principal se resalta."
+     ],
+     [
+      "Creado",
+      "Fecha",
+      "05-01-2026",
+      "Fecha de creación de la cuenta."
+     ],
+     [
+      "Vence clave",
+      "Fecha",
+      "31-12-{anio}",
+      "Se pinta en rojo si ya venció."
+     ],
+     [
+      "Empleado / Extensión / Teléfono",
+      "Texto",
+      "EMP-015 · 204 · 5555 1234",
+      "Datos de contacto internos."
+     ],
+     [
+      "Correo reportes",
+      "Texto",
+      "reportes@empresa.com",
+      "Destino por omisión de los reportes gerenciales."
+     ],
+     [
+      "Sist. anterior",
+      "Texto",
+      "JPEREZ · 07-10-2025",
+      "Código y fecha en el sistema anterior (solo usuarios migrados)."
+     ],
+     [
+      "Firma",
+      "Archivo",
+      "Imagen PNG",
+      "Imagen de la firma; «Sin firma» si no tiene."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones de la ficha",
+    "filas": [
+     [
+      "Modificar",
+      "Botón",
+      "",
+      "Abre el formulario del usuario."
+     ],
+     [
+      "Generar usuario",
+      "Botón",
+      "",
+      "Abre Generar clave con el usuario ya elegido."
+     ],
+     [
+      "Enviar cambio de clave",
+      "Botón",
+      "",
+      "Envía al correo del usuario el enlace para cambiar su clave."
+     ],
+     [
+      "Eliminar",
+      "Botón",
+      "",
+      "Borra la cuenta (solo Super Administrador Global; si tiene movimientos, se desactiva)."
+     ],
+     [
+      "Actualizar",
+      "Botón",
+      "",
+      "Vuelve a leer los usuarios."
+     ]
+    ]
+   },
+   {
+    "grupo": "Formulario Modificar usuario",
+    "filas": [
+     [
+      "Usuario (código)",
+      "Campo",
+      "JPerez",
+      "Letras y números, de 2 a 20."
+     ],
+     [
+      "Nombre",
+      "Campo",
+      "Juan Pérez",
+      "Obligatorio."
+     ],
+     [
+      "Organización",
+      "Lista",
+      "01 · {organizacion}",
+      "Obligatoria; al cambiarla se reinicia la tabla de empresas."
+     ],
+     [
+      "Empresa principal",
+      "Lista",
+      "EMP1 · {empresa}",
+      "Obligatoria; siempre tiene acceso."
+     ],
+     [
+      "Empresas y rol en cada una",
+      "Casilla",
+      "Acceso ✓ · Contador",
+      "Tabla con Acceso, Empresa y Rol en la empresa para cada localidad."
+     ],
+     [
+      "Todas las empresas",
+      "Botón",
+      "",
+      "Marca el acceso a todas las empresas de la organización."
+     ],
+     [
+      "Mismo rol en todas",
+      "Botón",
+      "",
+      "Copia el rol de la empresa principal a todas (solo Super Administrador)."
+     ],
+     [
+      "Super Administrador de la organización",
+      "Casilla",
+      "☐",
+      "Da acceso total a la organización (solo el Global lo marca; uno por organización)."
+     ],
+     [
+      "Activo",
+      "Casilla",
+      "✓",
+      "Desmarcada bloquea el acceso (no aparece para tu propio usuario)."
+     ],
+     [
+      "Fecha vence clave",
+      "Fecha",
+      "31/12/{anio}",
+      "Al vencer, el sistema pide cambiar la clave."
+     ],
+     [
+      "Empleado",
+      "Campo",
+      "EMP-015",
+      "Código de empleado."
+     ],
+     [
+      "Extensión telefónica",
+      "Campo",
+      "204",
+      "Extensión interna."
+     ],
+     [
+      "Teléfono (WhatsApp)",
+      "Campo",
+      "5555 1234",
+      "Destino por omisión de los reportes por WhatsApp."
+     ],
+     [
+      "Correo para reportes",
+      "Campo",
+      "reportes@empresa.com",
+      "Destino por omisión de los reportes por correo."
+     ],
+     [
+      "Firma",
+      "Archivo",
+      "firma.png",
+      "Imagen PNG, JPG o WEBP de la firma."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Rol en la empresa",
+    "Roles activos del catálogo Roles módulos",
+    "Rol actual del usuario",
+    "Define lo que ve y hace en cada empresa; solo el Super Administrador lo cambia."
+   ],
+   [
+    "Super Administrador de la organización",
+    "Marcado / desmarcado",
+    "Desmarcado",
+    "Acceso total a todas las empresas de la organización; solo uno por organización."
+   ],
+   [
+    "Activo",
+    "Marcado / desmarcado",
+    "Marcado",
+    "Un usuario inactivo no puede entrar."
+   ],
+   [
+    "Fecha vence clave",
+    "Fecha",
+    "Según la última clave",
+    "Al pasar la fecha se marca «Clave vencida» y se pide cambiarla."
+   ],
+   [
+    "Permiso de modificar",
+    "Super Administrador Global: todos; administradores: los de su organización",
+    "Según el rol",
+    "Determina si aparecen el lápiz, «Modificar», «Generar usuario» y «Enviar cambio de clave»."
+   ],
+   [
+    "Permiso de eliminar",
+    "Solo Super Administrador Global",
+    "—",
+    "Nunca a sí mismo ni a otro Global; si tiene movimientos se desactiva en su lugar."
+   ]
+  ]
  },
  "generar-usuario": {
   "puntos": [
    "Genera el código de usuario (iniciales de los nombres + primer apellido: Juan Carlos Tut → JCtut) y una clave temporal que se muestra una sola vez y vence hoy."
   ],
   "pasos": [
-   "Entra a Administración › Catálogos › Usuarios › Generar clave (o «Generar usuario» desde la ficha).",
-   "En «Buscar usuario» escribe el nombre o correo y elígelo.",
-   "Presiona «Generar usuario»: se propone el «Usuario *»; corrígelo si ya existe.",
-   "Presiona «Asignar clave»: aparece la clave temporal.",
-   "Presiona «Copiar» y entrégala al usuario de forma segura.",
-   "Al entrar, el sistema le pide crear su clave nueva (mínimo 8 caracteres con letras y números)."
+   "Entra a Administración › Catálogos › Usuarios › Generar clave (o presiona «Generar usuario» desde la ficha en Usuarios).",
+   "En «Buscar usuario» escribe el nombre, correo o usuario para acortar la lista.",
+   "Elige a la persona en la lista «Usuario *».",
+   "Paso 1: presiona «Generar usuario»; el sistema calcula y guarda el código (iniciales de los nombres + primer apellido; si ya existe le agrega un número).",
+   "Paso 2: presiona «Generar clave» y luego «Confirmar: generar clave nueva»; la clave anterior deja de funcionar.",
+   "Presiona «Copiar» y entrégala al usuario de forma segura: no se vuelve a mostrar y vence hoy.",
+   "Paso 3 (solo Super Administrador o tu propio usuario): escribe «Clave nueva» y «Repite la clave», marca o desmarca «Pedir que la cambie al entrar» y presiona «Asignar clave».",
+   "Al entrar con una clave temporal, el sistema le pide crear su propia clave (mínimo 8 caracteres con letras y números)."
   ],
   "campos": [
    [
@@ -106,19 +465,142 @@
     "Se muestra una sola vez",
     "Vence hoy ({hoy})."
    ]
+  ],
+  "elementos": [
+   {
+    "grupo": "Selección",
+    "filas": [
+     [
+      "Buscar usuario",
+      "Campo",
+      "Pérez",
+      "Filtra la lista por nombre, correo o usuario."
+     ],
+     [
+      "Usuario *",
+      "Lista",
+      "Juan Pérez · JPerez",
+      "Usuario a trabajar; muestra «(inactivo)» si está desactivado."
+     ]
+    ]
+   },
+   {
+    "grupo": "1 · Usuario",
+    "filas": [
+     [
+      "Código de usuario",
+      "Texto",
+      "JCtut",
+      "Código actual (solo lectura); «Sin usuario» si no tiene."
+     ],
+     [
+      "Generar usuario",
+      "Botón",
+      "",
+      "Calcula y guarda el código con la regla iniciales + primer apellido."
+     ]
+    ]
+   },
+   {
+    "grupo": "2 · Clave",
+    "filas": [
+     [
+      "Generar clave",
+      "Botón",
+      "",
+      "El primer clic pide confirmación; el segundo («Confirmar: generar clave nueva») crea una clave temporal."
+     ],
+     [
+      "Clave generada",
+      "Texto",
+      "Kp7xT92m",
+      "Se muestra una sola vez; vence hoy ({hoy})."
+     ],
+     [
+      "Copiar",
+      "Botón",
+      "",
+      "Copia la clave al portapapeles."
+     ]
+    ]
+   },
+   {
+    "grupo": "3 · Clave personalizada",
+    "filas": [
+     [
+      "Clave nueva",
+      "Campo",
+      "••••••••",
+      "Mínimo 8 y máximo 72 caracteres, con letras y números."
+     ],
+     [
+      "Repite la clave",
+      "Campo",
+      "••••••••",
+      "Debe coincidir con la clave nueva."
+     ],
+     [
+      "Ojo (Mostrar u ocultar)",
+      "Botón",
+      "",
+      "Muestra u oculta lo escrito."
+     ],
+     [
+      "Asignar clave",
+      "Botón",
+      "",
+      "Guarda la clave escrita."
+     ],
+     [
+      "Pedir que la cambie al entrar",
+      "Casilla",
+      "✓",
+      "Obliga al usuario a crear su propia clave al entrar (no aparece para tu usuario)."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Regla del código",
+    "Iniciales de los nombres + primer apellido; con 4 o más palabras se toman las 2 últimas como apellidos",
+    "—",
+    "Las partículas (de, del, la, san…) se unen al apellido; si el código existe se agrega 2, 3…"
+   ],
+   [
+    "Pedir que la cambie al entrar",
+    "Marcado / desmarcado",
+    "Marcado",
+    "Marcado: el usuario crea una clave propia al entrar."
+   ],
+   [
+    "Clave propia",
+    "Tu usuario",
+    "—",
+    "Al cambiar tu clave se renueva su vencimiento a 90 días."
+   ],
+   [
+    "Acceso a la pantalla",
+    "Administradores; el paso 3 solo Super Administrador o el propio usuario",
+    "—",
+    "Los demás ven «Solo un administrador puede generar usuarios y claves»."
+   ]
   ]
  },
  "modulos": {
   "puntos": [
-   "Módulos principales del sistema (izquierda) y la ficha del módulo elegido con sus sub-módulos (derecha), su estado y orden en el menú."
+   "Módulos principales del sistema (izquierda) y la ficha del módulo elegido con sus sub-módulos (derecha): código, siglas, descripción, estado y quién los grabó.",
+   "Arriba, los indicadores de módulos, sub-módulos, activos e inactivos."
   ],
   "pasos": [
    "Entra a Administración › Catálogos › Módulos › Módulos.",
-   "Elige un módulo de la lista.",
-   "En la ficha revisa nombre, estado y orden; presiona «Modificar» para cambiarlos.",
-   "Presiona «+ Sub-módulo» para agregar una opción.",
-   "«+ Módulo» crea un módulo nuevo.",
-   "Los cambios se ven en el menú al volver a entrar."
+   "Usa «Buscar módulo o sub-módulo» o elige un módulo de la lista «Módulos principales».",
+   "En la ficha revisa código, estado, cantidad de sub-módulos y quién lo grabó o modificó.",
+   "Presiona «Modificar» para cambiar código, siglas, descripción o «Activo».",
+   "Presiona «+ Sub-módulo» para agregar una opción: el código se sugiere como código del módulo × 100 + correlativo.",
+   "«+ Módulo» crea un módulo principal nuevo.",
+   "Para corregir un sub-módulo usa el lápiz de su fila.",
+   "Las siglas y la descripción se guardan en mayúsculas."
   ],
   "ejemplo": {
    "titulo": "Ejemplo · Módulo Caja y Bancos",
@@ -144,7 +626,186 @@
      "3"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "módulos",
+      "Indicador",
+      "14",
+      "Módulos principales."
+     ],
+     [
+      "sub-módulos",
+      "Indicador",
+      "62",
+      "Sub-módulos de todos los módulos."
+     ],
+     [
+      "activos",
+      "Indicador",
+      "70",
+      "Registros activos."
+     ],
+     [
+      "inactivos",
+      "Indicador",
+      "6",
+      "Registros desactivados (solo si hay)."
+     ],
+     [
+      "+ Módulo",
+      "Botón",
+      "",
+      "Crea un módulo principal (si puedes editar catálogos)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Módulos principales",
+    "filas": [
+     [
+      "Buscar módulo o sub-módulo",
+      "Campo",
+      "CON",
+      "Filtra por descripción, siglas o código."
+     ],
+     [
+      "Módulo",
+      "Botón",
+      "CON · CONTABILIDAD · Código 2",
+      "Selecciona el módulo; a la derecha, el número de sub-módulos."
+     ]
+    ]
+   },
+   {
+    "grupo": "Ficha del módulo",
+    "filas": [
+     [
+      "Siglas / Descripción",
+      "Texto",
+      "CON · CONTABILIDAD",
+      "Identificación del módulo."
+     ],
+     [
+      "Código · estado · sub-módulos",
+      "Texto",
+      "Código 2 · Activo · 5 sub-módulos",
+      "Resumen con quién lo grabó y quién lo modificó."
+     ],
+     [
+      "Modificar",
+      "Botón",
+      "",
+      "Edita el módulo elegido."
+     ],
+     [
+      "+ Sub-módulo",
+      "Botón",
+      "",
+      "Agrega un sub-módulo al módulo elegido."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas de Sub-módulos",
+    "filas": [
+     [
+      "Buscar sub-módulo",
+      "Campo",
+      "PART",
+      "Aparece cuando hay más de 6 sub-módulos."
+     ],
+     [
+      "Código",
+      "Columna",
+      "201",
+      "Código del sub-módulo."
+     ],
+     [
+      "Siglas",
+      "Columna",
+      "PAR",
+      "Siglas."
+     ],
+     [
+      "Descripción",
+      "Columna",
+      "PARTIDAS",
+      "Nombre del sub-módulo."
+     ],
+     [
+      "Grabado por",
+      "Columna",
+      "Juan Pérez",
+      "Usuario que lo creó."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activo",
+      "Activo o inactivo."
+     ],
+     [
+      "Lápiz",
+      "Botón",
+      "",
+      "Modifica el sub-módulo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Formulario",
+    "filas": [
+     [
+      "Módulo (código)",
+      "Número",
+      "201",
+      "Obligatorio y único."
+     ],
+     [
+      "Siglas",
+      "Campo",
+      "CON",
+      "Obligatorias, de 2 a 6 letras o números; únicas en su nivel."
+     ],
+     [
+      "Descripción",
+      "Campo",
+      "CONTABILIDAD",
+      "Obligatoria."
+     ],
+     [
+      "Activo",
+      "Casilla",
+      "✓",
+      "Desmarcada lo deja inactivo."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Código sugerido",
+    "Módulo: siguiente libre; sub-módulo: código del mayor × 100 + correlativo",
+    "Siguiente libre",
+    "Se puede cambiar; debe ser único."
+   ],
+   [
+    "Activo",
+    "Marcado / desmarcado",
+    "Marcado",
+    "Los inactivos se muestran atenuados."
+   ],
+   [
+    "Permiso de edición",
+    "Según «puede editar catálogos» del rol",
+    "—",
+    "Sin permiso no aparecen «+ Módulo», «Modificar», «+ Sub-módulo» ni el lápiz."
+   ]
+  ]
  },
  "roles-modulos": {
   "puntos": [
@@ -153,12 +814,13 @@
   ],
   "pasos": [
    "Entra a Administración › Catálogos › Módulos › Roles módulos.",
-   "Elige un rol (o «+ Rol» para crear uno y «Modificar rol» para cambiar su nombre).",
-   "Con «+ Asignar usuario» agrega los usuarios del rol.",
-   "En el navegador de módulos elige el módulo (ej. Caja y Bancos); se ve el avance de permisos.",
-   "En la matriz marca por cada pantalla: ver, crear, modificar, anular, imprimir.",
-   "Para un usuario con permisos distintos usa «Accesos de» y marca sus excepciones.",
-   "Presiona «Guardar accesos» (o «Descartar» para deshacer)."
+   "Elige un rol en la lista «Roles» (o «+ Rol» para crear uno y «Modificar rol» para cambiar su código, nombre, descripción, acceso total o estado).",
+   "Con «+ Asignar usuario» agrega un usuario al rol con su fecha de inicio, fin opcional y estado; el lápiz de cada usuario modifica su asignación.",
+   "En «Módulos» elige el módulo (ej. Caja y Bancos); cada uno muestra cuántas pantallas tienen acceso.",
+   "En la matriz marca por cada pantalla Ver, Crear, Modificar, Anular e Imprimir; el nombre de la pantalla marca o quita toda la fila y el encabezado de cada columna, la columna entera.",
+   "Usa los atajos «Acceso total», «Solo consulta» o «Quitar todo» para el módulo o para todo el sistema, o «Copiar permisos de» otro rol.",
+   "Para un usuario con permisos distintos elige su nombre y la pestaña «Accesos de …»: lo que cambies queda como excepción resaltada.",
+   "Presiona «Guardar accesos» (o «Descartar» para deshacer los cambios sin guardar)."
   ],
   "ejemplo": {
    "titulo": "Ejemplo · Rol Contador en Caja y Bancos",
@@ -196,7 +858,291 @@
      "✔"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Roles",
+    "filas": [
+     [
+      "+ Rol",
+      "Botón",
+      "",
+      "Crea un rol nuevo."
+     ],
+     [
+      "Buscar rol",
+      "Campo",
+      "Conta",
+      "Filtra la lista de roles."
+     ],
+     [
+      "Rol",
+      "Botón",
+      "Contador · 4",
+      "Selecciona el rol; la corona indica acceso total y el número, los usuarios activos."
+     ]
+    ]
+   },
+   {
+    "grupo": "Encabezado del rol",
+    "filas": [
+     [
+      "Nombre · código",
+      "Texto",
+      "Contador · código 3",
+      "Rol elegido con su estado y la marca «Acceso total» si la tiene."
+     ],
+     [
+      "Permisos del rol",
+      "Pestaña",
+      "",
+      "Edita los permisos que heredan todos los usuarios del rol."
+     ],
+     [
+      "Accesos de …",
+      "Pestaña",
+      "Accesos de JPerez",
+      "Edita las excepciones del usuario elegido (se habilita al elegir un usuario)."
+     ],
+     [
+      "Modificar rol",
+      "Botón",
+      "",
+      "Abre el formulario del rol."
+     ],
+     [
+      "+ Asignar usuario",
+      "Botón",
+      "",
+      "Agrega un usuario al rol."
+     ],
+     [
+      "Usuarios",
+      "Botón",
+      "JPerez Juan Pérez",
+      "Chips de los usuarios del rol; clic elige al usuario, el lápiz modifica su asignación."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "pantallas",
+      "Indicador",
+      "38/120",
+      "Pantallas con permiso de ver sobre el total, con barra de avance."
+     ],
+     [
+      "modifican",
+      "Indicador",
+      "25",
+      "Pantallas donde puede modificar."
+     ],
+     [
+      "excepciones",
+      "Indicador",
+      "2",
+      "Excepciones del usuario elegido o de los usuarios del rol."
+     ]
+    ]
+   },
+   {
+    "grupo": "Módulos",
+    "filas": [
+     [
+      "Módulo",
+      "Botón",
+      "CB · Caja y Bancos 12/19",
+      "Elige el módulo de la matriz; punto = cambios sin guardar, triángulo = tiene excepciones."
+     ],
+     [
+      "Acceso total / Solo consulta / Quitar todo",
+      "Botón",
+      "",
+      "Atajos para el módulo elegido."
+     ],
+     [
+      "Todo el sistema (Total, Consulta, Ninguno)",
+      "Botón",
+      "",
+      "Los mismos atajos para todas las pantallas."
+     ],
+     [
+      "Copiar permisos de",
+      "Lista",
+      "Otro rol…",
+      "Copia los permisos de otro rol (solo en Permisos del rol)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Matriz de accesos",
+    "filas": [
+     [
+      "Buscar pantalla en todos los módulos",
+      "Campo",
+      "cheques",
+      "Muestra las pantallas que coinciden en todos los módulos."
+     ],
+     [
+      "Pantalla",
+      "Columna",
+      "Emisión de cheques",
+      "Clic en el nombre marca o quita toda la fila."
+     ],
+     [
+      "Ver",
+      "Casilla",
+      "✓",
+      "Puede abrir la pantalla; al quitarlo se quitan las demás acciones."
+     ],
+     [
+      "Crear",
+      "Casilla",
+      "✓",
+      "Puede crear registros."
+     ],
+     [
+      "Modificar",
+      "Casilla",
+      "✓",
+      "Puede modificar registros."
+     ],
+     [
+      "Anular",
+      "Casilla",
+      "☐",
+      "Puede anular registros."
+     ],
+     [
+      "Imprimir",
+      "Casilla",
+      "✓",
+      "Puede imprimir y exportar."
+     ],
+     [
+      "Casilla del encabezado",
+      "Casilla",
+      "Parcial",
+      "Marca o quita la acción en toda la columna."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Descartar",
+      "Botón",
+      "",
+      "Deshace los cambios sin guardar."
+     ],
+     [
+      "Guardar accesos",
+      "Botón",
+      "",
+      "Guarda los permisos del rol o las excepciones del usuario."
+     ]
+    ]
+   },
+   {
+    "grupo": "Formulario del rol",
+    "filas": [
+     [
+      "Código",
+      "Número",
+      "3",
+      "Obligatorio."
+     ],
+     [
+      "Rol",
+      "Campo",
+      "Contador",
+      "Nombre del rol, obligatorio."
+     ],
+     [
+      "Descripción",
+      "Texto",
+      "Registra partidas y consulta reportes",
+      "Opcional."
+     ],
+     [
+      "Acceso total a todo (incluye pantallas nuevas)",
+      "Casilla",
+      "☐",
+      "Da todos los permisos sin editar la matriz."
+     ],
+     [
+      "Activo",
+      "Casilla",
+      "✓",
+      "Rol disponible para asignar."
+     ]
+    ]
+   },
+   {
+    "grupo": "Formulario de asignación",
+    "filas": [
+     [
+      "Usuario",
+      "Lista",
+      "Juan Pérez",
+      "Usuario a asignar (solo al crear)."
+     ],
+     [
+      "Inicia con el rol",
+      "Fecha",
+      "01/11/{anio}",
+      "Obligatoria."
+     ],
+     [
+      "Termina (opcional)",
+      "Fecha",
+      "31/12/{anio}",
+      "Fin de la asignación."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "Activo",
+      "Activo, Suspendido o Finalizado."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Acciones por pantalla",
+    "Ver, Crear, Modificar, Anular, Imprimir",
+    "Sin marcar",
+    "Determinan lo que el rol puede hacer en cada pantalla."
+   ],
+   [
+    "Acceso total",
+    "Marcado / desmarcado",
+    "Desmarcado",
+    "Todos los permisos, también en pantallas nuevas; la matriz del rol no se edita."
+   ],
+   [
+    "Atajos",
+    "Acceso total, Solo consulta (Ver e Imprimir), Quitar todo",
+    "—",
+    "Aplican al módulo o a todo el sistema."
+   ],
+   [
+    "Modo",
+    "Permisos del rol / Accesos de usuario",
+    "Permisos del rol",
+    "En modo usuario los cambios quedan como excepciones; si igualan al rol vuelven a heredarse."
+   ],
+   [
+    "Estado de la asignación",
+    "Activo, Suspendido, Finalizado",
+    "Activo",
+    "Solo las asignaciones activas cuentan como usuarios del rol."
+   ]
+  ]
  },
  "geografia": {
   "puntos": [
@@ -229,7 +1175,288 @@
      "Antigua Guatemala"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Países",
+    "filas": [
+     [
+      "+ País",
+      "Botón",
+      "",
+      "Agrega un país."
+     ],
+     [
+      "Buscar país",
+      "Campo",
+      "Guat",
+      "Filtra la lista de países."
+     ],
+     [
+      "Cód.",
+      "Columna",
+      "1",
+      "Código del país."
+     ],
+     [
+      "País",
+      "Columna",
+      "Guatemala",
+      "Nombre con su bandera; clic lo elige."
+     ],
+     [
+      "Prefijo",
+      "Columna",
+      "GT",
+      "Código ISO de 2 letras."
+     ],
+     [
+      "Cód. tel.",
+      "Columna",
+      "+502",
+      "Código telefónico."
+     ],
+     [
+      "Idioma",
+      "Columna",
+      "Español",
+      "Idioma oficial."
+     ],
+     [
+      "Moneda",
+      "Columna",
+      "GTQ",
+      "Moneda del país."
+     ]
+    ]
+   },
+   {
+    "grupo": "Estados / departamentos",
+    "filas": [
+     [
+      "Regiones",
+      "Botón",
+      "",
+      "Abre las regiones del país elegido."
+     ],
+     [
+      "+ Departamento",
+      "Botón",
+      "",
+      "Agrega un departamento al país elegido."
+     ],
+     [
+      "Buscar",
+      "Campo",
+      "Sacat",
+      "Filtra los departamentos."
+     ],
+     [
+      "Cód.",
+      "Columna",
+      "3",
+      "Código del departamento."
+     ],
+     [
+      "Estado / departamento",
+      "Columna",
+      "Sacatepéquez",
+      "Nombre; clic lo elige."
+     ],
+     [
+      "Región",
+      "Columna",
+      "Región V · Central",
+      "Región a la que pertenece."
+     ],
+     [
+      "Cód. tel.",
+      "Columna",
+      "7832",
+      "Código telefónico."
+     ],
+     [
+      "Cód. postal",
+      "Columna",
+      "03001",
+      "Código postal."
+     ],
+     [
+      "Municipios",
+      "Columna",
+      "16",
+      "Cantidad de municipios."
+     ]
+    ]
+   },
+   {
+    "grupo": "Ciudades / municipios",
+    "filas": [
+     [
+      "+ Municipio",
+      "Botón",
+      "",
+      "Agrega un municipio al departamento elegido."
+     ],
+     [
+      "Buscar",
+      "Campo",
+      "Antig",
+      "Filtra los municipios."
+     ],
+     [
+      "Cód.",
+      "Columna",
+      "301",
+      "Código del municipio."
+     ],
+     [
+      "Ciudad / municipio",
+      "Columna",
+      "Antigua Guatemala",
+      "Nombre."
+     ],
+     [
+      "Cód. postal",
+      "Columna",
+      "03001",
+      "Código postal."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activo",
+      "Activo o inactivo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Ventana Regiones",
+    "filas": [
+     [
+      "+ Región",
+      "Botón",
+      "",
+      "Agrega una región al país."
+     ],
+     [
+      "Cód.",
+      "Columna",
+      "5",
+      "Número de región."
+     ],
+     [
+      "Región",
+      "Columna",
+      "Región V · Central",
+      "Número romano y nombre."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activo",
+      "Activa o inactiva."
+     ]
+    ]
+   },
+   {
+    "grupo": "Formularios",
+    "filas": [
+     [
+      "Código",
+      "Número",
+      "1",
+      "Obligatorio en país, departamento y municipio."
+     ],
+     [
+      "País",
+      "Campo",
+      "Guatemala",
+      "Obligatorio."
+     ],
+     [
+      "Prefijo (ISO, 2 letras)",
+      "Campo",
+      "GT",
+      "Obligatorio."
+     ],
+     [
+      "Código telefónico",
+      "Campo",
+      "+502",
+      "Opcional."
+     ],
+     [
+      "Idioma",
+      "Campo",
+      "Español",
+      "Opcional."
+     ],
+     [
+      "Moneda",
+      "Campo",
+      "GTQ",
+      "Opcional."
+     ],
+     [
+      "Estado / departamento",
+      "Campo",
+      "Sacatepéquez",
+      "Obligatorio."
+     ],
+     [
+      "Región",
+      "Lista",
+      "Sin región",
+      "Región del departamento."
+     ],
+     [
+      "Código postal",
+      "Campo",
+      "03001",
+      "Opcional."
+     ],
+     [
+      "Ciudad / municipio",
+      "Campo",
+      "Antigua Guatemala",
+      "Obligatorio."
+     ],
+     [
+      "Número de región",
+      "Número",
+      "5",
+      "Obligatorio en la región."
+     ],
+     [
+      "Nombre",
+      "Campo",
+      "Central",
+      "Nombre de la región."
+     ],
+     [
+      "Activo / Activa",
+      "Casilla",
+      "✓",
+      "Desmarcada lo deja inactivo."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Activo",
+    "Marcado / desmarcado",
+    "Marcado",
+    "Los registros inactivos no se ofrecen en las demás pantallas."
+   ],
+   [
+    "Región del departamento",
+    "Regiones del país o «Sin región»",
+    "Sin región",
+    "Agrupa departamentos para reportes y direcciones."
+   ]
+  ]
  },
  "organizaciones": {
   "puntos": [
@@ -237,10 +1464,12 @@
   ],
   "pasos": [
    "Entra a Administración › Catálogos › Parámetros › Organizaciones.",
-   "Elige la organización o presiona «+ Organización»: nombre, logo, eslogan, país, departamento, municipio, representante legal, teléfonos, correos, dirección y «Activa».",
-   "Elige una localidad o presiona «+ Localidad»: «Nombre comercial», «Razón social», «Siglas», «NIT», si tiene «Venta de productos», teléfonos, correos y dirección.",
-   "Sube el logo y eslogan de la localidad (sin logo usa el de la organización).",
-   "Guarda; la localidad aparece para elegir en todas las pantallas."
+   "Elige la organización en la lista «Organizaciones» (con «Buscar organización» si hay muchas) o presiona «+ Organización».",
+   "En la ficha revisa los datos y la auditoría; «Modificar» abre el formulario: «Organización», «Organización anterior», representante legal, teléfonos, correos, dirección, país, departamento, municipio, «Activa», logo y eslogan.",
+   "Elige una localidad en «Localidades de …» o presiona «+ Localidad».",
+   "Completa «Nombre comercial», «Razón social», «Siglas», «Empresa anterior», «NIT», «Venta de productos», teléfonos, correos, dirección y ubicación.",
+   "Sube el logo y el eslogan de la localidad (sin ellos se usan los de la organización).",
+   "Guarda; la localidad aparece para elegir en todas las pantallas. «Actualizar» vuelve a leer los datos."
   ],
   "campos": [
    [
@@ -256,7 +1485,7 @@
    [
     "Siglas",
     "EMP",
-    "Se usan en correlativos."
+    "Se usan en los correlativos."
    ],
    [
     "NIT",
@@ -265,8 +1494,331 @@
    ],
    [
     "Venta de productos",
-    "Sí",
-    "Habilita inventarios y facturación."
+    "Medicamentos",
+    "Qué vende: define controles como lote, vencimiento y registro sanitario."
+   ]
+  ],
+  "elementos": [
+   {
+    "grupo": "Listas",
+    "filas": [
+     [
+      "+ Organización",
+      "Botón",
+      "",
+      "Crea una organización (si puedes editar catálogos)."
+     ],
+     [
+      "Buscar organización",
+      "Campo",
+      "Grupo",
+      "Aparece con más de 6 organizaciones."
+     ],
+     [
+      "Organización",
+      "Botón",
+      "01 · {organizacion}",
+      "Elige la organización; muestra representante legal y municipio."
+     ],
+     [
+      "+ Localidad",
+      "Botón",
+      "",
+      "Crea una localidad de la organización elegida."
+     ],
+     [
+      "Buscar localidad",
+      "Campo",
+      "EMP",
+      "Aparece con más de 6 localidades."
+     ],
+     [
+      "Localidad",
+      "Botón",
+      "EMP1 · {empresa}",
+      "Elige la localidad; muestra NIT y municipio."
+     ]
+    ]
+   },
+   {
+    "grupo": "Ficha de la organización",
+    "filas": [
+     [
+      "Estado y auditoría",
+      "Texto",
+      "Activo · Grabado por Juan Pérez el 05/01/2026",
+      "Quién la grabó y la última modificación."
+     ],
+     [
+      "Modificar",
+      "Botón",
+      "",
+      "Abre el formulario de la organización."
+     ],
+     [
+      "Actualizar",
+      "Botón",
+      "",
+      "Vuelve a leer los datos."
+     ],
+     [
+      "Representante legal",
+      "Texto",
+      "Representante Legal",
+      "Dato de la organización."
+     ],
+     [
+      "Organización anterior",
+      "Texto",
+      "ORG01",
+      "Código en el sistema anterior."
+     ],
+     [
+      "Teléfonos / Correos",
+      "Texto",
+      "2219-3093 · contacto@empresa.com",
+      "Contactos."
+     ],
+     [
+      "Dirección",
+      "Texto",
+      "Zona 10, Guatemala",
+      "Dirección fiscal."
+     ],
+     [
+      "País / Estado / departamento / Ciudad / municipio",
+      "Texto",
+      "Guatemala · Guatemala · Guatemala",
+      "Ubicación."
+     ],
+     [
+      "Logo / Eslogan",
+      "Archivo",
+      "logo.png",
+      "Imágenes de la organización."
+     ]
+    ]
+   },
+   {
+    "grupo": "Ficha de la localidad",
+    "filas": [
+     [
+      "Estado y auditoría",
+      "Texto",
+      "Activo · Grabado por Juan Pérez",
+      "Con «Modificar» y «Actualizar»."
+     ],
+     [
+      "Razón social",
+      "Texto",
+      "Empresa, S.A.",
+      "Nombre legal."
+     ],
+     [
+      "NIT",
+      "Texto",
+      "1234567-8",
+      "NIT de la empresa."
+     ],
+     [
+      "Siglas",
+      "Texto",
+      "EMP",
+      "Para correlativos."
+     ],
+     [
+      "Empresa anterior",
+      "Texto",
+      "E01",
+      "Código en el sistema anterior."
+     ],
+     [
+      "Venta de productos",
+      "Texto",
+      "Medicamentos",
+      "Tipo de productos que vende."
+     ],
+     [
+      "Teléfonos / Correos / Dirección",
+      "Texto",
+      "2219-3093",
+      "Contactos."
+     ],
+     [
+      "País / Estado / departamento / Ciudad / municipio",
+      "Texto",
+      "Guatemala",
+      "Ubicación."
+     ],
+     [
+      "Logo / Eslogan",
+      "Archivo",
+      "logo.png",
+      "Si no tiene, usa los de la organización."
+     ]
+    ]
+   },
+   {
+    "grupo": "Formulario de organización",
+    "filas": [
+     [
+      "Organización",
+      "Campo",
+      "{organizacion}",
+      "Obligatorio."
+     ],
+     [
+      "Organización anterior",
+      "Campo",
+      "ORG01",
+      "Código en el sistema anterior (migración)."
+     ],
+     [
+      "Representante legal",
+      "Campo",
+      "Representante Legal",
+      "Opcional."
+     ],
+     [
+      "Teléfonos",
+      "Campo",
+      "2219-3093",
+      "Opcional."
+     ],
+     [
+      "Correos",
+      "Campo",
+      "contacto@empresa.com",
+      "Opcional."
+     ],
+     [
+      "Dirección",
+      "Texto",
+      "Zona 10, Guatemala",
+      "Opcional."
+     ],
+     [
+      "País / Estado / departamento / Ciudad / municipio",
+      "Lista",
+      "Guatemala",
+      "Cascada de ubicación."
+     ],
+     [
+      "Activa",
+      "Casilla",
+      "✓",
+      "Organización vigente."
+     ],
+     [
+      "Logo",
+      "Archivo",
+      "logo.png",
+      "Imagen."
+     ],
+     [
+      "Eslogan",
+      "Archivo",
+      "eslogan.png",
+      "Imagen."
+     ]
+    ]
+   },
+   {
+    "grupo": "Formulario de localidad",
+    "filas": [
+     [
+      "Nombre comercial",
+      "Campo",
+      "{empresa}",
+      "Obligatorio."
+     ],
+     [
+      "Razón social",
+      "Campo",
+      "Empresa, S.A.",
+      "Nombre legal."
+     ],
+     [
+      "Siglas",
+      "Campo",
+      "MSA",
+      "Se usan en los correlativos."
+     ],
+     [
+      "Empresa anterior",
+      "Campo",
+      "E01",
+      "Código en el sistema anterior (migración)."
+     ],
+     [
+      "NIT",
+      "Campo",
+      "1234567-8",
+      "NIT."
+     ],
+     [
+      "Venta de productos",
+      "Lista",
+      "Sin definir",
+      "Medicamentos, Productos perecederos o Productos no perecederos."
+     ],
+     [
+      "Teléfonos / Correos / Dirección",
+      "Campo",
+      "2219-3093",
+      "Contactos."
+     ],
+     [
+      "País / Estado / departamento / Ciudad / municipio",
+      "Lista",
+      "Guatemala",
+      "Ubicación."
+     ],
+     [
+      "Activa",
+      "Casilla",
+      "✓",
+      "Localidad vigente."
+     ],
+     [
+      "Logo de la localidad",
+      "Archivo",
+      "logo.png",
+      "Sin logo se usa el de la organización."
+     ],
+     [
+      "Eslogan de la localidad",
+      "Archivo",
+      "eslogan.png",
+      "Sin eslogan se usa el de la organización."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Venta de productos",
+    "Sin definir, Medicamentos, Productos perecederos, Productos no perecederos",
+    "Sin definir",
+    "Define controles de inventario como lote, vencimiento y registro sanitario."
+   ],
+   [
+    "Siglas de la localidad",
+    "Texto corto",
+    "—",
+    "Prefijo de los correlativos de documentos."
+   ],
+   [
+    "Activa",
+    "Marcado / desmarcado",
+    "Marcado",
+    "Las inactivas no se ofrecen para elegir."
+   ],
+   [
+    "Logo y eslogan",
+    "Imagen propia o heredada",
+    "De la organización",
+    "Se imprimen en los reportes y documentos de la localidad."
    ]
   ]
  },
@@ -276,11 +1828,110 @@
    "La localidad sin configuración propia usa la de su organización; sin ninguna, todos los módulos."
   ],
   "pasos": [
-   "Entra a Administración › Catálogos › Parámetros › Acceso Sistemas.",
-   "Elige la organización.",
-   "Marca los módulos que puede usar (ej. Contabilidad, Caja y Bancos, Facturación).",
-   "Si una localidad necesita otros módulos, elígela y marca los suyos.",
-   "Presiona «Guardar»; los usuarios ven los cambios al volver a entrar."
+   "Entra a Administración › Catálogos › Parámetros › Acceso Sistemas (solo Super Administrador Global).",
+   "En «Organizaciones y localidades» elige «Toda la organización» o una localidad; la etiqueta de cada una resume sus módulos.",
+   "Lee el aviso de origen: configuración propia, usa la de su organización o sin restricción.",
+   "Marca los módulos que puede usar (ej. Contabilidad, Caja y Bancos, Facturación) o «Todos los módulos». Administración siempre está disponible.",
+   "Presiona «Guardar».",
+   "«Usar la de la organización» (localidad) o «Quitar restricción» (organización) borra la configuración propia.",
+   "Los usuarios ven los cambios al volver a entrar."
+  ],
+  "elementos": [
+   {
+    "grupo": "Organizaciones y localidades",
+    "filas": [
+     [
+      "Organización (Toda la organización)",
+      "Botón",
+      "01 · {organizacion}",
+      "Configura los módulos de toda la organización."
+     ],
+     [
+      "Localidad",
+      "Botón",
+      "EMP1 · {empresa}",
+      "Configura una localidad; «Inactiva» si está desactivada."
+     ],
+     [
+      "Etiqueta de módulos",
+      "Indicador",
+      "Todos menos Hospital",
+      "Resumen; la flecha indica que usa la de su organización."
+     ]
+    ]
+   },
+   {
+    "grupo": "Detalle",
+    "filas": [
+     [
+      "Aviso de origen",
+      "Texto",
+      "Usa la configuración de su organización.",
+      "Propia, heredada o sin restricción."
+     ],
+     [
+      "Todos los módulos",
+      "Casilla",
+      "✓",
+      "Marca o quita todos los módulos."
+     ],
+     [
+      "Cuenta",
+      "Indicador",
+      "11 de 13 módulos",
+      "Cuántos módulos están marcados."
+     ],
+     [
+      "Administración",
+      "Casilla",
+      "✓ (fija)",
+      "Siempre disponible."
+     ],
+     [
+      "Módulo",
+      "Casilla",
+      "Caja y Bancos",
+      "Un recuadro por módulo con su descripción."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Guardar",
+      "Botón",
+      "",
+      "Guarda la configuración de la organización o localidad."
+     ],
+     [
+      "Usar la de la organización / Quitar restricción",
+      "Botón",
+      "",
+      "Borra la configuración propia (aparece solo si la tiene)."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Origen de la configuración",
+    "Propia, De la organización, Sin restricción",
+    "Sin restricción",
+    "Una localidad sin configuración usa la de su organización; sin ninguna, todos los módulos."
+   ],
+   [
+    "Módulos marcados",
+    "Cualquier combinación de módulos",
+    "Todos",
+    "Define qué módulos aparecen en el menú de los usuarios de esa organización o localidad."
+   ],
+   [
+    "Acceso a la pantalla",
+    "Solo Super Administrador Global",
+    "—",
+    "Los demás no la ven."
+   ]
   ]
  },
  "datos-personas": {
@@ -289,16 +1940,17 @@
    "Valida el DPI (dígito verificador; de él salen departamento y municipio), el NIT (módulo 11), calcula la edad, separa nombres y apellidos y avisa duplicados."
   ],
   "pasos": [
-   "Entra a Administración › Registros › Personas › Datos Personas.",
+   "Entra a Administración › Registros › Datos Personas.",
    "Elige la «Organización» y la «Localidad (cuentas contables)».",
-   "En «Buscar persona» escribe nombre, DPI o NIT; si existe ábrela, si no presiona «Nuevo».",
-   "Elige el «Tipo de persona», el código y el centro de costo; escribe nombres y apellidos (se separan solos).",
-   "Llena los datos generales: fecha de nacimiento (calcula la edad), género, estado civil.",
-   "En identificación escribe el DPI: si es válido se llenan departamento y municipio de extensión; escribe el NIT (se valida).",
+   "En «Buscar persona» escribe nombre, apellido, DPI, NIT o código; si existe ábrela, si no presiona «Nueva persona».",
+   "Elige el «Tipo de persona» y el «Centro de costo»; escribe «Nombres» y «Apellidos» (el código se asigna al guardar).",
+   "Llena los datos generales: facturar a, vendedor, zona de venta, direcciones de factura y cobro, fecha de nacimiento (calcula la edad), nacionalidad, NIT, escolaridad, estado civil, profesión, sexo y correo.",
+   "En «Documento de identificación» escribe el DPI: si es válido se llenan departamento y municipio de extensión; el NIT se valida.",
    "Si ya existe otra persona con ese DPI no deja guardar; con el mismo NIT pide confirmación.",
-   "Llena dirección, teléfonos y correo, información laboral, límite de crédito y cuenta contable, y los contactos.",
-   "Revisa los «Clientes asociados» con el mismo NIT o DPI.",
-   "Guarda."
+   "Llena la dirección de casa, los teléfonos (+ para agregar) y los contactos.",
+   "Completa la información laboral, el crédito y la cuenta contable, y los nombres por separado.",
+   "Revisa los clientes asociados con el mismo NIT o DPI.",
+   "Presiona «Guardar». «Desactivar» o «Activar» cambia el estado de una persona ya guardada."
   ],
   "campos": [
    [
@@ -308,13 +1960,13 @@
    ],
    [
     "DPI",
-    "2456 78901 0101",
-    "CUI validado."
+    "2456789010101",
+    "CUI de 13 dígitos validado."
    ],
    [
     "NIT",
     "1234567-8",
-    "Validado módulo 11."
+    "Validado módulo 11 (o CF)."
    ],
    [
     "Fecha de nacimiento",
@@ -322,9 +1974,440 @@
     "Calcula la edad."
    ],
    [
-    "Límite de crédito",
-    "Q 10,000.00",
+    "Límite de crédito Q",
+    "10,000.00",
     "Para ventas al crédito."
+   ]
+  ],
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "01 · {organizacion}",
+      "Organización de las personas."
+     ],
+     [
+      "Localidad (cuentas contables)",
+      "Lista",
+      "EMP1 · {empresa}",
+      "Empresa de la que se toman las cuentas contables."
+     ],
+     [
+      "Buscar persona (N)",
+      "Campo",
+      "Juan Pérez · DPI 2456789010101 — 1001",
+      "Busca por nombre, apellido, DPI, NIT o código; muestra cuántas hay."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nueva persona",
+      "Botón",
+      "",
+      "Limpia la ficha para crear una persona."
+     ],
+     [
+      "Desactivar / Activar",
+      "Botón",
+      "",
+      "Cambia el estado de la persona abierta."
+     ],
+     [
+      "Guardar",
+      "Botón",
+      "",
+      "Valida y guarda la ficha."
+     ]
+    ]
+   },
+   {
+    "grupo": "Encabezado",
+    "filas": [
+     [
+      "Tipo de persona",
+      "Lista",
+      "Cliente",
+      "Del catálogo de tipos (empleado, cliente, paciente, proveedor, médico…)."
+     ],
+     [
+      "Código",
+      "Texto",
+      "Nuevo",
+      "Se asigna al guardar."
+     ],
+     [
+      "Centro de costo",
+      "Campo",
+      "ADM-01",
+      "Centro de costo de la persona."
+     ],
+     [
+      "Nombres",
+      "Campo",
+      "Juan Manuel",
+      "Obligatorio."
+     ],
+     [
+      "Apellidos",
+      "Campo",
+      "Pérez López",
+      "Apellidos."
+     ],
+     [
+      "Sellos",
+      "Indicador",
+      "Cliente · Activa · 40 años",
+      "Tipo, estado, edad, código anterior y fecha de ingreso."
+     ],
+     [
+      "Aviso de duplicado",
+      "Enlace",
+      "Ya existe … (mismo NIT)",
+      "Personas con el mismo DPI, NIT o nombre; clic la abre."
+     ]
+    ]
+   },
+   {
+    "grupo": "Datos generales",
+    "filas": [
+     [
+      "Facturar a",
+      "Campo",
+      "Juan Manuel Pérez López",
+      "Nombre para facturas."
+     ],
+     [
+      "Vendedor",
+      "Campo",
+      "V01",
+      "Vendedor asignado."
+     ],
+     [
+      "Zona de venta",
+      "Campo",
+      "Central",
+      "Zona comercial."
+     ],
+     [
+      "Dirección factura",
+      "Campo",
+      "Zona 1, Guatemala",
+      "Dirección fiscal."
+     ],
+     [
+      "Dirección cobro",
+      "Campo",
+      "Zona 4",
+      "Dirección de cobro."
+     ],
+     [
+      "Zona",
+      "Número",
+      "10",
+      "Zona de 0 a 25."
+     ],
+     [
+      "Fecha de nacimiento",
+      "Fecha",
+      "15/03/1985",
+      "Calcula la edad."
+     ],
+     [
+      "Edad",
+      "Número",
+      "40",
+      "Solo lectura."
+     ],
+     [
+      "Nacionalidad",
+      "Campo",
+      "Guatemalteca",
+      "Nacionalidad."
+     ],
+     [
+      "NIT",
+      "Campo",
+      "1234567-8",
+      "Validado; «no válido» si falla."
+     ],
+     [
+      "Escolaridad",
+      "Lista",
+      "Universitaria",
+      "Del catálogo de escolaridad."
+     ],
+     [
+      "Estado civil",
+      "Lista",
+      "CASADO",
+      "Soltero, Casado, Unido, Divorciado o Viudo."
+     ],
+     [
+      "Profesión",
+      "Lista",
+      "Contador",
+      "Del catálogo de profesiones."
+     ],
+     [
+      "Sexo",
+      "Lista",
+      "Masculino",
+      "Masculino o Femenino."
+     ],
+     [
+      "Correo",
+      "Campo",
+      "nombre@empresa.com",
+      "Correo electrónico."
+     ]
+    ]
+   },
+   {
+    "grupo": "Documento de identificación",
+    "filas": [
+     [
+      "DPI",
+      "Campo",
+      "2456789010101",
+      "13 dígitos; indica «válido» o «revisar»."
+     ],
+     [
+      "Departamento / Municipio",
+      "Lista",
+      "Guatemala · Mixco",
+      "Lugar de extensión del DPI (se llena solo si el DPI es válido)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Dirección de casa",
+    "filas": [
+     [
+      "País / Departamento / Municipio",
+      "Lista",
+      "Guatemala · Guatemala · Mixco",
+      "Ubicación de la vivienda."
+     ],
+     [
+      "Aldea",
+      "Campo",
+      "San Cristóbal",
+      "Aldea o colonia."
+     ],
+     [
+      "Dirección",
+      "Campo",
+      "4a calle 5-20",
+      "Dirección."
+     ]
+    ]
+   },
+   {
+    "grupo": "Teléfonos",
+    "filas": [
+     [
+      "+ (Agregar teléfono)",
+      "Botón",
+      "",
+      "Agrega una fila."
+     ],
+     [
+      "Teléfono",
+      "Campo",
+      "5555 1234",
+      "Número."
+     ],
+     [
+      "Tipo",
+      "Lista",
+      "CELULAR",
+      "Celular, Casa, Trabajo u Otro."
+     ],
+     [
+      "Ext.",
+      "Campo",
+      "204",
+      "Extensión."
+     ],
+     [
+      "Área",
+      "Campo",
+      "Ventas",
+      "Área."
+     ],
+     [
+      "X",
+      "Botón",
+      "",
+      "Quita el teléfono."
+     ]
+    ]
+   },
+   {
+    "grupo": "Contactos y clientes asociados",
+    "filas": [
+     [
+      "+ (Agregar contacto)",
+      "Botón",
+      "",
+      "Agrega un contacto."
+     ],
+     [
+      "Nombre / Parentesco / Teléfono",
+      "Campo",
+      "Ana Pérez · Esposa · 5555 0000",
+      "Datos del contacto."
+     ],
+     [
+      "Clientes asociados",
+      "Indicador",
+      "C001 · Juan Pérez",
+      "Clientes con el mismo NIT o DPI."
+     ]
+    ]
+   },
+   {
+    "grupo": "Información laboral",
+    "filas": [
+     [
+      "Empresa",
+      "Campo",
+      "Empresa, S.A.",
+      "Donde trabaja."
+     ],
+     [
+      "Años",
+      "Número",
+      "5",
+      "Tiempo de laborar."
+     ],
+     [
+      "Dirección",
+      "Campo",
+      "Zona 10",
+      "Dirección laboral."
+     ],
+     [
+      "Ingresos Q",
+      "Monto",
+      "8,500.00",
+      "Ingreso mensual."
+     ],
+     [
+      "Puesto",
+      "Campo",
+      "Contador",
+      "Puesto."
+     ],
+     [
+      "Otros ingresos Q",
+      "Monto",
+      "1,000.00",
+      "Otros ingresos."
+     ],
+     [
+      "Concepto",
+      "Campo",
+      "Alquileres",
+      "Origen de otros ingresos."
+     ],
+     [
+      "Mostrar en el reporte «Entre compañías»",
+      "Casilla",
+      "☐",
+      "Incluye a la persona en ese reporte."
+     ]
+    ]
+   },
+   {
+    "grupo": "Crédito y cuenta contable",
+    "filas": [
+     [
+      "Cuenta contable",
+      "Campo",
+      "1102-01 · Clientes",
+      "Cuenta de la localidad elegida."
+     ],
+     [
+      "Días de crédito",
+      "Número",
+      "30",
+      "Plazo de crédito."
+     ],
+     [
+      "Límite de crédito Q",
+      "Monto",
+      "10,000.00",
+      "Monto máximo de crédito."
+     ]
+    ]
+   },
+   {
+    "grupo": "Nombres por separado",
+    "filas": [
+     [
+      "1er nombre / 2do nombre",
+      "Campo",
+      "Juan · Manuel",
+      "Se separan solos de «Nombres»."
+     ],
+     [
+      "1er apellido / 2do apellido",
+      "Campo",
+      "Pérez · López",
+      "Se separan solos de «Apellidos»."
+     ],
+     [
+      "Apellido de casada",
+      "Campo",
+      "de Pérez",
+      "Opcional."
+     ],
+     [
+      "Observaciones",
+      "Campo",
+      "—",
+      "Notas."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Tipo de persona",
+    "Catálogo TIPO (empleado, cliente, paciente, proveedor, médico…)",
+    "El primero del catálogo",
+    "Clasifica a la persona en las consultas y en otras pantallas."
+   ],
+   [
+    "Validación de DPI",
+    "Dígito verificador y departamento/municipio del CUI",
+    "—",
+    "Un DPI repetido impide guardar."
+   ],
+   [
+    "Validación de NIT",
+    "Módulo 11 o CF",
+    "—",
+    "Un NIT repetido pide confirmación."
+   ],
+   [
+    "Localidad (cuentas contables)",
+    "Localidades de la organización",
+    "Tu localidad",
+    "Define el catálogo de cuentas para «Cuenta contable»."
+   ],
+   [
+    "Estado",
+    "Activa / Inactiva",
+    "Activa",
+    "Las inactivas aparecen marcadas en la búsqueda."
    ]
   ]
  },
@@ -333,12 +2416,14 @@
    "Resumen de las personas de la organización por tipo, estado, documento y empresa, con búsqueda, posibles duplicados, clientes asociados y reporte en Excel."
   ],
   "pasos": [
-   "Entra a Administración › Registros › Personas › Consulta Personas.",
-   "Elige la organización, el «Tipo de persona», el «Estado», el «Documento» (con DPI, con NIT, sin documento) y «Registradas en».",
-   "Elige el «Ordenar por».",
-   "Lee la síntesis: total, por tipo y posibles duplicados (coinciden en DPI, NIT o nombre).",
-   "Haz clic en «Ver ficha» para abrir la persona.",
-   "Genera el Excel."
+   "Entra a Administración › Registros › Consulta Personas.",
+   "Elige la «Empresa», el «Tipo de persona», el «Estado», el «Documento» y «Registradas en».",
+   "Elige el «Ordenar por» (o haz clic en el encabezado de Código, Nombre, Nacimiento o Estado).",
+   "Lee los totales: activas, inactivas, con DPI, sin DPI y posibles duplicados.",
+   "Usa la búsqueda por nombre, DPI, NIT, código o teléfono.",
+   "Haz clic en una persona para ver su ficha y la tabla «Posibles duplicados y clientes asociados».",
+   "«Ver ficha» o «Ver en Datos Personas» abre la persona para corregirla; «Nueva persona» crea una.",
+   "Presiona «Generar Excel» para el listado con el encabezado de la empresa."
   ],
   "reporte": {
    "titulo": "Ejemplo · Personas",
@@ -366,7 +2451,227 @@
     ]
    ]
   },
-  "voz": "Consulta de personas: dos registros; hay un posible duplicado que coincide en el NIT."
+  "voz": "Consulta de personas: dos registros; hay un posible duplicado que coincide en el NIT.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "EMP1 · {empresa}",
+      "Empresa y organización de la consulta."
+     ],
+     [
+      "Tipo de persona",
+      "Lista",
+      "Todos",
+      "Filtra por tipo."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "ACTIVAS",
+      "TODAS, ACTIVAS o INACTIVAS."
+     ],
+     [
+      "Documento",
+      "Lista",
+      "Todos",
+      "Todos, Con DPI, Sin DPI, Con NIT, Sin NIT o Posibles duplicados."
+     ],
+     [
+      "Registradas en",
+      "Lista",
+      "Toda la organización",
+      "Toda la organización o Esta empresa."
+     ],
+     [
+      "Ordenar por",
+      "Lista",
+      "Código ↑",
+      "Código ↑/↓, Nombre A-Z/Z-A, Ingreso ↓, Nacimiento ↑."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nueva persona",
+      "Enlace",
+      "",
+      "Abre Datos Personas para crear una."
+     ],
+     [
+      "Generar Excel",
+      "Botón",
+      "",
+      "Listado de personas en .xlsx con el encabezado de la empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Totales",
+    "filas": [
+     [
+      "Personas",
+      "Indicador",
+      "1,250",
+      "Personas con los filtros."
+     ],
+     [
+      "activas / inactivas",
+      "Indicador",
+      "1,180 · 70",
+      "Por estado."
+     ],
+     [
+      "con DPI / sin DPI",
+      "Indicador",
+      "1,020 · 230",
+      "Por documento."
+     ],
+     [
+      "posibles duplicados",
+      "Indicador",
+      "12",
+      "Coinciden en DPI, NIT o nombre."
+     ],
+     [
+      "Buscar",
+      "Campo",
+      "Pérez",
+      "Nombre, DPI, NIT, código, teléfono…"
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Código",
+      "Columna",
+      "1001",
+      "Ordenable."
+     ],
+     [
+      "Nombre · tipo",
+      "Columna",
+      "Juan Pérez · Cliente",
+      "Indica «posible duplicado» y en qué coincide."
+     ],
+     [
+      "DPI · NIT",
+      "Columna",
+      "2456789010101 · NIT 1234567-8",
+      "Documentos."
+     ],
+     [
+      "Teléfono · correo",
+      "Columna",
+      "5555 1234",
+      "Contacto."
+     ],
+     [
+      "Nacimiento",
+      "Columna",
+      "15-03-1985 · 40 años",
+      "Fecha y edad."
+     ],
+     [
+      "Sistema anterior",
+      "Columna",
+      "E01-0045",
+      "Código anterior y empresa."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activa · Ingreso 05-01-2026",
+      "Estado y fecha de ingreso."
+     ],
+     [
+      "Ver ficha",
+      "Botón",
+      "",
+      "Abre la ficha en Datos Personas."
+     ]
+    ]
+   },
+   {
+    "grupo": "Detalle de la persona",
+    "filas": [
+     [
+      "DPI / NIT / Nacimiento / Estado",
+      "Texto",
+      "2456789010101 · 1234567-8",
+      "Resumen."
+     ],
+     [
+      "Ver en Datos Personas",
+      "Enlace",
+      "",
+      "Abre la ficha para editar."
+     ],
+     [
+      "Datos de la ficha",
+      "Texto",
+      "Facturar a, teléfonos, correo, sexo, direcciones, crédito, cuenta contable",
+      "Datos principales."
+     ],
+     [
+      "Posibles duplicados y clientes asociados",
+      "Columna",
+      "Tipo · Código · Nombre · DPI · NIT · Coincide en",
+      "Personas que coinciden y clientes con el mismo documento."
+     ]
+    ]
+   },
+   {
+    "grupo": "Salidas",
+    "filas": [
+     [
+      "Excel",
+      "Archivo",
+      "personas_EMP1.xlsx",
+      "Código, nombres, apellidos, tipo, DPI, NIT, teléfonos, correo, nacimiento, edad, sexo, sistema anterior, empresa y estado (si no carga, CSV)."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Estado",
+    "TODAS, ACTIVAS, INACTIVAS",
+    "ACTIVAS",
+    "Filtra por estado."
+   ],
+   [
+    "Documento",
+    "Todos, Con DPI, Sin DPI, Con NIT, Sin NIT, Posibles duplicados",
+    "Todos",
+    "Filtra por documento o muestra solo los duplicados."
+   ],
+   [
+    "Registradas en",
+    "Toda la organización, Esta empresa",
+    "Toda la organización",
+    "Alcance de la consulta."
+   ],
+   [
+    "Ordenar por",
+    "Código ↑, Código ↓, Nombre A-Z, Nombre Z-A, Ingreso ↓, Nacimiento ↑",
+    "Código ↑",
+    "Orden del listado y del Excel."
+   ],
+   [
+    "Posible duplicado",
+    "Mismo DPI, NIT (excepto CF) o nombre completo",
+    "—",
+    "Se marca en la lista y en el detalle."
+   ]
+  ]
  },
  "backup": {
   "puntos": [
@@ -376,11 +2681,12 @@
   "pasos": [
    "Entra a Administración › Procesos › Backup.",
    "Elige la «Organización» y la «Localidad (empresa)» («Todas» solo administradores).",
-   "Elige el contenido: Base de datos, Aplicativo o Todo.",
-   "En «Directorio o ruta» indica la carpeta destino; en Chrome o Edge el navegador pide permiso una vez y la recuerda.",
-   "Presiona «Generar backup ahora»: lee cada tabla, arma el archivo y lo guarda; el historial muestra tablas, registros, tamaño y resultado.",
-   "Para respaldos automáticos elige frecuencia, «Día de la semana», «Semana del mes» y «Hora de ejecución» y presiona «Guardar programación»; «Probar ahora» lo verifica.",
-   "Los respaldos del servidor se copian a la carpeta con «Copiar a la carpeta» o se bajan con «Descargar»."
+   "En «Respaldar» marca Aplicativo, Base de datos o Todo; marca «Comprimir» si quieres el archivo .gz.",
+   "En «Directorio o ruta» indica la carpeta destino y presiona «Elegir carpeta…»; en Chrome o Edge el navegador pide permiso una vez y la recuerda (en otros navegadores el archivo se descarga).",
+   "Presiona «Generar backup ahora»: la barra muestra el avance y el historial registra tablas, registros, tamaño y resultado.",
+   "Para respaldos automáticos (solo Super Administrador) marca «Backup automático», elige Diaria, Semanal o Mensual, «Semana del mes», «Día de la semana» y «Hora de ejecución» y presiona «Guardar programación»; «Probar ahora» lo verifica.",
+   "Si hay respaldos automáticos pendientes, cópialos con «Copiar a la carpeta» o bájalos con «Descargar».",
+   "«Backups en Supabase» abre los respaldos del proyecto en el panel de Supabase."
   ],
   "resultado": {
    "titulo": "Ejemplo · Historial de respaldos",
@@ -413,7 +2719,282 @@
      "Exitoso"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Encabezado",
+    "filas": [
+     [
+      "Permiso",
+      "Indicador",
+      "Administrador: puede respaldar todas",
+      "Alcance que permite tu rol."
+     ],
+     [
+      "Usuario · fecha y hora",
+      "Texto",
+      "JPEREZ · {hoy} 10:15",
+      "Quién genera el respaldo."
+     ],
+     [
+      "Backups en Supabase",
+      "Enlace",
+      "",
+      "Abre los respaldos del proyecto en Supabase (con Base de datos marcada)."
+     ],
+     [
+      "Generar backup ahora",
+      "Botón",
+      "",
+      "Genera el respaldo y lo guarda en la carpeta o lo descarga."
+     ],
+     [
+      "Aviso de pendientes",
+      "Indicador",
+      "Hay 2 backups automáticos por copiar",
+      "Con «Copiar a la carpeta» o «Descargar»."
+     ]
+    ]
+   },
+   {
+    "grupo": "Alcance y contenido",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "Todas las organizaciones",
+      "Solo administradores pueden elegir otra o todas."
+     ],
+     [
+      "Localidad (empresa)",
+      "Lista",
+      "Todas las localidades de la organización",
+      "Localidad a respaldar."
+     ],
+     [
+      "Aplicativo",
+      "Casilla",
+      "☐",
+      "Página, estilos y programas (JSON)."
+     ],
+     [
+      "Base de datos",
+      "Casilla",
+      "✓",
+      "Tablas y registros (SQL)."
+     ],
+     [
+      "Todo",
+      "Casilla",
+      "☐",
+      "Aplicativo y base de datos."
+     ],
+     [
+      "Comprimir",
+      "Casilla",
+      "✓",
+      "Genera .sql.gz o .json.gz (si el navegador lo permite)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Programación automática",
+    "filas": [
+     [
+      "Backup automático activo/inactivo",
+      "Casilla",
+      "✓",
+      "Activa la programación (solo Super Administrador)."
+     ],
+     [
+      "Estado",
+      "Indicador",
+      "Programado",
+      "Programado o Sin programar."
+     ],
+     [
+      "Diaria / Semanal / Mensual",
+      "Lista",
+      "Diaria",
+      "Frecuencia."
+     ],
+     [
+      "Semana del mes",
+      "Lista",
+      "Primer",
+      "Solo mensual: Primer, Segundo, Tercer, Cuarto o Último."
+     ],
+     [
+      "Día de la semana",
+      "Lista",
+      "Viernes",
+      "Semanal o mensual."
+     ],
+     [
+      "Hora de ejecución",
+      "Texto",
+      "22:00",
+      "Hora en que el servidor lo genera."
+     ],
+     [
+      "Próximo backup / Último backup",
+      "Fecha",
+      "{hoy} 22:00",
+      "Siguiente ejecución y resultado de la última."
+     ],
+     [
+      "Qué respalda",
+      "Texto",
+      "Base de datos · Todas las organizaciones",
+      "Alcance programado."
+     ],
+     [
+      "Guardar programación",
+      "Botón",
+      "",
+      "Guarda la programación con el alcance elegido."
+     ],
+     [
+      "Probar ahora",
+      "Botón",
+      "",
+      "Genera el backup automático en el servidor para comprobarlo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Destino",
+    "filas": [
+     [
+      "Directorio o ruta (computadora o servidor)",
+      "Campo",
+      "D:\\Respaldos\\Financiero",
+      "Carpeta destino; se recuerda en esta computadora."
+     ],
+     [
+      "Elegir carpeta… / Cambiar carpeta",
+      "Botón",
+      "",
+      "Elige la carpeta (Chrome o Edge); avisa si no coincide con la ruta."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del Historial de backups",
+    "filas": [
+     [
+      "Fecha y hora",
+      "Columna",
+      "{hoy} 23:00",
+      "Momento del respaldo."
+     ],
+     [
+      "Origen",
+      "Columna",
+      "Automático",
+      "Manual o Automático."
+     ],
+     [
+      "Contenido",
+      "Columna",
+      "Base de datos",
+      "Tipo de archivo."
+     ],
+     [
+      "Usuario",
+      "Columna",
+      "JPEREZ",
+      "Quién lo generó."
+     ],
+     [
+      "Organización / Localidad",
+      "Columna",
+      "Todas",
+      "Alcance."
+     ],
+     [
+      "Archivo",
+      "Columna",
+      "backup_{hoy}.sql.gz",
+      "Nombre del archivo."
+     ],
+     [
+      "Ruta",
+      "Columna",
+      "D:\\Respaldos",
+      "Dónde se guardó."
+     ],
+     [
+      "Tablas",
+      "Columna",
+      "186",
+      "Tablas respaldadas."
+     ],
+     [
+      "Registros",
+      "Columna",
+      "412,880",
+      "Registros respaldados."
+     ],
+     [
+      "Tamaño",
+      "Columna",
+      "38.4 MB",
+      "Tamaño del archivo."
+     ],
+     [
+      "Resultado",
+      "Columna",
+      "Exitoso",
+      "Exitoso o Error (con detalle)."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Respaldar",
+    "Aplicativo, Base de datos, Todo",
+    "Base de datos",
+    "Define el contenido del archivo."
+   ],
+   [
+    "Comprimir",
+    "Marcado / desmarcado",
+    "Según la última elección",
+    "Archivo .gz más pequeño."
+   ],
+   [
+    "Frecuencia",
+    "Diaria, Semanal, Mensual",
+    "Diaria",
+    "Cada cuánto genera el servidor el respaldo."
+   ],
+   [
+    "Semana del mes",
+    "Primer, Segundo, Tercer, Cuarto, Último",
+    "Primer",
+    "Solo con frecuencia mensual."
+   ],
+   [
+    "Día de la semana",
+    "Lunes a Domingo",
+    "Viernes",
+    "Con frecuencia semanal o mensual."
+   ],
+   [
+    "Hora de ejecución",
+    "Hora",
+    "22:00",
+    "Hora del servidor."
+   ],
+   [
+    "Alcance según rol",
+    "Super Administrador y administradores: todas; demás: su organización y localidad",
+    "—",
+    "Limita la organización y localidad elegibles."
+   ]
+  ]
  },
  "reporte-organizaciones": {
   "puntos": [
@@ -421,9 +3002,11 @@
   ],
   "pasos": [
    "Entra a Administración › Reportes y gráficas › Organizaciones y localidades.",
-   "Elige la «Organización» (una o todas) y la «Localidad».",
-   "Elige el «Formato» y presiona «Ejecutar reporte».",
-   "Revisa el resultado y presiona «Imprimir» (PDF) o descarga el Excel."
+   "Elige la «Organización» (una o TODAS) y la «Localidad».",
+   "Indica la «Fecha inicial» y la «Fecha final» (fecha de alta).",
+   "Elige el «Formato»: PDF o EXCEL.",
+   "Presiona «Ejecutar reporte» y revisa los totales y el detalle en pantalla.",
+   "Presiona «Imprimir»: con PDF se abre la impresión; con EXCEL se descarga el archivo."
   ],
   "reporte": {
    "columnas": [
@@ -443,7 +3026,204 @@
     ]
    ]
   },
-  "voz": "{organizacion} tiene sus localidades activas; {empresa} vende productos."
+  "voz": "{organizacion} tiene sus localidades activas; {empresa} vende productos.",
+  "elementos": [
+   {
+    "grupo": "Parámetros del reporte",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "TODAS",
+      "Una organización o TODAS."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "TODAS",
+      "Una localidad o TODAS; al elegirla se fija su organización."
+     ],
+     [
+      "Fecha inicial",
+      "Fecha",
+      "01/01/{anio}",
+      "Fecha de alta: inicio del rango; por omisión el 1 de enero."
+     ],
+     [
+      "Fecha final",
+      "Fecha",
+      "{hoy}",
+      "Fecha de alta: fin del rango; por omisión hoy."
+     ],
+     [
+      "Formato",
+      "Lista",
+      "PDF",
+      "PDF (impresión) o EXCEL (archivo .csv)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Ejecutar reporte",
+      "Botón",
+      "",
+      "Genera el resultado en pantalla."
+     ],
+     [
+      "Imprimir",
+      "Botón",
+      "",
+      "Con PDF abre la impresión; con EXCEL descarga el archivo. Se habilita al ejecutar."
+     ]
+    ]
+   },
+   {
+    "grupo": "Totales",
+    "filas": [
+     [
+      "Organizaciones",
+      "Indicador",
+      "2",
+      "Organizaciones en el reporte."
+     ],
+     [
+      "Localidades",
+      "Indicador",
+      "6",
+      "Localidades que cumplen los filtros."
+     ],
+     [
+      "Activas",
+      "Indicador",
+      "5",
+      "Localidades activas."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Organización (fila de grupo)",
+      "Texto",
+      "01 · {organizacion} · Rep. legal · Tel.",
+      "Agrupa las localidades; indica INACTIVA si aplica."
+     ],
+     [
+      "Código",
+      "Columna",
+      "EMP1",
+      "Código de la localidad."
+     ],
+     [
+      "Nombre comercial",
+      "Columna",
+      "{empresa}",
+      "Nombre de la empresa."
+     ],
+     [
+      "Razón social",
+      "Columna",
+      "Empresa, S.A.",
+      "Nombre legal."
+     ],
+     [
+      "NIT",
+      "Columna",
+      "1234567-8",
+      "NIT."
+     ],
+     [
+      "Venta de productos",
+      "Columna",
+      "Medicamentos",
+      "Medicamentos, Perecederos o No perecederos."
+     ],
+     [
+      "Teléfonos",
+      "Columna",
+      "2219-3093",
+      "Contacto."
+     ],
+     [
+      "Municipio",
+      "Columna",
+      "Guatemala",
+      "Ubicación."
+     ],
+     [
+      "Empresa anterior",
+      "Columna",
+      "E01",
+      "Código en el sistema anterior."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activa",
+      "Activa o Inactiva (atenuada)."
+     ],
+     [
+      "Alta",
+      "Columna",
+      "05-01-2026",
+      "Fecha de creación."
+     ],
+     [
+      "registro(s)",
+      "Indicador",
+      "24 registro(s)",
+      "Pie con la cantidad de filas."
+     ]
+    ]
+   },
+   {
+    "grupo": "Salidas",
+    "filas": [
+     [
+      "PDF",
+      "Archivo",
+      "Organizaciones y localidades",
+      "Con título, filtros, fecha de generación y totales."
+     ],
+     [
+      "Excel",
+      "Archivo",
+      "organizaciones_{hoy}.csv",
+      "Una fila por registro con la columna de agrupación."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Organización",
+    "TODAS o una organización",
+    "TODAS",
+    "Limita el reporte a esa organización."
+   ],
+   [
+    "Localidad",
+    "TODAS o una localidad",
+    "TODAS",
+    "Limita el reporte a esa localidad."
+   ],
+   [
+    "Fecha de alta (Fecha inicial / Fecha final)",
+    "Rango de fechas",
+    "01/01/{anio} – {hoy}",
+    "Filtra las localidades por su fecha de creación."
+   ],
+   [
+    "Formato",
+    "PDF, EXCEL",
+    "PDF",
+    "Define si «Imprimir» abre la impresión o descarga el archivo."
+   ]
+  ]
  },
  "reporte-modulos": {
   "puntos": [
@@ -451,9 +3231,10 @@
   ],
   "pasos": [
    "Entra a Administración › Reportes y gráficas › Módulos y sub módulos.",
-   "Elige organización y localidad.",
-   "Presiona «Ejecutar reporte».",
-   "Imprime o descarga."
+   "Elige la «Organización» (una o TODAS) y la «Localidad».",
+   "Elige el «Formato»: PDF o EXCEL.",
+   "Presiona «Ejecutar reporte» y revisa los totales y el detalle en pantalla.",
+   "Presiona «Imprimir»: con PDF se abre la impresión; con EXCEL se descarga el archivo."
   ],
   "reporte": {
    "columnas": [
@@ -477,7 +3258,168 @@
     ]
    ]
   },
-  "voz": "Caja y bancos tiene diez opciones en bancos con seis usuarios con acceso."
+  "voz": "Caja y bancos tiene diez opciones en bancos con seis usuarios con acceso.",
+  "elementos": [
+   {
+    "grupo": "Parámetros del reporte",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "TODAS",
+      "Una organización o TODAS."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "TODAS",
+      "Una localidad o TODAS; al elegirla se fija su organización."
+     ],
+     [
+      "Formato",
+      "Lista",
+      "PDF",
+      "PDF (impresión) o EXCEL (archivo .csv)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Ejecutar reporte",
+      "Botón",
+      "",
+      "Genera el resultado en pantalla."
+     ],
+     [
+      "Imprimir",
+      "Botón",
+      "",
+      "Con PDF abre la impresión; con EXCEL descarga el archivo. Se habilita al ejecutar."
+     ]
+    ]
+   },
+   {
+    "grupo": "Totales",
+    "filas": [
+     [
+      "Módulos",
+      "Indicador",
+      "14",
+      "Módulos principales."
+     ],
+     [
+      "Sub módulos",
+      "Indicador",
+      "62",
+      "Sub módulos."
+     ],
+     [
+      "Opciones",
+      "Indicador",
+      "210",
+      "Pantallas del sistema."
+     ],
+     [
+      "Usuarios activos",
+      "Indicador",
+      "24",
+      "Usuarios activos de la organización y localidad."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Siglas",
+      "Columna",
+      "CB",
+      "Siglas del módulo."
+     ],
+     [
+      "Módulo / opción",
+      "Columna",
+      "CAJA Y BANCOS · ↳ Emisión de cheques",
+      "Módulo, sub módulo (↳) u opción."
+     ],
+     [
+      "Grupo",
+      "Columna",
+      "Cheques",
+      "Tipo de fila (Módulo, Sub módulo) o grupo del menú de la opción."
+     ],
+     [
+      "Subgrupo",
+      "Columna",
+      "Cheques",
+      "Subgrupo del menú."
+     ],
+     [
+      "Clave",
+      "Columna",
+      "emision-de-cheques",
+      "Identificador de la opción."
+     ],
+     [
+      "Opciones · usuarios con acceso",
+      "Columna",
+      "19 · 8",
+      "En módulos, cantidad de opciones; en opciones, usuarios activos que pueden verla."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activo",
+      "Activo/Activa o Inactivo/Inactiva."
+     ],
+     [
+      "registro(s)",
+      "Indicador",
+      "24 registro(s)",
+      "Pie con la cantidad de filas."
+     ]
+    ]
+   },
+   {
+    "grupo": "Salidas",
+    "filas": [
+     [
+      "PDF",
+      "Archivo",
+      "Módulos y sub módulos",
+      "Con título, filtros, fecha de generación y totales."
+     ],
+     [
+      "Excel",
+      "Archivo",
+      "modulos_{hoy}.csv",
+      "Una fila por registro."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Organización",
+    "TODAS o una organización",
+    "TODAS",
+    "Limita el reporte a esa organización."
+   ],
+   [
+    "Localidad",
+    "TODAS o una localidad",
+    "TODAS",
+    "Limita el reporte a esa localidad."
+   ],
+   [
+    "Formato",
+    "PDF, EXCEL",
+    "PDF",
+    "Define si «Imprimir» abre la impresión o descarga el archivo."
+   ]
+  ]
  },
  "reporte-roles": {
   "puntos": [
@@ -485,9 +3427,11 @@
   ],
   "pasos": [
    "Entra a Administración › Reportes y gráficas › Roles módulos.",
-   "Elige organización y localidad.",
-   "Presiona «Ejecutar reporte».",
-   "Imprime o descarga."
+   "Elige la «Organización» (una o TODAS) y la «Localidad».",
+   "Indica la «Fecha inicial» y la «Fecha final» (vigencia de la asignación).",
+   "Elige el «Formato»: PDF o EXCEL.",
+   "Presiona «Ejecutar reporte» y revisa los totales y el detalle en pantalla.",
+   "Presiona «Imprimir»: con PDF se abre la impresión; con EXCEL se descarga el archivo."
   ],
   "reporte": {
    "columnas": [
@@ -511,7 +3455,210 @@
     ]
    ]
   },
-  "voz": "El rol contador tiene tres usuarios y cincuenta y ocho opciones."
+  "voz": "El rol contador tiene tres usuarios y cincuenta y ocho opciones.",
+  "elementos": [
+   {
+    "grupo": "Parámetros del reporte",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "TODAS",
+      "Una organización o TODAS."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "TODAS",
+      "Una localidad o TODAS; al elegirla se fija su organización."
+     ],
+     [
+      "Fecha inicial",
+      "Fecha",
+      "01/01/{anio}",
+      "Vigencia de la asignación: inicio del rango; por omisión el 1 de enero."
+     ],
+     [
+      "Fecha final",
+      "Fecha",
+      "{hoy}",
+      "Vigencia de la asignación: fin del rango; por omisión hoy."
+     ],
+     [
+      "Formato",
+      "Lista",
+      "PDF",
+      "PDF (impresión) o EXCEL (archivo .csv)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Ejecutar reporte",
+      "Botón",
+      "",
+      "Genera el resultado en pantalla."
+     ],
+     [
+      "Imprimir",
+      "Botón",
+      "",
+      "Con PDF abre la impresión; con EXCEL descarga el archivo. Se habilita al ejecutar."
+     ]
+    ]
+   },
+   {
+    "grupo": "Totales",
+    "filas": [
+     [
+      "Roles",
+      "Indicador",
+      "6",
+      "Roles en el reporte."
+     ],
+     [
+      "Asignaciones",
+      "Indicador",
+      "18",
+      "Usuarios asignados vigentes."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Rol (fila de grupo)",
+      "Texto",
+      "3 · Contador · 4 usuario(s) · 38 opción(es)",
+      "Indica ACCESO TOTAL o INACTIVO si aplica."
+     ],
+     [
+      "Tipo",
+      "Columna",
+      "Usuario",
+      "Usuario u Opción."
+     ],
+     [
+      "Usuario / módulo",
+      "Columna",
+      "JPerez · CB",
+      "Código del usuario o siglas del módulo."
+     ],
+     [
+      "Nombre / opción",
+      "Columna",
+      "Juan Pérez · Emisión de cheques",
+      "Nombre del usuario o de la opción."
+     ],
+     [
+      "Org. · loc. / grupo",
+      "Columna",
+      "01 · EMP1",
+      "Empresa del usuario o grupo del menú."
+     ],
+     [
+      "Inicio",
+      "Columna",
+      "01-01-2026",
+      "Inicio de la asignación."
+     ],
+     [
+      "Fin",
+      "Columna",
+      "31-12-2026",
+      "Fin de la asignación."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "ACTIVO",
+      "Estado de la asignación."
+     ],
+     [
+      "Ver",
+      "Columna",
+      "✓",
+      "Permiso de ver."
+     ],
+     [
+      "Crear",
+      "Columna",
+      "✓",
+      "Permiso de crear."
+     ],
+     [
+      "Modificar",
+      "Columna",
+      "✓",
+      "Permiso de modificar."
+     ],
+     [
+      "Anular",
+      "Columna",
+      "",
+      "Permiso de anular."
+     ],
+     [
+      "Imprimir",
+      "Columna",
+      "✓",
+      "Permiso de imprimir."
+     ],
+     [
+      "registro(s)",
+      "Indicador",
+      "24 registro(s)",
+      "Pie con la cantidad de filas."
+     ]
+    ]
+   },
+   {
+    "grupo": "Salidas",
+    "filas": [
+     [
+      "PDF",
+      "Archivo",
+      "Roles módulos",
+      "Con título, filtros, fecha de generación y totales."
+     ],
+     [
+      "Excel",
+      "Archivo",
+      "roles_{hoy}.csv",
+      "Una fila por registro con la columna de agrupación."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Organización",
+    "TODAS o una organización",
+    "TODAS",
+    "Limita el reporte a esa organización."
+   ],
+   [
+    "Localidad",
+    "TODAS o una localidad",
+    "TODAS",
+    "Limita el reporte a esa localidad."
+   ],
+   [
+    "Vigencia de la asignación (Fecha inicial / Fecha final)",
+    "Rango de fechas",
+    "01/01/{anio} – {hoy}",
+    "Incluye las asignaciones vigentes en el rango (inician antes del final y no terminan antes del inicio)."
+   ],
+   [
+    "Formato",
+    "PDF, EXCEL",
+    "PDF",
+    "Define si «Imprimir» abre la impresión o descarga el archivo."
+   ]
+  ]
  },
  "reporte-usuarios": {
   "puntos": [
@@ -519,9 +3666,11 @@
   ],
   "pasos": [
    "Entra a Administración › Reportes y gráficas › Listado de usuarios.",
-   "Elige organización, localidad y, si aplica, «Fecha inicial» y «Fecha final» de creación.",
-   "Presiona «Ejecutar reporte».",
-   "Imprime o descarga."
+   "Elige la «Organización» (una o TODAS) y la «Localidad».",
+   "Indica la «Fecha inicial» y la «Fecha final» (fecha de alta).",
+   "Elige el «Formato»: PDF o EXCEL.",
+   "Presiona «Ejecutar reporte» y revisa los totales y el detalle en pantalla.",
+   "Presiona «Imprimir»: con PDF se abre la impresión; con EXCEL se descarga el archivo."
   ],
   "reporte": {
    "columnas": [
@@ -548,7 +3697,204 @@
     ]
    ]
   },
-  "voz": "{empresa} tiene dos usuarios activos: un contador y un administrador."
+  "voz": "{empresa} tiene dos usuarios activos: un contador y un administrador.",
+  "elementos": [
+   {
+    "grupo": "Parámetros del reporte",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "TODAS",
+      "Una organización o TODAS."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "TODAS",
+      "Una localidad o TODAS; al elegirla se fija su organización."
+     ],
+     [
+      "Fecha inicial",
+      "Fecha",
+      "01/01/{anio}",
+      "Fecha de alta: inicio del rango; por omisión el 1 de enero."
+     ],
+     [
+      "Fecha final",
+      "Fecha",
+      "{hoy}",
+      "Fecha de alta: fin del rango; por omisión hoy."
+     ],
+     [
+      "Formato",
+      "Lista",
+      "PDF",
+      "PDF (impresión) o EXCEL (archivo .csv)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Ejecutar reporte",
+      "Botón",
+      "",
+      "Genera el resultado en pantalla."
+     ],
+     [
+      "Imprimir",
+      "Botón",
+      "",
+      "Con PDF abre la impresión; con EXCEL descarga el archivo. Se habilita al ejecutar."
+     ]
+    ]
+   },
+   {
+    "grupo": "Totales",
+    "filas": [
+     [
+      "Usuarios",
+      "Indicador",
+      "24",
+      "Usuarios en el reporte."
+     ],
+     [
+      "Activos",
+      "Indicador",
+      "21",
+      "Usuarios activos."
+     ],
+     [
+      "Inactivos",
+      "Indicador",
+      "3",
+      "Usuarios inactivos."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Organización (fila de grupo)",
+      "Texto",
+      "01 · {organizacion}",
+      "Agrupa los usuarios."
+     ],
+     [
+      "Usuario",
+      "Columna",
+      "JPerez",
+      "Código."
+     ],
+     [
+      "Nombre",
+      "Columna",
+      "Juan Pérez",
+      "Nombre completo."
+     ],
+     [
+      "Correo",
+      "Columna",
+      "usuario@empresa.com",
+      "Correo de la cuenta."
+     ],
+     [
+      "Localidad",
+      "Columna",
+      "EMP1 · {empresa}",
+      "Empresa activa."
+     ],
+     [
+      "Rol",
+      "Columna",
+      "Contador",
+      "Rol del sistema."
+     ],
+     [
+      "Roles funcionales",
+      "Columna",
+      "3, 5",
+      "Códigos de los roles funcionales activos."
+     ],
+     [
+      "Empleado",
+      "Columna",
+      "EMP-015",
+      "Código de empleado."
+     ],
+     [
+      "Vence clave",
+      "Columna",
+      "31-12-{anio} (vencida)",
+      "Indica si ya venció."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activo",
+      "Activo o Inactivo."
+     ],
+     [
+      "Alta",
+      "Columna",
+      "05-01-2026",
+      "Fecha de creación."
+     ],
+     [
+      "registro(s)",
+      "Indicador",
+      "24 registro(s)",
+      "Pie con la cantidad de filas."
+     ]
+    ]
+   },
+   {
+    "grupo": "Salidas",
+    "filas": [
+     [
+      "PDF",
+      "Archivo",
+      "Listado de usuarios",
+      "Con título, filtros, fecha de generación y totales."
+     ],
+     [
+      "Excel",
+      "Archivo",
+      "usuarios_{hoy}.csv",
+      "Una fila por registro con la columna de agrupación."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Organización",
+    "TODAS o una organización",
+    "TODAS",
+    "Limita el reporte a esa organización."
+   ],
+   [
+    "Localidad",
+    "TODAS o una localidad",
+    "TODAS",
+    "Limita el reporte a esa localidad."
+   ],
+   [
+    "Fecha de alta (Fecha inicial / Fecha final)",
+    "Rango de fechas",
+    "01/01/{anio} – {hoy}",
+    "Filtra los usuarios por su fecha de creación."
+   ],
+   [
+    "Formato",
+    "PDF, EXCEL",
+    "PDF",
+    "Define si «Imprimir» abre la impresión o descarga el archivo."
+   ]
+  ]
  },
  "tickets-generacion": {
   "puntos": [
@@ -556,12 +3902,14 @@
   ],
   "pasos": [
    "Entra a Administración › Tickets › Generación.",
-   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». Elige también el «Estado».",
-   "Presiona «Nuevo ticket».",
-   "Elige el módulo y escribe la «Descripción del requerimiento *» (ej. No cuadra la conciliación de octubre).",
-   "Elige la «Prioridad» y adjunta capturas o archivos.",
-   "Guarda: el ticket toma su número y queda NUEVO; la gráfica del proceso muestra en qué etapa está.",
-   "«Descartar» cancela lo que no se guardó."
+   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo», «Prioridad» y «Estado».",
+   "Presiona «Nuevo ticket» (o «Modificar» en una fila para abrir uno existente).",
+   "Revisa los datos automáticos: organización, localidad, solicitante y fecha y hora.",
+   "Elige el «Módulo» y escribe la «Descripción del requerimiento *» (ej. No cuadra la conciliación de octubre).",
+   "En «Gestión» elige la «Prioridad»; si corresponde, el «Estado» y el «Recurso asignado».",
+   "Arrastra o elige los «Adjuntos» (máximo 10 MB cada uno).",
+   "Presiona «Generar ticket»: toma su número y la gráfica del proceso muestra su etapa; al modificar, «Guardar cambios».",
+   "«Descartar» deshace lo que no se guardó; el «Historial» registra cada cambio de estado."
   ],
   "campos": [
    [
@@ -570,14 +3918,287 @@
     "Dónde está el problema."
    ],
    [
-    "Descripción *",
+    "Descripción del requerimiento *",
     "No cuadra la conciliación de octubre",
     "Qué se necesita."
    ],
    [
     "Prioridad",
-    "Alta",
-    "Urgencia."
+    "2. Urgente",
+    "Urgencia del ticket."
+   ]
+  ],
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "01 · {organizacion}",
+      "Organización de los tickets."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "Todas",
+      "Una localidad o todas."
+     ],
+     [
+      "Fecha inicial",
+      "Fecha",
+      "01/{mes}/{anio}",
+      "Inicio del rango; por omisión el primer día del mes."
+     ],
+     [
+      "Fecha final",
+      "Fecha",
+      "{hoy}",
+      "Fin del rango; por omisión hoy."
+     ],
+     [
+      "Módulo",
+      "Lista",
+      "Todos",
+      "Todos, «Todos los módulos (general)» o un módulo."
+     ],
+     [
+      "Prioridad",
+      "Lista",
+      "Todas",
+      "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "Todos",
+      "Todos o un estado: 1. REGISTRADO, 2. EN REVISIÓN, 3. ASIGNADO, 4. EN PROCESO, 5. EN PRUEBAS, 6. RESUELTO, 7. CERRADO."
+     ]
+    ]
+   },
+   {
+    "grupo": "Listado",
+    "filas": [
+     [
+      "Buscar ticket, requerimiento, módulo…",
+      "Campo",
+      "conciliación",
+      "Filtra la lista."
+     ],
+     [
+      "Nuevo ticket",
+      "Botón",
+      "",
+      "Abre el detalle en blanco."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Ticket",
+      "Columna",
+      "T-0128",
+      "Número."
+     ],
+     [
+      "Fecha",
+      "Columna",
+      "13/11/{anio} 09:30",
+      "Fecha y hora."
+     ],
+     [
+      "Solicitante",
+      "Columna",
+      "JPEREZ",
+      "Quien lo creó."
+     ],
+     [
+      "Módulo",
+      "Columna",
+      "Caja y Bancos",
+      "Módulo afectado."
+     ],
+     [
+      "Requerimiento",
+      "Columna",
+      "No cuadra la conciliación",
+      "Descripción."
+     ],
+     [
+      "Prioridad",
+      "Columna",
+      "2. Urgente",
+      "Con su color."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "1. REGISTRADO",
+      "Estado actual."
+     ],
+     [
+      "Recurso asignado",
+      "Columna",
+      "MLopez",
+      "Responsable."
+     ],
+     [
+      "Modificar",
+      "Botón",
+      "",
+      "Abre el ticket en el detalle."
+     ],
+     [
+      "Eliminar",
+      "Botón",
+      "",
+      "Borra el ticket con sus asignaciones, procesos, seguimiento, cierre y adjuntos (solo Super Administrador)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Encabezado del ticket",
+    "filas": [
+     [
+      "Número",
+      "Texto",
+      "Se numera al generarlo",
+      "Número del ticket."
+     ],
+     [
+      "Marcas de estado y prioridad",
+      "Indicador",
+      "1. REGISTRADO · 2. Urgente",
+      "Estado y prioridad actuales."
+     ],
+     [
+      "Gráfica del proceso",
+      "Gráfica",
+      "",
+      "Etapas completadas, la actual y las pendientes con su fecha."
+     ],
+     [
+      "Descartar",
+      "Botón",
+      "",
+      "Deshace los cambios."
+     ],
+     [
+      "Generar ticket / Guardar cambios",
+      "Botón",
+      "",
+      "Crea o guarda el ticket."
+     ]
+    ]
+   },
+   {
+    "grupo": "Datos del ticket",
+    "filas": [
+     [
+      "Organización / Localidad",
+      "Texto",
+      "{empresa}",
+      "Automáticas."
+     ],
+     [
+      "Solicitante",
+      "Texto",
+      "JPEREZ",
+      "Usuario actual."
+     ],
+     [
+      "Fecha y hora",
+      "Texto",
+      "{hoy} 09:30",
+      "Se graba al generarlo."
+     ],
+     [
+      "Módulo",
+      "Lista",
+      "Todos los módulos",
+      "Módulo del requerimiento."
+     ],
+     [
+      "Descripción del requerimiento *",
+      "Texto",
+      "No cuadra la conciliación de octubre",
+      "Obligatoria."
+     ]
+    ]
+   },
+   {
+    "grupo": "Gestión",
+    "filas": [
+     [
+      "Prioridad",
+      "Lista",
+      "1. Normal",
+      "Botones de opción de 1 a 5."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "1. REGISTRADO",
+      "Todos o un estado: 1. REGISTRADO, 2. EN REVISIÓN, 3. ASIGNADO, 4. EN PROCESO, 5. EN PRUEBAS, 6. RESUELTO, 7. CERRADO."
+     ],
+     [
+      "Recurso asignado",
+      "Lista",
+      "Sin asignar",
+      "Responsable."
+     ],
+     [
+      "Adjuntos",
+      "Archivo",
+      "captura.png",
+      "Arrastra o elige archivos (máx. 10 MB c/u); la X los quita."
+     ]
+    ]
+   },
+   {
+    "grupo": "Historial",
+    "filas": [
+     [
+      "Movimiento",
+      "Texto",
+      "1. REGISTRADO · {hoy} 09:30 · JPEREZ",
+      "Cambios de estado y recurso con fecha y usuario."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Fecha inicial / Fecha final",
+    "Rango de fechas del ticket",
+    "Primer día del mes – hoy",
+    "Limita los tickets mostrados."
+   ],
+   [
+    "Módulo",
+    "Todos, Todos los módulos (general), un módulo",
+    "Todos",
+    "«General» muestra los tickets sin módulo específico."
+   ],
+   [
+    "Prioridad",
+    "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente",
+    "Todas",
+    "Filtra y colorea los tickets por prioridad."
+   ],
+   [
+    "Estado",
+    "Todos, 1. REGISTRADO, 2. EN REVISIÓN, 3. ASIGNADO, 4. EN PROCESO, 5. EN PRUEBAS, 6. RESUELTO, 7. CERRADO",
+    "Todos",
+    "Filtra los tickets; el 7 es CERRADO."
+   ],
+   [
+    "Edición",
+    "Quien lo creó, el recurso o un administrador",
+    "—",
+    "Los demás lo ven en solo consulta."
    ]
   ]
  },
@@ -587,12 +4208,323 @@
   ],
   "pasos": [
    "Entra a Administración › Tickets › Asignación.",
-   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». En «Asignación» elige pendientes o asignados.",
-   "Elige el ticket.",
+   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». En «Asignación» elige Todos, Sin asignar o Asignados.",
+   "Elige el ticket (o «Modificar» en su fila).",
+   "Revisa los datos del ticket, el requerimiento y el «Historial de asignaciones».",
    "Elige el «Usuario asignado *», la «Fecha estimada de entrega» y escribe la «Descripción / observaciones de la asignación».",
-   "Agrega los procesos de la solución con su «Responsable», «Estado» y «Observaciones».",
-   "Guarda: la fecha, hora y quien asigna se graban solos.",
-   "Para cambiar de responsable usa «Modificar asignación» o «Reasignar en su lugar»."
+   "Presiona «Asignar» o «Reasignar»: la fecha, hora y quien asigna se graban solos.",
+   "Para corregir la asignación vigente sin crear otra usa «Modificar asignación» y «Guardar modificación»; «Reasignar en su lugar» vuelve al modo normal.",
+   "En «Procesos de la solución» escribe cada proceso con su fecha estimada, «Responsable», «Estado» y «Observaciones» y presiona «Agregar proceso»; el lápiz lo modifica."
+  ],
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "01 · {organizacion}",
+      "Organización de los tickets."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "Todas",
+      "Una localidad o todas."
+     ],
+     [
+      "Fecha inicial",
+      "Fecha",
+      "01/{mes}/{anio}",
+      "Inicio del rango; por omisión el primer día del mes."
+     ],
+     [
+      "Fecha final",
+      "Fecha",
+      "{hoy}",
+      "Fin del rango; por omisión hoy."
+     ],
+     [
+      "Módulo",
+      "Lista",
+      "Todos",
+      "Todos, «Todos los módulos (general)» o un módulo."
+     ],
+     [
+      "Prioridad",
+      "Lista",
+      "Todas",
+      "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente."
+     ],
+     [
+      "Asignación",
+      "Lista",
+      "Todos",
+      "Todos, Sin asignar o Asignados."
+     ]
+    ]
+   },
+   {
+    "grupo": "Totales",
+    "filas": [
+     [
+      "sin asignar",
+      "Indicador",
+      "3",
+      "Tickets sin recurso."
+     ],
+     [
+      "asignados",
+      "Indicador",
+      "9",
+      "Tickets con recurso."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Ticket",
+      "Columna",
+      "T-0128",
+      "Número."
+     ],
+     [
+      "Fecha",
+      "Columna",
+      "13/11/{anio}",
+      "Fecha del ticket."
+     ],
+     [
+      "Solicitante",
+      "Columna",
+      "JPEREZ",
+      "Quien lo creó."
+     ],
+     [
+      "Módulo",
+      "Columna",
+      "Caja y Bancos",
+      "Módulo."
+     ],
+     [
+      "Requerimiento",
+      "Columna",
+      "No cuadra la conciliación",
+      "Descripción."
+     ],
+     [
+      "Prioridad",
+      "Columna",
+      "2. Urgente",
+      "Prioridad."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "3. ASIGNADO",
+      "Estado."
+     ],
+     [
+      "Recurso asignado",
+      "Columna",
+      "MLopez",
+      "Responsable vigente."
+     ],
+     [
+      "Entrega",
+      "Columna",
+      "20/11/{anio}",
+      "Fecha estimada."
+     ],
+     [
+      "Modificar",
+      "Botón",
+      "",
+      "Abre el ticket en el detalle."
+     ],
+     [
+      "Eliminar",
+      "Botón",
+      "",
+      "Borra el ticket con sus asignaciones, procesos, seguimiento, cierre y adjuntos (solo Super Administrador)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Datos del ticket",
+    "filas": [
+     [
+      "Solicitante / Fecha del ticket / Localidad / Módulo",
+      "Texto",
+      "JPEREZ · {hoy}",
+      "Datos del ticket."
+     ],
+     [
+      "Recurso asignado",
+      "Texto",
+      "Sin asignar",
+      "Responsable vigente."
+     ],
+     [
+      "Entrega estimada",
+      "Fecha",
+      "20/11/{anio}",
+      "En rojo si está vencida."
+     ],
+     [
+      "Requerimiento",
+      "Texto",
+      "No cuadra la conciliación",
+      "Descripción."
+     ],
+     [
+      "Historial de asignaciones",
+      "Texto",
+      "MLopez vigente · asignó JPEREZ",
+      "Asignaciones anteriores con fecha, quién asignó, entrega y observaciones."
+     ]
+    ]
+   },
+   {
+    "grupo": "Asignación",
+    "filas": [
+     [
+      "Fecha de asignación",
+      "Texto",
+      "{hoy} 10:00",
+      "Se graba al asignar."
+     ],
+     [
+      "Asignado por",
+      "Texto",
+      "JPEREZ",
+      "Usuario actual."
+     ],
+     [
+      "Usuario asignado *",
+      "Lista",
+      "María López (MLopez)",
+      "Responsable del ticket."
+     ],
+     [
+      "Fecha estimada de entrega",
+      "Fecha",
+      "20/11/{anio}",
+      "Desde hoy."
+     ],
+     [
+      "Descripción / observaciones de la asignación",
+      "Texto",
+      "Revisar partidas de octubre",
+      "Instrucciones."
+     ],
+     [
+      "Modificar asignación / Reasignar en su lugar",
+      "Enlace",
+      "",
+      "Cambia entre corregir la asignación vigente o crear una nueva."
+     ],
+     [
+      "Asignar / Reasignar / Guardar modificación",
+      "Botón",
+      "",
+      "Guarda la asignación."
+     ]
+    ]
+   },
+   {
+    "grupo": "Procesos de la solución",
+    "filas": [
+     [
+      "Avance",
+      "Indicador",
+      "2 de 4 finalizados",
+      "Barra de avance."
+     ],
+     [
+      "Proceso",
+      "Texto",
+      "1. Revisar extractos · EN PROCESO",
+      "Lista con número, estado, responsable y entrega; el lápiz lo modifica."
+     ],
+     [
+      "Proceso N · descripción *",
+      "Campo",
+      "Revisar extractos",
+      "Qué se hará."
+     ],
+     [
+      "Fecha estimada de entrega",
+      "Fecha",
+      "18/11/{anio}",
+      "Entrega del proceso."
+     ],
+     [
+      "Responsable",
+      "Lista",
+      "Sin responsable",
+      "Usuario responsable."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "ASIGNADO",
+      "ASIGNADO, EN PROCESO o FINALIZADO."
+     ],
+     [
+      "Observaciones",
+      "Campo",
+      "Avance, pendientes…",
+      "Notas."
+     ],
+     [
+      "Agregar proceso / Guardar proceso / Cancelar",
+      "Botón",
+      "",
+      "Guarda o cancela el proceso."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Fecha inicial / Fecha final",
+    "Rango de fechas del ticket",
+    "Primer día del mes – hoy",
+    "Limita los tickets mostrados."
+   ],
+   [
+    "Módulo",
+    "Todos, Todos los módulos (general), un módulo",
+    "Todos",
+    "«General» muestra los tickets sin módulo específico."
+   ],
+   [
+    "Prioridad",
+    "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente",
+    "Todas",
+    "Filtra y colorea los tickets por prioridad."
+   ],
+   [
+    "Asignación",
+    "Todos, Sin asignar, Asignados",
+    "Todos",
+    "Filtra por recurso asignado."
+   ],
+   [
+    "Estado del proceso",
+    "ASIGNADO, EN PROCESO, FINALIZADO",
+    "ASIGNADO",
+    "Define el avance de la solución."
+   ],
+   [
+    "Modo de asignación",
+    "Asignar/Reasignar o Modificar asignación",
+    "Asignar",
+    "Reasignar crea una asignación nueva; modificar corrige la vigente."
+   ]
   ]
  },
  "tickets-seguimiento": {
@@ -601,9 +4533,12 @@
   ],
   "pasos": [
    "Entra a Administración › Tickets › Seguimiento.",
-   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». Elige el «Estado».",
-   "Elige el ticket: ves la gráfica del proceso, los tiempos y los procesos.",
-   "Presiona «Agregar observación», escribe el avance y «Guardar cambios» (fecha y usuario se graban solos)."
+   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo», «Prioridad» y «Estado».",
+   "Revisa el resumen por estado y los vencidos encima de la lista.",
+   "Elige el ticket: ves la gráfica del proceso, el tiempo transcurrido, la fecha de asignación, a quién está asignado y la entrega estimada.",
+   "Revisa los «Procesos de la solución» y su avance (se definen en Tickets › Asignación).",
+   "En «Observaciones de seguimiento» escribe el avance y presiona «Agregar observación» (fecha y usuario se graban solos).",
+   "Para corregir una observación usa el lápiz y «Guardar cambios» o «Cancelar»."
   ],
   "reporte": {
    "columnas": [
@@ -630,7 +4565,257 @@
     ]
    ]
   },
-  "voz": "Hay dos tickets en seguimiento: uno en proceso con dos días y uno asignado hace cinco horas."
+  "voz": "Hay dos tickets en seguimiento: uno en proceso con dos días y uno asignado hace cinco horas.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "01 · {organizacion}",
+      "Organización de los tickets."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "Todas",
+      "Una localidad o todas."
+     ],
+     [
+      "Fecha inicial",
+      "Fecha",
+      "01/{mes}/{anio}",
+      "Inicio del rango; por omisión el primer día del mes."
+     ],
+     [
+      "Fecha final",
+      "Fecha",
+      "{hoy}",
+      "Fin del rango; por omisión hoy."
+     ],
+     [
+      "Módulo",
+      "Lista",
+      "Todos",
+      "Todos, «Todos los módulos (general)» o un módulo."
+     ],
+     [
+      "Prioridad",
+      "Lista",
+      "Todas",
+      "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "Todos",
+      "Todos o un estado: 1. REGISTRADO, 2. EN REVISIÓN, 3. ASIGNADO, 4. EN PROCESO, 5. EN PRUEBAS, 6. RESUELTO, 7. CERRADO."
+     ]
+    ]
+   },
+   {
+    "grupo": "Totales",
+    "filas": [
+     [
+      "Cantidad por estado",
+      "Indicador",
+      "EN PROCESO 3",
+      "Una marca por estado con tickets."
+     ],
+     [
+      "vencidos",
+      "Indicador",
+      "2 vencidos",
+      "Tickets con la entrega estimada vencida."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Ticket",
+      "Columna",
+      "T-0128",
+      "Número."
+     ],
+     [
+      "Descripción",
+      "Columna",
+      "No cuadra la conciliación",
+      "Requerimiento."
+     ],
+     [
+      "Prioridad",
+      "Columna",
+      "2. Urgente",
+      "Prioridad."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "EN PROCESO",
+      "Con su color."
+     ],
+     [
+      "Fecha asignación",
+      "Columna",
+      "12/11/{anio} 10:00",
+      "Cuándo se asignó."
+     ],
+     [
+      "Asignado a",
+      "Columna",
+      "MLopez",
+      "Recurso."
+     ],
+     [
+      "Tiempo transcurrido",
+      "Columna",
+      "2 d 4 h",
+      "Desde el ticket hasta hoy o su resolución."
+     ],
+     [
+      "Entrega",
+      "Columna",
+      "20/11/{anio}",
+      "Fecha estimada."
+     ],
+     [
+      "Modificar",
+      "Botón",
+      "",
+      "Abre el ticket en el detalle."
+     ],
+     [
+      "Eliminar",
+      "Botón",
+      "",
+      "Borra el ticket con sus asignaciones, procesos, seguimiento, cierre y adjuntos (solo Super Administrador)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Datos del ticket",
+    "filas": [
+     [
+      "Gráfica del proceso",
+      "Gráfica",
+      "",
+      "Etapas del ticket con su fecha."
+     ],
+     [
+      "Tiempo transcurrido",
+      "Indicador",
+      "2 d 4 h",
+      "Desde la fecha del ticket o «Resuelto el …»."
+     ],
+     [
+      "Fecha asignación",
+      "Texto",
+      "12/11/{anio} 10:00",
+      "Con hace cuánto y quién asignó."
+     ],
+     [
+      "Asignado a",
+      "Texto",
+      "María López",
+      "Recurso."
+     ],
+     [
+      "Entrega estimada",
+      "Fecha",
+      "20/11/{anio}",
+      "«Vencida» o «En plazo»."
+     ],
+     [
+      "Descripción",
+      "Texto",
+      "No cuadra la conciliación",
+      "Requerimiento."
+     ]
+    ]
+   },
+   {
+    "grupo": "Procesos de la solución",
+    "filas": [
+     [
+      "Avance",
+      "Indicador",
+      "2 de 4 finalizados",
+      "Barra de avance."
+     ],
+     [
+      "Proceso",
+      "Texto",
+      "1. Revisar extractos · EN PROCESO",
+      "Número, descripción, estado, responsable y entrega."
+     ]
+    ]
+   },
+   {
+    "grupo": "Observaciones de seguimiento",
+    "filas": [
+     [
+      "Observación",
+      "Texto",
+      "Se revisaron los extractos de octubre",
+      "Máximo 1,000 caracteres."
+     ],
+     [
+      "Agregar observación",
+      "Botón",
+      "",
+      "Guarda la observación con fecha y usuario."
+     ],
+     [
+      "Lápiz",
+      "Botón",
+      "",
+      "Modifica tu observación."
+     ],
+     [
+      "Guardar cambios / Cancelar",
+      "Botón",
+      "",
+      "Al modificar una observación."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Fecha inicial / Fecha final",
+    "Rango de fechas del ticket",
+    "Primer día del mes – hoy",
+    "Limita los tickets mostrados."
+   ],
+   [
+    "Módulo",
+    "Todos, Todos los módulos (general), un módulo",
+    "Todos",
+    "«General» muestra los tickets sin módulo específico."
+   ],
+   [
+    "Prioridad",
+    "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente",
+    "Todas",
+    "Filtra y colorea los tickets por prioridad."
+   ],
+   [
+    "Estado",
+    "Todos, 1. REGISTRADO, 2. EN REVISIÓN, 3. ASIGNADO, 4. EN PROCESO, 5. EN PRUEBAS, 6. RESUELTO, 7. CERRADO",
+    "Todos",
+    "Filtra los tickets."
+   ],
+   [
+    "Vencido",
+    "Entrega estimada anterior a hoy y sin resolver",
+    "—",
+    "Se marca en rojo y se cuenta en «vencidos»."
+   ]
+  ]
  },
  "tickets-cierre": {
   "puntos": [
@@ -638,12 +4823,280 @@
   ],
   "pasos": [
    "Entra a Administración › Tickets › Cierre.",
-   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». En «Cierre» elige pendientes o cerrados.",
-   "Elige el ticket.",
+   "Arriba elige «Organización», «Localidad», «Fecha inicial», «Fecha final», «Módulo» y «Prioridad». En «Cierre» elige Pendientes de cierre, Cerrados o Todos.",
+   "Elige el ticket; revisa sus datos y si todos los procesos de la solución están finalizados.",
    "Elige «Usuario que entrega *», «Usuario que recibe *» y «Tipo de pruebas o cierre *».",
-   "Escribe las observaciones y adjunta las pruebas.",
-   "Presiona «Cerrar ticket»: pasa a CERRADO con fecha, hora y usuario.",
-   "«Modificar cierre» corrige los datos del cierre."
+   "Escribe las observaciones y adjunta los archivos de prueba.",
+   "Presiona «Cerrar ticket» y confirma: pasa a CERRADO con fecha, hora y usuario que lo cierra.",
+   "«Modificar cierre» corrige los datos del cierre («Guardar modificación» o «Cancelar»); el ticket sigue CERRADO."
+  ],
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Organización",
+      "Lista",
+      "01 · {organizacion}",
+      "Organización de los tickets."
+     ],
+     [
+      "Localidad",
+      "Lista",
+      "Todas",
+      "Una localidad o todas."
+     ],
+     [
+      "Fecha inicial",
+      "Fecha",
+      "01/{mes}/{anio}",
+      "Inicio del rango; por omisión el primer día del mes."
+     ],
+     [
+      "Fecha final",
+      "Fecha",
+      "{hoy}",
+      "Fin del rango; por omisión hoy."
+     ],
+     [
+      "Módulo",
+      "Lista",
+      "Todos",
+      "Todos, «Todos los módulos (general)» o un módulo."
+     ],
+     [
+      "Prioridad",
+      "Lista",
+      "Todas",
+      "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente."
+     ],
+     [
+      "Cierre",
+      "Lista",
+      "Pendientes de cierre",
+      "Pendientes de cierre, Cerrados o Todos."
+     ]
+    ]
+   },
+   {
+    "grupo": "Totales",
+    "filas": [
+     [
+      "resueltos por cerrar",
+      "Indicador",
+      "2",
+      "Tickets en estado 6 listos para cerrar."
+     ],
+     [
+      "pendientes",
+      "Indicador",
+      "5",
+      "Tickets sin cerrar."
+     ],
+     [
+      "cerrados",
+      "Indicador",
+      "12",
+      "Tickets cerrados."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Ticket",
+      "Columna",
+      "T-0128",
+      "Número."
+     ],
+     [
+      "Descripción",
+      "Columna",
+      "No cuadra la conciliación",
+      "Requerimiento."
+     ],
+     [
+      "Prioridad",
+      "Columna",
+      "2. Urgente",
+      "Prioridad."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "6. RESUELTO",
+      "Estado actual."
+     ],
+     [
+      "Asignado a",
+      "Columna",
+      "MLopez",
+      "Recurso."
+     ],
+     [
+      "Entrega",
+      "Columna",
+      "20/11/{anio}",
+      "Fecha estimada."
+     ],
+     [
+      "Fecha de cierre",
+      "Columna",
+      "{hoy} 16:00",
+      "Si está cerrado."
+     ],
+     [
+      "Modificar",
+      "Botón",
+      "",
+      "Abre el ticket en el detalle."
+     ],
+     [
+      "Eliminar",
+      "Botón",
+      "",
+      "Borra el ticket con sus asignaciones, procesos, seguimiento, cierre y adjuntos (solo Super Administrador)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Datos del ticket",
+    "filas": [
+     [
+      "Solicitante / Fecha del ticket / Asignado a / Entrega estimada",
+      "Texto",
+      "JPEREZ · MLopez",
+      "Datos del ticket."
+     ],
+     [
+      "Descripción",
+      "Texto",
+      "No cuadra la conciliación",
+      "Requerimiento."
+     ],
+     [
+      "Procesos de la solución",
+      "Indicador",
+      "4 de 4 finalizados",
+      "Avisa si quedan procesos sin finalizar."
+     ]
+    ]
+   },
+   {
+    "grupo": "Cierre",
+    "filas": [
+     [
+      "Usuario que entrega *",
+      "Lista",
+      "María López",
+      "Quien entrega la solución."
+     ],
+     [
+      "Usuario que recibe *",
+      "Lista",
+      "Juan Pérez",
+      "Quien la recibe."
+     ],
+     [
+      "Tipo de pruebas o cierre *",
+      "Lista",
+      "PRUEBAS DE USUARIO",
+      "Tipo de cierre."
+     ],
+     [
+      "Observaciones (tipo de pruebas o cierre)",
+      "Texto",
+      "Pruebas realizadas y conformidad",
+      "Detalle."
+     ],
+     [
+      "Archivos de prueba",
+      "Archivo",
+      "prueba.pdf",
+      "Máximo 10 MB cada uno."
+     ],
+     [
+      "Cerrar ticket",
+      "Botón",
+      "",
+      "Cierra el ticket."
+     ],
+     [
+      "Guardar modificación / Cancelar",
+      "Botón",
+      "",
+      "Al modificar un cierre."
+     ]
+    ]
+   },
+   {
+    "grupo": "Cierre registrado",
+    "filas": [
+     [
+      "Fecha de cierre / Cerró / Entrega / Recibe",
+      "Texto",
+      "{hoy} 16:00 · JPEREZ",
+      "Datos del cierre."
+     ],
+     [
+      "Tipo",
+      "Indicador",
+      "PRUEBAS DE USUARIO",
+      "Tipo de cierre."
+     ],
+     [
+      "Modificar cierre",
+      "Botón",
+      "",
+      "Corrige el cierre."
+     ],
+     [
+      "Pruebas y observaciones",
+      "Archivo",
+      "prueba.pdf",
+      "Archivos y observaciones guardados."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Fecha inicial / Fecha final",
+    "Rango de fechas del ticket",
+    "Primer día del mes – hoy",
+    "Limita los tickets mostrados."
+   ],
+   [
+    "Módulo",
+    "Todos, Todos los módulos (general), un módulo",
+    "Todos",
+    "«General» muestra los tickets sin módulo específico."
+   ],
+   [
+    "Prioridad",
+    "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente",
+    "Todas",
+    "Filtra y colorea los tickets por prioridad."
+   ],
+   [
+    "Cierre",
+    "Pendientes de cierre, Cerrados, Todos",
+    "Pendientes de cierre",
+    "Filtra por estado de cierre."
+   ],
+   [
+    "Tipo de pruebas o cierre",
+    "PRUEBAS DE USUARIO, PRUEBAS TÉCNICAS, PRUEBAS INTEGRALES, CIERRE ADMINISTRATIVO, CIERRE SIN SOLUCIÓN",
+    "PRUEBAS DE USUARIO",
+    "Clasifica el cierre."
+   ],
+   [
+    "Quién puede cerrar",
+    "Quien creó el ticket, el recurso asignado o un administrador",
+    "—",
+    "Los demás ven un aviso."
+   ]
   ]
  },
  "tickets-visualizacion": {
@@ -652,9 +5105,11 @@
   ],
   "pasos": [
    "Entra a Administración › Tickets › Visualización General.",
-   "Elige «Localidad», fechas, «Módulo», «Prioridad» y «Estado».",
+   "Elige «Localidad», «Fecha inicial», «Fecha final», «Módulo», «Prioridad» y «Estado».",
    "Elige «Ordenar por» y «Orden» (o toca el encabezado de una columna).",
-   "Presiona «Imprimir» para PDF o Excel."
+   "Usa la búsqueda por ticket, requerimiento o usuario.",
+   "Revisa las gráficas «Tickets asignados por usuario» y «Tickets por estado de» (elige el usuario).",
+   "Elige el formato PDF o EXCEL y presiona «Imprimir»."
   ],
   "reporte": {
    "columnas": [
@@ -671,7 +5126,7 @@
      "T-0128",
      "13/11/{anio}",
      "Caja y Bancos",
-     "Alta",
+     "2. Urgente",
      "EN PROCESO",
      "JPerez",
      "2 d 4 h"
@@ -680,13 +5135,234 @@
      "T-0126",
      "10/11/{anio}",
      "Ventas",
-     "Media",
+     "1. Normal",
      "CERRADO",
      "MLopez",
      "1 d 2 h"
     ]
    ]
   },
-  "voz": "Visualización de tickets: uno en proceso de prioridad alta en caja y bancos y uno cerrado de ventas."
+  "voz": "Visualización de tickets: uno urgente en proceso en caja y bancos y uno normal cerrado de ventas.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Localidad",
+      "Lista",
+      "{empresa}",
+      "Una localidad o Todas; por omisión la tuya."
+     ],
+     [
+      "Fecha inicial",
+      "Fecha",
+      "01/{mes}/{anio}",
+      "Inicio del rango."
+     ],
+     [
+      "Fecha final",
+      "Fecha",
+      "{hoy}",
+      "Fin del rango."
+     ],
+     [
+      "Módulo",
+      "Lista",
+      "Todos",
+      "Todos, general o un módulo."
+     ],
+     [
+      "Prioridad",
+      "Lista",
+      "Todas",
+      "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "Todos",
+      "Todos o un estado: 1. REGISTRADO, 2. EN REVISIÓN, 3. ASIGNADO, 4. EN PROCESO, 5. EN PRUEBAS, 6. RESUELTO, 7. CERRADO."
+     ],
+     [
+      "Ordenar por",
+      "Lista",
+      "Fecha",
+      "Fecha, Ticket, Tiempo transcurrido, Módulo, Estado, Usuario asignado, Fecha de asignación, Prioridad, Solicitante o Fecha estimada de entrega."
+     ],
+     [
+      "Orden",
+      "Lista",
+      "Descendente",
+      "Ascendente o Descendente."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Buscar ticket, requerimiento, usuario…",
+      "Campo",
+      "conciliación",
+      "Filtra la tabla."
+     ],
+     [
+      "Formato",
+      "Lista",
+      "PDF",
+      "PDF o EXCEL."
+     ],
+     [
+      "Imprimir",
+      "Botón",
+      "",
+      "Imprime el PDF o descarga el archivo .csv."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Ticket",
+      "Columna",
+      "T-0128",
+      "Ordenable."
+     ],
+     [
+      "Fecha",
+      "Columna",
+      "13/11/{anio}",
+      "Ordenable."
+     ],
+     [
+      "Solicitante",
+      "Columna",
+      "JPEREZ",
+      "Ordenable."
+     ],
+     [
+      "Módulo",
+      "Columna",
+      "Caja y Bancos",
+      "Ordenable."
+     ],
+     [
+      "Requerimiento",
+      "Columna",
+      "No cuadra la conciliación",
+      "Descripción."
+     ],
+     [
+      "Prioridad",
+      "Columna",
+      "2. Urgente",
+      "Ordenable."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "EN PROCESO",
+      "Ordenable."
+     ],
+     [
+      "Recurso asignado",
+      "Columna",
+      "MLopez",
+      "Ordenable."
+     ],
+     [
+      "Fecha asignación",
+      "Columna",
+      "13/11/{anio} 10:00",
+      "Ordenable."
+     ],
+     [
+      "Tiempo transcurrido",
+      "Columna",
+      "2 d 4 h",
+      "Ordenable."
+     ],
+     [
+      "Fecha estimada entrega",
+      "Columna",
+      "20/11/{anio}",
+      "Ordenable."
+     ]
+    ]
+   },
+   {
+    "grupo": "Gráficas",
+    "filas": [
+     [
+      "Tickets asignados por usuario",
+      "Gráfica",
+      "8 de 12 ticket(s) asignados",
+      "Barras por usuario según los parámetros y la búsqueda."
+     ],
+     [
+      "Tickets por estado de",
+      "Gráfica",
+      "María López",
+      "Barras por estado del usuario elegido, con abiertos y vencidos."
+     ]
+    ]
+   },
+   {
+    "grupo": "Salidas",
+    "filas": [
+     [
+      "PDF",
+      "Archivo",
+      "Tickets · Visualización general",
+      "Tabla y gráficas con localidad y rango."
+     ],
+     [
+      "Excel",
+      "Archivo",
+      "tickets_{anio}-11-01_{anio}-11-30.csv",
+      "Una fila por ticket."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Fecha inicial / Fecha final",
+    "Rango de fechas",
+    "Primer día del mes – hoy",
+    "Limita los tickets."
+   ],
+   [
+    "Módulo",
+    "Todos, general o un módulo",
+    "Todos",
+    "Filtra por módulo."
+   ],
+   [
+    "Prioridad",
+    "Todas, 1. Normal, 2. Urgente, 3. Importante, 4. Urgente no importante, 5. Importante y urgente",
+    "Todas",
+    "Filtra por prioridad."
+   ],
+   [
+    "Estado",
+    "Todos, 1. REGISTRADO, 2. EN REVISIÓN, 3. ASIGNADO, 4. EN PROCESO, 5. EN PRUEBAS, 6. RESUELTO, 7. CERRADO",
+    "Todos",
+    "Filtra por estado."
+   ],
+   [
+    "Ordenar por / Orden",
+    "10 columnas · Ascendente/Descendente",
+    "Fecha · Descendente",
+    "Orden de la tabla y del reporte."
+   ],
+   [
+    "Formato",
+    "PDF, EXCEL",
+    "PDF",
+    "Salida de «Imprimir»."
+   ]
+  ]
  }
 }
