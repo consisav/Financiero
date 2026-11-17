@@ -6657,3 +6657,27 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
 .cr-conta tr.pr-m td, .pr-tabla tr.pr-m td { font-weight: 700; }
 .sc-centros .sc-form .sc-detalle .pr-tabla th:nth-child(2) { width: 28% !important; }
 .sc-centros .sc-form .sc-detalle .pr-tabla th:nth-child(n+4) { width: 10% !important; }
+
+/* Integración de movimientos: panel de módulos a la derecha, columna Transacción y detalle de la operación. */
+.ci-compacto .ci-cuerpo { display: flex; gap: 8px; flex: 1 1 auto; min-height: 0; align-items: stretch; }
+.ci-compacto .ci-cuerpo > .pr-tabla { flex: 1 1 auto; min-width: 0; }
+.ci-tipos.ci-lateral { flex: 0 0 215px; flex-direction: column; flex-wrap: nowrap; gap: 6px; overflow-y: auto; align-self: stretch; }
+.ci-tipos.ci-lateral legend { flex-wrap: wrap; }
+.ci-tipos.ci-lateral .ci-grupo { min-width: 0; }
+.ci-compacto .pr-tabla th:nth-child(13) { width: 5%; }
+.ci-compacto .pr-tabla tr[data-p] { cursor: pointer; }
+.ci-compacto .pr-tabla tr[data-p]:hover td, .ci-compacto .pr-tabla tr.ci-abierto td { background: var(--cl-azul); }
+.ci-compacto .pr-tabla tr.ci-det > td { padding: 6px 10px 10px 28px !important; white-space: normal; overflow: visible; background: var(--panel); }
+.ci-detalle { border: 1px solid var(--borde); border-radius: 8px; padding: 6px 8px; background: var(--fondo, #fff); }
+.ci-dcab { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-size: 12px; margin-bottom: 4px; }
+.ci-dcab b { color: var(--acento); }
+.ci-dcab .ci-ddesc { flex: 1 1 100%; color: var(--suave); }
+.ci-dcab .ci-mini { margin-left: auto; }
+.ci-detalle table { width: 100%; table-layout: auto !important; border-collapse: collapse; }
+.ci-detalle th, .ci-detalle td { width: auto !important; font-size: 11.5px; padding: 2px 6px !important; white-space: nowrap; }
+.ci-detalle td:nth-child(3), .ci-detalle td:nth-child(5) { white-space: normal; }
+.ci-detalle tr.ci-esta td { font-weight: 700; background: #fff6d6; }
+.ci-detalle tr.ci-tot td { font-weight: 700; border-top: 1px solid var(--borde); }
+@media (max-width: 1100px) { .ci-compacto .ci-cuerpo { flex-direction: column; } .ci-tipos.ci-lateral { flex: 0 0 auto; flex-direction: row; flex-wrap: wrap; } }
+.ci-detalle th.num, .ci-detalle td.num { text-align: right !important; } 
+.ci-detalle th, .ci-detalle td { display: table-cell !important; }

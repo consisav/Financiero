@@ -84,8 +84,7 @@
           ${op.tipos ? `<button type="button" class="ci-modbtn ${f.mods ? 'abierto' : ''}" data-mods aria-expanded="${!!f.mods}"><i class="ti ti-filter" aria-hidden="true"></i> Módulos <b>${f.tipos.size}/${TODOS.length}</b> <i class="ti ti-chevron-down" aria-hidden="true"></i></button>` : ''}
         </div>
         ${cfg.aviso ? `<p class="cp-aviso cp-error"><i class="ti ti-alert-triangle" aria-hidden="true"></i> ${esc(cfg.aviso)}</p>` : ''}
-        ${op.tipos && f.mods ? panelTipos(f, datos) : ''}
-        ${C().tabla(cfg, false)}</div>`;
+        <div class="ci-cuerpo">${C().tabla(cfg, false)}${op.tipos && f.mods ? panelTipos(f, datos) : ''}</div></div>`;
       window.CUENTAS_XLSX.ajustarAlto(cont);
     }
     cont.addEventListener('change', (e) => {
@@ -99,12 +98,42 @@
     cont.addEventListener('click', (e) => {
       const ex = e.target.closest('[data-exp]'); if (ex) return C().exportar(cfg, ex.dataset.exp, false);
       if (e.target.closest('[data-mods]')) { f.mods = !f.mods; return consultar(); }
+      const fp = e.target.closest('tr[data-p]'); if (fp) return detalleOperacion(fp);
       const t = e.target.closest('[data-tipos]'); if (!t) return;
       if (t.dataset.tipos === 'todos') TODOS.forEach((k) => f.tipos.add(k));
       else if (t.dataset.tipos === 'ninguno') f.tipos.clear();
       else { const g = TIPOS.find(([n]) => n === t.dataset.tipos); if (g) { const todos = g[1].every(([k]) => f.tipos.has(k)); g[1].forEach(([k]) => (todos ? f.tipos.delete(k) : f.tipos.add(k))); } }
       consultar();
     });
+    // Detalle de la operación: encabezado de la partida y todas sus líneas (la cuenta del renglón resaltada). Otro clic lo cierra.
+    async function detalleOperacion(tr) {
+      const sig = tr.nextElementSibling;
+      tr.closest('tbody').querySelectorAll('tr.ci-det').forEach((x) => x.remove());
+      tr.closest('tbody').querySelectorAll('tr.ci-abierto').forEach((x) => x.classList.remove('ci-abierto'));
+      if (sig && sig.classList.contains('ci-det') && sig.dataset.de === tr.dataset.p + '|' + tr.rowIndex) return;
+      const n = tr.cells.length, cta = tr.dataset.c;
+      const det = document.createElement('tr'); det.className = 'ci-det'; det.dataset.de = tr.dataset.p + '|' + tr.rowIndex;
+      det.innerHTML = `<td colspan="${n}"><p class="vacio">Leyendo la operación…</p></td>`;
+      tr.after(det); tr.classList.add('ci-abierto');
+      try {
+        const [p, ls] = await Promise.all([
+          ctx.sb.from('partidas').select('anio, mes, numero, fecha, descripcion, estado, aprobada, total_debe, total_haber, tipos_partida(siglas, descripcion)').eq('id', tr.dataset.p).maybeSingle(),
+          C().leerTodo(() => ctx.sb.from('partida_lineas').select('linea, concepto, debe, haber, cuentas(codigo, nombre), centros_costo(codigo, nombre)').eq('partida_id', tr.dataset.p).order('linea'))]);
+        if (p.error) throw p.error;
+        const x = p.data || {}, tp = x.tipos_partida || {};
+        const td = ls.reduce((a, l) => a + num(l.debe), 0), th = ls.reduce((a, l) => a + num(l.haber), 0);
+        const MAX = 300, vis = ls.slice(0, MAX);
+        det.innerHTML = `<td colspan="${n}"><div class="ci-detalle">
+          <div class="ci-dcab"><b>Póliza ${esc(tp.siglas || 'PD')} ${x.mes}-${x.numero}</b> <span>${esc(tp.descripcion || '')}</span> <span>Fecha ${x.fecha ? fmt.fechaDia(String(x.fecha).slice(0, 10)) : ''}</span> <span>${x.aprobada ? 'Aprobada' : 'Por aprobar'}</span>
+            <span class="ci-ddesc">${esc(x.descripcion || '')}</span><button type="button" class="ci-mini" data-cerrar-det>Cerrar</button></div>
+          <table><thead><tr><th>Línea</th><th>Cuenta</th><th>Nombre de la cuenta</th><th>Centro</th><th>Concepto</th><th class="num">Debe</th><th class="num">Haber</th></tr></thead>
+          <tbody>${vis.map((l) => `<tr class="${l.cuentas?.codigo === cta ? 'ci-esta' : ''}"><td>${l.linea ?? ''}</td><td>${esc(l.cuentas?.codigo || '')}</td><td>${esc(l.cuentas?.nombre || '')}</td><td>${esc(l.centros_costo?.codigo || '')}</td><td>${esc(l.concepto || '')}</td>
+            <td class="num">${num(l.debe) ? fmt.monto(l.debe) : ''}</td><td class="num">${num(l.haber) ? fmt.monto(l.haber) : ''}</td></tr>`).join('')}
+          ${ls.length > MAX ? `<tr><td colspan="7" class="tk-vacio">Se muestran ${MAX} de ${ls.length} líneas.</td></tr>` : ''}
+          <tr class="ci-tot"><td colspan="5">Total de la póliza (${ls.length} líneas)${Math.abs(td - th) >= 0.01 ? ' · descuadrada' : ''}</td><td class="num">${fmt.monto(td)}</td><td class="num">${fmt.monto(th)}</td></tr></tbody></table></div></td>`;
+      } catch (err) { det.innerHTML = `<td colspan="${n}"><p class="vacio">${esc(err.message || 'No se pudo leer la operación.')}</p></td>`; }
+    }
+    cont.addEventListener('click', (e) => { if (e.target.closest('[data-cerrar-det]')) { const d = e.target.closest('tr.ci-det'); d.previousElementSibling?.classList.remove('ci-abierto'); d.remove(); } }, true);
     iniciar();
   }
 
@@ -117,7 +146,7 @@
   // Casillas de los tipos de documento a desglosar, con cuántos movimientos hay de cada uno.
   function panelTipos(f, D) {
     const n = new Map(); (D?.filas || []).forEach((x) => n.set(x.t, (n.get(x.t) || 0) + 1));
-    return `<fieldset class="ci-tipos"><legend>Módulos a desglosar
+    return `<fieldset class="ci-tipos ci-lateral"><legend>Módulos a desglosar
         <button type="button" class="ci-mini" data-tipos="todos">Todos</button><button type="button" class="ci-mini" data-tipos="ninguno">Ninguno</button></legend>
       ${TIPOS.map(([g, ts]) => `<div class="ci-grupo"><button type="button" class="ci-gtit" data-tipos="${esc(g)}" title="Marcar o desmarcar ${esc(g.toLowerCase())}">${esc(g)}</button>
         ${ts.map(([k, t]) => `<label class="pc-check ${n.get(k) ? '' : 'ci-cero'}"><input type="checkbox" name="tipo" value="${k}" ${f.tipos.has(k) ? 'checked' : ''}> ${esc(t)} <b class="cp-num ${n.get(k) ? '' : 'cp-cero'}">${n.get(k) || 0}</b></label>`).join('')}</div>`).join('')}
@@ -131,7 +160,7 @@
     const nat = (c) => num(D.nat?.[c]) || 1;
     const visibles = D.filas.filter((x) => f.tipos.has(x.t));
     const filas = []; let n = 0, tD = 0, tH = 0;
-    const fila = (x, ant, s) => [n, x.c, x.t, x.doc, fmt.fechaDia(x.fd), x.pt, x.cc || '', r2(ant), num(x.d) ? r2(x.d) : '', num(x.h) ? r2(x.h) : '', r2(s), x.desc || ''];
+    const fila = (x, ant, s) => [n, x.c, x.t, x.doc, fmt.fechaDia(x.fd), x.pt, x.cc || '', r2(ant), num(x.d) ? r2(x.d) : '', num(x.h) ? r2(x.h) : '', r2(s), x.desc || '', x.tr != null ? String(x.tr) : ''];
     const v = (x) => (x === '' ? '' : r2(x));
     const pie = (txt, ini, d, h, s, tipo) => filas.push({ valores: ['', '', '', '', txt, '', '', v(ini), v(d), v(h), v(s), ''], tipo });
     // Un bloque de movimientos de una cuenta (o de la cuenta elegida) con su saldo anterior.
@@ -139,7 +168,7 @@
       let s = ini, d = 0, h = 0;
       if (titulo) filas.push({ valores: [titulo], tipo: 'grupo', combinar: true });
       filas.push({ valores: ['', '', '', '', 'Saldo anterior', '', '', '', '', '', r2(ini), ''], tipo: 'nota' });
-      xs.forEach((x) => { const ant = s; s += (num(x.d) - num(x.h)) * nat(x.c); d += num(x.d); h += num(x.h); n++; filas.push({ valores: fila(x, ant, s) }); });
+      xs.forEach((x) => { const ant = s; s += (num(x.d) - num(x.h)) * nat(x.c); d += num(x.d); h += num(x.h); n++; filas.push({ valores: fila(x, ant, s), attr: `data-p="${x.p}" data-c="${esc(x.c)}" title="Clic para ver el detalle de la operación"` }); });
       tD += d; tH += h;
       return { ini, d, h, s };
     };
@@ -178,7 +207,7 @@
     return TODOS.filter((k) => m.has(k)).map((k) => ({ k, ...m.get(k) }));
   }
   const COLS_MOV = [col('#', 'numero', 6), col('Cuenta', 'texto', 12), col('Tipo', 'texto', 6), col('Documento', 'texto', 22), col('Fecha doc.', 'texto', 11), col('Póliza', 'texto', 11),
-    col('Centro', 'texto', 9), col('Saldo anterior', 'monto', 15), col('Debe', 'monto', 14), col('Haber', 'monto', 14), col('Saldo actual', 'monto', 15), col('Descripción', 'texto', 40)];
+    col('Centro', 'texto', 9), col('Saldo anterior', 'monto', 15), col('Debe', 'monto', 14), col('Haber', 'monto', 14), col('Saldo actual', 'monto', 15), col('Descripción', 'texto', 40), col('Transac.', 'texto', 9)];
 
   // ===================== a) Por cuenta =====================
   window.PANTALLAS['con-int-cuenta'] = (cont) => pantalla(cont, {
@@ -224,7 +253,7 @@
   window.PANTALLAS['con-int-movimientos'] = (cont) => pantalla(cont, {
     titulo: 'Integración de movimientos contables', icono: 'ti-list-details', rpc: 'con_integracion_movimientos', tipos: true,
     ayuda: 'Detalle por documento de los movimientos de la cuenta (o de todas, agrupadas por cuenta): el tipo y número salen del documento que generó la partida; las pólizas del Cierre Preliminar se abren en cada documento y las partidas sin documento salen como POL. El saldo corre con los módulos marcados.',
-    f: () => ({ cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS) }),
+    f: () => ({ cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS), mods: true }),
     filtros: (f, L) => `${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
     falta: (f) => (f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
     clave: (f) => `${f.cuenta}|${f.desde}|${f.al}`,
@@ -236,7 +265,7 @@
   window.PANTALLAS['con-int-centro'] = (cont) => pantalla(cont, {
     titulo: 'Integración de movimientos por centro de costo', icono: 'ti-sitemap', rpc: 'con_integracion_movimientos', tipos: true, centros: true,
     ayuda: 'Detalle por documento de los movimientos del centro de costo y sus subcentros (o de todos los centros), agrupado por centro y cuenta con su saldo anterior y su total. Si eliges una cuenta, solo esa cuenta y sus subcuentas.',
-    f: () => ({ centro: '', cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS) }),
+    f: () => ({ centro: '', cuenta: '', desde: mesAnterior(), al: hoy(), tipos: new Set(TODOS), mods: true }),
     filtros: (f, L) => `${campoCentro(f, L.centros)}${campoCuenta(f, L.cuentas, true)}${fecha('desde', 'Fecha inicial', f.desde)}${fecha('al', 'Fecha final', f.al)}`,
     falta: (f) => (f.desde > f.al ? 'La fecha inicial es posterior a la final.' : ''),
     clave: (f) => `${f.centro}|${f.cuenta}|${f.desde}|${f.al}`,
