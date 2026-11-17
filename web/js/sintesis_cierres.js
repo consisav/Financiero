@@ -1,7 +1,7 @@
 // Reportes y gráficas · Cierre y análisis · Síntesis de cierres (datos del sistema anterior, script 215).
 //   Maestro: los cierres de la empresa (CON_CIERRES + CON_TIPOS_CIERRES) por año, mes y tipo.
 //   Detalle: los saldos del cierre elegido (CON_SALDOS_CIERRE) por cuenta, con filtro de cuenta (una y sus hijas, o todas)
-//   y de nivel (todos o hasta uno), indentados por nivel. El saldo de cada cuenta mayor es el que guardó el sistema anterior.
+//   y de nivel (todos, hasta uno o solo uno), indentados por nivel. El saldo de cada cuenta mayor es el que guardó el sistema anterior.
 //   PDF y Excel con el encabezado del cierre y el detalle. Usa window.CONTA (contabilidad_cierre.js).
 (function () {
   const { esc } = window.UI;
@@ -51,7 +51,7 @@
         ${sel('tipo', 'Tipo de cierre', [['', 'Todos'], ...[...tipos.entries()].sort((a, b) => a[0] - b[0]).map(([k, d]) => [k, `${k} · ${d}`])], f.tipo)}
         <label class="campo cx-prov pr-prod"><span>Cuenta</span><input name="cuenta" list="sc-cuentas" value="${esc(f.cuenta)}" placeholder="Todas las cuentas" autocomplete="off"></label>
         <datalist id="sc-cuentas">${saldos.map((s) => `<option value="${esc(s.codigo)}">${esc(s.nombre)}</option>`).join('')}</datalist>
-        ${sel('nivel', 'Nivel', [['', 'Todos'], ...niveles.map((n) => [n, `Hasta nivel ${n}`])], f.nivel)}
+        ${sel('nivel', 'Nivel', [['', 'Todos'], ...niveles.map((n) => ['h' + n, `Hasta nivel ${n}`]), ...niveles.map((n) => ['s' + n, `Solo nivel ${n}`])], f.nivel)}
         ${sel('mon', 'Moneda', [['L', 'Local'], ['E', 'Extranjera']], f.mon)}`, C().botonesExp);
     }
 
@@ -76,19 +76,20 @@
     function detalle() {
       const ext = f.mon === 'E', v = (s, c) => num(ext ? s[`${c}_mi`] : s[c]);
       let xs = saldos.filter((s) => !f.cuenta || s.codigo.startsWith(f.cuenta));
-      if (f.nivel) xs = xs.filter((s) => s.nivel <= Number(f.nivel));
+      const nN = Number(f.nivel.slice(1)), solo = f.nivel[0] === 's';
+      if (f.nivel) xs = xs.filter((s) => (solo ? s.nivel === nN : s.nivel <= nN));
       const base = xs.length ? Math.min(...xs.map((s) => s.nivel)) : 1;
-      const cods = new Set(xs.map((s) => s.codigo));
       // Para los totales solo cuentan las cuentas sin una cuenta madre en la lista (así no se suma dos veces).
-      const raiz = (s) => ![...cods].some((c) => c !== s.codigo && s.codigo.startsWith(c));
+      // Madre = cuenta de la lista de menor nivel cuyo código contiene al de la cuenta (601010 no es madre de 6010104: son del mismo nivel).
+      const raiz = (s) => !xs.some((c) => c.nivel < s.nivel && s.codigo.startsWith(c.codigo));
       const t = { sa: 0, de: 0, cr: 0, sx: 0 };
       const filas = xs.map((s) => {
         const top = raiz(s);
         if (top) { t.sa += v(s, 'saldo_anterior'); t.de += v(s, 'debitos'); t.cr += v(s, 'creditos'); t.sx += v(s, 'saldo_actual'); }
         return { valores: [`${sang(s.nivel - base)}${s.codigo}`, `${sang(s.nivel - base)}${s.nombre}`, s.nivel, r2(v(s, 'saldo_anterior')), r2(v(s, 'debitos')), r2(v(s, 'creditos')), r2(v(s, 'saldo_actual'))],
-          tipo: s.nivel === base && xs.some((h) => h !== s && h.codigo.startsWith(s.codigo)) ? 'subtotal' : undefined };
+          tipo: s.nivel === base && xs.some((h) => h.nivel > s.nivel && h.codigo.startsWith(s.codigo)) ? 'subtotal' : undefined };
       });
-      if (xs.length) filas.push({ valores: ['', f.cuenta ? `Total cuenta ${f.cuenta}` : 'Total de las cuentas de primer nivel', '', f.cuenta ? r2(t.sa) : '', r2(t.de), r2(t.cr), f.cuenta ? r2(t.sx) : ''], tipo: 'total' });
+      if (xs.length) filas.push({ valores: ['', `${f.cuenta ? `Total cuenta ${f.cuenta}` : solo ? `Total de las cuentas de nivel ${nN}` : 'Total de las cuentas de primer nivel'}${f.cuenta && solo ? ` (nivel ${nN})` : ''}`, '', f.cuenta ? r2(t.sa) : '', r2(t.de), r2(t.cr), f.cuenta ? r2(t.sx) : ''], tipo: 'total' });
       return { filas, n: xs.length, t };
     }
 
@@ -97,7 +98,7 @@
       if (!actual || !lista.includes(actual)) actual = lista[0] || null;
       ctx.pDet.innerHTML = '<p class="vacio">Leyendo los saldos del cierre…</p>';
       try { await leerSaldos(); } catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(e.message)}</p>`; return; }
-      if (f.nivel && !saldos.some((s) => String(s.nivel) === String(f.nivel))) f.nivel = '';
+      if (f.nivel && !saldos.some((s) => String(s.nivel) === f.nivel.slice(1))) f.nivel = '';
       barraFiltros();
       if (!cierres.length) { cfg = null; ctx.pDet.innerHTML = ctx.vacio('La empresa no tiene cierres migrados del sistema anterior.', 'ti-report-search'); return; }
 
@@ -110,7 +111,7 @@
       cfg = { orgId: ctx.sel.org, locId: ctx.sel.loc, hoja: 'Síntesis de cierres', titulo: 'Síntesis de cierres',
         archivo: actual ? `sintesis_cierre_${actual.anio}_${String(actual.mes).padStart(2, '0')}_tipo${actual.tipo_cierre}${f.cuenta ? `_${f.cuenta}` : ''}` : 'sintesis_cierres',
         parametros: [`Empresa: ${empresaDe(ctx)}`, `Cierre: ${titDet}`, actual ? `${clase(tc)} · resultado del ejercicio Q ${fmt.monto(actual.resultado_ejercicio)} · ${fechaHora(actual.fecha)} · usuario ${actual.usuario || '—'}` : '',
-          `Cuenta: ${f.cuenta ? `${f.cuenta} y sus subcuentas` : 'todas'} · Nivel: ${f.nivel ? `hasta ${f.nivel}` : 'todos'} · Moneda ${f.mon === 'E' ? 'extranjera' : 'local'}`].filter(Boolean),
+          `Cuenta: ${f.cuenta ? `${f.cuenta} y sus subcuentas` : 'todas'} · Nivel: ${f.nivel ? `${f.nivel[0] === 's' ? 'solo' : 'hasta'} ${f.nivel.slice(1)}` : 'todos'} · Moneda ${f.mon === 'E' ? 'extranjera' : 'local'}`].filter(Boolean),
         columnas: [col('Cuenta', 'texto', 16), col('Nombre de la cuenta', 'texto', 38), col('Nivel', 'numero', 6), col('Saldo anterior', 'monto', 15), col('Débitos', 'monto', 15), col('Créditos', 'monto', 15), col('Saldo actual', 'monto', 15)],
         filas: D.filas, vacio: !actual ? 'Elige un cierre en el maestro.' : !saldos.length ? (tc?.clasificacion === 'E' ? 'Este cierre es por centros de costo: no tiene saldos por cuenta.' : 'Este cierre no tiene saldos por cuenta con montos.') : 'Ninguna cuenta cumple con el filtro.' };
       const definitivos = lista.filter((c) => c.tipos_cierre?.definitivo).length;
