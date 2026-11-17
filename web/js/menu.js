@@ -374,7 +374,7 @@ window.MODULOS = [
           subgrupo: 'Ventas',
           icono: 'ti-truck-delivery',
           pantallas: [
-            { id: 'envios', nombre: 'Envíos', icono: 'ti-truck', descripcion: 'Envíos de productos a un cliente: bodega, cliente, forma de pago, precios y productos con lote y vencimiento; impresión tipo factura o tipo envío.' },
+            { id: 'envios', nombre: 'Administración de envíos', icono: 'ti-truck', descripcion: 'Envíos de productos a un cliente: bodega, cliente, forma de pago, precios y productos con lote y vencimiento; impresión tipo factura o tipo envío.' },
             { id: 'contrasenas-cobros', nombre: 'Contraseñas de Cobro', icono: 'ti-key', descripcion: 'Recepción de facturas por el cliente: contraseña de cobro, días de crédito y fecha estimada de cobro de cada factura.' },
             { id: 'despachos', nombre: 'Despachos', icono: 'ti-package-export', descripcion: 'Facturas por despachar por fechas, cliente y estado; despacho de productos con guías, reportes de salida y envío, mensajero y entrega.' },
             { id: 'retenciones', nombre: 'Retenciones', icono: 'ti-receipt-tax', descripcion: 'Constancias de retención (IVA o ISR) recibidas del cliente y aplicadas a sus facturas.' },
@@ -388,8 +388,8 @@ window.MODULOS = [
           icono: 'ti-file-invoice',
           pantallas: [
             { id: 'facturas-ventas', nombre: 'Facturas Ventas', icono: 'ti-file-invoice', descripcion: 'Factura electrónica (FEL, certificador COFIDI): cliente, venta y crédito, impuestos, productos con lote y vencimiento, detalle contable, inventario y pagos.' },
-            { id: 'envios-productos', nombre: 'Envíos de Productos', icono: 'ti-truck-delivery', descripcion: 'Envíos de productos a clientes: listado por fechas con estado (vigente, operado, anulado), moneda, valor y responsable; el envío con sus productos, impresión tipo factura o tipo envío y generación de la factura.' },
-            { id: 'consulta-de-facturas', nombre: 'Consulta de Facturas', icono: 'ti-file-search', descripcion: 'Resumen de las facturas de venta por cliente, vendedor, forma de pago, fechas y estado (con saldo, pagadas, anuladas, sin certificar), con sus productos, detalle contable y pagos.', separador: true }
+            { id: 'consulta-de-facturas', nombre: 'Consulta de Facturas', icono: 'ti-file-search', descripcion: 'Resumen de las facturas de venta por cliente, vendedor, forma de pago, fechas y estado (con saldo, pagadas, anuladas, sin certificar), con sus productos, detalle contable y pagos.', separador: true },
+            { id: 'envios-productos', nombre: 'Envíos de Productos', icono: 'ti-truck-delivery', descripcion: 'Envíos de productos a clientes: listado por fechas con estado (vigente, operado, anulado), moneda, valor y responsable; el envío con sus productos, impresión tipo factura o tipo envío y generación de la factura.' }
           ]
         },
         {
