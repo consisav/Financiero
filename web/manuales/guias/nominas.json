@@ -1,0 +1,685 @@
+{
+ "nom-empleados": {
+  "puntos": [
+   "Ficha del empleado: DPI, NIT, afiliación IGSS, puesto, departamento, jornada, salario, bonificación, frecuencia de pago y cuenta para el pago."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Catálogos › Personal › Empleados y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Filtra por «Mostrar» (activos, de baja) y «Frecuencia de pago».",
+   "Presiona «Nuevo empleado».",
+   "Escribe nombres, apellidos, DPI, NIT y número de afiliación IGSS.",
+   "Elige el departamento, el puesto y la jornada (diurna 8 h, mixta 7 h, nocturna 6 h).",
+   "Escribe el salario mensual y la bonificación incentivo (Q 250).",
+   "Elige la frecuencia de pago (mensual o quincenal) y la cuenta bancaria del empleado.",
+   "Escribe la fecha de ingreso y presiona «Guardar»."
+  ],
+  "campos": [
+   [
+    "DPI",
+    "2456 78901 0101",
+    "Identificación."
+   ],
+   [
+    "Afiliación IGSS",
+    "123456789",
+    "Número de afiliado."
+   ],
+   [
+    "Puesto",
+    "Auxiliar contable",
+    "Del catálogo de puestos."
+   ],
+   [
+    "Jornada",
+    "Diurna",
+    "Horas para horas extra."
+   ],
+   [
+    "Salario",
+    "Q 4,000.00",
+    "Mensual."
+   ],
+   [
+    "Bonificación",
+    "Q 250.00",
+    "Decreto 37-2001."
+   ]
+  ]
+ },
+ "nom-departamentos": {
+  "puntos": [
+   "Departamentos que agrupan la planilla y el costo de personal."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Catálogos › Personal › Departamentos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: nombre y centro de costo.",
+   "Presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Departamento",
+    "Centro de costo"
+   ],
+   "filas": [
+    [
+     "Administración",
+     "01.01"
+    ],
+    [
+     "Ventas",
+     "02.01"
+    ]
+   ]
+  }
+ },
+ "nom-puestos": {
+  "puntos": [
+   "Puestos con su departamento y salario base de referencia."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Catálogos › Personal › Puestos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: nombre, departamento y salario base.",
+   "Presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Puesto",
+    "Departamento",
+    "Salario base"
+   ],
+   "filas": [
+    [
+     "Auxiliar contable",
+     "Administración",
+     "Q 4,000.00"
+    ],
+    [
+     "Vendedor",
+     "Ventas",
+     "Q 3,800.00"
+    ]
+   ]
+  }
+ },
+ "nom-conceptos": {
+  "puntos": [
+   "Comisiones, bonos, viáticos y descuentos con su afectación a IGSS, ISR y prestaciones."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Catálogos › Configuración › Conceptos de ingreso y descuento y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: nombre, «Clase» (ingreso o descuento).",
+   "Marca si afecta IGSS, ISR y prestaciones.",
+   "Elige la cuenta contable y presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Concepto",
+    "Clase",
+    "IGSS",
+    "ISR",
+    "Prestaciones"
+   ],
+   "filas": [
+    [
+     "Comisiones",
+     "Ingreso",
+     "Sí",
+     "Sí",
+     "Sí"
+    ],
+    [
+     "Viáticos",
+     "Ingreso",
+     "No",
+     "No",
+     "No"
+    ],
+    [
+     "Préstamo",
+     "Descuento",
+     "—",
+     "—",
+     "—"
+    ]
+   ]
+  }
+ },
+ "nom-parametros": {
+  "puntos": [
+   "IGSS laboral (4.83 %) y patronal (12.67 %), bonificación incentivo, salario mínimo, ISR de asalariados y cuentas de la partida de planilla."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Catálogos › Configuración › Parámetros de nómina y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Revisa los porcentajes de IGSS laboral y patronal (IGSS 10.67 + INTECAP 1 + IRTRA 1).",
+   "Revisa la bonificación incentivo y el salario mínimo vigente.",
+   "Revisa la deducción personal de ISR (Q 48,000) y las tasas 5 % / 7 %.",
+   "Elige las cuentas contables de sueldos, bonificación, IGSS, ISR y sueldos por pagar.",
+   "Presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Parámetro",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "IGSS laboral",
+     "4.83 %"
+    ],
+    [
+     "IGSS patronal",
+     "12.67 %"
+    ],
+    [
+     "Bonificación incentivo",
+     "Q 250.00"
+    ],
+    [
+     "Deducción personal ISR",
+     "Q 48,000.00"
+    ]
+   ]
+  }
+ },
+ "nom-novedades": {
+  "puntos": [
+   "Horas extra, ausencias, suspensiones IGSS, otros ingresos y descuentos del mes."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Registros › Novedades › Novedades del período y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes» y la «Quincena».",
+   "Presiona «Agregar»: «Empleado», «Clase», «Concepto (ingreso o descuento)», «Horas o días», «Monto Q» y «Descripción».",
+   "Presiona «Registrar»; entran al calcular la planilla."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Empleado",
+    "Concepto",
+    "Horas o días",
+    "Monto"
+   ],
+   "filas": [
+    [
+     "Juan Pérez",
+     "Horas extra diurnas",
+     "6 h",
+     "Q 150.00"
+    ],
+    [
+     "María López",
+     "Ausencia",
+     "1 día",
+     "Q -133.33"
+    ]
+   ],
+   "nota": "Hora extra = 4,000 ÷ 30 ÷ 8 × 1.5 = Q 25.00."
+  }
+ },
+ "nom-prestamos": {
+  "puntos": [
+   "Anticipos y préstamos con su cuota, que se descuenta en cada planilla."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Registros › Novedades › Anticipos y préstamos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Empleado», «Tipo» (anticipo o préstamo), «Fecha», monto y «Cuotas».",
+   "Presiona «Registrar»; la cuota se descuenta sola hasta saldar."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Empleado",
+    "Tipo",
+    "Monto",
+    "Cuotas",
+    "Cuota",
+    "Saldo"
+   ],
+   "filas": [
+    [
+     "Juan Pérez",
+     "Préstamo",
+     "Q 3,000.00",
+     "6",
+     "Q 500.00",
+     "Q 2,000.00"
+    ]
+   ]
+  }
+ },
+ "nom-vacaciones": {
+  "puntos": [
+   "Saldo de vacaciones (15 días hábiles por año) y registro de los goces."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Registros › Novedades › Vacaciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el empleado: ves sus días ganados, gozados y pendientes.",
+   "Presiona «Registrar goce»: «Desde», «Hasta», «Días hábiles», «Período» y «Observaciones».",
+   "Guarda; el saldo se actualiza."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Empleado",
+    "Período",
+    "Ganados",
+    "Gozados",
+    "Pendientes"
+   ],
+   "filas": [
+    [
+     "Juan Pérez",
+     "2025–{anio}",
+     "15",
+     "10",
+     "5"
+    ]
+   ]
+  }
+ },
+ "nom-planilla": {
+  "puntos": [
+   "Planilla ordinaria, Bono 14 y aguinaldo: cálculo, aprobación, pago y partida contable.",
+   "Salario proporcional a días laborados, horas extra, bonificación (no afecta IGSS), IGSS 4.83 %, ISR proyectado, préstamos y otros descuentos."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Procesos › Planillas › Planillas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: «Tipo» (ordinaria, Bono 14, aguinaldo), «Año», «Mes» y «Quincena».",
+   "Revisa que las novedades del período estén registradas.",
+   "Presiona «Calcular planilla»: por empleado salen días, salario, horas extra, bonificación, IGSS, ISR, descuentos y líquido.",
+   "Revisa los totales y presiona «Aprobar».",
+   "Al pagar (transferencia o cheque) presiona «Registrar pago».",
+   "Presiona «Generar partida»: se contabiliza con las cuentas de los parámetros.",
+   "«Anular» deja sin efecto una planilla no pagada."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Línea de planilla de Juan Pérez",
+   "columnas": [
+    "Concepto",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "Salario (30 días)",
+     "Q 4,000.00"
+    ],
+    [
+     "Horas extra (6 h × Q 25.00)",
+     "Q 150.00"
+    ],
+    [
+     "Bonificación incentivo",
+     "Q 250.00"
+    ],
+    [
+     "(−) IGSS laboral 4.83 % de Q 4,150.00",
+     "Q -200.45"
+    ],
+    [
+     "(−) ISR (renta proyectada bajo la deducción)",
+     "Q 0.00"
+    ],
+    [
+     "(−) Cuota préstamo",
+     "Q -500.00"
+    ]
+   ],
+   "totales": [
+    "Líquido a recibir",
+    "Q 3,699.55"
+   ]
+  },
+  "resultado": {
+   "titulo": "Resultado · Partida de la planilla",
+   "columnas": [
+    "Cuenta",
+    "Nombre",
+    "Debe",
+    "Haber"
+   ],
+   "filas": [
+    [
+     "6.1.1.01",
+     "Sueldos y horas extra",
+     "Q 4,150.00",
+     ""
+    ],
+    [
+     "6.1.1.02",
+     "Bonificación incentivo",
+     "Q 250.00",
+     ""
+    ],
+    [
+     "6.1.1.05",
+     "Cuota patronal IGSS 12.67 %",
+     "Q 525.81",
+     ""
+    ],
+    [
+     "2.1.3.01",
+     "IGSS por pagar",
+     "",
+     "Q 726.26"
+    ],
+    [
+     "1.1.2.05",
+     "Préstamos a empleados",
+     "",
+     "Q 500.00"
+    ],
+    [
+     "2.1.3.05",
+     "Sueldos por pagar",
+     "",
+     "Q 3,699.55"
+    ]
+   ],
+   "totales": [
+    "",
+    "Totales",
+    "Q 4,925.81",
+    "Q 4,925.81"
+   ],
+   "nota": "Códigos ilustrativos."
+  }
+ },
+ "nom-liquidacion": {
+  "puntos": [
+   "Liquidación laboral al dar de baja: salario pendiente, indemnización, aguinaldo, Bono 14 y vacaciones proporcionales."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Procesos › Planillas › Liquidación laboral y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Empleado», la «Fecha de baja» y el «Motivo» (renuncia, despido justificado o injustificado).",
+   "Revisa cada concepto calculado: salario pendiente, indemnización (solo despido injustificado: salario + 1/6 + 1/6 por año), aguinaldo y Bono 14 proporcionales y vacaciones pendientes.",
+   "Elige la «Planilla aprobada o pagada» de referencia si aplica.",
+   "Presiona «Guardar liquidación»; imprime el finiquito."
+  ],
+  "resultado": {
+   "titulo": "Ejemplo · Liquidación por despido injustificado (2 años)",
+   "columnas": [
+    "Concepto",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "Salario pendiente (15 días)",
+     "Q 2,000.00"
+    ],
+    [
+     "Indemnización (Q 4,000 + 1/6 + 1/6) × 2 años",
+     "Q 10,666.67"
+    ],
+    [
+     "Aguinaldo proporcional",
+     "Q 3,333.33"
+    ],
+    [
+     "Bono 14 proporcional",
+     "Q 1,500.00"
+    ],
+    [
+     "Vacaciones pendientes (5 días)",
+     "Q 666.67"
+    ]
+   ],
+   "totales": [
+    "Total a pagar",
+    "Q 18,166.67"
+   ]
+  }
+ },
+ "nom-reporte-planilla": {
+  "puntos": [
+   "Planilla por departamento con ingresos, descuentos, líquido y cuota patronal."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Reportes y gráficas › Reportes › Planilla del período y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes» y la planilla.",
+   "Revisa la vista previa y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Departamento",
+    "Empleados",
+    "Ingresos",
+    "Descuentos",
+    "Líquido",
+    "Cuota patronal"
+   ],
+   "filas": [
+    [
+     "Administración",
+     "4",
+     "Q 18,400.00",
+     "Q 1,620.00",
+     "Q 16,780.00",
+     "Q 2,268.00"
+    ],
+    [
+     "Ventas",
+     "6",
+     "Q 24,300.00",
+     "Q 1,950.00",
+     "Q 22,350.00",
+     "Q 2,966.00"
+    ]
+   ],
+   "totales": [
+    "Total",
+    "10",
+    "Q 42,700.00",
+    "Q 3,570.00",
+    "Q 39,130.00",
+    "Q 5,234.00"
+   ]
+  },
+  "voz": "Planilla de noviembre: diez empleados, líquido a pagar de treinta y nueve mil ciento treinta quetzales y cuota patronal de cinco mil doscientos treinta y cuatro."
+ },
+ "nom-boletas": {
+  "puntos": [
+   "Boleta de cada empleado con ingresos, descuentos, líquido y firma de recibido."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Reportes y gráficas › Reportes › Boletas de pago y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes» y la planilla.",
+   "Elige un empleado o todos.",
+   "Revisa la vista previa y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Concepto",
+    "Ingresos",
+    "Descuentos"
+   ],
+   "filas": [
+    [
+     "Salario",
+     "Q 4,000.00",
+     ""
+    ],
+    [
+     "Horas extra",
+     "Q 150.00",
+     ""
+    ],
+    [
+     "Bonificación",
+     "Q 250.00",
+     ""
+    ],
+    [
+     "IGSS",
+     "",
+     "Q 200.45"
+    ],
+    [
+     "Préstamo",
+     "",
+     "Q 500.00"
+    ]
+   ],
+   "totales": [
+    "Líquido",
+    "Q 4,400.00",
+    "Q 3,699.55"
+   ]
+  },
+  "voz": "Boleta de Juan Pérez: ingresos de cuatro mil cuatrocientos quetzales y líquido de tres mil seiscientos noventa y nueve quetzales con cincuenta y cinco."
+ },
+ "nom-planilla-igss": {
+  "puntos": [
+   "Salario afecto, cuota laboral y patronal por afiliado del mes."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Reportes y gráficas › Reportes › Planilla del IGSS y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes» y la planilla.",
+   "Revisa la vista previa y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Afiliado",
+    "Empleado",
+    "Salario afecto",
+    "Laboral 4.83 %",
+    "Patronal 12.67 %"
+   ],
+   "filas": [
+    [
+     "123456789",
+     "Juan Pérez",
+     "Q 4,150.00",
+     "Q 200.45",
+     "Q 525.81"
+    ]
+   ]
+  },
+  "voz": "Planilla del IGSS: cuota laboral de doscientos quetzales con cuarenta y cinco y patronal de quinientos veinticinco con ochenta y uno para Juan Pérez."
+ },
+ "nom-retenciones-isr": {
+  "puntos": [
+   "ISR retenido a cada asalariado por mes y total del año."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Reportes y gráficas › Reportes › Retenciones de ISR y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes» y la planilla.",
+   "Revisa la vista previa y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Empleado",
+    "Renta proyectada",
+    "ISR anual",
+    "Retenido al mes"
+   ],
+   "filas": [
+    [
+     "Gerente General",
+     "Q 216,000.00",
+     "Q 7,878.36",
+     "Q 656.53"
+    ],
+    [
+     "Juan Pérez",
+     "Q 49,800.00",
+     "Q 0.00",
+     "Q 0.00"
+    ]
+   ]
+  },
+  "voz": "Retenciones de ISR: solo el gerente general tiene retención, de seiscientos cincuenta y seis quetzales con cincuenta y tres centavos al mes."
+ },
+ "nom-libro-salarios": {
+  "puntos": [
+   "Libro de salarios por empleado y período (Código de Trabajo art. 102)."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Reportes y gráficas › Reportes › Libro de salarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes» y la planilla.",
+   "Elige el empleado o todos y el rango de meses.",
+   "Revisa la vista previa y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Mes",
+    "Días",
+    "Salario",
+    "Horas extra",
+    "Bonificación",
+    "Descuentos",
+    "Líquido"
+   ],
+   "filas": [
+    [
+     "Noviembre",
+     "30",
+     "Q 4,000.00",
+     "Q 150.00",
+     "Q 250.00",
+     "Q 700.45",
+     "Q 3,699.55"
+    ]
+   ]
+  },
+  "voz": "Libro de salarios de Juan Pérez de noviembre: treinta días laborados y líquido de tres mil seiscientos noventa y nueve quetzales."
+ },
+ "nom-costo-personal": {
+  "puntos": [
+   "Sueldos, bonificación, prestaciones y cuota patronal por departamento y mes."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Reportes y gráficas › Reportes › Costo de personal y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes» y la planilla.",
+   "Revisa la vista previa y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Departamento",
+    "Sueldos",
+    "Bonificación",
+    "Prestaciones",
+    "Cuota patronal",
+    "Costo total"
+   ],
+   "filas": [
+    [
+     "Administración",
+     "Q 17,400.00",
+     "Q 1,000.00",
+     "Q 4,350.00",
+     "Q 2,268.00",
+     "Q 25,018.00"
+    ]
+   ]
+  },
+  "voz": "Costo de personal de administración en noviembre: veinticinco mil dieciocho quetzales."
+ },
+ "nom-provision-prestaciones": {
+  "puntos": [
+   "Provisión mensual de indemnización, aguinaldo, Bono 14 y vacaciones por empleado."
+  ],
+  "pasos": [
+   "Entra a Nóminas › Reportes y gráficas › Reportes › Provisión de prestaciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes» y la planilla.",
+   "Revisa la vista previa y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Empleado",
+    "Indemnización",
+    "Aguinaldo",
+    "Bono 14",
+    "Vacaciones",
+    "Total"
+   ],
+   "filas": [
+    [
+     "Juan Pérez",
+     "Q 444.44",
+     "Q 333.33",
+     "Q 333.33",
+     "Q 166.67",
+     "Q 1,277.77"
+    ]
+   ]
+  },
+  "voz": "Provisión de prestaciones de Juan Pérez: mil doscientos setenta y siete quetzales con setenta y siete centavos al mes."
+ }
+}

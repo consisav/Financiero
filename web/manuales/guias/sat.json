@@ -1,0 +1,700 @@
+{
+ "sat-emisor": {
+  "puntos": [
+   "Datos del emisor de {empresa} ante la SAT: NIT, nombre como en el RTU, nombre comercial, régimen de IVA e ISR, % IVA, agente retenedor y certificador FEL (sin claves)."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Catálogos › Emisor › Datos del emisor y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Escribe el «NIT *» y el «Nombre del emisor (como en el RTU) *».",
+   "Escribe el «Nombre comercial».",
+   "Elige el «Régimen de IVA» (general, pequeño contribuyente) y el «Régimen de ISR» (utilidades o simplificado) y el «% IVA».",
+   "Marca si es agente retenedor de IVA o ISR.",
+   "Llena el «Certificador FEL», el «NIT del certificador», el «Usuario del certificador» y el «Correo de notificaciones». Las claves no se guardan aquí.",
+   "Presiona «Guardar»."
+  ],
+  "campos": [
+   [
+    "NIT *",
+    "1234567-8",
+    "NIT de la empresa."
+   ],
+   [
+    "Régimen de IVA",
+    "General",
+    "Define frases y cálculo."
+   ],
+   [
+    "Régimen de ISR",
+    "Sobre utilidades",
+    "Pagos trimestrales."
+   ],
+   [
+    "Certificador FEL",
+    "COFIDI",
+    "Quien certifica los DTE."
+   ]
+  ]
+ },
+ "sat-establecimientos": {
+  "puntos": [
+   "Establecimientos registrados en el RTU con su código SAT; cada DTE se emite desde un establecimiento."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Catálogos › Emisor › Establecimientos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: código SAT del establecimiento (ej. 1), nombre comercial y dirección.",
+   "Liga el establecimiento con la localidad del sistema.",
+   "Presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código SAT",
+    "Nombre comercial",
+    "Dirección",
+    "Localidad"
+   ],
+   "filas": [
+    [
+     "1",
+     "{empresa}",
+     "Zona 10, Guatemala",
+     "{empresa}"
+    ]
+   ]
+  }
+ },
+ "sat-tipos-dte": {
+  "puntos": [
+   "Documentos tributarios electrónicos (FACT, FCAM, FPEQ, FESP, NCRE, NDEB, NABN, RECI) y su efecto en el IVA."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Catálogos › FEL › Tipos de DTE y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Revisa cada tipo con su descripción y efecto (suma o resta IVA, no afecta).",
+   "Marca los que usa la empresa y guarda."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Tipo",
+    "Descripción",
+    "Efecto IVA"
+   ],
+   "filas": [
+    [
+     "FACT",
+     "Factura",
+     "Débito"
+    ],
+    [
+     "FCAM",
+     "Factura cambiaria",
+     "Débito"
+    ],
+    [
+     "NCRE",
+     "Nota de crédito",
+     "Resta"
+    ],
+    [
+     "NDEB",
+     "Nota de débito",
+     "Suma"
+    ],
+    [
+     "RECI",
+     "Recibo",
+     "No afecta"
+    ]
+   ]
+  }
+ },
+ "sat-frases": {
+  "puntos": [
+   "Frases que exige la SAT en los DTE según el régimen; se marcan las que aplican a la empresa."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Catálogos › FEL › Frases y escenarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Revisa cada frase y su escenario (ej. Sujeto a pagos trimestrales ISR).",
+   "Marca las que aplican a {empresa} según su régimen.",
+   "Presiona «Guardar»; se agregan solas a cada DTE."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Tipo de frase",
+    "Escenario",
+    "Texto"
+   ],
+   "filas": [
+    [
+     "1",
+     "1",
+     "Sujeto a pagos trimestrales ISR"
+    ],
+    [
+     "2",
+     "1",
+     "Agente de retención del IVA"
+    ]
+   ]
+  }
+ },
+ "sat-mant-dte": {
+  "puntos": [
+   "DTE del sistema anterior con emisor, receptor, ítems e impuestos, frases, complementos (cambiaria, exportación, notas), adendas, resultado, anulación e ID FEL. Solo consulta."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Mantenimientos › FEL › Documentos FEL (DTE) y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde», «Hasta» y el «Estado».",
+   "Busca el documento y ábrelo para ver todas sus secciones.",
+   "«Imprimir» saca la representación; «PDF» o «Excel» el listado."
+  ],
+  "reporte": {
+   "columnas": [
+    "DTE",
+    "Fecha",
+    "Receptor",
+    "Tipo",
+    "Total",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "A1B2-0045",
+     "15/09/2025",
+     "{cliente}",
+     "FACT",
+     "Q 2,450.00",
+     "Certificado"
+    ]
+   ]
+  },
+  "voz": "Documentos FEL migrados: el DTE A uno B dos cero cero cuarenta y cinco está certificado por dos mil cuatrocientos cincuenta quetzales."
+ },
+ "sat-mant-ids": {
+  "puntos": [
+   "ID reservados en el sistema anterior con su estado y el DTE que lo usó."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Mantenimientos › FEL › IDs FEL y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Filtra por «Estado» y «Uso».",
+   "Revisa qué ID quedaron sin usar.",
+   "Genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "ID FEL",
+    "Estado",
+    "DTE"
+   ],
+   "filas": [
+    [
+     "10045",
+     "USADO",
+     "A1B2-0045"
+    ],
+    [
+     "10046",
+     "LIBRE",
+     ""
+    ]
+   ]
+  },
+  "voz": "Hay un ID FEL libre sin usar."
+ },
+ "sat-mant-frases": {
+  "puntos": [
+   "Tipos de frase FEL con sus escenarios, texto en el DTE y si es exento de IVA (administrador)."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Mantenimientos › FEL › Tipos de frase y escenarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Tipo» para agregar un tipo de frase o «Escenario» para uno nuevo.",
+   "Escribe el texto que sale en el DTE y marca si es exento.",
+   "Presiona «Guardar»."
+  ]
+ },
+ "sat-mant-tipos-doc": {
+  "puntos": [
+   "Códigos de documento del sistema anterior con su tipo de DTE."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Mantenimientos › FEL › Tipos de documento FEL y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo»: código del sistema anterior y su tipo DTE.",
+   "Presiona «Guardar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Código anterior",
+    "Tipo DTE"
+   ],
+   "filas": [
+    [
+     "3",
+     "FACT"
+    ],
+    [
+     "5",
+     "FESP"
+    ]
+   ]
+  }
+ },
+ "sat-mant-conexion": {
+  "puntos": [
+   "Ambiente (pruebas o producción), URL e identificadores del web service del certificador; nunca usuario ni contraseña."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Mantenimientos › FEL › Conexión del certificador y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el ambiente.",
+   "Escribe la URL y los identificadores que da el certificador.",
+   "Presiona «Guardar». Las credenciales se configuran en el servidor, no en esta pantalla."
+  ]
+ },
+ "dte-emitidos": {
+  "puntos": [
+   "Bandeja de facturas y notas del período: certificadas, pendientes de certificar y anuladas."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Registros › Documentos › DTE emitidos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Período» y el «Estado».",
+   "Revisa los pendientes y certifícalos desde su factura o nota.",
+   "Genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Documento",
+    "Fecha",
+    "Cliente",
+    "Tipo",
+    "Total",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "FE-7082",
+     "{hoy}",
+     "{cliente}",
+     "FACT",
+     "Q 716.80",
+     "CERTIFICADO"
+    ],
+    [
+     "FE-7083",
+     "{hoy}",
+     "Farmacia Central",
+     "FACT",
+     "Q 1,250.00",
+     "PENDIENTE"
+    ]
+   ]
+  },
+  "voz": "DTE emitidos: un documento pendiente de certificar por mil doscientos cincuenta quetzales."
+ },
+ "sat-historial-fel": {
+  "puntos": [
+   "DTE certificados en el sistema anterior con líneas, frases, abonos, anulaciones y errores, enlazados a sus facturas y notas de venta."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Registros › Documentos › Historial FEL (DTE certificados) y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde» y «Hasta».",
+   "Abre un DTE para ver su detalle.",
+   "«Enlazar documentos» vuelve a relacionar los DTE con las facturas y notas por número interno o autorización.",
+   "Si un DTE no tiene factura, presiona «Crear la factura».",
+   "«Imprimir DTE» saca su representación; «PDF» o «Excel» el listado."
+  ],
+  "reporte": {
+   "columnas": [
+    "DTE",
+    "Fecha",
+    "Receptor",
+    "Total",
+    "Documento enlazado"
+   ],
+   "filas": [
+    [
+     "A1B2-0045",
+     "15/09/2025",
+     "{cliente}",
+     "Q 2,450.00",
+     "FE-6890"
+    ],
+    [
+     "A1B2-0046",
+     "15/09/2025",
+     "Farmacia Central",
+     "Q 820.00",
+     "Sin documento"
+    ]
+   ]
+  },
+  "voz": "Historial FEL: un DTE sin factura enlazada; se puede crear con el botón crear la factura."
+ },
+ "dte-recibidos": {
+  "puntos": [
+   "Facturas recibidas según el archivo de la SAT y si ya están registradas en compras."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Registros › Documentos › DTE recibidos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Cargar archivo de la SAT» (o usa Compras › Carga Facturas SAT).",
+   "Elige el período y el estado (registrada o pendiente).",
+   "Registra las pendientes en Compras."
+  ],
+  "reporte": {
+   "columnas": [
+    "Autorización",
+    "Emisor",
+    "Fecha",
+    "Total",
+    "En compras"
+   ],
+   "filas": [
+    [
+     "F-4521",
+     "{proveedor}",
+     "02/11/{anio}",
+     "Q 4,491.20",
+     "C-0981"
+    ],
+    [
+     "F-4600",
+     "Telefonía, S.A.",
+     "05/11/{anio}",
+     "Q 450.00",
+     "Pendiente"
+    ]
+   ]
+  },
+  "voz": "DTE recibidos: una factura de telefonía por cuatrocientos cincuenta quetzales aún no está registrada en compras."
+ },
+ "constancias-retencion": {
+  "puntos": [
+   "Retenciones de IVA e ISR recibidas de clientes y emitidas a proveedores."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Registros › Documentos › Constancias de retención y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el período y «Retenciones» (recibidas o emitidas) y el «Tipo» (IVA o ISR).",
+   "Revisa cada constancia con su documento y valor.",
+   "Genera PDF o Excel; las recibidas se descuentan en la liquidación del IVA."
+  ],
+  "reporte": {
+   "columnas": [
+    "Constancia",
+    "Tercero",
+    "Tipo",
+    "Documento",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "RET-55410",
+     "{cliente}",
+     "IVA",
+     "FE-7080",
+     "Q 143.04"
+    ]
+   ]
+  },
+  "voz": "Constancias de retención del mes: una de IVA recibida por ciento cuarenta y tres quetzales con cuatro centavos."
+ },
+ "conciliacion-fiscal": {
+  "puntos": [
+   "DTE de la SAT contra compras registradas, montos distintos y ventas sin certificar."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Procesos › Impuestos › Conciliación fiscal y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año» y el «Mes».",
+   "Revisa las diferencias: DTE sin compra, compras sin DTE, montos distintos y ventas sin certificar.",
+   "Corrige cada una en su módulo.",
+   "Genera PDF o Excel."
+  ],
+  "reporte": {
+   "columnas": [
+    "Diferencia",
+    "Documentos",
+    "Monto"
+   ],
+   "filas": [
+    [
+     "DTE recibidos sin compra",
+     "1",
+     "Q 450.00"
+    ],
+    [
+     "Ventas sin certificar",
+     "1",
+     "Q 1,250.00"
+    ],
+    [
+     "Montos distintos",
+     "0",
+     "Q 0.00"
+    ]
+   ]
+  },
+  "voz": "Conciliación fiscal de noviembre: una compra sin registrar y una venta sin certificar."
+ },
+ "liquidacion-impuestos": {
+  "puntos": [
+   "IVA del mes (débito, crédito, retenciones, remanente, a pagar; tipo SAT-2237), ISR e ISO, con el cierre del período fiscal."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Procesos › Impuestos › Liquidación de impuestos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año» y el «Mes».",
+   "Revisa el IVA débito (ventas), el crédito (compras), las retenciones recibidas y el remanente del mes anterior.",
+   "Revisa el ISR (trimestral o mensual) y el ISO.",
+   "Si todo está bien presiona «Cerrar período»: ya no se registran documentos de ese mes fiscal.",
+   "Presenta la declaración en Declaraguate y regístrala con «Registrar presentación»; «Reabrir» si hay que corregir."
+  ],
+  "resultado": {
+   "titulo": "Resultado · IVA de noviembre",
+   "columnas": [
+    "Concepto",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "IVA débito (ventas Q 125,430.00 con IVA)",
+     "Q 13,438.93"
+    ],
+    [
+     "(−) IVA crédito (compras Q 92,300.00)",
+     "Q 11,076.00"
+    ],
+    [
+     "(−) Retenciones de IVA recibidas",
+     "Q 143.04"
+    ],
+    [
+     "(−) Remanente del mes anterior",
+     "Q 0.00"
+    ]
+   ],
+   "totales": [
+    "IVA a pagar",
+    "Q 2,219.89"
+   ]
+  }
+ },
+ "impuestos-regimen": {
+  "puntos": [
+   "Cálculo de cada obligación del calendario según el régimen: IVA, pequeño contribuyente, ISR mensual o trimestral, ISO."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Procesos › Impuestos › Cálculo de impuestos del régimen y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Mes del período» y si el ISR es trimestral.",
+   "Revisa la base, la tasa y el impuesto de cada obligación.",
+   "Usa «Actualizar» tras registrar documentos; genera PDF o Excel."
+  ],
+  "resultado": {
+   "columnas": [
+    "Obligación",
+    "Base",
+    "Tasa",
+    "Impuesto"
+   ],
+   "filas": [
+    [
+     "IVA general (débito − crédito − retenciones)",
+     "Q 13,438.93",
+     "12 %",
+     "Q 2,219.89"
+    ],
+    [
+     "ISR trimestral",
+     "Q 85,000.00",
+     "25 %",
+     "Q 21,250.00"
+    ]
+   ]
+  }
+ },
+ "calendario-fiscal": {
+  "puntos": [
+   "Obligaciones del año según el régimen, con vencimientos y el registro de su presentación."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Procesos › Impuestos › Calendario fiscal y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año».",
+   "Revisa cada obligación con su vencimiento y estado.",
+   "Al presentarla presiona «Registrar presentación» (fecha y número de formulario)."
+  ],
+  "reporte": {
+   "columnas": [
+    "Obligación",
+    "Período",
+    "Vence",
+    "Estado"
+   ],
+   "filas": [
+    [
+     "IVA mensual",
+     "Noviembre",
+     "31/12/{anio}",
+     "Pendiente"
+    ],
+    [
+     "ISR trimestral",
+     "Oct–Dic",
+     "31/01",
+     "Pendiente"
+    ],
+    [
+     "IVA mensual",
+     "Octubre",
+     "30/11/{anio}",
+     "Presentada"
+    ]
+   ]
+  },
+  "voz": "Calendario fiscal: el IVA de noviembre vence el treinta y uno de diciembre; el de octubre ya está presentado."
+ },
+ "libro-ventas": {
+  "puntos": [
+   "Libro de ventas y servicios del período con gravado, exento e IVA débito."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Reportes y gráficas › Libros › Libro de ventas y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Período» («Año» y «Mes» o «Desde» / «Hasta»).",
+   "Revisa los totales y la gráfica.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Cliente",
+    "NIT",
+    "Gravado",
+    "Exento",
+    "IVA"
+   ],
+   "filas": [
+    [
+     "{hoy}",
+     "FE-7082",
+     "{cliente}",
+     "1234567-8",
+     "Q 640.00",
+     "Q 0.00",
+     "Q 76.80"
+    ]
+   ],
+   "totales": [
+    "",
+    "",
+    "Totales del mes",
+    "",
+    "Q 111,991.07",
+    "Q 0.00",
+    "Q 13,438.93"
+   ]
+  },
+  "voz": "Libro de ventas de noviembre: ventas gravadas de ciento once mil novecientos noventa y un quetzales e IVA débito de trece mil cuatrocientos treinta y ocho quetzales."
+ },
+ "libro-compras": {
+  "puntos": [
+   "Libro de compras y servicios por período de presentación: bienes, servicios, combustibles, exento e IVA crédito."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Reportes y gráficas › Libros › Libro de compras y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Período» («Año» y «Mes» o «Desde» / «Hasta»).",
+   "Revisa los totales y la gráfica.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Fecha",
+    "Documento",
+    "Proveedor",
+    "Bienes",
+    "Servicios",
+    "Combustibles",
+    "IVA"
+   ],
+   "filas": [
+    [
+     "02/11/{anio}",
+     "A-4521",
+     "{proveedor}",
+     "Q 4,010.00",
+     "",
+     "",
+     "Q 481.20"
+    ]
+   ]
+  },
+  "voz": "Libro de compras de noviembre: crédito fiscal de cuatrocientos ochenta y un quetzales con veinte centavos en compras de bienes."
+ },
+ "resumen-iva": {
+  "puntos": [
+   "IVA débito, crédito, retenciones, remanente y a pagar de cada mes del año, con gráficas."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Reportes y gráficas › Análisis › Resumen de IVA y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Período» («Año» y «Mes» o «Desde» / «Hasta»).",
+   "Elige «Mostrar» (por mes o acumulado).",
+   "Revisa los totales y la gráfica.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Mes",
+    "Débito",
+    "Crédito",
+    "Retenciones",
+    "A pagar"
+   ],
+   "filas": [
+    [
+     "Octubre",
+     "Q 14,236.80",
+     "Q 11,076.00",
+     "Q 0.00",
+     "Q 3,160.80"
+    ],
+    [
+     "Noviembre",
+     "Q 13,438.93",
+     "Q 11,076.00",
+     "Q 143.04",
+     "Q 2,219.89"
+    ]
+   ]
+  },
+  "voz": "Resumen de IVA: en noviembre se pagan dos mil doscientos diecinueve quetzales con ochenta y nueve centavos."
+ },
+ "dte-por-estado": {
+  "puntos": [
+   "Documentos emitidos por tipo y estado de certificación, con valores e IVA."
+  ],
+  "pasos": [
+   "Entra a Integraciones SAT › Reportes y gráficas › Análisis › DTE por estado y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Período» («Año» y «Mes» o «Desde» / «Hasta»).",
+   "Revisa los totales y la gráfica.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Tipo",
+    "Estado",
+    "Documentos",
+    "Valor",
+    "IVA"
+   ],
+   "filas": [
+    [
+     "FACT",
+     "CERTIFICADO",
+     "82",
+     "Q 125,430.00",
+     "Q 13,438.93"
+    ],
+    [
+     "FACT",
+     "PENDIENTE",
+     "1",
+     "Q 1,250.00",
+     "Q 133.93"
+    ]
+   ]
+  },
+  "voz": "DTE por estado: ochenta y dos facturas certificadas y una pendiente."
+ }
+}

@@ -1,0 +1,451 @@
+{
+ "rubros-cuentas": {
+  "puntos": [
+   "Cuentas contables de cada rubro de presupuesto: de ellas sale la ejecución."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Rubros y cuentas contables y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el rubro (ej. 201 Sueldos y salarios).",
+   "Agrega las cuentas contables que lo forman (ej. 6.1.1.01 Sueldos, 6.1.1.02 Bonificación).",
+   "Guarda; la ejecución suma las partidas de esas cuentas."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Rubro",
+    "Cuenta",
+    "Nombre de la cuenta"
+   ],
+   "filas": [
+    [
+     "201 Sueldos y salarios",
+     "6.1.1.01",
+     "Sueldos"
+    ],
+    [
+     "201 Sueldos y salarios",
+     "6.1.1.02",
+     "Bonificación incentivo"
+    ]
+   ]
+  }
+ },
+ "escenarios-presupuesto": {
+  "puntos": [
+   "Escenarios base, optimista y conservador con sus factores de ingresos y egresos."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Escenarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nuevo» o edita uno: nombre y factores de ingresos y egresos (ej. optimista 1.10 y 1.05).",
+   "Guarda; se eligen al formular el presupuesto y en la proyección de flujo."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Escenario",
+    "Factor ingresos",
+    "Factor egresos"
+   ],
+   "filas": [
+    [
+     "Base",
+     "1.00",
+     "1.00"
+    ],
+    [
+     "Optimista",
+     "1.10",
+     "1.05"
+    ],
+    [
+     "Conservador",
+     "0.90",
+     "1.00"
+    ]
+   ]
+  }
+ },
+ "rubros-de-flujo": {
+  "puntos": [
+   "Rubros del flujo por actividad (NIC 7: operación, inversión, financiamiento) con su origen: manual, cobros o pagos."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Catálogos › Flujo de efectivo › Rubros de flujo y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Cargar los de la norma» para traer los rubros NIC 7.",
+   "Agrega o edita: nombre, actividad y origen (manual, cobros de clientes o pagos a proveedores).",
+   "Guarda."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Rubro",
+    "Actividad",
+    "Origen"
+   ],
+   "filas": [
+    [
+     "Cobros a clientes",
+     "Operación",
+     "Cobros"
+    ],
+    [
+     "Pagos a proveedores",
+     "Operación",
+     "Pagos"
+    ],
+    [
+     "Compra de activos",
+     "Inversión",
+     "Manual"
+    ]
+   ]
+  }
+ },
+ "formulacion-presupuesto": {
+  "puntos": [
+   "Presupuesto por rubro y mes (12 meses) con supuestos, versiones y envío a revisión."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Registros › Presupuesto › Formulación del presupuesto y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año» y presiona «Nuevo presupuesto»: «Tipo *», «Escenario», «Fecha» y «Descripción».",
+   "Para partir del año anterior usa el «% de ajuste al copiar».",
+   "Presiona «Crear presupuesto».",
+   "Llena cada rubro por mes y escribe los supuestos.",
+   "Guarda; «Nueva versión» guarda una versión nueva.",
+   "Presiona «Enviar a revisión»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Rubro",
+    "Ene",
+    "Feb",
+    "Mar",
+    "Total año"
+   ],
+   "filas": [
+    [
+     "101 Ventas",
+     "Q 100,000.00",
+     "Q 95,000.00",
+     "Q 105,000.00",
+     "Q 1,200,000.00"
+    ],
+    [
+     "201 Sueldos",
+     "Q 30,000.00",
+     "Q 30,000.00",
+     "Q 30,000.00",
+     "Q 360,000.00"
+    ]
+   ]
+  }
+ },
+ "modificaciones-presupuestarias": {
+  "puntos": [
+   "Traslados, ampliaciones y reducciones del presupuesto aprobado con justificación."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Registros › Presupuesto › Modificaciones presupuestarias y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Presupuesto aprobado» y presiona «Nuevo».",
+   "Elige el «Tipo» (traslado, ampliación, reducción), el «Rubro de origen (rebaja)» y el «Rubro de destino (aumenta)», el «Mes» y el «Monto Q».",
+   "Escribe la «Justificación (mínimo 10 caracteres)».",
+   "Presiona «Registrar» y luego «Aplicar»."
+  ],
+  "ejemplo": {
+   "columnas": [
+    "Tipo",
+    "Origen",
+    "Destino",
+    "Mes",
+    "Monto"
+   ],
+   "filas": [
+    [
+     "Traslado",
+     "305 Energía",
+     "306 Mantenimiento",
+     "Noviembre",
+     "Q 5,000.00"
+    ]
+   ]
+  }
+ },
+ "proyeccion-de-flujo": {
+  "puntos": [
+   "Flujo de 13 semanas o 12 meses con el saldo de bancos, cobros y pagos automáticos, escenario y alerta de saldo mínimo."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Registros › Flujo de efectivo › Proyección de flujo y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Presiona «Nueva proyección»: «Nombre *», «Proyección» (13 semanas o 12 meses), «Fecha de inicio» y «Saldo mínimo de caja Q».",
+   "Presiona «Crear proyección».",
+   "«Saldo de bancos» trae el saldo inicial; «Cargar cobros y pagos» trae las facturas por cobrar y las compras por pagar en su fecha.",
+   "Agrega a mano otros rubros (planilla, impuestos, préstamos).",
+   "Revisa el saldo final de cada período: en rojo los que quedan bajo el mínimo."
+  ],
+  "reporte": {
+   "columnas": [
+    "Semana",
+    "Saldo inicial",
+    "Cobros",
+    "Pagos",
+    "Saldo final"
+   ],
+   "filas": [
+    [
+     "1",
+     "Q 198,325.40",
+     "Q 25,000.00",
+     "Q 60,000.00",
+     "Q 163,325.40"
+    ],
+    [
+     "2",
+     "Q 163,325.40",
+     "Q 18,000.00",
+     "Q 95,000.00",
+     "Q 86,325.40"
+    ]
+   ]
+  },
+  "voz": "Proyección de flujo: el saldo baja a ochenta y seis mil trescientos veinticinco quetzales en la semana dos, todavía sobre el mínimo."
+ },
+ "aprobacion-presupuesto": {
+  "puntos": [
+   "Revisión, aprobación (otra persona distinta de quien formula), devolución, cierre y anulación de presupuestos."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Procesos › Presupuesto › Aprobación de presupuestos y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el presupuesto en revisión.",
+   "Revisa rubros, meses y supuestos.",
+   "Presiona «Aprobar» o «Devolver» con observaciones.",
+   "Al terminar el año presiona «Cerrar»; «Anular» lo deja sin efecto."
+  ]
+ },
+ "ejecucion-presupuestaria": {
+  "puntos": [
+   "Calcula la ejecución mes a mes desde las partidas contables y muestra el avance con semáforo."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Procesos › Presupuesto › Ejecución presupuestaria y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el presupuesto y el «Mes de corte».",
+   "Presiona «Calcular ejecución».",
+   "Revisa el semáforo: verde dentro de lo presupuestado, amarillo cerca del límite, rojo excedido."
+  ],
+  "resultado": {
+   "columnas": [
+    "Rubro",
+    "Presupuestado",
+    "Ejecutado",
+    "%",
+    "Semáforo"
+   ],
+   "filas": [
+    [
+     "201 Sueldos",
+     "Q 300,000.00",
+     "Q 300,000.00",
+     "100%",
+     "Verde"
+    ],
+    [
+     "305 Energía",
+     "Q 30,000.00",
+     "Q 34,500.00",
+     "115%",
+     "Rojo"
+    ]
+   ]
+  }
+ },
+ "presupuesto-vs-ejecutado-pf": {
+  "puntos": [
+   "Mes y acumulado por rubro con variación, % de ejecución y semáforo; o el ejecutado por mes."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Reportes › Presupuesto vs. ejecutado y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige el «Año», el «Presupuesto», el «Mes de corte» y la «Vista».",
+   "Revisa la vista y presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Rubro",
+    "Presupuestado",
+    "Ejecutado",
+    "Variación",
+    "%"
+   ],
+   "filas": [
+    [
+     "Ventas",
+     "Q 1,000,000.00",
+     "Q 1,050,400.00",
+     "Q 50,400.00",
+     "105%"
+    ],
+    [
+     "Energía",
+     "Q 30,000.00",
+     "Q 34,500.00",
+     "Q 4,500.00",
+     "115%"
+    ]
+   ]
+  },
+  "voz": "Presupuesto contra ejecutado a octubre: las ventas superan lo presupuestado en cinco por ciento; energía está excedida quince por ciento."
+ },
+ "estado-flujo-efectivo": {
+  "puntos": [
+   "Estado de flujo de efectivo NIC 7 por el método indirecto: operación, inversión y financiamiento, conciliado con caja y bancos."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Reportes › Estado de flujo de efectivo y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige «Desde» y la fecha final.",
+   "Revisa cada actividad y la conciliación con el saldo de caja y bancos.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Concepto",
+    "Valor"
+   ],
+   "filas": [
+    [
+     "Utilidad neta",
+     "Q 17,000.00"
+    ],
+    [
+     "(+) Depreciaciones",
+     "Q 24,000.00"
+    ],
+    [
+     "(−) Aumento de cuentas por cobrar",
+     "Q -12,000.00"
+    ],
+    [
+     "Flujo de operación",
+     "Q 29,000.00"
+    ],
+    [
+     "Flujo de inversión",
+     "Q -15,000.00"
+    ],
+    [
+     "Flujo de financiamiento",
+     "Q 0.00"
+    ]
+   ],
+   "totales": [
+    "Aumento neto de efectivo",
+    "Q 14,000.00"
+   ]
+  },
+  "voz": "Estado de flujo de efectivo: la operación generó veintinueve mil quetzales, se invirtieron quince mil y el efectivo aumentó catorce mil quetzales."
+ },
+ "flujo-proyectado-vs-real": {
+  "puntos": [
+   "Entradas, salidas y saldo proyectados contra los movimientos reales de caja y bancos por período."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Reportes › Flujo proyectado vs. real y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la proyección.",
+   "Revisa por período lo proyectado, lo real y la diferencia.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Semana",
+    "Cobros proy.",
+    "Cobros reales",
+    "Pagos proy.",
+    "Pagos reales"
+   ],
+   "filas": [
+    [
+     "1",
+     "Q 25,000.00",
+     "Q 22,400.00",
+     "Q 60,000.00",
+     "Q 58,100.00"
+    ]
+   ]
+  },
+  "voz": "En la semana uno se cobró dos mil seiscientos quetzales menos de lo proyectado."
+ },
+ "indicadores-financieros": {
+  "puntos": [
+   "Liquidez, prueba ácida, capital de trabajo, endeudamiento, rentabilidad y días de cobro con semáforo."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Reportes › Indicadores financieros y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Elige la fecha de corte.",
+   "Revisa cada indicador con su valor y semáforo.",
+   "Presiona «PDF» o «Excel»."
+  ],
+  "reporte": {
+   "columnas": [
+    "Indicador",
+    "Valor",
+    "Semáforo"
+   ],
+   "filas": [
+    [
+     "Liquidez corriente",
+     "2.4",
+     "Verde"
+    ],
+    [
+     "Prueba ácida",
+     "1.6",
+     "Verde"
+    ],
+    [
+     "Endeudamiento",
+     "33.7%",
+     "Verde"
+    ],
+    [
+     "Días de cobro",
+     "28",
+     "Amarillo"
+    ]
+   ]
+  },
+  "voz": "Indicadores financieros: liquidez de dos punto cuatro, endeudamiento del treinta y tres por ciento y veintiocho días de cobro."
+ },
+ "rubros-presupuesto": {
+  "puntos": [
+   "Rubros que se presupuestan, por grupo: ingresos, personal, gastos financieros, administrativos, impuestos e inversiones.",
+   "Se usan en Registros › Presupuesto y en el reporte Presupuesto vs. ejecutado."
+  ],
+  "pasos": [
+   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Rubros de presupuesto.",
+   "Elige la organización y la localidad.",
+   "Presiona «+ Rubro».",
+   "Escribe el código, el nombre (ej. Sueldos y salarios) y elige el grupo (Personal).",
+   "Relaciona las cuentas contables del rubro para calcular lo ejecutado.",
+   "Guarda; el rubro aparece al armar el presupuesto."
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo · Rubros",
+   "columnas": [
+    "Código",
+    "Rubro",
+    "Grupo"
+   ],
+   "filas": [
+    [
+     "101",
+     "Ventas de productos",
+     "Ingresos"
+    ],
+    [
+     "201",
+     "Sueldos y salarios",
+     "Personal"
+    ],
+    [
+     "305",
+     "Energía eléctrica",
+     "Gastos administrativos"
+    ]
+   ]
+  }
+ }
+}
