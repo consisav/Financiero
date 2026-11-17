@@ -68,9 +68,11 @@
       if (c.tipo === 'porcentaje' && typeof v === 'number') return `<td class="n">${(v * 100).toFixed(1)} %</td>`;
       return `<td class="${c.tipo === 'texto' ? '' : 'n'}">${esc(String(v))}</td>`;
     };
-    const cuerpo = filas.map((f) => (f.tipo === 'grupo' ? `<tr class="g"><td colspan="${n}">${esc(String(f.valores[0] ?? ''))}</td></tr>`
+    // Un grupo con cifras (p. ej. la cuenta de nivel 1 en la balanza) se imprime como renglón normal con el estilo de grupo.
+    const soloTexto = (f) => f.valores.slice(2).every((v) => v === '' || v == null);
+    const cuerpo = filas.map((f) => (f.tipo === 'grupo' && soloTexto(f) ? `<tr class="g"><td colspan="${n}">${esc(f.valores.filter((v) => v !== '' && v != null && typeof v !== 'number').map(String).join('   '))}</td></tr>`
       : f.tipo === 'nota' ? `<tr class="nt"><td colspan="${n}">${esc(String(f.valores[0] ?? ''))}</td></tr>`
-        : `<tr class="${f.tipo === 'subtotal' ? 's' : f.tipo === 'total' ? 't' : ''}${f.negrita ? ' m' : ''}">${columnas.map((c, i) => (i === 0 && f.sangria > 0 ? celda(f.valores[i], c).replace('<td', `<td style="padding-left:${5 + f.sangria * 11}px"`) : celda(f.valores[i], c))).join('')}</tr>`)).join('');
+        : `<tr class="${f.tipo === 'grupo' ? 'g' : f.tipo === 'subtotal' ? 's' : f.tipo === 'total' ? 't' : ''}${f.negrita ? ' m' : ''}">${columnas.map((c, i) => (i === 0 && f.sangria > 0 ? celda(f.valores[i], c).replace('<td', `<td style="padding-left:${5 + f.sangria * 11}px"`) : celda(f.valores[i], c))).join('')}</tr>`)).join('');
     const est = `<style>table.cx td,table.cx th{font-size:10.5px;padding:3px 5px}tr.g td{background:#dfe7f2;color:#1f3a5f;font-weight:bold;font-size:11px}
       tr.s td{font-weight:bold;background:#f1f4f9;border-top:1px solid #9fb0c8}tr.t td{font-weight:bold;background:#eaf0f7;border-top:2px solid #1f3a5f}
       tr.nt td{font-style:italic;color:#555;font-size:10px;border:0}tr.m td{font-weight:bold}${bordes ? 'table.cx th,table.cx td{border:1px solid #8796ab}table.cx tr.nt td{border:1px solid #8796ab}' : ''}tr.g,tr.s{break-inside:avoid}tr.g{break-after:avoid}.graf svg{display:block;width:100%;height:auto;break-inside:avoid;page-break-inside:avoid;margin-top:16px}</style>`;

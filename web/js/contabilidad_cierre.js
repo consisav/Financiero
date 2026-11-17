@@ -33,6 +33,20 @@
   const botonesExp = '<button type="button" class="boton secundario-sm" data-exp="PDF"><i class="ti ti-file-type-pdf" aria-hidden="true"></i> PDF</button><button type="button" class="boton secundario-sm" data-exp="EXCEL"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Excel</button>';
   // Sangría de la columna Cuenta según el nivel (r.sangria); el nombre ya trae su sangría en el texto.
   const sangrar = (td, i, r) => (i === 0 && r.sangria > 0 ? td.replace('<td', `<td style="padding-left:calc(6px + ${(r.sangria * 1.1).toFixed(1)}em) !important"`) : td);
+  // Columnas escalonadas por nivel (formato clásico de balance): cada renglón con _n (nivel) y _v (valor) lleva su valor
+  // en la columna de su nivel; de izquierda a derecha el nivel más profundo hasta el nivel 2, y al final «Total» (nivel 1).
+  // _fin: valores que van después de las columnas escalonadas (p. ej. % de ventas). Devuelve las columnas de valores.
+  function escalonar(filas, { total = 'Total Q', ancho = 15 } = {}) {
+    const niveles = [...new Set(filas.filter((x) => x._n > 1).map((x) => x._n))].sort((a, b) => b - a);
+    filas.forEach((x) => {
+      if (x.combinar) return;
+      const vs = Array(niveles.length + 1).fill('');
+      if (x._n != null) vs[x._n === 1 ? niveles.length : niveles.indexOf(x._n)] = x._v;
+      x.valores = [x.valores[0] ?? '', x.valores[1] ?? '', ...vs, ...(x._fin || [])];
+      delete x._n; delete x._v; delete x._fin;
+    });
+    return [...niveles.map((n) => col(`Nivel ${n}`, 'monto', ancho)), col(total, 'monto', ancho + 2)];
+  }
   function tabla(c, graficas = true) {
     const n = c.columnas.length;
     const celda = (v, x) => (v === '' || v == null ? '<td></td>' : typeof v === 'number' ? `<td class="num${v < 0 ? ' pc-rojo' : ''}">${x.tipo === 'monto' ? fmt.monto(v) : x.tipo === 'porcentaje' ? `${(v * 100).toFixed(1)} %` : v.toLocaleString('es-GT', { maximumFractionDigits: 2 })}</td>` : String(v).startsWith('¤') ? `<td>${marca(String(v).slice(1))}</td>` : `<td>${esc(String(v))}</td>`);
@@ -157,7 +171,7 @@
     const cuenta = (k) => (filas.get(k)?.cuenta_codigo || '').trim() || (resp[k] || '').trim() || '';
     return { filas, resp, cuenta };
   }
-  window.CONTA = { sangrar, leer, saldos, saldoCod, cuentasEmpresa, cuentasClave, CLAVES_INTEGRACION, CLAVES_CIERRE, tabla, exportar, botonesExp, marca, leerTodo, docPart, finMes, iniMes, MES, falta };
+  window.CONTA = { sangrar, escalonar, leer, saldos, saldoCod, cuentasEmpresa, cuentasClave, CLAVES_INTEGRACION, CLAVES_CIERRE, tabla, exportar, botonesExp, marca, leerTodo, docPart, finMes, iniMes, MES, falta };
 
   // ===================== Ejercicios y períodos contables =====================
   window.PANTALLAS['con-ejercicios'] = function (cont) {

@@ -243,26 +243,27 @@
         const rEj = resultadoDe(resEj), rAnt = resultadoDe(resAnt);
         const filas = [], tot = {};
         clases.forEach((cl) => {
-          filas.push({ valores: [cl.codigo, cl.nombre, ''], tipo: 'grupo' });
-          visibles(todo, (c) => c.codigo !== cl.codigo && c.codigo.startsWith(cl.codigo) && c.nivel > 1).forEach((c) => { const v = valor(c.codigo, todo); if (Math.abs(v) >= 0.005) filas.push(filaCuenta(c, [r2(v)], c.nivel === 2 ? 'subtotal' : undefined)); });
+          filas.push({ valores: [cl.codigo, cl.nombre], tipo: 'grupo' });
+          visibles(todo, (c) => c.codigo !== cl.codigo && c.codigo.startsWith(cl.codigo) && c.nivel > 1).forEach((c) => { const v = valor(c.codigo, todo); if (Math.abs(v) >= 0.005) filas.push({ ...filaCuenta(c, [], c.nivel === 2 ? 'subtotal' : undefined), _n: c.nivel, _v: r2(v) }); });
           let t = valor(cl.codigo, todo);
           if (cl.nat === -1 && /PATRIMONIO|CAPITAL/i.test(cl.nombre + cl.tipoDesc)) {
-            if (Math.abs(rAnt) >= 0.005) filas.push({ valores: ['', `${sang(1)}Resultados de ejercicios anteriores (no cerrados)`, r2(rAnt)] });
-            filas.push({ valores: ['', `${sang(1)}Resultado del ejercicio ${f.fecha.slice(0, 4)}`, r2(rEj)], resaltar: 2 });
+            if (Math.abs(rAnt) >= 0.005) filas.push({ valores: ['', `${sang(1)}Resultados de ejercicios anteriores (no cerrados)`], _n: 2, _v: r2(rAnt) });
+            filas.push({ valores: ['', `${sang(1)}Resultado del ejercicio ${f.fecha.slice(0, 4)}`], resaltar: 2, _n: 2, _v: r2(rEj) });
             t += rEj + rAnt;
           }
           tot[cl.tipoDesc || cl.nombre] = t;
-          filas.push({ valores: [`TOTAL ${cl.nombre}`, '', r2(t)], tipo: 'total' });
+          filas.push({ valores: [`TOTAL ${cl.nombre}`, ''], tipo: 'total', _n: 1, _v: r2(t) });
         });
         const activo = clases.filter((c) => c.nat === 1).reduce((s, c) => s + tot[c.tipoDesc || c.nombre], 0);
         const pasPat = clases.filter((c) => c.nat === -1).reduce((s, c) => s + tot[c.tipoDesc || c.nombre], 0);
-        filas.push({ valores: ['TOTAL PASIVO Y PATRIMONIO', '', r2(pasPat)], tipo: 'total' });
+        filas.push({ valores: ['TOTAL PASIVO Y PATRIMONIO', ''], tipo: 'total', _n: 1, _v: r2(pasPat) });
+        const colsEsc = window.CONTA.escalonar(filas);
         const cuadra = Math.abs(activo - pasPat) < 0.01;
         const kpis = [['Activo', `Q ${fmt.monto(activo)}`], ['Pasivo + patrimonio', `Q ${fmt.monto(pasPat)}`], [`Resultado ${f.fecha.slice(0, 4)}`, `Q ${fmt.monto(rEj)}`, rEj >= 0 ? 'ec-fin' : 'ec-alerta'], ['Cuadre', cuadra ? 'Cuadra' : `Dif. Q ${fmt.monto(activo - pasPat)}`, cuadra ? 'ec-fin' : 'ec-alerta']];
         const graficas = [G().barras('Estructura financiera (Q)', clases.map((c) => ({ etiqueta: c.nombre, valor: Math.abs(tot[c.tipoDesc || c.nombre]), texto: `Q ${fmt.monto(tot[c.tipoDesc || c.nombre])} · ${activo ? ((tot[c.tipoDesc || c.nombre] / activo) * 100).toFixed(1) : 0} %` }))),
           G().barras('Principales rubros (nivel 2)', visibles(todo, (c) => c.nivel === 2 && c.reporte === 'B').map((c) => ({ etiqueta: `${c.codigo} ${c.nombre}`, valor: Math.abs(valor(c.codigo, todo)), texto: `Q ${fmt.monto(valor(c.codigo, todo))}` })).sort((a, b) => b.valor - a.valor).slice(0, 10), G().COLORES.VERDE)];
         return { ...b0, parametros: parametros(['Incluye el resultado del ejercicio']), n: filas.length, kpis, graficas, filas, firmas: ['Representante legal', 'Contador general'],
-          columnas: [col('Cuenta', 'texto', 14), col('Nombre de la cuenta', 'texto', 56), col('Saldo Q', 'monto', 18)] };
+          columnas: [col('Cuenta', 'texto', 14), col('Nombre de la cuenta', 'texto', 44), ...colsEsc] };
       }
 
       // Estado de resultados: secciones por tipo de cuenta (ingresos suman; costos y gastos restan) con utilidades intermedias.
@@ -274,7 +275,9 @@
       const sMes = mensual ? meses.map((m) => saldos((l) => enPerER(l) && l.p.fecha.startsWith(m))) : [];
       const val = (cod, mapa) => { const x = mapa.get(cod); return x ? x.h - x.d : 0; }; // positivo = ingreso / utilidad
       const secciones = [...sPer.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.nivel === 1 && c.reporte === 'E').sort((a, b) => (a.tipoCod || 0) - (b.tipoCod || 0) || a.codigo.localeCompare(b.codigo));
-      const columnas = [col('Cuenta', 'texto', 14), col('Nombre de la cuenta', 'texto', mensual ? 34 : 52), ...(mensual ? meses.map((m) => col(MES[Number(m.slice(5, 7)) - 1].slice(0, 3), 'monto', 13)) : []), col('Total período', 'monto', 16), col('% de ventas', 'porcentaje', 11)];
+      let columnas = [col('Cuenta', 'texto', 14), col('Nombre de la cuenta', 'texto', mensual ? 34 : 44), ...(mensual ? meses.map((m) => col(MES[Number(m.slice(5, 7)) - 1].slice(0, 3), 'monto', 13)) : []), col('Total período', 'monto', 16), col('% de ventas', 'porcentaje', 11)];
+      // Por período (un solo valor): columnas escalonadas por nivel; por mes queda una columna por mes.
+      const esc = (fila, n) => (mensual ? fila : { ...fila, _n: n, _v: fila.valores[2], _fin: [fila.valores[3]] });
       const ingresos = secciones.filter((c) => c.resultado === 'SUMAR' || c.nat === -1).reduce((s, c) => s + val(c.codigo, sPer), 0);
       // Porcentajes sobre las ventas netas (la primera sección de ingresos), como se presenta el estado de resultados.
       const ventas = secciones.length && secciones[0].nat === -1 ? val(secciones[0].codigo, sPer) : ingresos;
@@ -284,11 +287,12 @@
       secciones.forEach((sec, i) => {
         const signo = sec.nat === -1 ? 1 : -1; // mostrar costos y gastos en positivo
         filas.push({ valores: [sec.codigo, sec.nombre], tipo: 'grupo', combinar: true });
-        visibles(sPer, (c) => c.codigo !== sec.codigo && c.codigo.startsWith(sec.codigo) && c.nivel > 1).forEach((c) => { if (Math.abs(val(c.codigo, sPer)) >= 0.005) filas.push(filaCuenta(c, cifras(c.codigo, signo), c.nivel === 2 ? 'subtotal' : undefined)); });
-        filas.push({ valores: [`TOTAL ${sec.nombre}`, '', ...cifras(sec.codigo, signo)], tipo: 'subtotal' });
+        visibles(sPer, (c) => c.codigo !== sec.codigo && c.codigo.startsWith(sec.codigo) && c.nivel > 1).forEach((c) => { if (Math.abs(val(c.codigo, sPer)) >= 0.005) filas.push(esc(filaCuenta(c, cifras(c.codigo, signo), c.nivel === 2 ? 'subtotal' : undefined), c.nivel)); });
+        filas.push(esc({ valores: [`TOTAL ${sec.nombre}`, '', ...cifras(sec.codigo, signo)], tipo: 'subtotal' }, 1));
         acum += val(sec.codigo, sPer); acumMes = acumMes.map((v, k) => v + val(sec.codigo, sMes[k] || new Map()));
-        if (sec.nat === 1 || i === secciones.length - 1) filas.push({ valores: [etiqueta(sec, i === secciones.length - 1), '', ...(mensual ? acumMes.map(r2) : []), r2(acum), ventas ? acum / ventas : 0], tipo: 'total' });
+        if (sec.nat === 1 || i === secciones.length - 1) filas.push(esc({ valores: [etiqueta(sec, i === secciones.length - 1), '', ...(mensual ? acumMes.map(r2) : []), r2(acum), ventas ? acum / ventas : 0], tipo: 'total' }, 1));
       });
+      if (!mensual) columnas = [columnas[0], columnas[1], ...window.CONTA.escalonar(filas, { total: 'Total período' }), columnas[columnas.length - 1]];
       const kpis = [['Ingresos', `Q ${fmt.monto(ingresos)}`], ['Costos y gastos', `Q ${fmt.monto(ingresos - acum)}`], ['Resultado neto', `Q ${fmt.monto(acum)}`, acum >= 0 ? 'ec-fin' : 'ec-alerta'], ['Margen neto', ingresos ? `${((acum / ingresos) * 100).toFixed(1)} %` : '—']];
       const porMes = meses.map((m) => saldos((l) => enPerER(l) && l.p.fecha.startsWith(m)));
       const ing = porMes.map((mp) => secciones.filter((c) => c.nat === -1).reduce((s, c) => s + val(c.codigo, mp), 0));

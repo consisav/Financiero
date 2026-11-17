@@ -334,22 +334,23 @@
       filas.push({ valores: ['INVENTARIO DE CUENTAS DE BALANCE'], tipo: 'grupo', combinar: true });
       let act = 0, pp = 0;
       clases.forEach((cl) => {
-        [...b.todo.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.codigo.startsWith(cl.codigo)).sort((x, y) => x.codigo.localeCompare(y.codigo)).forEach((c) => { const vv = valor(base, b.todo, c.codigo); if (Math.abs(vv) >= 0.005) filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, c.integra ? '' : r2(vv), c.integra ? r2(vv) : ''], tipo: c.nivel === 1 ? 'subtotal' : undefined, sangria: c.nivel - 1, negrita: !!c.integra }); });
+        [...b.todo.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.codigo.startsWith(cl.codigo)).sort((x, y) => x.codigo.localeCompare(y.codigo)).forEach((c) => { const vv = valor(base, b.todo, c.codigo); if (Math.abs(vv) >= 0.005) filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`], tipo: c.nivel === 1 ? 'subtotal' : undefined, sangria: c.nivel - 1, negrita: !!c.integra, _n: c.nivel, _v: r2(vv) }); });
         let t = valor(base, b.todo, cl.codigo);
-        if (esPatrimonio(cl)) { if (Math.abs(b.rAnt) >= 0.005) filas.push({ valores: ['', `${sang(1)}Resultados de ejercicios anteriores no cerrados`, r2(b.rAnt), ''] }); filas.push({ valores: ['', `${sang(1)}Resultado del ejercicio ${f.anio} no trasladado`, r2(b.rEj), ''] }); t += b.rAnt + b.rEj; }
-        filas.push({ valores: [`TOTAL ${cl.nombre}`, '', '', r2(t)], tipo: 'total' });
+        if (esPatrimonio(cl)) { if (Math.abs(b.rAnt) >= 0.005) filas.push({ valores: ['', `${sang(1)}Resultados de ejercicios anteriores no cerrados`], _n: 2, _v: r2(b.rAnt) }); filas.push({ valores: ['', `${sang(1)}Resultado del ejercicio ${f.anio} no trasladado`], _n: 2, _v: r2(b.rEj) }); t += b.rAnt + b.rEj; }
+        filas.push({ valores: [`TOTAL ${cl.nombre}`, ''], tipo: 'total', _n: 1, _v: r2(t) });
         if (cl.nat === 1) act += t; else pp += t;
       });
-      filas.push({ valores: ['TOTAL PASIVO Y PATRIMONIO', '', '', r2(pp)], tipo: 'total' });
+      filas.push({ valores: ['TOTAL PASIVO Y PATRIMONIO', ''], tipo: 'total', _n: 1, _v: r2(pp) });
       const per = C().saldos(base, (l) => l.dia >= `${f.anio}-01-01` && l.dia <= al && l.siglas !== 'PCR');
       const secs = [...per.keys()].map((k) => base.porCodigo.get(k)).filter((c) => c && c.reporte === 'E' && c.nivel <= 2).sort((x, y) => x.codigo.localeCompare(y.codigo));
       filas.push({ valores: [`ESTADO DE RESULTADOS DEL 01/01/${f.anio} AL ${fmt.fechaDia(al)}`], tipo: 'grupo', combinar: true });
-      let r = 0; secs.forEach((c) => { const x = per.get(c.codigo), vv = x ? x.h - x.d : 0; if (c.nivel === 1) r += vv; filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`, c.nivel === 2 ? r2(Math.abs(vv)) : '', c.nivel === 1 ? r2(Math.abs(vv)) : ''], tipo: c.nivel === 1 ? 'subtotal' : undefined, sangria: c.nivel - 1, negrita: !!c.integra }); });
-      filas.push({ valores: ['UTILIDAD (PÉRDIDA) NETA DEL EJERCICIO', '', '', r2(r)], tipo: 'total' });
+      let r = 0; secs.forEach((c) => { const x = per.get(c.codigo), vv = x ? x.h - x.d : 0; if (c.nivel === 1) r += vv; filas.push({ valores: [c.codigo, `${sang(c.nivel - 1)}${c.nombre}`], tipo: c.nivel === 1 ? 'subtotal' : undefined, sangria: c.nivel - 1, negrita: !!c.integra, _n: c.nivel, _v: r2(Math.abs(vv)) }); });
+      filas.push({ valores: ['UTILIDAD (PÉRDIDA) NETA DEL EJERCICIO', ''], tipo: 'total', _n: 1, _v: r2(r) });
+      const colsEsc = C().escalonar(filas);
       const folio = Number(f.folio) || D.folio;
       return { parametros: [`Empresa: ${empresaDe(ctx)}`, `Al ${fmt.fechaDia(al)}`, D.libro ? `Libro autorizado: resolución ${D.libro.resolucion || '—'} · folio inicial ${folio}` : `Folio inicial ${folio} (registra el libro en Catálogos › Libros autorizados SAT)`],
         kpis: [['Activo', q(act)], ['Pasivo + patrimonio', q(pp)], ['Cuadre', Math.abs(act - pp) < 0.01 ? 'Cuadra' : `Dif. Q ${fmt.monto(act - pp)}`, Math.abs(act - pp) < 0.01 ? 'ec-fin' : 'ec-alerta'], [`Resultado ${f.anio}`, q(r), r >= 0 ? 'ec-fin' : 'ec-alerta']],
-        columnas: [col('Cuenta', 'texto', 14), col('Nombre de la cuenta', 'texto', 52), col('Parcial Q', 'monto', 16), col('Total Q', 'monto', 16)], filas, firmas: ['Representante legal', 'Contador general'], graficas: [] };
+        columnas: [col('Cuenta', 'texto', 14), col('Nombre de la cuenta', 'texto', 44), ...colsEsc], filas, firmas: ['Representante legal', 'Contador general'], graficas: [] };
     }, archivo: (f) => `libro_inventarios_${f.anio}` });
 
   // ===================== Bitácora de cierres =====================
