@@ -100,7 +100,7 @@
       try { await leerSaldos(); } catch (e) { ctx.pDet.innerHTML = `<p class="vacio">${esc(e.message)}</p>`; return; }
       if (f.nivel && !saldos.some((s) => String(s.nivel) === f.nivel.slice(1))) f.nivel = '';
       barraFiltros();
-      if (!cierres.length) { cfg = null; ctx.pDet.innerHTML = ctx.vacio('La empresa no tiene cierres migrados del sistema anterior.', 'ti-report-search'); return; }
+      if (!cierres.length) { cfg = null; ctx.pDet.innerHTML = ctx.vacio(`${empresaDe(ctx) || 'La empresa'} no tiene cierres migrados del sistema anterior todavía (Hospital Miraflores: script 215; Futura Farma: script 216).`, 'ti-report-search'); return; }
 
       const maestro = { columnas: [col('Año', 'texto', 6), col('Mes', 'texto', 10), col('Tipo de cierre', 'texto', 30), col('Clase', 'texto', 10), col('Frecuencia', 'texto', 9), col('Resultado del ejercicio', 'monto', 15), col('Fecha', 'texto', 13), col('Usuario', 'texto', 8)],
         filas: lista.map((c) => ({ valores: [String(c.anio), mesDe(c.mes), `${c.tipo_cierre} · ${c.tipos_cierre?.descripcion || ''}`, clase(c.tipos_cierre), c.tipos_cierre?.frecuencia === 'A' ? 'Anual' : 'Mensual', r2(c.resultado_ejercicio), fechaHora(c.fecha), c.usuario || ''],
