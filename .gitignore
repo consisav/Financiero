@@ -76,3 +76,7 @@ supabase/pendientes/204_facturas_parte_*.sql
 # La parte 0 (estructura y catalogos) si se publica.
 supabase/pendientes/205_fel_parte_*.sql
 !supabase/pendientes/205_fel_parte_0_de_*.sql
+
+# Envios de la organizacion 3 (clientes con NIT, direccion y contacto): solo local.
+supabase/migrations/20261117000220_envios_organizacion_3.sql
+supabase/pendientes/220_envios_organizacion_3.sql
