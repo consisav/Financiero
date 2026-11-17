@@ -1,0 +1,101 @@
+{
+ "depositos": {
+  "puntos": [
+   "Registra el dinero que entra a una cuenta bancaria de {empresa}: depósitos en efectivo o cheque, en quetzales o en otra moneda.",
+   "Cada depósito guarda el banco y la cuenta, el número de boleta, la fecha, la moneda con su valor de cambio, el cliente, quién depositó, la descripción y la imagen de la boleta.",
+   "Abajo tiene tres pestañas: «Detalle contable» (la partida del depósito), «Facturas de liquidación» y «Recibos físicos» que el depósito cubre.",
+   "La franja de control muestra el folio (automático), el estado, el operador con fecha y hora, y la póliza cuando ya se generó la partida."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Depósitos multimoneda.",
+   "Arriba elige la organización ({organizacion}) y la localidad ({empresa}). Si la localidad no tiene cuentas bancarias, primero créalas en Bancos › Cuentas bancarias.",
+   "Presiona «Nuevo» (botón azul arriba a la derecha). El título cambia a «Nuevo depósito» y el estado dice «Sin registrar».",
+   "En «Cuenta bancaria *» elige la cuenta donde entró el dinero (por ejemplo {cuentaBancaria}); el código y nombre del banco se llenan solos.",
+   "Escribe el «No. depósito» tal como aparece en la boleta del banco y la «Fecha *» del depósito (no la fecha de hoy si se depositó otro día).",
+   "Elige la «Moneda». En quetzales deja «Cambio» en 1; en dólares escribe el valor de cambio del día (por ejemplo 7.75).",
+   "Escribe el «Valor *» en la moneda del depósito; a la derecha aparece de inmediato su valor en quetzales (Valor × Cambio).",
+   "En «Cliente y descripción» escribe el código y el nombre del cliente (ejemplo: {cliente}), en «Depositó» la persona que hizo el depósito y en «Descripción» las facturas que paga (ej. FE-7074 FE-7075). Marca «Clientes varios» si el depósito es de varios clientes.",
+   "Si es dinero de caja chica marca «Caja chica»; en «Tipo de operación» elige o escribe la operación (efectivo, cheque, transferencia).",
+   "En «Imagen de la operación bancaria» adjunta la foto o el PDF de la boleta (hasta 10 MB).",
+   "Pestaña «Detalle contable»: en «Transacción» elige la transacción del depósito (ejemplo: {transaccion}) y presiona «Contabilizar». El sistema arma las líneas: el banco al Debe y la contrapartida al Haber, con su centro de costo.",
+   "Revisa que la fila «Totales» quede cuadrada (Debe = Haber). Si necesitas otra cuenta usa «Agregar línea» y escribe el código de cuenta y el centro.",
+   "Pestaña «Facturas de liquidación»: presiona «Agregar» por cada factura que paga el depósito y escribe número, nombre, valor y abono (en su moneda; el valor en Q se calcula solo). Haz lo mismo en «Recibos físicos» si aplica.",
+   "Presiona «Registrar». El sistema asigna el folio, guarda el operador ({usuario}) con fecha y hora y deja el depósito en estado ACTIVO.",
+   "Con el depósito guardado presiona «Generar partida»: se crea la póliza con el detalle contable y aparece en la franja de control (Póliza mes-número).",
+   "Para corregir un depósito sin partida usa «Modificar», cambia los datos y «Guardar cambios»; para dejarlo sin efecto usa «Anular» y escribe el motivo (queda tachado y fuera de los saldos).",
+   "Imprime el comprobante con «Imprimir en PDF» o descárgalo con «Generar Excel»; para buscar depósitos anteriores usa el botón «Consulta»."
+  ],
+  "nota": "Un depósito con partida ya no cambia su valor, fecha ni cuenta: anula la partida o el depósito y regístralo de nuevo.",
+  "campos": [
+   ["Cuenta bancaria *", "{cuentaBancaria}", "Cuenta de {empresa} donde entró el dinero; define el banco y la cuenta contable del Debe."],
+   ["No. depósito", "100245871", "Número impreso en la boleta del banco; sirve para conciliar con el estado de cuenta."],
+   ["Fecha *", "05/11/{anio}", "Día en que el banco recibió el depósito."],
+   ["Moneda / Cambio", "Quetzales · 1", "En dólares, el valor de cambio del día (ej. 7.75)."],
+   ["Valor *", "Q 3,450.00", "Monto de la boleta; el sistema muestra el equivalente en quetzales."],
+   ["Código / Cliente", "{cliente}", "Cliente que paga; con «Clientes varios» se detalla en las facturas."],
+   ["Depositó", "Juan Pérez", "Persona que llevó el dinero al banco."],
+   ["Descripción", "Pago facturas FE-7074 FE-7075", "Concepto que sale en la consulta, la póliza y los reportes."],
+   ["Tipo de operación", "EFECTIVO", "Efectivo, cheque o transferencia; ayuda a filtrar y conciliar."],
+   ["Imagen", "boleta-100245871.pdf", "Foto o PDF de la boleta (hasta 10 MB)."]
+  ],
+  "ejemplo": {
+   "titulo": "Ejemplo de registro · Depósito con dos facturas",
+   "columnas": ["Factura", "Nombre factura", "Valor factura", "Valor abono", "Valor abono Q"],
+   "filas": [
+    ["FE-7074", "{cliente}", "Q 2,000.00", "Q 2,000.00", "Q 2,000.00"],
+    ["FE-7075", "{cliente}", "Q 1,450.00", "Q 1,450.00", "Q 1,450.00"]
+   ],
+   "totales": ["Totales", "", "Q 3,450.00", "Q 3,450.00", "Q 3,450.00"],
+   "nota": "La suma de los abonos debe ser igual al valor del depósito; el total aplicado se ve junto a las pestañas."
+  },
+  "resultado": {
+   "titulo": "Resultado del proceso · Detalle contable y póliza",
+   "puntos": [
+    "Al «Contabilizar» con la transacción del depósito se arma este detalle; al «Generar partida» queda como póliza del mes y el depósito muestra «Partida 11-0045».",
+    "El depósito queda ACTIVO y sin conciliar hasta que se marque en Conciliación bancaria con el estado de cuenta del banco."
+   ],
+   "columnas": ["Línea", "Cuenta", "Nombre de la cuenta", "Debe", "Haber", "Centro"],
+   "filas": [
+    ["1", "1.1.1.02", "Bancos · {cuentaBancaria}", "Q 3,450.00", "", "01 · Administración"],
+    ["2", "1.1.2.01", "Clientes · {cliente}", "", "Q 3,450.00", "01 · Administración"]
+   ],
+   "totales": ["", "", "Totales", "Q 3,450.00", "Q 3,450.00", "Cuadrada"],
+   "nota": "Las cuentas y el centro salen de la transacción contable configurada en Contabilidad › Objetos contables; los códigos de este ejemplo son ilustrativos."
+  }
+ },
+ "consulta-de-depositos": {
+  "puntos": [
+   "Reporte de todos los depósitos de {empresa} en un rango de fechas, con sus totales: vigentes, anulados, conciliados, sin conciliar y sin partida.",
+   "Arriba está la lista (maestro) y abajo el detalle del depósito elegido: su detalle contable y las facturas y recibos que cubre.",
+   "Genera el reporte en Excel resumido (una fila por depósito) o detallado (con sus líneas contables y documentos)."
+  ],
+  "pasos": [
+   "Entra a Caja y Bancos › Bancos › Consulta de Depósitos Monetarios (también desde el botón «Consulta» de Depósitos multimoneda).",
+   "Elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "En «Cuenta bancaria» deja «Todas» o elige una cuenta (ejemplo: {cuentaBancaria}).",
+   "En «Cliente o depositante» escribe parte del nombre o el código para filtrar (ejemplo: {cliente}); vacío trae a todos.",
+   "Revisa «Fecha inicial» y «Fecha final»: por omisión va desde el primer depósito de la empresa hasta hoy ({hoy}). Para un mes, pon del 1 al último día de ese mes.",
+   "En «Estado» elige TODOS, VIGENTES, ANULADOS, CONCILIADOS, SIN CONCILIAR o SIN PARTIDA; en «Ordenar por» elige fecha, número o valor (también con clic en el encabezado de la columna).",
+   "Lee los totales del encabezado: monto de los vigentes, cuántos anulados, conciliados, sin conciliar y sin partida.",
+   "Usa el buscador para encontrar por número, cliente o descripción.",
+   "Haz clic en un depósito: abajo aparecen su detalle contable (cuentas, debe, haber, centro) y sus facturas o recibos.",
+   "Presiona el botón de la última columna para abrir el depósito en Depósitos multimoneda (para modificar, anular o generar la partida).",
+   "Presiona «Generar Excel» y elige Resumido o Detallado: se descarga el archivo con el encabezado de la empresa y los mismos filtros."
+  ],
+  "nota": "Los depósitos SIN PARTIDA no están en la contabilidad: genérales la partida antes del cierre del mes.",
+  "reporte": {
+   "titulo": "Ejemplo del reporte · Depósitos de octubre",
+   "puntos": ["Filtros: todas las cuentas · 01/10/{anio} al 31/10/{anio} · estado TODOS · orden Fecha ↓"],
+   "columnas": ["Depósito", "Fecha", "Cliente · descripción", "Cuenta bancaria", "Valor", "Estado", "Docs."],
+   "filas": [
+    ["100245871", "30/10/{anio}", "{cliente} · Pago FE-7074 FE-7075", "{cuentaBancaria}", "Q 3,450.00", "Conciliado", "2"],
+    ["100245655", "22/10/{anio}", "CLIENTES VARIOS · Ventas de contado semana 4", "{cuentaBancaria}", "Q 12,780.50", "Activo", "9"],
+    ["100245390", "15/10/{anio}", "{cliente} · Anticipo pedido 315", "{cuentaBancaria}", "Q 5,000.00", "Sin partida", "0"],
+    ["100245102", "08/10/{anio}", "CLIENTES VARIOS · Boleta duplicada", "{cuentaBancaria}", "Q 1,200.00", "Anulado", "0"]
+   ],
+   "totales": ["Total vigentes (3)", "", "", "", "Q 21,230.50", "1 anulado", ""],
+   "nota": "En Excel detallado cada depósito lleva debajo sus líneas contables y sus facturas o recibos."
+  },
+  "voz": "Consulta de depósitos de {empresa}, del uno al treinta y uno de octubre: tres depósitos vigentes por veintiún mil doscientos treinta quetzales con cincuenta centavos. Un depósito anulado. Uno conciliado y dos sin conciliar. Un depósito sin partida contable por cinco mil quetzales."
+ }
+}

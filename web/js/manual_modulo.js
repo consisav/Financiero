@@ -19,7 +19,7 @@
   // Generación con IA desde el visor (Edge Function con clave de Anthropic): apagada; los manuales
   // escritos viven en web/manuales/<módulo>.json y se completan con ejemplos de la información actual.
   const CON_IA = false;
-  const TIPO_ICONO = { portada: 'ti-book', indice: 'ti-list', concepto: 'ti-route', pantalla: 'ti-app-window', pasos: 'ti-list-numbers', ejemplo: 'ti-table', consejos: 'ti-bulb', cierre: 'ti-flag', grupo: 'ti-folders', opcion: 'ti-app-window', desarrollo: 'ti-hourglass' };
+  const TIPO_ICONO = { registro: 'ti-forms', resultado: 'ti-notebook', reporte: 'ti-report-analytics', portada: 'ti-book', indice: 'ti-list', concepto: 'ti-route', pantalla: 'ti-app-window', pasos: 'ti-list-numbers', ejemplo: 'ti-table', consejos: 'ti-bulb', cierre: 'ti-flag', grupo: 'ti-folders', opcion: 'ti-app-window', desarrollo: 'ti-hourglass' };
 
   async function ejemplos(sb, loc) {
     const m = window.MANUAL._modulo;
@@ -123,6 +123,8 @@
     return v;
   }
   const llenar = (t, v) => String(t || '').replace(/\{(\w+)\}/g, (m, k) => (v[k] != null ? v[k] : m));
+  // Tabla de ejemplo de una guía ({ columnas, filas, totales }) con los datos de la empresa en sus celdas.
+  const tablaEj = (x, v) => (x?.columnas?.length ? { titulo: '', columnas: x.columnas.map((t) => llenar(t, v)), filas: (x.filas || []).map((f) => f.map((t) => llenar(t, v))), totales: x.totales ? x.totales.map((t) => llenar(t, v)) : null } : { titulo: '', columnas: [], filas: [] });
 
   // Pasos generales cuando una opción aún no tiene guía escrita (según el grupo del menú).
   function pasosGenerales(g, p, ruta, m) {
@@ -150,10 +152,23 @@
         if (vistos.has(p.id)) return; vistos.add(p.id);
         const gu = guias[p.id] || {};
         const ruta = p.ruta.replace(/ · /g, ' › ');
-        dia({ tipo: 'opcion', titulo: p.nombre, subtitulo: `${m.corto} › ${g.grupo} › ${ruta}`, vista: window.PANTALLAS?.[p.id] ? p.id : '',
+        const sub = ruta === g.grupo ? `${m.corto} › ${g.grupo}` : `${m.corto} › ${g.grupo} › ${ruta}`;
+        const pasos = (gu.pasos || pasosGenerales(g, p, ruta, m)).map((t) => llenar(t, v));
+        // Guía detallada (paso a paso largo, ejemplo de registro, resultado o reporte de ejemplo): la opción con su
+        // pantalla en vivo y, aparte, una diapositiva para cada parte.
+        const detallada = pasos.length > 6 || gu.campos || gu.ejemplo || gu.resultado || gu.reporte;
+        dia({ tipo: 'opcion', titulo: p.nombre, subtitulo: sub, vista: window.PANTALLAS?.[p.id] ? p.id : '',
           puntos: (gu.puntos || [p.descripcion]).filter(Boolean).map((t) => llenar(t, v)),
-          pasos: (gu.pasos || pasosGenerales(g, p, ruta, m)).map((t) => llenar(t, v)),
-          nota: llenar(gu.nota || '', v) });
+          pasos: detallada ? [] : pasos,
+          nota: llenar(detallada ? gu.notaPantalla || '' : gu.nota || '', v) });
+        if (!detallada) return;
+        dia({ tipo: 'pasos', titulo: `Paso a paso · ${p.nombre}`, subtitulo: sub, pasos, nota: llenar(gu.nota || '', v) });
+        if (gu.campos || gu.ejemplo) dia({ tipo: 'registro', titulo: gu.ejemplo?.titulo ? llenar(gu.ejemplo.titulo, v) : `Ejemplo de registro · ${p.nombre}`, subtitulo: sub,
+          campos: (gu.campos || []).map((f) => f.map((t) => llenar(t, v))), ejemplo: tablaEj(gu.ejemplo, v), nota: llenar(gu.ejemplo?.nota || '', v) });
+        if (gu.resultado) dia({ tipo: 'resultado', titulo: llenar(gu.resultado.titulo || `Resultado del proceso · ${p.nombre}`, v), subtitulo: sub,
+          puntos: (gu.resultado.puntos || []).map((t) => llenar(t, v)), ejemplo: tablaEj(gu.resultado, v), nota: llenar(gu.resultado.nota || '', v) });
+        if (gu.reporte) dia({ tipo: 'reporte', titulo: llenar(gu.reporte.titulo || `Ejemplo del reporte · ${p.nombre}`, v), subtitulo: sub,
+          puntos: (gu.reporte.puntos || []).map((t) => llenar(t, v)), ejemplo: tablaEj(gu.reporte, v), voz: llenar(gu.voz || '', v), nota: llenar(gu.reporte.nota || '', v) });
       });
       if (g.opciones.length) dia({ tipo: 'desarrollo', titulo: `${g.grupo}: opciones en desarrollo`, subtitulo: `${m.corto} › ${g.grupo}`, puntos: g.opciones.map((o) => `${o}: ${llenar(guias[`${m.id}|${o}`] || 'opción planificada; todavía no tiene pantalla. Al tocarla, el sistema avisa «en construcción».', v)}`) });
     });
@@ -186,7 +201,18 @@
 
   // ---------- Visor ----------
   let estado = null;
-  function cerrar() { document.querySelector('.mm-fondo')?.remove(); document.removeEventListener('keydown', teclas); estado = null; }
+  // Lee en voz alta el ejemplo de un reporte (voz en español del navegador, como Reportes gerenciales).
+  function leerVoz(texto) {
+    if (!texto) return;
+    if (!('speechSynthesis' in window)) return window.FIN.aviso('Este navegador no tiene lectura en voz');
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-GT';
+    const vz = speechSynthesis.getVoices().find((x) => /^es/i.test(x.lang));
+    if (vz) u.voice = vz;
+    speechSynthesis.speak(u);
+  }
+  function cerrar() { if ('speechSynthesis' in window) speechSynthesis.cancel(); document.querySelector('.mm-fondo')?.remove(); document.removeEventListener('keydown', teclas); estado = null; }
   function teclas(e) {
     if (!estado) return;
     if (e.key === 'Escape') cerrar();
@@ -195,13 +221,19 @@
   }
   function ir(i) { if (!estado) return; estado.i = Math.max(0, Math.min(estado.manual.diapositivas.length - 1, i)); pintar(); }
   function diapositiva(s, n, total) {
-    const ej = s.ejemplo && s.ejemplo.columnas?.length ? `<div class="mm-tabla"><table><thead><tr>${s.ejemplo.columnas.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(s.ejemplo.filas || []).map((f) => `<tr>${f.map((v) => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+    // Montos (Q 1,234.56 o 1,234.56) alineados a la derecha.
+    const td = (v) => `<td class="${/^-?(Q|US\$|\$)?\s?-?[\d,]+\.\d{2}$/.test(String(v).trim()) ? 'mm-num' : ''}">${esc(v)}</td>`;
+    const ej = s.ejemplo && s.ejemplo.columnas?.length ? `<div class="mm-tabla"><table><thead><tr>${s.ejemplo.columnas.map((c, k) => `<th class="${/mm-num/.test(td((s.ejemplo.filas || [])[0]?.[k] ?? '')) ? 'mm-num' : ''}">${esc(c)}</th>`).join('')}</tr></thead><tbody>${(s.ejemplo.filas || []).map((f) => `<tr>${f.map(td).join('')}</tr>`).join('')}</tbody>${s.ejemplo.totales ? `<tfoot><tr>${s.ejemplo.totales.map(td).join('')}</tr></tfoot>` : ''}</table></div>` : '';
+    const campos = s.campos?.length ? `<div class="mm-tabla mm-campos"><table><thead><tr><th>Campo</th><th>Ejemplo</th><th>Qué se escribe o para qué sirve</th></tr></thead><tbody>${s.campos.map(([c, e, x]) => `<tr><td><b>${esc(c)}</b></td><td class="mm-valor">${esc(e || '')}</td><td>${esc(x || '')}</td></tr>`).join('')}</tbody></table></div>` : '';
+    const voz = s.voz ? `<div class="mm-voz"><span class="mm-voz-ico"><i class="ti ti-volume" aria-hidden="true"></i></span><div><small>Ejemplo de la lectura en voz del reporte</small><p>«${esc(s.voz)}»</p></div>${estado.imprimiendo ? '' : '<button type="button" class="boton primario-sm" data-mm="voz"><i class="ti ti-player-play" aria-hidden="true"></i> Escuchar</button>'}</div>` : '';
     return `<article class="mm-dia mm-t-${esc(s.tipo)}">
         <header><span class="mm-tipo"><i class="ti ${TIPO_ICONO[s.tipo] || 'ti-point'}" aria-hidden="true"></i></span><div><h2>${esc(s.titulo)}</h2>${s.subtitulo ? `<p>${esc(s.subtitulo)}</p>` : ''}</div></header>
         <div class="mm-cuerpo">
           ${s.puntos?.length ? `<ul>${s.puntos.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
-          ${s.pasos?.length ? `<ol class="mm-pasos">${s.pasos.map((p) => `<li>${esc(p)}</li>`).join('')}</ol>` : ''}
+          ${s.pasos?.length ? `<ol class="mm-pasos ${s.pasos.length > 7 ? 'mm-pasos-2' : ''}">${s.pasos.map((p) => `<li>${esc(p)}</li>`).join('')}</ol>` : ''}
+          ${campos}
           ${ej}
+          ${voz}
           ${s.vista ? `<figure class="mm-vista-fig"><figcaption><i class="ti ti-photo" aria-hidden="true"></i> Pantalla «${esc(s.titulo)}» con la información de ${esc(estado.v?.empresa || 'la empresa')}</figcaption>${estado.imprimiendo ? '<p class="mm-vista-nota">La pantalla en vivo se ve en el visor del manual.</p>' : `<div class="mm-vista" data-vista="${esc(s.vista)}" inert></div>`}</figure>` : ''}
         </div>
         <footer>${s.nota ? `<span class="mm-nota"><i class="ti ti-info-circle" aria-hidden="true"></i> ${esc(s.nota)}</span>` : '<span></span>'}<span>${esc(estado.m.corto)} · ${n} / ${total}</span></footer>
@@ -248,6 +280,8 @@
       .mm-tipo{font-size:28px;color:#1f5fa8}.mm-cuerpo{flex:1;padding-top:10px;font-size:15px}.mm-cuerpo li{margin:5px 0}.mm-pasos li{margin:7px 0}
       table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left}th{background:#e1eefb}
       footer{display:flex;justify-content:space-between;color:#666;font-size:11px;border-top:1px solid #ddd;padding-top:6px}.mm-t-portada h2{font-size:34px}
+      .mm-pasos-2{columns:2;column-gap:10mm}.mm-pasos-2 li{break-inside:avoid;font-size:13px;margin:3px 0}.mm-num{text-align:right}tfoot td{font-weight:700;background:#f3f6fa}
+      .mm-voz{display:flex;gap:10px;align-items:center;margin-top:8px;padding:8px 12px;border:1px solid #c9d6e6;border-radius:8px;background:#f5f9ff}.mm-voz small{color:#555}.mm-voz p{margin:2px 0 0;font-style:italic}.mm-voz-ico{font-size:22px;color:#1f5fa8}
       </style></head><body>${paginas}</body></html>`);
     v.document.close();
     setTimeout(imprimirYa, 900);
@@ -295,13 +329,15 @@
       if (a === 'cerrar') return cerrar();
       if (a === 'imprimir') return imprimirManual();
       if (a === 'ia') return generarIA();
+      if (a === 'voz') return leerVoz(estado?.manual.diapositivas[estado.i]?.voz);
     });
     const sb = window.FIN.sb;
     const ver = encodeURIComponent(document.querySelector('script[src*="manual_modulo.js"]')?.src.split('v=')[1] || '');
     const leer = (ruta) => fetch(`${ruta}?v=${ver}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-    const [datos, escrito, guias, v] = await Promise.all([ejemplos(sb, window.BANCOS?.seleccion?.loc || window.FIN.perfil()?.localidad_id), leer(`manuales/${m.id}.json`), leer('manuales/guias.json'), valores(sb)]);
+    // Guías detalladas del módulo (manuales/guias/<módulo>.json) sobre las guías breves comunes.
+    const [datos, escrito, guias, detalladas, v] = await Promise.all([ejemplos(sb, window.BANCOS?.seleccion?.loc || window.FIN.perfil()?.localidad_id), leer(`manuales/${m.id}.json`), leer('manuales/guias.json'), leer(`manuales/guias/${m.id}.json`), valores(sb)]);
     if (!document.body.contains(fondo)) return;
-    estado = { m, estructura, v, manual: completo(m, estructura, escrito, guias || {}, datos, v), origen: 'COMPLETO', version: escrito?.version, i: 0 };
+    estado = { m, estructura, v, manual: completo(m, estructura, escrito, { ...(guias || {}), ...(detalladas || {}) }, datos, v), origen: 'COMPLETO', version: escrito?.version, i: 0 };
     if (document.body.contains(fondo)) pintar();
   }
   window.MANUAL = { abrir, _modulo: null };
