@@ -4,10 +4,12 @@
    "Cuentas contables de cada rubro de presupuesto: de ellas sale la ejecución."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Rubros y cuentas contables y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el rubro (ej. 201 Sueldos y salarios).",
-   "Agrega las cuentas contables que lo forman (ej. 6.1.1.01 Sueldos, 6.1.1.02 Bonificación).",
-   "Guarda; la ejecución suma las partidas de esas cuentas."
+   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Rubros y cuentas contables y elige la «Empresa» ({empresa}).",
+   "Revisa los indicadores: rubros, con cuentas y sin cuentas.",
+   "Busca el rubro dentro de su grupo (ej. 201 SUELDOS Y SALARIOS).",
+   "En «Agregar cuenta» escribe o elige el código de la cuenta y sal de la casilla; una cuenta mayor incluye todas sus subcuentas.",
+   "Para quitar una cuenta presiona la × de su etiqueta.",
+   "La ejecución presupuestaria suma las partidas de las cuentas vinculadas; «PDF» o «Excel» sacan la relación."
   ],
   "ejemplo": {
    "columnas": [
@@ -27,16 +29,121 @@
      "Bonificación incentivo"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Rubros",
+      "Indicador",
+      "42",
+      "Rubros activos del catálogo."
+     ],
+     [
+      "Con cuentas",
+      "Indicador",
+      "38",
+      "Rubros que ya tienen cuentas."
+     ],
+     [
+      "Sin cuentas",
+      "Indicador",
+      "4",
+      "Rubros sin cuentas: no tendrán ejecución."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Rubro",
+      "Columna",
+      "201",
+      "Código del rubro, agrupado por grupo."
+     ],
+     [
+      "Nombre",
+      "Columna",
+      "SUELDOS Y SALARIOS",
+      "Nombre del rubro."
+     ],
+     [
+      "Grupo",
+      "Columna",
+      "EGRESO",
+      "Naturaleza del rubro."
+     ],
+     [
+      "Cuentas vinculadas",
+      "Etiqueta",
+      "6.1.1.01 SUELDOS ×",
+      "Cuentas del rubro; la × la quita (administrador)."
+     ],
+     [
+      "Agregar cuenta",
+      "Campo",
+      "6.1.1.02",
+      "Código de cuenta con lista del catálogo vigente (hasta nivel 4)."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Catálogo de cuentas",
+    "Versión activa más reciente de la empresa",
+    "",
+    "Las cuentas se validan contra ese catálogo."
+   ],
+   [
+    "Cuenta mayor",
+    "Código de cualquier nivel",
+    "",
+    "Una cuenta mayor suma todas sus subcuentas en la ejecución."
+   ]
+  ]
  },
  "escenarios-presupuesto": {
   "puntos": [
    "Escenarios base, optimista y conservador con sus factores de ingresos y egresos."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Escenarios y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Nuevo» o edita uno: nombre y factores de ingresos y egresos (ej. optimista 1.10 y 1.05).",
-   "Guarda; se eligen al formular el presupuesto y en la proyección de flujo."
+   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Escenarios y elige la «Empresa» ({empresa}).",
+   "Presiona «Cargar los de la norma» para traer los escenarios base, optimista y conservador.",
+   "Presiona «Nuevo» para agregar uno o escribe directo en la fila: código, nombre, factores y descripción.",
+   "Ejemplo: conservador con «Factor ingresos» 0.90 y «Factor egresos» 1.05.",
+   "Cada cambio se guarda al salir de la casilla; la papelera quita el escenario (si está en uso, márcalo inactivo).",
+   "Se eligen al crear un presupuesto y una proyección de flujo."
   ],
   "ejemplo": {
    "columnas": [
@@ -61,17 +168,127 @@
      "1.00"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Cargar los de la norma",
+      "Botón",
+      "",
+      "Crea los escenarios y rubros de flujo estándar si faltan (administrador)."
+     ],
+     [
+      "Nuevo",
+      "Botón",
+      "",
+      "Agrega una fila ESCENARIO n (administrador)."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Código",
+      "Campo",
+      "CONSERVADOR",
+      "Código del escenario."
+     ],
+     [
+      "Nombre",
+      "Campo",
+      "ESCENARIO CONSERVADOR",
+      "Nombre que se muestra al elegirlo."
+     ],
+     [
+      "Factor ingresos",
+      "Número",
+      "0.90",
+      "Multiplica las entradas de la proyección."
+     ],
+     [
+      "Factor egresos",
+      "Número",
+      "1.05",
+      "Multiplica las salidas de la proyección."
+     ],
+     [
+      "Descripción",
+      "Campo",
+      "Prueba de liquidez",
+      "Para qué sirve el escenario."
+     ],
+     [
+      "Activo",
+      "Casilla",
+      "Sí",
+      "Solo los activos se pueden elegir."
+     ],
+     [
+      "Quitar",
+      "Botón",
+      "",
+      "Elimina el escenario si no está en uso."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Factor ingresos",
+    "Número (1 = sin cambio)",
+    "1",
+    "Multiplica el total de entradas de cada período del flujo."
+   ],
+   [
+    "Factor egresos",
+    "Número (1 = sin cambio)",
+    "1",
+    "Multiplica el total de salidas de cada período del flujo."
+   ],
+   [
+    "Activo",
+    "Sí · No",
+    "Sí",
+    "Los inactivos no aparecen al crear presupuestos y proyecciones."
+   ]
+  ]
  },
  "rubros-de-flujo": {
   "puntos": [
    "Rubros del flujo por actividad (NIC 7: operación, inversión, financiamiento) con su origen: manual, cobros o pagos."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Catálogos › Flujo de efectivo › Rubros de flujo y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Entra a Presupuesto y Flujo › Catálogos › Flujo de efectivo › Rubros de flujo y elige la «Empresa» ({empresa}).",
    "Presiona «Cargar los de la norma» para traer los rubros NIC 7.",
-   "Agrega o edita: nombre, actividad y origen (manual, cobros de clientes o pagos a proveedores).",
-   "Guarda."
+   "Presiona «Nuevo» o escribe directo en la fila: código, nombre, actividad, tipo y origen.",
+   "Los de origen COBROS y PAGOS se llenan solos con las cuentas por cobrar y por pagar.",
+   "Cada cambio se guarda al salir de la casilla; la papelera quita el rubro (si está en uso, márcalo inactivo)."
   ],
   "ejemplo": {
    "columnas": [
@@ -96,20 +313,131 @@
      "Manual"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Cargar los de la norma",
+      "Botón",
+      "",
+      "Crea los rubros de flujo estándar (NIC 7) y los escenarios si faltan."
+     ],
+     [
+      "Nuevo",
+      "Botón",
+      "",
+      "Agrega un rubro NUEVO RUBRO de operación y salida."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Código",
+      "Número",
+      "10",
+      "Código del rubro."
+     ],
+     [
+      "Nombre",
+      "Campo",
+      "COBROS A CLIENTES",
+      "Nombre que aparece en la proyección."
+     ],
+     [
+      "Actividad",
+      "Lista",
+      "OPERACIÓN",
+      "OPERACIÓN, INVERSIÓN o FINANCIAMIENTO."
+     ],
+     [
+      "Tipo",
+      "Lista",
+      "ENTRADA",
+      "ENTRADA o SALIDA."
+     ],
+     [
+      "Origen",
+      "Lista",
+      "COBROS",
+      "MANUAL, COBROS o PAGOS."
+     ],
+     [
+      "Activo",
+      "Casilla",
+      "Sí",
+      "Solo los activos entran a las proyecciones."
+     ],
+     [
+      "Quitar",
+      "Botón",
+      "",
+      "Elimina el rubro si no está en uso."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Actividad",
+    "OPERACIÓN · INVERSIÓN · FINANCIAMIENTO",
+    "OPERACIÓN",
+    "Sección del flujo donde aparece el rubro."
+   ],
+   [
+    "Tipo",
+    "ENTRADA · SALIDA",
+    "SALIDA",
+    "Entradas suman y salidas restan al saldo."
+   ],
+   [
+    "Origen",
+    "MANUAL · COBROS · PAGOS",
+    "MANUAL",
+    "COBROS y PAGOS se cargan automáticamente de cuentas por cobrar y por pagar."
+   ]
+  ]
  },
  "formulacion-presupuesto": {
   "puntos": [
    "Presupuesto por rubro y mes (12 meses) con supuestos, versiones y envío a revisión."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Registros › Presupuesto › Formulación del presupuesto y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el «Año» y presiona «Nuevo presupuesto»: «Tipo *», «Escenario», «Fecha» y «Descripción».",
-   "Para partir del año anterior usa el «% de ajuste al copiar».",
+   "Entra a Presupuesto y Flujo › Registros › Presupuesto › Formulación del presupuesto y elige la «Empresa» ({empresa}).",
+   "Elige el «Año» (desde octubre se propone el siguiente) y el «Presupuesto», o presiona «Nuevo presupuesto».",
+   "En el nuevo elige «Tipo *», «Escenario», «Fecha» y «Descripción».",
+   "Para partir del presupuesto elegido marca «Copiar los rubros y montos…» y escribe el «% de ajuste al copiar».",
    "Presiona «Crear presupuesto».",
-   "Llena cada rubro por mes y escribe los supuestos.",
-   "Guarda; «Nueva versión» guarda una versión nueva.",
-   "Presiona «Enviar a revisión»."
+   "Con «Agregar rubro…» suma cada rubro; escribe el total en «Anual» para repartirlo en 12 meses o llena cada mes.",
+   "Escribe el «Supuesto» (base del cálculo); todo se guarda al salir de la celda.",
+   "Presiona «Enviar a revisión»; si ya fue revisado, «Nueva versión» crea otra versión en formulación.",
+   "Genera «PDF» o «Excel» con firmas de Elaboró, Revisó y Aprobó."
   ],
   "ejemplo": {
    "columnas": [
@@ -135,18 +463,270 @@
      "Q 360,000.00"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Año",
+      "Número",
+      "2027",
+      "Año del presupuesto; desde octubre se propone el siguiente."
+     ],
+     [
+      "Presupuesto",
+      "Lista",
+      "No. 3 v1 · MAESTRO · FORMULACIÓN",
+      "Presupuestos del año con número, versión, tipo y estado."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nuevo presupuesto",
+      "Botón",
+      "",
+      "Abre el formulario del presupuesto nuevo (administrador)."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Nuevo presupuesto",
+    "filas": [
+     [
+      "Tipo *",
+      "Lista",
+      "PRESUPUESTO MAESTRO",
+      "Maestro, ingresos, gastos de operación, personal, inversión, caja, financiero, compras o ventas."
+     ],
+     [
+      "Escenario",
+      "Lista",
+      "ESCENARIO BASE",
+      "Escenario del catálogo."
+     ],
+     [
+      "Fecha",
+      "Fecha",
+      "{hoy}",
+      "Fecha del presupuesto."
+     ],
+     [
+      "Descripción",
+      "Campo",
+      "Presupuesto anual de operación 2027",
+      "Texto libre (200 caracteres)."
+     ],
+     [
+      "Copiar los rubros y montos del presupuesto elegido",
+      "Casilla",
+      "No",
+      "Copia las líneas del presupuesto seleccionado."
+     ],
+     [
+      "% de ajuste al copiar",
+      "Número",
+      "5",
+      "Aumenta o reduce los montos copiados."
+     ],
+     [
+      "Cancelar / Crear presupuesto",
+      "Botón",
+      "",
+      "Descarta o crea el presupuesto."
+     ]
+    ]
+   },
+   {
+    "grupo": "Encabezado",
+    "filas": [
+     [
+      "Presupuesto",
+      "Indicador",
+      "No. 3 · v1 · FORMULACIÓN",
+      "Número, versión y estado."
+     ],
+     [
+      "Tipo / Escenario / Descripción",
+      "Texto",
+      "PRESUPUESTO MAESTRO · BASE",
+      "Datos del presupuesto."
+     ],
+     [
+      "Elaboró / Envió / Aprobó / Observación",
+      "Texto",
+      "{usuario}",
+      "Trazabilidad y motivo de devolución."
+     ],
+     [
+      "Enviar a revisión",
+      "Botón",
+      "",
+      "Pasa el presupuesto a EN REVISIÓN; ya no se modifica."
+     ],
+     [
+      "Nueva versión",
+      "Botón",
+      "",
+      "Crea otra versión en formulación con los mismos montos."
+     ],
+     [
+      "Ciclo",
+      "Indicador",
+      "Formular › Revisar › Aprobar › Ejecutar › Cerrar",
+      "Paso en que está el presupuesto."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Ingresos presupuestados",
+      "Indicador",
+      "Q 2,400,000.00",
+      "Total de rubros de ingreso."
+     ],
+     [
+      "Egresos e inversiones",
+      "Indicador",
+      "Q 2,050,000.00",
+      "Total de los demás rubros."
+     ],
+     [
+      "Resultado presupuestado",
+      "Indicador",
+      "Q 350,000.00",
+      "Ingresos − egresos."
+     ],
+     [
+      "Rubros",
+      "Indicador",
+      "24",
+      "Líneas del presupuesto."
+     ]
+    ]
+   },
+   {
+    "grupo": "Detalle / Líneas",
+    "filas": [
+     [
+      "Agregar rubro…",
+      "Lista",
+      "201 · SUELDOS Y SALARIOS",
+      "Agrega un rubro que aún no está."
+     ],
+     [
+      "Rubro / Nombre",
+      "Columna",
+      "201 · SUELDOS Y SALARIOS",
+      "Rubro de la línea, agrupado por grupo."
+     ],
+     [
+      "Anual",
+      "Monto",
+      "120,000.00",
+      "Total anual que se reparte en 12 meses iguales."
+     ],
+     [
+      "Ene … Dic",
+      "Monto",
+      "10,000.00",
+      "Monto de cada mes."
+     ],
+     [
+      "Total",
+      "Columna",
+      "120,000.00",
+      "Suma de los 12 meses."
+     ],
+     [
+      "Supuesto",
+      "Campo",
+      "10 plazas × Q 5,000 + prestaciones",
+      "Base del cálculo."
+     ],
+     [
+      "Quitar rubro",
+      "Botón",
+      "",
+      "Elimina la línea."
+     ],
+     [
+      "Total del grupo",
+      "Columna",
+      "",
+      "Subtotal por mes de cada grupo."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Tipo",
+    "MAESTRO · INGRESOS · GASTOS DE OPERACIÓN · PERSONAL (PLANILLA) · INVERSIÓN (CAPITAL) · CAJA (FLUJO) · FINANCIERO · COMPRAS · VENTAS",
+    "PRESUPUESTO MAESTRO",
+    "Clasifica el presupuesto."
+   ],
+   [
+    "Escenario",
+    "Escenarios activos",
+    "BASE",
+    "Escenario de referencia del presupuesto."
+   ],
+   [
+    "Estado",
+    "FORMULACIÓN · EN REVISIÓN · APROBADO · EN EJECUCIÓN · MODIFICADO · CERRADO · ANULADO",
+    "FORMULACIÓN",
+    "Solo en FORMULACIÓN se editan los montos."
+   ],
+   [
+    "% de ajuste al copiar",
+    "Porcentaje",
+    "0",
+    "Multiplica los montos copiados por (1 + %/100)."
+   ],
+   [
+    "Reparto anual",
+    "12 meses iguales",
+    "",
+    "El último mes absorbe la diferencia de centavos."
+   ]
+  ]
  },
  "modificaciones-presupuestarias": {
   "puntos": [
    "Traslados, ampliaciones y reducciones del presupuesto aprobado con justificación."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Registros › Presupuesto › Modificaciones presupuestarias y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el «Presupuesto aprobado» y presiona «Nuevo».",
-   "Elige el «Tipo» (traslado, ampliación, reducción), el «Rubro de origen (rebaja)» y el «Rubro de destino (aumenta)», el «Mes» y el «Monto Q».",
-   "Escribe la «Justificación (mínimo 10 caracteres)».",
-   "Presiona «Registrar» y luego «Aplicar»."
+   "Entra a Presupuesto y Flujo › Registros › Presupuesto › Modificaciones presupuestarias y elige la «Empresa» ({empresa}).",
+   "Elige el «Presupuesto aprobado».",
+   "Elige el «Tipo»: TRASLADO (origen y destino), AMPLIACIÓN (solo destino) o REDUCCIÓN (solo origen).",
+   "Elige el «Rubro de origen (rebaja)» y/o el «Rubro de destino (aumenta)», el «Mes» y el «Monto Q».",
+   "Escribe la «Justificación (mínimo 10 caracteres)» y presiona «Registrar».",
+   "En la fila registrada presiona «Aplicar» para que afecte el presupuesto, o «Anular».",
+   "Genera «PDF» o «Excel» con firmas."
   ],
   "ejemplo": {
    "columnas": [
@@ -165,19 +745,188 @@
      "Q 5,000.00"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Presupuesto aprobado",
+      "Lista",
+      "2026 · No. 3 v1 · MAESTRO · APROBADO",
+      "Presupuestos aprobados, en ejecución, modificados o cerrados."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Presupuesto vigente",
+      "Indicador",
+      "Q 2,050,000.00",
+      "Total presupuestado actual."
+     ],
+     [
+      "Modificaciones aplicadas",
+      "Indicador",
+      "4",
+      "Cantidad aplicada."
+     ],
+     [
+      "Ampliaciones / Reducciones / Traslados",
+      "Indicador",
+      "Q 50,000.00",
+      "Montos aplicados por tipo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Nueva modificación",
+    "filas": [
+     [
+      "Tipo",
+      "Lista",
+      "TRASLADO",
+      "TRASLADO, AMPLIACIÓN o REDUCCIÓN."
+     ],
+     [
+      "Rubro de origen (rebaja)",
+      "Lista",
+      "305 · PUBLICIDAD",
+      "Rubro del presupuesto que disminuye."
+     ],
+     [
+      "Rubro de destino (aumenta)",
+      "Lista",
+      "201 · SUELDOS Y SALARIOS",
+      "Rubro que aumenta."
+     ],
+     [
+      "Mes",
+      "Lista",
+      "Noviembre",
+      "Mes afectado."
+     ],
+     [
+      "Monto Q",
+      "Monto",
+      "5,000.00",
+      "Valor de la modificación."
+     ],
+     [
+      "Justificación (mínimo 10 caracteres)",
+      "Campo",
+      "Contratación temporal por temporada",
+      "Causa y respaldo."
+     ],
+     [
+      "Registrar",
+      "Botón",
+      "",
+      "Registra la modificación en estado REGISTRADA."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "No. / Fecha / Tipo",
+      "Columna",
+      "5 · 10/11/2026 · TRASLADO",
+      "Identificación."
+     ],
+     [
+      "Origen / Destino",
+      "Columna",
+      "305 · PUBLICIDAD → 201 · SUELDOS",
+      "Rubros afectados."
+     ],
+     [
+      "Mes / Monto",
+      "Columna",
+      "Noviembre · 5,000.00",
+      "Mes y valor."
+     ],
+     [
+      "Justificación",
+      "Columna",
+      "Contratación temporal",
+      "Motivo."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "APLICADA · {usuario}",
+      "REGISTRADA, APLICADA o ANULADA."
+     ],
+     [
+      "Aplicar / Anular",
+      "Botón",
+      "",
+      "Para las registradas: aplica o anula."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Tipo",
+    "TRASLADO · AMPLIACIÓN · REDUCCIÓN",
+    "TRASLADO",
+    "Traslado mueve entre rubros; ampliación aumenta el total; reducción lo disminuye."
+   ],
+   [
+    "Estado",
+    "REGISTRADA · APLICADA · ANULADA",
+    "REGISTRADA",
+    "Solo las aplicadas cambian el presupuesto."
+   ],
+   [
+    "Estado del presupuesto",
+    "APROBADO · EN EJECUCIÓN · MODIFICADO",
+    "",
+    "Solo en esos estados se registran modificaciones."
+   ]
+  ]
  },
  "proyeccion-de-flujo": {
   "puntos": [
    "Flujo de 13 semanas o 12 meses con el saldo de bancos, cobros y pagos automáticos, escenario y alerta de saldo mínimo."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Registros › Flujo de efectivo › Proyección de flujo y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Nueva proyección»: «Nombre *», «Proyección» (13 semanas o 12 meses), «Fecha de inicio» y «Saldo mínimo de caja Q».",
-   "Presiona «Crear proyección».",
-   "«Saldo de bancos» trae el saldo inicial; «Cargar cobros y pagos» trae las facturas por cobrar y las compras por pagar en su fecha.",
-   "Agrega a mano otros rubros (planilla, impuestos, préstamos).",
-   "Revisa el saldo final de cada período: en rojo los que quedan bajo el mínimo."
+   "Entra a Presupuesto y Flujo › Registros › Flujo de efectivo › Proyección de flujo y elige la «Empresa» ({empresa}).",
+   "Presiona «Nueva proyección»: «Nombre *», «Tipo» (Semanal 13 semanas o Mensual 12 meses), «Fecha de inicio», «Escenario» y «Saldo mínimo de caja Q».",
+   "Presiona «Crear proyección»: toma el saldo de bancos y carga los cobros y pagos.",
+   "En borrador, «Saldo de bancos» actualiza el saldo inicial y «Cargar cobros y pagos» vuelve a traerlos.",
+   "Escribe los montos de los rubros manuales en cada período (planilla, impuestos, préstamos); se guardan al salir de la celda.",
+   "Revisa el saldo final: en rojo los períodos bajo el mínimo y el aviso de déficit.",
+   "Presiona «Aprobar» cuando esté lista; «Anular» la deja sin efecto.",
+   "Genera «PDF» o «Excel»."
   ],
   "reporte": {
    "columnas": [
@@ -204,18 +953,417 @@
     ]
    ]
   },
-  "voz": "Proyección de flujo: el saldo baja a ochenta y seis mil trescientos veinticinco quetzales en la semana dos, todavía sobre el mínimo."
+  "voz": "Proyección de flujo: el saldo baja a ochenta y seis mil trescientos veinticinco quetzales en la semana dos, todavía sobre el mínimo.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Proyección",
+      "Lista",
+      "No. 4 · Flujo 13 semanas · BORRADOR",
+      "Proyecciones no anuladas."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Muestra u oculta las gráficas en pantalla, en el PDF y en el Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nueva proyección",
+      "Botón",
+      "",
+      "Abre el formulario (administrador)."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Nueva proyección",
+    "filas": [
+     [
+      "Nombre *",
+      "Campo",
+      "Flujo 13 semanas desde 23/11/2026",
+      "Nombre de la proyección."
+     ],
+     [
+      "Tipo",
+      "Lista",
+      "Semanal (13 semanas)",
+      "Semanal (13 semanas) o Mensual (12 meses)."
+     ],
+     [
+      "Fecha de inicio",
+      "Fecha",
+      "23/11/2026",
+      "Por omisión el próximo lunes."
+     ],
+     [
+      "Escenario",
+      "Lista",
+      "ESCENARIO BASE",
+      "Aplica sus factores a entradas y salidas."
+     ],
+     [
+      "Saldo mínimo de caja Q",
+      "Monto",
+      "50,000.00",
+      "Umbral de la alerta de liquidez."
+     ],
+     [
+      "Cancelar / Crear proyección",
+      "Botón",
+      "",
+      "Descarta o crea la proyección."
+     ]
+    ]
+   },
+   {
+    "grupo": "Encabezado",
+    "filas": [
+     [
+      "Proyección",
+      "Indicador",
+      "No. 4 · BORRADOR",
+      "Número y estado."
+     ],
+     [
+      "Nombre / Horizonte / Escenario",
+      "Texto",
+      "13 semanas desde 23/11/2026",
+      "Datos de la proyección."
+     ],
+     [
+      "Saldo inicial",
+      "Monto",
+      "185,400.00",
+      "Editable en borrador."
+     ],
+     [
+      "Saldo mínimo",
+      "Monto",
+      "50,000.00",
+      "Editable en borrador."
+     ],
+     [
+      "Cobros y pagos",
+      "Texto",
+      "cargados 17/11/2026 09:10",
+      "Última carga automática."
+     ],
+     [
+      "Cargar cobros y pagos",
+      "Botón",
+      "",
+      "Trae las facturas por cobrar y las compras por pagar en su fecha."
+     ],
+     [
+      "Saldo de bancos",
+      "Botón",
+      "",
+      "Propone el saldo de caja y bancos contable al día anterior al inicio."
+     ],
+     [
+      "Aprobar / Anular",
+      "Botón",
+      "",
+      "Aprueba (ya no se modifica) o anula."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Entradas / Salidas",
+      "Indicador",
+      "Q 920,000.00 / Q 870,000.00",
+      "Totales del horizonte."
+     ],
+     [
+      "Flujo neto",
+      "Indicador",
+      "Q 50,000.00",
+      "Entradas − salidas."
+     ],
+     [
+      "Saldo final",
+      "Indicador",
+      "Q 235,400.00",
+      "Saldo al último período."
+     ],
+     [
+      "Saldo más bajo",
+      "Indicador",
+      "Q 42,300.00",
+      "En alerta si queda bajo el mínimo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Detalle / Líneas",
+    "filas": [
+     [
+      "Concepto",
+      "Columna",
+      "(+) COBROS A CLIENTES · automático",
+      "Rubros por actividad con su signo."
+     ],
+     [
+      "S1 23/11 … S13",
+      "Monto",
+      "45,000.00",
+      "Monto por período; editable en borrador."
+     ],
+     [
+      "Total",
+      "Columna",
+      "585,000.00",
+      "Suma del rubro."
+     ],
+     [
+      "Saldo inicial / Total entradas / Total salidas / Flujo neto",
+      "Columna",
+      "",
+      "Subtotales por período (con el factor del escenario)."
+     ],
+     [
+      "SALDO FINAL PROYECTADO",
+      "Columna",
+      "42,300.00",
+      "En rojo si queda bajo el mínimo."
+     ],
+     [
+      "Saldo final proyectado",
+      "Gráfica",
+      "",
+      "Línea del saldo por período."
+     ],
+     [
+      "Entradas y salidas por período",
+      "Gráfica",
+      "",
+      "Columnas por período."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Tipo",
+    "SEMANAL (13 períodos) · MENSUAL (12 períodos)",
+    "SEMANAL",
+    "Horizonte y etiqueta de los períodos."
+   ],
+   [
+    "Escenario",
+    "Escenarios activos",
+    "BASE",
+    "Sus factores multiplican el total de entradas y de salidas."
+   ],
+   [
+    "Saldo mínimo de caja",
+    "Monto",
+    "0",
+    "Los períodos con saldo final menor se marcan como déficit."
+   ],
+   [
+    "Origen del rubro",
+    "MANUAL · COBROS · PAGOS",
+    "",
+    "COBROS y PAGOS se llenan con «Cargar cobros y pagos»."
+   ],
+   [
+    "Estado",
+    "BORRADOR · APROBADA · ANULADA",
+    "BORRADOR",
+    "Solo en borrador se editan saldos y montos."
+   ]
+  ]
  },
  "aprobacion-presupuesto": {
   "puntos": [
    "Revisión, aprobación (otra persona distinta de quien formula), devolución, cierre y anulación de presupuestos."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Procesos › Presupuesto › Aprobación de presupuestos y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el presupuesto en revisión.",
-   "Revisa rubros, meses y supuestos.",
-   "Presiona «Aprobar» o «Devolver» con observaciones.",
-   "Al terminar el año presiona «Cerrar»; «Anular» lo deja sin efecto."
+   "Entra a Presupuesto y Flujo › Procesos › Presupuesto › Aprobación de presupuestos y elige la «Empresa» ({empresa}).",
+   "Elige el «Estado» (por omisión EN REVISIÓN) y el «Presupuesto».",
+   "Revisa los datos, los indicadores y el resumen por grupo y trimestre.",
+   "Presiona «Aprobar» o «Devolver» con observaciones; quien lo elaboró no puede aprobarlo (salvo el Super Administrador).",
+   "Al terminar el año presiona «Cerrar»; «Anular» lo deja sin efecto pidiendo el motivo."
+  ],
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "EN REVISIÓN",
+      "EN REVISIÓN, APROBADO, EN EJECUCIÓN, MODIFICADO, FORMULACIÓN, CERRADO o TODOS."
+     ],
+     [
+      "Presupuesto",
+      "Lista",
+      "2027 · No. 3 v1 · MAESTRO",
+      "Presupuestos en ese estado."
+     ]
+    ]
+   },
+   {
+    "grupo": "Encabezado",
+    "filas": [
+     [
+      "Presupuesto",
+      "Indicador",
+      "No. 3 · v1 · EN REVISIÓN",
+      "Número, versión y estado."
+     ],
+     [
+      "Tipo / Escenario / Elaboró / Envió / Aprobó / Descripción",
+      "Texto",
+      "{usuario}",
+      "Datos y trazabilidad."
+     ],
+     [
+      "Aviso de segregación",
+      "Texto",
+      "",
+      "Aparece si tú lo elaboraste."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Aprobar",
+      "Botón",
+      "",
+      "Aprueba el presupuesto en revisión."
+     ],
+     [
+      "Devolver",
+      "Botón",
+      "",
+      "Lo regresa a formulación con observaciones."
+     ],
+     [
+      "Cerrar",
+      "Botón",
+      "",
+      "Cierra un presupuesto aprobado, en ejecución o modificado."
+     ],
+     [
+      "Anular",
+      "Botón",
+      "",
+      "Lo anula con motivo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Ingresos",
+      "Indicador",
+      "Q 2,400,000.00",
+      "Total de ingresos."
+     ],
+     [
+      "Egresos e inversiones",
+      "Indicador",
+      "Q 2,050,000.00",
+      "Total de egresos."
+     ],
+     [
+      "Resultado presupuestado",
+      "Indicador",
+      "Q 350,000.00",
+      "Ingresos − egresos."
+     ],
+     [
+      "Margen",
+      "Indicador",
+      "14.6 %",
+      "Resultado ÷ ingresos."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del resumen",
+    "filas": [
+     [
+      "Grupo / Rubros",
+      "Columna",
+      "GASTOS DE PERSONAL · 6",
+      "Grupo y cantidad de rubros."
+     ],
+     [
+      "Trimestre 1 … 4",
+      "Columna",
+      "300,000.00",
+      "Monto por trimestre."
+     ],
+     [
+      "Total anual / % del total",
+      "Columna",
+      "1,200,000.00 · 58.5 %",
+      "Total del grupo y su peso."
+     ],
+     [
+      "Egresos por grupo",
+      "Gráfica",
+      "",
+      "Barras de egresos por grupo."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Estado",
+    "FORMULACIÓN · EN REVISIÓN · APROBADO · EN EJECUCIÓN · MODIFICADO · CERRADO · ANULADO · TODOS",
+    "EN REVISIÓN",
+    "Filtra la lista de presupuestos."
+   ],
+   [
+    "Segregación de funciones",
+    "Elaboró ≠ aprueba",
+    "",
+    "Quien elaboró no puede aprobar, salvo el Super Administrador."
+   ]
   ]
  },
  "ejecucion-presupuestaria": {
@@ -223,10 +1371,12 @@
    "Calcula la ejecución mes a mes desde las partidas contables y muestra el avance con semáforo."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Procesos › Presupuesto › Ejecución presupuestaria y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el presupuesto y el «Mes de corte».",
-   "Presiona «Calcular ejecución».",
-   "Revisa el semáforo: verde dentro de lo presupuestado, amarillo cerca del límite, rojo excedido."
+   "Entra a Presupuesto y Flujo › Procesos › Presupuesto › Ejecución presupuestaria y elige la «Empresa» ({empresa}).",
+   "Elige el «Año», el «Presupuesto» aprobado y el «Mes de corte».",
+   "Presiona «Calcular ejecución»: toma las partidas contables vigentes de las cuentas vinculadas a cada rubro.",
+   "Revisa por rubro el mes, el acumulado, la variación, el % y el semáforo.",
+   "Si aparece «Rubros sin cuentas vinculadas», vincúlalas en Catálogos › Rubros y cuentas contables.",
+   "Genera «PDF» o «Excel»."
   ],
   "resultado": {
    "columnas": [
@@ -252,16 +1402,157 @@
      "Rojo"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Año",
+      "Número",
+      "{anio}",
+      "Año del presupuesto."
+     ],
+     [
+      "Presupuesto",
+      "Lista",
+      "No. 3 v1 · MAESTRO · EN EJECUCIÓN",
+      "Presupuestos aprobados del año."
+     ],
+     [
+      "Mes de corte",
+      "Lista",
+      "Octubre",
+      "Mes hasta el que se acumula; por omisión el actual."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Calcular ejecución",
+      "Botón",
+      "",
+      "Recalcula lo ejecutado desde la contabilidad (administrador; no en cerrados)."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Ingresos: ejecución acumulada",
+      "Indicador",
+      "92.4 %",
+      "Ejecutado ÷ presupuestado."
+     ],
+     [
+      "Egresos: ejecución acumulada",
+      "Indicador",
+      "97.8 %",
+      "Ejecutado ÷ presupuestado."
+     ],
+     [
+      "Resultado ejecutado / presupuestado",
+      "Indicador",
+      "Q 280,000.00",
+      "Ingresos − egresos."
+     ],
+     [
+      "Rubros sin cuentas vinculadas",
+      "Indicador",
+      "2",
+      "Aparece solo si hay."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Rubro / Nombre",
+      "Columna",
+      "201 · SUELDOS Y SALARIOS",
+      "Agrupados por grupo."
+     ],
+     [
+      "Ppto mes / Ejec. mes / Variación / %",
+      "Columna",
+      "10,000.00 / 10,450.00 / 450.00 / 104.5 %",
+      "Del mes de corte."
+     ],
+     [
+      "Ppto acumulado / Ejec. acumulado / Variación acum. / % acum.",
+      "Columna",
+      "100,000.00 / 98,200.00",
+      "Del año al corte."
+     ],
+     [
+      "Semáforo",
+      "Indicador",
+      "Verde",
+      "En meta, atención o fuera de meta."
+     ],
+     [
+      "Ppto anual / % anual",
+      "Columna",
+      "120,000.00 / 81.8 %",
+      "Avance contra el año."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Semáforo",
+    "Ingresos: verde ≥ 95 %, ámbar ≥ 80 % · Egresos: verde ≤ 100 %, ámbar ≤ 110 %",
+    "",
+    "Fuera de esos rangos el rubro queda en rojo y la fila se resalta."
+   ],
+   [
+    "Fuente de lo ejecutado",
+    "Partidas VIGENTES en cuentas vinculadas",
+    "",
+    "Sin cuentas vinculadas el rubro queda en cero."
+   ],
+   [
+    "Mes de corte",
+    "Enero … Diciembre",
+    "Mes actual",
+    "Define el mes y el acumulado."
+   ]
+  ]
  },
  "presupuesto-vs-ejecutado-pf": {
   "puntos": [
    "Mes y acumulado por rubro con variación, % de ejecución y semáforo; o el ejecutado por mes."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Reportes › Presupuesto vs. ejecutado y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el «Año», el «Presupuesto», el «Mes de corte» y la «Vista».",
-   "Revisa la vista y presiona «PDF» o «Excel»."
+   "Entra a Presupuesto y Flujo › Reportes y gráficas › Reportes › Presupuesto vs. ejecutado y elige la «Empresa» ({empresa}).",
+   "Elige el «Año», el «Presupuesto» y el «Mes de corte».",
+   "Elige la «Vista»: Mes y acumulado, o Ejecutado por mes.",
+   "Marca o desmarca «Gráficas».",
+   "Revisa variaciones, % de ejecución y semáforo; los rubros en rojo se resaltan.",
+   "Presiona «PDF» o «Excel» (con firmas de Elaboró y Revisó)."
   ],
   "reporte": {
    "columnas": [
@@ -288,17 +1579,179 @@
     ]
    ]
   },
-  "voz": "Presupuesto contra ejecutado a octubre: las ventas superan lo presupuestado en cinco por ciento; energía está excedida quince por ciento."
+  "voz": "Presupuesto contra ejecutado a octubre: las ventas superan lo presupuestado en cinco por ciento; energía está excedida quince por ciento.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Año",
+      "Número",
+      "{anio}",
+      "Año del presupuesto."
+     ],
+     [
+      "Presupuesto",
+      "Lista",
+      "No. 3 v1 · MAESTRO · EN EJECUCIÓN",
+      "Presupuestos aprobados del año."
+     ],
+     [
+      "Mes de corte",
+      "Lista",
+      "Octubre",
+      "Mes del corte."
+     ],
+     [
+      "Vista",
+      "Lista",
+      "Mes y acumulado",
+      "Mes y acumulado o Ejecutado por mes."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Muestra u oculta las gráficas en pantalla, en el PDF y en el Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Ingresos / Egresos: ejecución acumulada",
+      "Indicador",
+      "92.4 % / 97.8 %",
+      "Avance acumulado."
+     ],
+     [
+      "Resultado ejecutado / presupuestado",
+      "Indicador",
+      "Q 280,000.00 / Q 310,000.00",
+      "Comparación del resultado."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas (Mes y acumulado)",
+    "filas": [
+     [
+      "Ppto / Ejec. del mes, Variación, %",
+      "Columna",
+      "10,000.00 / 10,450.00",
+      "Mes de corte."
+     ],
+     [
+      "Ppto / Ejec. acumulado, Variación acum., % acum.",
+      "Columna",
+      "100,000.00 / 98,200.00",
+      "Acumulado."
+     ],
+     [
+      "Semáforo / Ppto anual / % anual",
+      "Columna",
+      "Verde · 120,000.00 · 81.8 %",
+      "Estado y avance anual."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas (Ejecutado por mes)",
+    "filas": [
+     [
+      "Ene … mes de corte",
+      "Columna",
+      "9,800.00",
+      "Ejecutado de cada mes."
+     ],
+     [
+      "Ejecutado acum. / Presupuesto acum. / % ejec.",
+      "Columna",
+      "98,200.00 / 100,000.00 / 98.2 %",
+      "Acumulados y avance."
+     ]
+    ]
+   },
+   {
+    "grupo": "Gráficas",
+    "filas": [
+     [
+      "Presupuestado vs. ejecutado por grupo",
+      "Gráfica",
+      "",
+      "Columnas por grupo al corte."
+     ],
+     [
+      "Ingresos presupuestados vs. ejecutados por mes",
+      "Gráfica",
+      "",
+      "Columnas mensuales."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Vista",
+    "Mes y acumulado · Ejecutado por mes",
+    "Mes y acumulado",
+    "Cambia las columnas del reporte."
+   ],
+   [
+    "Semáforo",
+    "Ingresos: verde ≥ 95 %, ámbar ≥ 80 % · Egresos: verde ≤ 100 %, ámbar ≤ 110 %",
+    "",
+    "Fuera de esos rangos el rubro queda en rojo y la fila se resalta."
+   ],
+   [
+    "Gráficas",
+    "Sí · No",
+    "Sí",
+    "Incluye o quita las gráficas de la pantalla y de las salidas."
+   ],
+   [
+    "Mes de corte",
+    "Enero … Diciembre",
+    "Mes actual",
+    "Define el mes y el acumulado."
+   ]
+  ]
  },
  "estado-flujo-efectivo": {
   "puntos": [
    "Estado de flujo de efectivo NIC 7 por el método indirecto: operación, inversión y financiamiento, conciliado con caja y bancos."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Reportes › Estado de flujo de efectivo y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige «Desde» y la fecha final.",
-   "Revisa cada actividad y la conciliación con el saldo de caja y bancos.",
-   "Presiona «PDF» o «Excel»."
+   "Entra a Presupuesto y Flujo › Reportes y gráficas › Reportes › Estado de flujo de efectivo y elige la «Empresa» ({empresa}).",
+   "Elige «Desde» (por omisión el 1 de enero) y «Al» (por omisión hoy).",
+   "Marca o desmarca «Gráficas».",
+   "Revisa el resultado del período y las variaciones por actividad de operación, inversión y financiamiento.",
+   "Revisa el indicador «Comprobación con bancos»: debe decir «Cuadra».",
+   "Presiona «PDF» o «Excel» (con firmas del representante legal y el contador)."
   ],
   "reporte": {
    "columnas": [
@@ -336,16 +1789,155 @@
     "Q 14,000.00"
    ]
   },
-  "voz": "Estado de flujo de efectivo: la operación generó veintinueve mil quetzales, se invirtieron quince mil y el efectivo aumentó catorce mil quetzales."
+  "voz": "Estado de flujo de efectivo: la operación generó veintinueve mil quetzales, se invirtieron quince mil y el efectivo aumentó catorce mil quetzales.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Desde",
+      "Fecha",
+      "01/01/2026",
+      "Inicio del período."
+     ],
+     [
+      "Al",
+      "Fecha",
+      "{hoy}",
+      "Fecha final; no mayor a hoy."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Muestra u oculta las gráficas en pantalla, en el PDF y en el Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Operación",
+      "Indicador",
+      "Q 320,450.00",
+      "Efectivo neto de operación."
+     ],
+     [
+      "Inversión",
+      "Indicador",
+      "−Q 85,000.00",
+      "Efectivo neto de inversión."
+     ],
+     [
+      "Financiamiento",
+      "Indicador",
+      "−Q 40,000.00",
+      "Efectivo neto de financiamiento."
+     ],
+     [
+      "Variación del efectivo",
+      "Indicador",
+      "Q 195,450.00",
+      "Aumento o disminución neta."
+     ],
+     [
+      "Comprobación con bancos",
+      "Indicador",
+      "Cuadra",
+      "Compara el efectivo final con caja y bancos."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Cuenta",
+      "Columna",
+      "1.1.2.01",
+      "Cuenta de nivel 3 con variación."
+     ],
+     [
+      "Concepto",
+      "Columna",
+      "Resultado del período",
+      "Resultado y variaciones por actividad."
+     ],
+     [
+      "Q",
+      "Columna",
+      "320,450.00",
+      "Efecto en el efectivo."
+     ],
+     [
+      "Flujo por actividad",
+      "Gráfica",
+      "",
+      "Barras de operación, inversión y financiamiento."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Método",
+    "NIC 7 · indirecto",
+    "",
+    "Parte del resultado del período y suma las variaciones del balance."
+   ],
+   [
+    "Clasificación",
+    "Operación = capital de trabajo · Inversión = activo no corriente · Financiamiento = pasivo no corriente y patrimonio",
+    "",
+    "Según el catálogo de cuentas y sus tipos."
+   ],
+   [
+    "Partidas",
+    "VIGENTES, sin cierre de ejercicio ni apertura",
+    "",
+    "Se excluyen las partidas de cierre (PCE) y apertura (PA)."
+   ],
+   [
+    "Gráficas",
+    "Sí · No",
+    "Sí",
+    "Incluye o quita las gráficas de la pantalla y de las salidas."
+   ]
+  ]
  },
  "flujo-proyectado-vs-real": {
   "puntos": [
    "Entradas, salidas y saldo proyectados contra los movimientos reales de caja y bancos por período."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Reportes › Flujo proyectado vs. real y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige la proyección.",
-   "Revisa por período lo proyectado, lo real y la diferencia.",
+   "Entra a Presupuesto y Flujo › Reportes y gráficas › Reportes › Flujo proyectado vs. real y elige la «Empresa» ({empresa}).",
+   "Elige la «Proyección».",
+   "Marca o desmarca «Gráficas».",
+   "Revisa por período las entradas y salidas proyectadas contra las reales de caja y bancos, y los saldos.",
    "Presiona «PDF» o «Excel»."
   ],
   "reporte": {
@@ -366,16 +1958,143 @@
     ]
    ]
   },
-  "voz": "En la semana uno se cobró dos mil seiscientos quetzales menos de lo proyectado."
+  "voz": "En la semana uno se cobró dos mil seiscientos quetzales menos de lo proyectado.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Proyección",
+      "Lista",
+      "No. 4 · Flujo 13 semanas",
+      "Proyecciones no anuladas."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Muestra u oculta las gráficas en pantalla, en el PDF y en el Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Entradas: real / proyectado",
+      "Indicador",
+      "96.2 %",
+      "Cumplimiento de entradas."
+     ],
+     [
+      "Salidas: real / proyectado",
+      "Indicador",
+      "101.4 %",
+      "Cumplimiento de salidas."
+     ],
+     [
+      "Saldo final proyectado / Saldo real",
+      "Indicador",
+      "Q 235,400.00 / Q 221,800.00",
+      "Saldos al final."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Período",
+      "Columna",
+      "S1 23/11",
+      "Semana o mes."
+     ],
+     [
+      "Entradas proyectadas / reales / Variación",
+      "Columna",
+      "70,000.00 / 66,500.00 / −3,500.00",
+      "Entradas."
+     ],
+     [
+      "Salidas proyectadas / reales / Variación",
+      "Columna",
+      "65,000.00 / 66,100.00 / 1,100.00",
+      "Salidas."
+     ],
+     [
+      "Saldo proyectado / Saldo real",
+      "Columna",
+      "190,400.00 / 185,800.00",
+      "Saldos del período."
+     ],
+     [
+      "Semáforo",
+      "Indicador",
+      "Verde",
+      "Cumplimiento de entradas de los períodos ya vencidos."
+     ],
+     [
+      "Entradas / Salidas proyectadas vs. reales",
+      "Gráfica",
+      "",
+      "Columnas por período."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Real",
+    "Movimientos de las cuentas de caja y bancos",
+    "",
+    "Débitos son entradas y créditos salidas en cada período."
+   ],
+   [
+    "Escenario de la proyección",
+    "Factores del escenario",
+    "",
+    "Lo proyectado incluye los factores de ingresos y egresos."
+   ],
+   [
+    "Gráficas",
+    "Sí · No",
+    "Sí",
+    "Incluye o quita las gráficas de la pantalla y de las salidas."
+   ]
+  ]
  },
  "indicadores-financieros": {
   "puntos": [
    "Liquidez, prueba ácida, capital de trabajo, endeudamiento, rentabilidad y días de cobro con semáforo."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Reportes › Indicadores financieros y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige la fecha de corte.",
-   "Revisa cada indicador con su valor y semáforo.",
+   "Entra a Presupuesto y Flujo › Reportes y gráficas › Reportes › Indicadores financieros y elige la «Empresa» ({empresa}).",
+   "Elige «Al (fecha de corte)»; el resultado se mide del 1 de enero a esa fecha.",
+   "Marca o desmarca «Gráficas».",
+   "Revisa cada indicador con su fórmula, resultado, referencia y semáforo; los rojos se resaltan.",
    "Presiona «PDF» o «Excel»."
   ],
   "reporte": {
@@ -407,7 +2126,133 @@
     ]
    ]
   },
-  "voz": "Indicadores financieros: liquidez de dos punto cuatro, endeudamiento del treinta y tres por ciento y veintiocho días de cobro."
+  "voz": "Indicadores financieros: liquidez de dos punto cuatro, endeudamiento del treinta y tres por ciento y veintiocho días de cobro.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Al (fecha de corte)",
+      "Fecha",
+      "{hoy}",
+      "Fecha del balance; no mayor a hoy."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Muestra u oculta las gráficas en pantalla, en el PDF y en el Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Activo / Pasivo",
+      "Indicador",
+      "Q 4,250,000.00 / Q 1,980,000.00",
+      "Totales al corte."
+     ],
+     [
+      "Patrimonio (con resultados)",
+      "Indicador",
+      "Q 2,270,000.00",
+      "Incluye los resultados acumulados."
+     ],
+     [
+      "Capital de trabajo",
+      "Indicador",
+      "Q 640,000.00",
+      "Activo corriente − pasivo corriente."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Indicador",
+      "Columna",
+      "Liquidez corriente",
+      "Liquidez, prueba ácida, liquidez inmediata, capital de trabajo, endeudamiento, autonomía, margen neto, ROA, ROE y días de cobro."
+     ],
+     [
+      "Fórmula",
+      "Columna",
+      "Activo corriente ÷ pasivo corriente",
+      "Cómo se calcula."
+     ],
+     [
+      "Resultado",
+      "Columna",
+      "1.85 veces",
+      "Valor al corte."
+     ],
+     [
+      "Referencia",
+      "Columna",
+      "≥ 1.5",
+      "Valor sano de referencia."
+     ],
+     [
+      "Estado",
+      "Indicador",
+      "Verde",
+      "Semáforo del indicador."
+     ],
+     [
+      "Estructura",
+      "Gráfica",
+      "",
+      "Activo corriente, pasivo corriente, efectivo e inventarios."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Referencias",
+    "Liquidez ≥ 1.5 · Prueba ácida ≥ 1.0 · Inmediata ≥ 0.2 · Endeudamiento ≤ 60 % · Autonomía ≥ 40 % · Margen ≥ 10 % · ROA ≥ 5 % · ROE ≥ 12 % · Cobro ≤ 45 días",
+    "",
+    "Definen el semáforo verde; hay un rango ámbar antes del rojo."
+   ],
+   [
+    "Período del resultado",
+    "1 de enero a la fecha de corte",
+    "",
+    "Base del margen, ROA, ROE y días de cobro."
+   ],
+   [
+    "Gráficas",
+    "Sí · No",
+    "Sí",
+    "Incluye o quita las gráficas de la pantalla y de las salidas."
+   ]
+  ]
  },
  "rubros-presupuesto": {
   "puntos": [
@@ -415,12 +2260,13 @@
    "Se usan en Registros › Presupuesto y en el reporte Presupuesto vs. ejecutado."
   ],
   "pasos": [
-   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Rubros de presupuesto.",
-   "Elige la organización y la localidad.",
-   "Presiona «+ Rubro».",
-   "Escribe el código, el nombre (ej. Sueldos y salarios) y elige el grupo (Personal).",
-   "Relaciona las cuentas contables del rubro para calcular lo ejecutado.",
-   "Guarda; el rubro aparece al armar el presupuesto."
+   "Entra a Presupuesto y Flujo › Catálogos › Presupuesto › Rubros de presupuesto (el catálogo es general, no se elige empresa).",
+   "Usa el buscador para encontrar un rubro o un grupo.",
+   "Presiona «+ Rubro» para uno nuevo o el lápiz de una fila para modificarlo.",
+   "Escribe el «Código» (se propone el siguiente del grupo) y el «Rubro» (ej. SUELDOS Y SALARIOS).",
+   "Elige el «Grupo» (ej. GASTOS DE PERSONAL) y la «Naturaleza» (INGRESO, EGRESO o INVERSIÓN).",
+   "Marca «Activo» y presiona «Guardar».",
+   "Vincula sus cuentas contables en Catálogos › Rubros y cuentas contables para calcular lo ejecutado."
   ],
   "ejemplo": {
    "titulo": "Ejemplo · Rubros",
@@ -446,6 +2292,132 @@
      "Gastos administrativos"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Buscar rubro o grupo",
+      "Texto",
+      "PERSONAL",
+      "Filtra las filas del listado mientras escribes."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "+ Rubro",
+      "Botón",
+      "",
+      "Abre la ventana para crear un rubro (solo quien edita catálogos)."
+     ],
+     [
+      "Modificar (lápiz)",
+      "Botón",
+      "",
+      "Abre el rubro de la fila para cambiarlo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Código",
+      "Columna",
+      "201",
+      "Código del rubro."
+     ],
+     [
+      "Rubro",
+      "Columna",
+      "SUELDOS Y SALARIOS",
+      "Nombre del rubro."
+     ],
+     [
+      "Grupo",
+      "Columna",
+      "GASTOS DE PERSONAL",
+      "Grupo al que pertenece."
+     ],
+     [
+      "Naturaleza",
+      "Columna",
+      "EGRESO",
+      "INGRESO, EGRESO o INVERSIÓN, con su color."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "Activo",
+      "Activo o inactivo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Ventana Nuevo / Modificar rubro",
+    "filas": [
+     [
+      "Código *",
+      "Número",
+      "201",
+      "Código del rubro; se propone el siguiente del grupo."
+     ],
+     [
+      "Rubro *",
+      "Campo",
+      "SUELDOS Y SALARIOS",
+      "Nombre; se guarda en mayúsculas."
+     ],
+     [
+      "Grupo *",
+      "Lista",
+      "GASTOS DE PERSONAL",
+      "INGRESOS, GASTOS DE PERSONAL, GASTOS FINANCIEROS, GASTOS ADMINISTRATIVOS, IMPUESTOS o INVERSIONES."
+     ],
+     [
+      "Naturaleza *",
+      "Lista",
+      "EGRESO",
+      "INGRESO, EGRESO o INVERSIÓN."
+     ],
+     [
+      "Activo",
+      "Casilla",
+      "Sí",
+      "Solo los activos se ofrecen al formular."
+     ],
+     [
+      "Cancelar / Guardar",
+      "Botón",
+      "",
+      "Cierra la ventana o guarda el rubro."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Grupo",
+    "INGRESOS · GASTOS DE PERSONAL · GASTOS FINANCIEROS · GASTOS ADMINISTRATIVOS · IMPUESTOS · INVERSIONES",
+    "GASTOS ADMINISTRATIVOS",
+    "Agrupa los rubros en la formulación, la aprobación y los reportes."
+   ],
+   [
+    "Naturaleza",
+    "INGRESO · EGRESO · INVERSIÓN",
+    "EGRESO",
+    "Define si suma a ingresos o a egresos y cómo se lee el semáforo."
+   ],
+   [
+    "Activo",
+    "Sí · No",
+    "Sí",
+    "Los inactivos no se pueden agregar a un presupuesto ni vincular a cuentas."
+   ]
+  ]
  }
 }

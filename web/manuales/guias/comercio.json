@@ -4,10 +4,12 @@
    "Agentes aduanales con su licencia, contacto y honorario."
   ],
   "pasos": [
-   "Entra a Import. y export. › Catálogos › Aduanas › Agentes aduanales y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Nuevo» para agregar un registro o elige uno para cambiarlo.",
-   "Llena sus datos y presiona «Guardar».",
-   "Se eligen en las pólizas de importación, exportaciones y embarques."
+   "Entra a Import. y export. › Catálogos › Aduanas › Agentes aduanales y elige la «Empresa» ({empresa}).",
+   "Presiona «Nuevo»: se agrega una fila con el siguiente código y el nombre NUEVO AGENTE.",
+   "Escribe o cambia los datos directamente en la fila; cada cambio se guarda al salir de la casilla (en mayúsculas).",
+   "Llena nombre, NIT, licencia, teléfono, correo y honorario %; marca «Activo».",
+   "La papelera quita el agente; «PDF» o «Excel» sacan el catálogo.",
+   "Los agentes se eligen en las pólizas de importación y las exportaciones."
   ],
   "ejemplo": {
    "columnas": [
@@ -24,16 +26,121 @@
      "Q 1,500.00"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nuevo",
+      "Botón",
+      "",
+      "Agrega un agente (administrador)."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Código",
+      "Número",
+      "1",
+      "Código del agente."
+     ],
+     [
+      "Nombre",
+      "Campo",
+      "AGENCIA ADUANAL DEL PACÍFICO",
+      "Nombre del agente."
+     ],
+     [
+      "NIT",
+      "Campo",
+      "1234567-8",
+      "NIT del agente."
+     ],
+     [
+      "Licencia",
+      "Campo",
+      "AA-1234",
+      "Licencia autorizada por la SAT."
+     ],
+     [
+      "Teléfono",
+      "Campo",
+      "2222-0000",
+      "Teléfono de contacto."
+     ],
+     [
+      "Correo",
+      "Campo",
+      "agente@ejemplo.com",
+      "Correo de contacto."
+     ],
+     [
+      "Honorario %",
+      "Número",
+      "1.5",
+      "Honorario de referencia."
+     ],
+     [
+      "Activo",
+      "Casilla",
+      "Sí",
+      "Solo los activos se usan."
+     ],
+     [
+      "Quitar",
+      "Botón",
+      "",
+      "Elimina el registro; si está en uso, desmarca Activo en su lugar."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Activo",
+    "Sí · No",
+    "Sí",
+    "Los inactivos se conservan para el historial."
+   ]
+  ]
  },
  "com-aduanas": {
   "puntos": [
    "Aduanas marítimas, terrestres, aérea, express e internas de Guatemala."
   ],
   "pasos": [
-   "Entra a Import. y export. › Catálogos › Aduanas › Aduanas y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Cargar partidas frecuentes» o «Nuevo» para traer o agregar aduanas.",
-   "Revisa código, nombre y tipo; presiona «Guardar»."
+   "Entra a Import. y export. › Catálogos › Aduanas › Aduanas y elige la «Empresa» ({empresa}).",
+   "Revisa el catálogo de aduanas de Guatemala (es general para todas las empresas).",
+   "Un administrador puede cambiar en la fila el nombre, el tipo, la ubicación y si está activa; se guarda al salir de la casilla.",
+   "La papelera quita la aduana si no está en uso.",
+   "«PDF» o «Excel» sacan el catálogo."
   ],
   "ejemplo": {
    "columnas": [
@@ -58,17 +165,102 @@
      "Terrestre"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Código",
+      "Columna",
+      "01",
+      "Código de la aduana (no se cambia)."
+     ],
+     [
+      "Nombre",
+      "Campo",
+      "PUERTO QUETZAL",
+      "Nombre de la aduana."
+     ],
+     [
+      "Tipo",
+      "Lista",
+      "MARÍTIMA",
+      "MARÍTIMA, TERRESTRE, AÉREA, EXPRESS o INTERNA."
+     ],
+     [
+      "Ubicación",
+      "Campo",
+      "ESCUINTLA",
+      "Lugar de la aduana."
+     ],
+     [
+      "Activa",
+      "Casilla",
+      "Sí",
+      "Solo las activas se eligen."
+     ],
+     [
+      "Quitar",
+      "Botón",
+      "",
+      "Elimina el registro; si está en uso, desmarca Activo en su lugar."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Tipo",
+    "MARÍTIMA · TERRESTRE · AÉREA · EXPRESS · INTERNA",
+    "",
+    "Clasifica la aduana."
+   ],
+   [
+    "Activa",
+    "Sí · No",
+    "Sí",
+    "Las inactivas no se eligen en pólizas."
+   ]
+  ]
  },
  "com-incoterms": {
   "puntos": [
    "Incoterms 2020 con quién paga el flete y el seguro."
   ],
   "pasos": [
-   "Entra a Import. y export. › Catálogos › Aduanas › Incoterms y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Nuevo» para agregar un registro o elige uno para cambiarlo.",
-   "Llena sus datos y presiona «Guardar».",
-   "Se eligen en las pólizas de importación, exportaciones y embarques."
+   "Entra a Import. y export. › Catálogos › Aduanas › Incoterms y elige la «Empresa» ({empresa}).",
+   "Consulta los Incoterms 2020 agrupados por grupo, con quién paga el flete y el seguro.",
+   "El catálogo es solo de consulta; el Incoterm se elige en cada póliza y exportación.",
+   "«PDF» o «Excel» sacan el catálogo."
   ],
   "ejemplo": {
    "columnas": [
@@ -93,17 +285,97 @@
      "Comprador"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Código",
+      "Columna",
+      "FOB",
+      "Código del Incoterm."
+     ],
+     [
+      "Nombre",
+      "Columna",
+      "Free On Board",
+      "Nombre."
+     ],
+     [
+      "Grupo",
+      "Columna",
+      "F",
+      "Grupo E, F, C o D."
+     ],
+     [
+      "Flete del comprador",
+      "Columna",
+      "Sí",
+      "Si el comprador paga el flete."
+     ],
+     [
+      "Seguro del comprador",
+      "Columna",
+      "Sí",
+      "Si el comprador paga el seguro."
+     ],
+     [
+      "Descripción",
+      "Columna",
+      "El vendedor entrega a bordo",
+      "Explicación."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Flete / Seguro del comprador",
+    "Sí · No",
+    "",
+    "Define qué se suma al FOB para llegar al CIF; la póliza avisa si se suma un flete que paga el vendedor."
+   ]
+  ]
  },
  "com-partidas": {
   "puntos": [
    "Partidas del SAC con su DAI e IVA."
   ],
   "pasos": [
-   "Entra a Import. y export. › Catálogos › Aranceles y transporte › Partidas arancelarias y elige la organización ({organizacion}) y la localidad ({empresa}).",
+   "Entra a Import. y export. › Catálogos › Aranceles y transporte › Partidas arancelarias y elige la «Empresa» ({empresa}).",
    "Presiona «Cargar partidas frecuentes» para traer las más usadas.",
-   "Presiona «Nuevo»: partida SAC, descripción, % DAI y % IVA.",
-   "Presiona «Guardar»."
+   "Presiona «Nuevo»: se agrega la fila NUEVA PARTIDA con un código 0000.00.nn.",
+   "Escribe la «Partida SAC», la «Descripción», el «DAI %», el «IVA %» y las observaciones; se guarda al salir de la casilla.",
+   "Verifica las tasas vigentes en el arancel de la SAT; la papelera quita la partida."
   ],
   "ejemplo": {
    "columnas": [
@@ -132,17 +404,122 @@
      "12 %"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nuevo",
+      "Botón",
+      "",
+      "Agrega una partida (administrador)."
+     ],
+     [
+      "Cargar partidas frecuentes",
+      "Botón",
+      "",
+      "Carga el catálogo base de partidas de la empresa."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Partida SAC",
+      "Campo",
+      "8471.30.00",
+      "Código del Sistema Arancelario Centroamericano."
+     ],
+     [
+      "Descripción",
+      "Campo",
+      "COMPUTADORAS PORTÁTILES",
+      "Mercancía."
+     ],
+     [
+      "DAI %",
+      "Número",
+      "0",
+      "Derecho arancelario a la importación."
+     ],
+     [
+      "IVA %",
+      "Número",
+      "12",
+      "IVA de importación."
+     ],
+     [
+      "Observaciones",
+      "Campo",
+      "",
+      "Notas."
+     ],
+     [
+      "Activa",
+      "Casilla",
+      "Sí",
+      "Solo las activas se eligen."
+     ],
+     [
+      "Quitar",
+      "Botón",
+      "",
+      "Elimina el registro; si está en uso, desmarca Activo en su lugar."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "DAI %",
+    "Porcentaje",
+    "",
+    "DAI = CIF × DAI % de la partida de cada línea."
+   ],
+   [
+    "IVA %",
+    "Porcentaje",
+    "12",
+    "IVA de importación = (CIF + DAI) × IVA %; es crédito fiscal."
+   ]
+  ],
+  "notaParametros": "Si la empresa no tiene partidas, las pantallas de comercio cargan las frecuentes automáticamente."
  },
  "com-transportistas": {
   "puntos": [
    "Navieras, aerolíneas, transportistas terrestres y couriers."
   ],
   "pasos": [
-   "Entra a Import. y export. › Catálogos › Aranceles y transporte › Navieras y transportistas y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Nuevo» para agregar un registro o elige uno para cambiarlo.",
-   "Llena sus datos y presiona «Guardar».",
-   "Se eligen en las pólizas de importación, exportaciones y embarques."
+   "Entra a Import. y export. › Catálogos › Aranceles y transporte › Navieras y transportistas y elige la «Empresa» ({empresa}).",
+   "Presiona «Nuevo»: se agrega la fila NUEVO TRANSPORTISTA con el siguiente código.",
+   "Escribe o cambia los datos directamente en la fila; cada cambio se guarda al salir de la casilla (en mayúsculas).",
+   "Elige el «Tipo» (NAVIERA, AÉREA, TERRESTRE o COURIER) y llena contacto, teléfono y correo.",
+   "La papelera quita el transportista; se eligen en pólizas, exportaciones y embarques."
   ],
   "ejemplo": {
    "columnas": [
@@ -162,7 +539,110 @@
      "2222-3333"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nuevo",
+      "Botón",
+      "",
+      "Agrega un transportista (administrador)."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "Código",
+      "Número",
+      "1",
+      "Código."
+     ],
+     [
+      "Nombre",
+      "Campo",
+      "NAVIERA DEL ATLÁNTICO",
+      "Nombre."
+     ],
+     [
+      "Tipo",
+      "Lista",
+      "NAVIERA",
+      "NAVIERA, AÉREA, TERRESTRE o COURIER."
+     ],
+     [
+      "Contacto",
+      "Campo",
+      "ENCARGADO DE TRÁFICO",
+      "Persona de contacto."
+     ],
+     [
+      "Teléfono",
+      "Campo",
+      "2222-0000",
+      "Teléfono."
+     ],
+     [
+      "Correo",
+      "Campo",
+      "trafico@ejemplo.com",
+      "Correo."
+     ],
+     [
+      "Activo",
+      "Casilla",
+      "Sí",
+      "Solo los activos se eligen."
+     ],
+     [
+      "Quitar",
+      "Botón",
+      "",
+      "Elimina el registro; si está en uso, desmarca Activo en su lugar."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Tipo",
+    "NAVIERA · AÉREA · TERRESTRE · COURIER",
+    "",
+    "Clasifica el medio de transporte."
+   ],
+   [
+    "Activo",
+    "Sí · No",
+    "Sí",
+    "Los inactivos no se eligen."
+   ]
+  ]
  },
  "com-polizas": {
   "puntos": [
@@ -170,16 +650,17 @@
    "Costeo: (FOB + flete + seguro) × tipo de cambio = CIF; DAI = CIF × % partida; IVA importación = (CIF + DAI) × 12 % (crédito fiscal); costo = CIF + DAI + gastos sin IVA."
   ],
   "pasos": [
-   "Entra a Import. y export. › Registros › Comercio exterior › Pólizas de importación y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Nueva póliza»: «Póliza», «Tipo de DUCA», «Fecha» y «Llegada a bodega».",
-   "Elige el «Proveedor del exterior *», el «Incoterm», la «Moneda» y el tipo de cambio.",
-   "Elige la «Aduana», el «Agente aduanal», el «Transportista» y la «Bodega de ingreso».",
-   "Elige cómo se prorratea (por FOB, peso o cantidad).",
-   "Presiona «Agregar producto» por cada línea: producto, descripción, partida, cantidad, peso kg, FOB, lote y vencimiento.",
-   "Escribe el flete y el seguro.",
-   "Presiona «Agregar gasto» por cada gasto local: tipo, proveedor, documento, monto sin IVA e IVA.",
-   "Guarda y revisa el costeo por producto.",
-   "Presiona «Liquidar» y luego «Ingresar a bodega»; «Anular» la deja sin efecto."
+   "Entra a Import. y export. › Registros › Comercio exterior › Pólizas de importación y elige la «Empresa» ({empresa}).",
+   "Elige el «Año», el «Estado» y la «Póliza», o presiona «Nueva póliza».",
+   "En el encabezado llena «Tipo de DUCA», «Número de DUCA», «Fecha», «Llegada a bodega», «Proveedor del exterior *», «Factura del exterior» y «País de origen».",
+   "Elige «Incoterm», «Moneda», «Tipo de cambio», «Aduana», «Agente aduanal» y «Transportista»; escribe BL o guía y contenedor.",
+   "Escribe el «Flete internacional (moneda)» y el «Seguro (moneda)», elige el «Prorrateo» y la «Bodega de ingreso».",
+   "Presiona «Crear póliza» (o «Guardar encabezado» al cambiarla).",
+   "Agrega cada producto: producto, descripción, partida, cantidad, peso kg, FOB, lote y vence; presiona «Agregar producto».",
+   "Agrega cada gasto local: tipo, proveedor, documento, monto sin IVA, IVA y «Va al costo»; presiona «Agregar gasto».",
+   "Revisa el costeo por producto; toca una línea o un gasto para quitarlo.",
+   "Presiona «Liquidar» y luego «Ingresar a bodega»; «Anular» pide el motivo.",
+   "Genera «PDF» o «Excel» de la liquidación con firmas."
   ],
   "campos": [
    [
@@ -236,18 +717,367 @@
     "Costo total · unitario Q 107.74",
     "Q 10,774.25"
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Año",
+      "Número",
+      "{anio}",
+      "Año de la fecha de la póliza."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "TODAS",
+      "TODAS, REGISTRADA, LIQUIDADA, INGRESADA o ANULADA."
+     ],
+     [
+      "Póliza",
+      "Lista",
+      "No. 12 · 26GT0001234 · {proveedor} · REGISTRADA",
+      "Pólizas del año y estado."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nueva póliza",
+      "Botón",
+      "",
+      "Abre el encabezado en blanco (administrador)."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Encabezado de la póliza",
+    "filas": [
+     [
+      "Tipo de DUCA",
+      "Lista",
+      "DUCA-D",
+      "DUCA-D, DUCA-F o DUCA-T."
+     ],
+     [
+      "Número de DUCA",
+      "Campo",
+      "26GT0001234",
+      "Número de la declaración."
+     ],
+     [
+      "Fecha / Llegada a bodega",
+      "Fecha",
+      "{hoy} · 20/11/2026",
+      "Fecha de la póliza y de llegada."
+     ],
+     [
+      "Proveedor del exterior *",
+      "Campo",
+      "{proveedor}",
+      "Con lista de proveedores; obligatorio."
+     ],
+     [
+      "Factura del exterior / País de origen",
+      "Campo",
+      "INV-4521 · ESTADOS UNIDOS",
+      "Documento y origen."
+     ],
+     [
+      "Incoterm",
+      "Lista",
+      "FOB · Free On Board",
+      "Término de comercio."
+     ],
+     [
+      "Moneda / Tipo de cambio",
+      "Lista",
+      "USD · 7.700000",
+      "Moneda de la factura y su cambio."
+     ],
+     [
+      "Aduana / Agente aduanal / Transportista",
+      "Lista",
+      "PUERTO QUETZAL",
+      "Catálogos de comercio."
+     ],
+     [
+      "BL / guía aérea / carta de porte · Contenedor",
+      "Campo",
+      "MSCU1234567",
+      "Documento de transporte."
+     ],
+     [
+      "Flete internacional (moneda) / Seguro (moneda)",
+      "Monto",
+      "1,200.00 / 150.00",
+      "Se prorratean entre los productos."
+     ],
+     [
+      "Prorrateo",
+      "Lista",
+      "Por valor FOB",
+      "Por valor FOB, Por peso o Por cantidad."
+     ],
+     [
+      "Bodega de ingreso",
+      "Lista",
+      "{bodega}",
+      "Bodega donde entra el producto."
+     ],
+     [
+      "Observaciones",
+      "Campo",
+      "",
+      "Notas."
+     ],
+     [
+      "Cancelar / Crear póliza / Guardar encabezado",
+      "Botón",
+      "",
+      "Guarda el encabezado (solo en REGISTRADA)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Cabecera y acciones",
+    "filas": [
+     [
+      "Póliza de importación",
+      "Indicador",
+      "No. 12 · REGISTRADA",
+      "Número y estado."
+     ],
+     [
+      "DUCA / Proveedor / Aduana / Incoterm / Elaboró / Liquidó / Ingresó",
+      "Texto",
+      "{usuario}",
+      "Datos y trazabilidad."
+     ],
+     [
+      "Liquidar",
+      "Botón",
+      "",
+      "Guarda el costeo y pasa a LIQUIDADA."
+     ],
+     [
+      "Ingresar a bodega",
+      "Botón",
+      "",
+      "Ingresa los productos con su costo unitario."
+     ],
+     [
+      "Anular",
+      "Botón",
+      "",
+      "Anula una póliza registrada o liquidada con motivo."
+     ],
+     [
+      "Ciclo",
+      "Indicador",
+      "Registrar › Liquidar › Ingresar a bodega",
+      "Paso actual."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Valor CIF",
+      "Indicador",
+      "Q 98,560.00",
+      "FOB + flete + seguro en quetzales."
+     ],
+     [
+      "DAI",
+      "Indicador",
+      "Q 9,856.00",
+      "Derechos arancelarios."
+     ],
+     [
+      "IVA importación (crédito)",
+      "Indicador",
+      "Q 13,009.92",
+      "No es costo."
+     ],
+     [
+      "Gastos al costo",
+      "Indicador",
+      "Q 4,500.00",
+      "Gastos locales sin IVA."
+     ],
+     [
+      "Costo total",
+      "Indicador",
+      "Q 112,916.00",
+      "CIF + DAI + gastos."
+     ],
+     [
+      "Costo sobre FOB",
+      "Indicador",
+      "+24.6 %",
+      "Recargo del costo sobre el FOB."
+     ]
+    ]
+   },
+   {
+    "grupo": "Detalle / Líneas",
+    "filas": [
+     [
+      "Producto",
+      "Campo",
+      "{producto} — {codigoProducto}",
+      "Producto del catálogo (nombre o código)."
+     ],
+     [
+      "Descripción / Partida",
+      "Campo",
+      "8471.30.00 (0 %)",
+      "Descripción y partida arancelaria."
+     ],
+     [
+      "Cantidad / Peso kg / FOB (moneda)",
+      "Número",
+      "100 · 250 · 9,000.00",
+      "Base del prorrateo y del costeo."
+     ],
+     [
+      "Lote / Vence",
+      "Campo",
+      "L-2611 · 30/11/2028",
+      "Lote y vencimiento."
+     ],
+     [
+      "Agregar producto",
+      "Botón",
+      "",
+      "Agrega la línea."
+     ],
+     [
+      "Columnas del costeo",
+      "Columna",
+      "FOB Q · Flete Q · Seguro Q · CIF Q · DAI % · DAI Q · IVA Q · Gastos Q · Costo Q · Unitario Q",
+      "Costo por producto y total."
+     ],
+     [
+      "Composición del costo",
+      "Gráfica",
+      "",
+      "FOB, flete, seguro, DAI y gastos con su %."
+     ]
+    ]
+   },
+   {
+    "grupo": "Gastos locales de la importación",
+    "filas": [
+     [
+      "Tipo",
+      "Lista",
+      "AGENTE ADUANAL",
+      "AGENTE ADUANAL, ALMACENAJE, TRANSPORTE INTERNO, MANEJO Y ESTIBA, FLETE LOCAL, SEGURO LOCAL, TRÁMITES u OTROS."
+     ],
+     [
+      "Proveedor / Documento",
+      "Campo",
+      "{proveedor} · A-1234",
+      "Quién factura el gasto."
+     ],
+     [
+      "Monto sin IVA Q / IVA Q",
+      "Monto",
+      "1,500.00 / 180.00",
+      "El IVA no va al costo."
+     ],
+     [
+      "Va al costo",
+      "Casilla",
+      "Sí",
+      "Si se prorratea al costo."
+     ],
+     [
+      "Agregar gasto",
+      "Botón",
+      "",
+      "Agrega el gasto."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Prorrateo",
+    "VALOR (FOB) · PESO · CANTIDAD",
+    "VALOR",
+    "Reparte flete, seguro y gastos entre los productos."
+   ],
+   [
+    "Tipo de cambio",
+    "Número (6 decimales)",
+    "7.7",
+    "Convierte FOB, flete y seguro a quetzales."
+   ],
+   [
+    "Incoterm",
+    "Incoterms 2020",
+    "FOB",
+    "Si el vendedor paga el flete, avisa para no sumarlo dos veces."
+   ],
+   [
+    "DAI % / IVA % (partida)",
+    "Porcentajes de la partida",
+    "IVA 12",
+    "DAI = CIF × DAI %; IVA = (CIF + DAI) × IVA %."
+   ],
+   [
+    "Va al costo",
+    "Sí · No",
+    "Sí",
+    "Solo los gastos marcados suman al costo."
+   ],
+   [
+    "Estado",
+    "REGISTRADA · LIQUIDADA · INGRESADA · ANULADA",
+    "REGISTRADA",
+    "Solo en REGISTRADA se edita la póliza."
+   ]
+  ]
  },
  "com-exportaciones": {
   "puntos": [
    "Exportaciones con cliente, destino, Incoterm, productos y valor en quetzales."
   ],
   "pasos": [
-   "Entra a Import. y export. › Registros › Comercio exterior › Exportaciones y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Nueva exportación»: número, fecha, cliente y país destino.",
-   "Elige el «Incoterm», la «Aduana de salida» y la moneda.",
-   "Agrega cada línea: «Producto o descripción», cantidad y «Valor (moneda)».",
-   "Guarda; al salir presiona «Marcar despachada»."
+   "Entra a Import. y export. › Registros › Comercio exterior › Exportaciones y elige la «Empresa» ({empresa}).",
+   "Elige el «Año» y la «Exportación», o presiona «Nueva exportación».",
+   "Llena «DUCA de exportación», «Fecha», «Cliente del exterior *» y «País de destino *».",
+   "Elige «Incoterm», «Moneda» y «Tipo de cambio»; escribe la «Factura de exportación».",
+   "Elige «Aduana de salida», «Agente aduanal», «Transportista»; escribe BL o guía, flete, seguro y observaciones; presiona «Guardar».",
+   "Agrega cada línea: «Producto o descripción», «Partida», «Cantidad», «Peso kg» y «Valor (moneda)»; presiona «Agregar».",
+   "Toca una línea para quitarla; los totales se recalculan solos.",
+   "Al salir la mercadería presiona «Marcar despachada»; «Anular» la deja sin efecto.",
+   "Genera «PDF» o «Excel»."
   ],
   "ejemplo": {
    "columnas": [
@@ -264,17 +1094,216 @@
      "Q 139,500.00"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Año",
+      "Número",
+      "{anio}",
+      "Año de la exportación."
+     ],
+     [
+      "Exportación",
+      "Lista",
+      "No. 7 · {cliente} · EL SALVADOR · REGISTRADA",
+      "Exportaciones del año."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "Nueva exportación",
+      "Botón",
+      "",
+      "Abre el formulario en blanco (administrador)."
+     ],
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Datos de la exportación",
+    "filas": [
+     [
+      "DUCA de exportación",
+      "Campo",
+      "26GT0005678",
+      "Número de la DUCA."
+     ],
+     [
+      "Fecha",
+      "Fecha",
+      "{hoy}",
+      "Fecha de la exportación."
+     ],
+     [
+      "Cliente del exterior *",
+      "Campo",
+      "{cliente}",
+      "Obligatorio."
+     ],
+     [
+      "País de destino *",
+      "Campo",
+      "EL SALVADOR",
+      "Obligatorio."
+     ],
+     [
+      "Incoterm / Moneda / Tipo de cambio",
+      "Lista",
+      "FOB · USD · 7.700000",
+      "Condiciones de la venta."
+     ],
+     [
+      "Factura de exportación",
+      "Campo",
+      "FEXP-000045",
+      "Factura emitida."
+     ],
+     [
+      "Aduana de salida / Agente aduanal / Transportista",
+      "Lista",
+      "PEDRO DE ALVARADO",
+      "Catálogos de comercio."
+     ],
+     [
+      "BL / guía",
+      "Campo",
+      "CP-88412",
+      "Documento de transporte."
+     ],
+     [
+      "Flete (moneda) / Seguro (moneda)",
+      "Monto",
+      "300.00 / 50.00",
+      "Se suman al FOB para el valor total."
+     ],
+     [
+      "Observaciones",
+      "Campo",
+      "",
+      "Notas."
+     ],
+     [
+      "Cancelar / Guardar",
+      "Botón",
+      "",
+      "Guarda los datos (solo en REGISTRADA)."
+     ]
+    ]
+   },
+   {
+    "grupo": "Cabecera y acciones",
+    "filas": [
+     [
+      "Exportación",
+      "Indicador",
+      "No. 7 · REGISTRADA",
+      "Número y estado."
+     ],
+     [
+      "Cliente / Destino / DUCA / Valor total",
+      "Texto",
+      "12,350.00 · Q 95,095.00",
+      "Resumen."
+     ],
+     [
+      "Marcar despachada",
+      "Botón",
+      "",
+      "Pasa a DESPACHADA."
+     ],
+     [
+      "Anular",
+      "Botón",
+      "",
+      "Pasa a ANULADA."
+     ]
+    ]
+   },
+   {
+    "grupo": "Detalle / Líneas",
+    "filas": [
+     [
+      "Producto o descripción",
+      "Campo",
+      "{producto} — {codigoProducto}",
+      "Producto del catálogo o texto libre."
+     ],
+     [
+      "Partida / Cantidad / Peso kg / Valor (moneda)",
+      "Número",
+      "0901.11.00 · 500 · 600 · 12,000.00",
+      "Datos de la línea."
+     ],
+     [
+      "Agregar",
+      "Botón",
+      "",
+      "Agrega la línea."
+     ],
+     [
+      "Columnas",
+      "Columna",
+      "# · Descripción · Partida · Cantidad · Peso kg · Valor USD · Valor Q",
+      "Detalle y total FOB."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Tipo de cambio",
+    "Número",
+    "7.7",
+    "Convierte el valor a quetzales."
+   ],
+   [
+    "Valor total",
+    "FOB + flete + seguro",
+    "",
+    "Se recalcula al guardar o cambiar líneas."
+   ],
+   [
+    "Estado",
+    "REGISTRADA · DESPACHADA · ANULADA",
+    "REGISTRADA",
+    "Solo en REGISTRADA se edita."
+   ]
+  ]
  },
  "com-embarques": {
   "puntos": [
    "Seguimiento de embarques con estado, ETA y bitácora de eventos."
   ],
   "pasos": [
-   "Entra a Import. y export. › Registros › Comercio exterior › Embarques y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Presiona «Registrar embarque»: «Póliza / exportación», «BL / guía», «Contenedor», «Origen», «Destino», «Fecha de embarque» y «ETA».",
-   "Guarda.",
-   "Con «Agregar» registra cada evento (zarpe, arribo, liberación) en la bitácora."
+   "Entra a Import. y export. › Registros › Comercio exterior › Embarques y elige la «Empresa» ({empresa}).",
+   "Elige «Mostrar»: ACTIVOS, ENTREGADOS o TODOS.",
+   "Para registrar uno elige «Tipo», «Póliza / exportación», «Transportista» y escribe «BL / guía», «Contenedor», «Origen», «Destino», «Fecha de embarque» y «ETA».",
+   "Presiona «Registrar embarque»: queda PROGRAMADO, o EN TRÁNSITO si tiene fecha de embarque.",
+   "Toca un embarque para avanzarlo al siguiente estado y escribe la nota del evento en su bitácora.",
+   "Revisa los indicadores, en especial los de ETA vencida; genera «PDF» o «Excel»."
   ],
   "ejemplo": {
    "columnas": [
@@ -293,17 +1322,186 @@
      "EN TRÁNSITO"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Mostrar",
+      "Lista",
+      "ACTIVOS",
+      "ACTIVOS (no entregados), ENTREGADOS o TODOS."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Embarques activos",
+      "Indicador",
+      "5",
+      "No entregados."
+     ],
+     [
+      "En tránsito",
+      "Indicador",
+      "2",
+      "En camino."
+     ],
+     [
+      "En aduana",
+      "Indicador",
+      "1",
+      "En puerto o en aduana."
+     ],
+     [
+      "Con ETA vencida",
+      "Indicador",
+      "1",
+      "Pasó la ETA sin liberarse."
+     ]
+    ]
+   },
+   {
+    "grupo": "Registrar embarque",
+    "filas": [
+     [
+      "Tipo",
+      "Lista",
+      "IMPORTACIÓN",
+      "IMPORTACIÓN o EXPORTACIÓN."
+     ],
+     [
+      "Póliza / exportación",
+      "Lista",
+      "Póliza 12 · {proveedor}",
+      "Documento relacionado."
+     ],
+     [
+      "Transportista",
+      "Lista",
+      "NAVIERA DEL ATLÁNTICO",
+      "Del catálogo."
+     ],
+     [
+      "BL / guía · Contenedor",
+      "Campo",
+      "MSCU1234567",
+      "Documento y contenedor."
+     ],
+     [
+      "Origen / Destino",
+      "Campo",
+      "MIAMI · PUERTO QUETZAL",
+      "Puertos."
+     ],
+     [
+      "Fecha de embarque / ETA",
+      "Fecha",
+      "10/11/2026 · 24/11/2026",
+      "Salida y llegada estimada."
+     ],
+     [
+      "Registrar embarque",
+      "Botón",
+      "",
+      "Guarda el embarque con su primer evento."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del listado",
+    "filas": [
+     [
+      "No. / Tipo / Documento",
+      "Columna",
+      "8 · IMPORTACIÓN · Póliza 12",
+      "Identificación."
+     ],
+     [
+      "Transportista / BL / Contenedor",
+      "Columna",
+      "NAVIERA DEL ATLÁNTICO",
+      "Transporte."
+     ],
+     [
+      "Origen / Destino",
+      "Columna",
+      "MIAMI · PUERTO QUETZAL",
+      "Ruta."
+     ],
+     [
+      "Embarque / ETA",
+      "Columna",
+      "10/11/2026 · 24/11/2026",
+      "Fechas."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "EN TRÁNSITO",
+      "PROGRAMADO, EN TRÁNSITO, EN PUERTO, EN ADUANA, LIBERADO o ENTREGADO."
+     ],
+     [
+      "Último evento",
+      "Columna",
+      "2026-11-10 · EN TRÁNSITO · Zarpe",
+      "Último registro de la bitácora."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Mostrar",
+    "ACTIVOS · ENTREGADOS · TODOS",
+    "ACTIVOS",
+    "Filtra el listado y las salidas."
+   ],
+   [
+    "Secuencia de estados",
+    "PROGRAMADO › EN TRÁNSITO › EN PUERTO › EN ADUANA › LIBERADO › ENTREGADO",
+    "PROGRAMADO",
+    "Cada clic avanza un estado; EN PUERTO registra la fecha de llegada."
+   ]
+  ]
  },
  "com-liquidacion": {
   "puntos": [
    "Bandeja de pólizas por liquidar: costo CIF, DAI, IVA y gastos prorrateados; ingreso a la bodega."
   ],
   "pasos": [
-   "Entra a Import. y export. › Procesos › Importaciones › Liquidación de pólizas y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el «Año» y el «Estado» (por liquidar).",
-   "Abre la póliza y revisa el costeo.",
-   "Presiona «Liquidar» y luego «Ingresar a bodega»: los productos entran con su costo unitario."
+   "Entra a Import. y export. › Procesos › Importaciones › Liquidación de pólizas y elige la «Empresa» ({empresa}).",
+   "Elige el «Año» y el «Estado» (por omisión REGISTRADA, las pendientes de liquidar) y la «Póliza».",
+   "Revisa el encabezado, el costeo por producto y los gastos locales; corrige lo que haga falta mientras esté REGISTRADA.",
+   "Presiona «Liquidar»: confirma CIF, DAI, IVA, gastos y costo total.",
+   "Con la póliza LIQUIDADA presiona «Ingresar a bodega»: los productos entran con su costo unitario.",
+   "Genera «PDF» o «Excel» de la liquidación con firmas."
   ],
   "resultado": {
    "columnas": [
@@ -322,16 +1520,163 @@
      "Q 10,774.25"
     ]
    ]
-  }
+  },
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Año",
+      "Número",
+      "{anio}",
+      "Año de la póliza."
+     ],
+     [
+      "Estado",
+      "Lista",
+      "REGISTRADA",
+      "TODAS, REGISTRADA, LIQUIDADA, INGRESADA o ANULADA."
+     ],
+     [
+      "Póliza",
+      "Lista",
+      "No. 12 · 26GT0001234 · {proveedor} · REGISTRADA",
+      "Pólizas por liquidar."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ],
+     [
+      "Liquidar",
+      "Botón",
+      "",
+      "Guarda el costeo (administrador)."
+     ],
+     [
+      "Ingresar a bodega",
+      "Botón",
+      "",
+      "Ingresa los productos a la bodega de ingreso."
+     ],
+     [
+      "Anular",
+      "Botón",
+      "",
+      "Anula con motivo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Indicadores",
+    "filas": [
+     [
+      "Valor CIF / DAI / IVA importación (crédito)",
+      "Indicador",
+      "Q 98,560.00 / Q 9,856.00 / Q 13,009.92",
+      "Tributos y base."
+     ],
+     [
+      "Gastos al costo / Costo total",
+      "Indicador",
+      "Q 4,500.00 / Q 112,916.00",
+      "Costo de la importación."
+     ],
+     [
+      "Costo sobre FOB",
+      "Indicador",
+      "+24.6 %",
+      "Recargo."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del costeo",
+    "filas": [
+     [
+      "# / Código / Descripción / Partida",
+      "Columna",
+      "1 · {codigoProducto} · {producto} · 8471.30.00",
+      "Producto."
+     ],
+     [
+      "Cantidad / FOB moneda / FOB Q",
+      "Columna",
+      "100 · 9,000.00 · 69,300.00",
+      "Valor de origen."
+     ],
+     [
+      "Flete Q / Seguro Q / CIF Q",
+      "Columna",
+      "9,240.00 · 1,155.00 · 79,695.00",
+      "Prorrateados."
+     ],
+     [
+      "DAI % / DAI Q / IVA Q",
+      "Columna",
+      "10.0 % · 7,969.50 · 10,519.74",
+      "Tributos."
+     ],
+     [
+      "Gastos Q / Costo Q / Unitario Q",
+      "Columna",
+      "3,600.00 · 91,264.50 · 912.645",
+      "Costo final."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Estado",
+    "TODAS · REGISTRADA · LIQUIDADA · INGRESADA · ANULADA",
+    "REGISTRADA",
+    "La bandeja abre en las pendientes de liquidar."
+   ],
+   [
+    "Prorrateo (de la póliza)",
+    "VALOR · PESO · CANTIDAD",
+    "VALOR",
+    "Reparte flete, seguro y gastos."
+   ],
+   [
+    "Bodega de ingreso",
+    "Bodegas de la empresa",
+    "",
+    "Bodega donde entran los productos al ingresar."
+   ]
+  ],
+  "notaElementos": "Es la misma pantalla de Pólizas de importación, abierta en las pólizas REGISTRADAS y sin el botón «Nueva póliza»."
  },
  "com-importaciones-periodo": {
   "puntos": [
    "Pólizas liquidadas por mes con CIF, DAI, IVA, gastos y costo."
   ],
   "pasos": [
-   "Entra a Import. y export. › Reportes y gráficas › Reportes › Importaciones por período y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el «Año» o el rango «Desde» / «Hasta».",
-   "Revisa la vista previa y presiona «PDF» o «Excel»."
+   "Entra a Import. y export. › Reportes y gráficas › Reportes › Importaciones por período y elige la «Empresa» ({empresa}).",
+   "Elige «Desde» y «Hasta» (por omisión del 1 de enero a hoy).",
+   "Marca o desmarca «Gráficas».",
+   "Revisa las pólizas liquidadas agrupadas por mes con su subtotal y el total.",
+   "Presiona «PDF» o «Excel»."
   ],
   "reporte": {
    "columnas": [
@@ -361,17 +1706,120 @@
     ]
    ]
   },
-  "voz": "Importaciones de noviembre: una póliza con un costo de diez mil setecientos setenta y cuatro quetzales."
+  "voz": "Importaciones de noviembre: una póliza con un costo de diez mil setecientos setenta y cuatro quetzales.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Desde / Hasta",
+      "Fecha",
+      "01/01/2026 – 17/11/2026",
+      "Rango de fechas de las pólizas o exportaciones; por omisión del 1 de enero a hoy."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Muestra u oculta las gráficas en pantalla, en el PDF y en el Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Fecha",
+      "Columna",
+      "05/11/2026",
+      "Fecha de la póliza."
+     ],
+     [
+      "Póliza / DUCA",
+      "Columna",
+      "12 · 26GT0001234",
+      "Número y DUCA."
+     ],
+     [
+      "Proveedor / Aduana",
+      "Columna",
+      "{proveedor} · PUERTO QUETZAL",
+      "Origen."
+     ],
+     [
+      "CIF Q / DAI Q / IVA Q",
+      "Columna",
+      "98,560.00 / 9,856.00 / 13,009.92",
+      "Base y tributos."
+     ],
+     [
+      "Gastos Q / Costo Q",
+      "Columna",
+      "4,500.00 / 112,916.00",
+      "Costo."
+     ],
+     [
+      "Estado",
+      "Columna",
+      "INGRESADA",
+      "LIQUIDADA o INGRESADA."
+     ],
+     [
+      "Costo de importaciones por mes",
+      "Gráfica",
+      "",
+      "Columnas por mes."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Estado de las pólizas",
+    "LIQUIDADA · INGRESADA",
+    "",
+    "Solo entran las pólizas ya liquidadas o ingresadas a bodega."
+   ],
+   [
+    "Gráficas",
+    "Sí · No",
+    "Sí",
+    "Incluye o quita las gráficas de la pantalla y de las salidas."
+   ]
+  ]
  },
  "com-costo-poliza": {
   "puntos": [
    "Costo de cada producto por póliza: FOB, flete y seguro, DAI, gastos, unitario y recargo."
   ],
   "pasos": [
-   "Entra a Import. y export. › Reportes y gráficas › Reportes › Costo por póliza y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el «Año» o el rango «Desde» / «Hasta».",
-   "Elige la póliza.",
-   "Revisa la vista previa y presiona «PDF» o «Excel»."
+   "Entra a Import. y export. › Reportes y gráficas › Reportes › Costo por póliza y elige la «Empresa» ({empresa}).",
+   "Elige «Desde» y «Hasta».",
+   "Revisa cada póliza liquidada con sus productos y el total de la póliza.",
+   "Presiona «PDF» o «Excel»."
   ],
   "reporte": {
    "columnas": [
@@ -397,16 +1845,109 @@
     ]
    ]
   },
-  "voz": "Costo por póliza: el equipo X cuesta ciento siete quetzales con setenta y cuatro por unidad, un recargo del treinta y nueve por ciento sobre el FOB."
+  "voz": "Costo por póliza: el equipo X cuesta ciento siete quetzales con setenta y cuatro por unidad, un recargo del treinta y nueve por ciento sobre el FOB.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Desde / Hasta",
+      "Fecha",
+      "01/01/2026 – 17/11/2026",
+      "Rango de fechas de las pólizas o exportaciones; por omisión del 1 de enero a hoy."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Este reporte no tiene gráficas."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Póliza (grupo)",
+      "Columna",
+      "Póliza 12 · 26GT0001234 · {proveedor} · 05/11/2026",
+      "Encabezado de cada póliza."
+     ],
+     [
+      "Producto / Cantidad",
+      "Columna",
+      "{producto} · 100",
+      "Línea de la póliza."
+     ],
+     [
+      "FOB Q / Flete y seguro Q",
+      "Columna",
+      "69,300.00 / 10,395.00",
+      "Valor y transporte."
+     ],
+     [
+      "DAI Q / Gastos Q / Costo Q",
+      "Columna",
+      "7,969.50 / 3,600.00 / 91,264.50",
+      "Costo."
+     ],
+     [
+      "Unitario Q",
+      "Columna",
+      "912.645",
+      "Costo unitario (4 decimales)."
+     ],
+     [
+      "Recargo sobre FOB",
+      "Columna",
+      "31.7 %",
+      "Costo ÷ FOB − 1."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Estado de las pólizas",
+    "LIQUIDADA · INGRESADA",
+    "",
+    "Solo entran las pólizas ya liquidadas o ingresadas a bodega."
+   ]
+  ]
  },
  "com-exportaciones-destino": {
   "puntos": [
    "Exportaciones por país con su participación."
   ],
   "pasos": [
-   "Entra a Import. y export. › Reportes y gráficas › Reportes › Exportaciones por destino y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el «Año» o el rango «Desde» / «Hasta».",
-   "Revisa la vista previa y presiona «PDF» o «Excel»."
+   "Entra a Import. y export. › Reportes y gráficas › Reportes › Exportaciones por destino y elige la «Empresa» ({empresa}).",
+   "Elige «Desde» y «Hasta».",
+   "Marca o desmarca «Gráficas».",
+   "Revisa por país la cantidad, el valor y la participación.",
+   "Presiona «PDF» o «Excel»."
   ],
   "reporte": {
    "columnas": [
@@ -430,16 +1971,115 @@
     ]
    ]
   },
-  "voz": "Exportaciones: Estados Unidos es el principal destino con el sesenta y ocho por ciento."
+  "voz": "Exportaciones: Estados Unidos es el principal destino con el sesenta y ocho por ciento.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Desde / Hasta",
+      "Fecha",
+      "01/01/2026 – 17/11/2026",
+      "Rango de fechas de las pólizas o exportaciones; por omisión del 1 de enero a hoy."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Muestra u oculta las gráficas en pantalla, en el PDF y en el Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "País de destino",
+      "Columna",
+      "EL SALVADOR",
+      "País."
+     ],
+     [
+      "Exportaciones",
+      "Columna",
+      "6",
+      "Cantidad."
+     ],
+     [
+      "Valor FOB (moneda)",
+      "Columna",
+      "72,000.00",
+      "Valor FOB."
+     ],
+     [
+      "Valor Q",
+      "Columna",
+      "554,400.00",
+      "Valor total en quetzales."
+     ],
+     [
+      "%",
+      "Columna",
+      "45.2 %",
+      "Participación."
+     ],
+     [
+      "Exportaciones por país",
+      "Gráfica",
+      "",
+      "Barras por país."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Estado de las exportaciones",
+    "Todas menos ANULADA",
+    "",
+    "Entran las registradas y despachadas."
+   ],
+   [
+    "Gráficas",
+    "Sí · No",
+    "Sí",
+    "Incluye o quita las gráficas de la pantalla y de las salidas."
+   ]
+  ]
  },
  "com-tributos-aduana": {
   "puntos": [
    "DAI e IVA de importación por mes y aduana (crédito fiscal)."
   ],
   "pasos": [
-   "Entra a Import. y export. › Reportes y gráficas › Reportes › Tributos de aduana y elige la organización ({organizacion}) y la localidad ({empresa}).",
-   "Elige el «Año» o el rango «Desde» / «Hasta».",
-   "Revisa la vista previa y presiona «PDF» o «Excel»."
+   "Entra a Import. y export. › Reportes y gráficas › Reportes › Tributos de aduana y elige la «Empresa» ({empresa}).",
+   "Elige «Desde» y «Hasta».",
+   "Marca o desmarca «Gráficas».",
+   "Revisa el DAI y el IVA de importación por mes y aduana; el IVA es crédito fiscal del período.",
+   "Presiona «PDF» o «Excel»."
   ],
   "reporte": {
    "columnas": [
@@ -457,6 +2097,103 @@
     ]
    ]
   },
-  "voz": "Tributos de aduana de noviembre: novecientos seis quetzales de DAI y mil ciento noventa y seis de IVA, que es crédito fiscal."
+  "voz": "Tributos de aduana de noviembre: novecientos seis quetzales de DAI y mil ciento noventa y seis de IVA, que es crédito fiscal.",
+  "elementos": [
+   {
+    "grupo": "Filtros",
+    "filas": [
+     [
+      "Empresa",
+      "Lista",
+      "{empresa}",
+      "Empresa (localidad) agrupada por su organización; todo lo que muestra la pantalla es de esta empresa."
+     ],
+     [
+      "Desde / Hasta",
+      "Fecha",
+      "01/01/2026 – 17/11/2026",
+      "Rango de fechas de las pólizas o exportaciones; por omisión del 1 de enero a hoy."
+     ],
+     [
+      "Gráficas",
+      "Casilla",
+      "Marcada",
+      "Muestra u oculta las gráficas en pantalla, en el PDF y en el Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Botones",
+    "filas": [
+     [
+      "PDF",
+      "Botón",
+      "",
+      "Genera el listado o reporte en PDF con el encabezado de la empresa."
+     ],
+     [
+      "Excel",
+      "Botón",
+      "",
+      "Descarga la misma información en Excel."
+     ]
+    ]
+   },
+   {
+    "grupo": "Columnas del reporte",
+    "filas": [
+     [
+      "Mes",
+      "Columna",
+      "Noviembre 2026",
+      "Mes."
+     ],
+     [
+      "Aduana",
+      "Columna",
+      "PUERTO QUETZAL",
+      "Aduana (SIN ADUANA si no se indicó)."
+     ],
+     [
+      "Pólizas",
+      "Columna",
+      "3",
+      "Cantidad."
+     ],
+     [
+      "CIF Q / DAI Q / IVA Q",
+      "Columna",
+      "250,000.00 / 18,500.00 / 32,220.00",
+      "Base y tributos."
+     ],
+     [
+      "Total tributos Q",
+      "Columna",
+      "50,720.00",
+      "DAI + IVA."
+     ],
+     [
+      "Tributos por aduana",
+      "Gráfica",
+      "",
+      "Barras por aduana."
+     ]
+    ]
+   }
+  ],
+  "parametros": [
+   [
+    "Estado de las pólizas",
+    "LIQUIDADA · INGRESADA",
+    "",
+    "Solo entran las pólizas ya liquidadas o ingresadas a bodega."
+   ],
+   [
+    "Gráficas",
+    "Sí · No",
+    "Sí",
+    "Incluye o quita las gráficas de la pantalla y de las salidas."
+   ]
+  ]
  }
 }
