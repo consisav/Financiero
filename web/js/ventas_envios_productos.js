@@ -63,15 +63,19 @@
     table.det .n { text-align: right; white-space: nowrap; } table.det .c { text-align: center; }
     .q { display: flex; justify-content: space-between; gap: 6px; }
     .pie { margin-top: auto; padding-top: 14px; }
-    .totales { display: grid; grid-template-columns: 1fr 260px; gap: 12px; align-items: stretch; margin-bottom: 14px; }
-    .letras b { display: block; color: #13406b; }
-    .tot { display: grid; grid-template-columns: 120px 1fr; border: 1.3px solid #2b3d50; border-radius: 12px; overflow: hidden; }
-    .tot span { background: #3d7cc0; color: #fff; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; border-right: 1.3px solid #2b3d50; border-radius: 0 12px 12px 0; }
-    .tot b { display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 13px; }
-    .firmas { display: grid; grid-template-columns: 1fr 190px; gap: 8px 24px; color: #13406b; font-size: 9.5px; align-items: end; }
-    .linea { display: inline-block; min-width: 230px; border-bottom: 1px solid #13406b; margin-left: 10px; }
-    .nombre { text-align: right; }
-    .recibido { border: 1.3px solid #13406b; border-radius: 12px 12px 0 0; border-bottom: 0; height: 58px; text-align: center; padding-top: 10px; grid-row: span 2; align-self: end; }
+    .totales { display: grid; grid-template-columns: 1fr 120px 135px; gap: 12px; align-items: stretch; margin-bottom: 16px; }
+    .letras { font-size: 10.5px; } .letras b { display: block; color: #13406b; }
+    .tot-et { background: #3d7cc0; color: #fff; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 1.3px solid #2b3d50; border-radius: 10px; }
+    .tot-val { border: 1.3px solid #2b3d50; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 11.5px; font-weight: 700; }
+    .firmas { display: grid; grid-template-columns: 1fr 210px; gap: 0 28px; color: #1f4f86; font-size: 9px; }
+    .f-izq { display: grid; grid-template-rows: auto 1fr 1fr; }
+    .f-fila { display: grid; grid-template-columns: 175px 250px; align-items: end; align-content: end; }
+    .f-fila .linea { border-bottom: 1px solid #1f4f86; height: 12px; }
+    .f-fila .quien { grid-column: 2; text-align: center; padding-top: 1px; }
+    .nombre-de { text-align: right; margin-bottom: 10px; white-space: nowrap; }
+    .nombre-de span { display: inline-block; width: 140px; border-bottom: 1px solid #1f4f86; margin-left: 4px; }
+    .recibido { border: 1.3px solid #1f4f86; border-radius: 12px; height: 104px; text-align: center; padding-top: 12px; }
+    .f-sello { text-align: center; margin-top: 6px; }
     .anulado { position: fixed; top: 40%; left: 0; right: 0; text-align: center; font-size: 80px; color: rgba(190, 30, 30, .13); transform: rotate(-24deg); font-weight: 800; letter-spacing: .1em; }
   `;
   const htmlEmpresa = (emp) => `<div class="emp">${emp.logo ? `<img src="${emp.logo}" alt="">` : `<b>${esc(emp.nombre)}</b>`}
@@ -81,6 +85,14 @@
   const fechaLarga = (d) => (d ? new Date(`${String(d).slice(0, 10)}T12:00:00`).toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\./g, '').replace(/ /g, '-').replace(/-(\w)/, (m, c) => `-${c.toUpperCase()}`) : '');
   const fechaGuion = (d) => (d ? String(d).slice(0, 10).split('-').reverse().join('-') : '');
 
+  // Pie de las dos impresiones: nombre de, firma y sello de la empresa, firma del responsable y recibido de conformidad.
+  const htmlFirmas = (emp, e) => `<div class="firmas">
+      <div class="f-izq"><div></div>
+        <div class="f-fila"><span>FIRMA Y SELLO DE ${esc(String(emp.nombre || '').toUpperCase())}:</span><span class="linea"></span></div>
+        <div class="f-fila"><span>FIRMA RESPONSABLE:</span><span class="linea"></span><span class="quien">${esc(String(e.responsable || '').toUpperCase())}</span></div></div>
+      <div><div class="nombre-de">NOMBRE DE:<span></span></div><div class="recibido">RECIBIDO DE CONFORMIDAD</div><div class="f-sello">FIRMA Y SELLO</div></div>
+    </div>`;
+
   function imprimir(tipo, e, lineas, emp, moneda) {
     const sim = moneda?.simbolo || 'Q.';
     const simb = /\.$/.test(sim) ? sim : sim === 'Q' ? 'Q.' : sim;
@@ -88,7 +100,6 @@
     const nomMon = String(moneda?.nombre || 'QUETZALES').toUpperCase();
     const letras = window.BANCOS.enLetras ? window.BANCOS.enLetras(total, nomMon) : '';
     const anulado = e.estado === 'ANULADO' ? '<div class="anulado">ANULADO</div>' : '';
-    const firmaEmp = `FIRMA Y SELLO DE ${esc(String(emp.nombre || '').toUpperCase())}:`;
     let cuerpo;
     if (tipo === 'FACTURA') {
       cuerpo = `<div class="top">${htmlEmpresa(emp)}<div class="doc">Documento de Envío<br><b># ${esc(String(e.numero ?? ''))}</b></div></div>
@@ -98,17 +109,14 @@
         <tbody>${lineas.map((x) => `<tr><td class="c">${fmt.monto(x.cantidad).replace(/\.00$/, '')}</td><td>${esc(String(x.producto_codigo ?? ''))}</td><td>${esc(x.descripcion || '')}${x.lote ? ` <small>· Lote ${esc(x.lote)}</small>` : ''}</td>
           <td class="n"><span class="q"><span>${esc(simb)}</span><span>${fmt.monto(x.precio)}</span></span></td><td class="n"><span class="q"><span>${esc(simb)}</span><span>${fmt.monto(Number(x.cantidad) * Number(x.precio))}</span></span></td></tr>`).join('')}</tbody></table>
         <div class="pie">
-          <div class="totales"><div class="caja letras"><b>Valor en Letras:</b>${esc(letras)}</div><div class="tot"><span>Total:</span><b><small>${esc(simb)}</small> ${fmt.monto(total)}</b></div></div>
-          <div class="firmas"><div class="nombre">NOMBRE DE: <span class="linea" style="min-width:150px"></span></div><div></div>
-            <div>${firmaEmp}<span class="linea"></span></div><div class="recibido">RECIBIDO DE CONFORMIDAD</div></div>
+          <div class="totales"><div class="caja letras"><b>Valor en Letras:</b>${esc(letras)}</div><div class="tot-et">Total:</div><div class="tot-val"><span>${esc(simb)}</span><span>${fmt.monto(total)}</span></div></div>
+          ${htmlFirmas(emp, e)}
         </div>`;
     } else {
       cuerpo = `<div class="top">${htmlEmpresa(emp)}<div class="caja envbox">${kv([['Envío', `<span class="num">${esc(String(e.numero ?? ''))}</span>`], ['Fecha Emisión', esc(fechaGuion(e.fecha))], ['Nombre', esc(e.nombre || '')], ['Nit', esc(e.nit || '')], ['Teléfono', esc(e.telefono || '')], ['Dirección Envío', esc(e.direccion || '')]])}</div></div>
         <table class="det"><thead><tr><th style="width:13%">Cantidad</th><th style="width:20%">Código</th><th>Descripción</th></tr></thead>
         <tbody>${lineas.map((x) => `<tr><td class="c">${fmt.monto(x.cantidad).replace(/\.00$/, '')}</td><td>${esc(String(x.producto_codigo ?? ''))}</td><td>${esc(x.descripcion || '')}${x.lote ? ` <small>· Lote ${esc(x.lote)}${x.fecha_vencimiento ? ` · vence ${esc(fechaGuion(x.fecha_vencimiento))}` : ''}</small>` : ''}</td></tr>`).join('')}</tbody></table>
-        <div class="pie"><div class="firmas"><div class="nombre">NOMBRE DE: <span class="linea" style="min-width:150px"></span></div><div></div>
-          <div>${firmaEmp}<span class="linea"></span></div><div class="recibido">RECIBIDO DE CONFORMIDAD</div>
-          <div>FIRMA RESPONSABLE:<span class="linea"></span>${e.responsable ? `<div style="margin:2px 0 0 120px">${esc(e.responsable)}</div>` : ''}</div><div></div></div></div>`;
+        <div class="pie">${htmlFirmas(emp, e)}</div>`;
     }
     const titulo = `${tipo === 'FACTURA' ? 'Envío tipo factura' : 'Envío'} ${e.numero ?? ''}`;
     const { v, imprimirYa } = window.FIN_IMPRESION();
