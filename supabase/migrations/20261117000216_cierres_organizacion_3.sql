@@ -1,6 +1,8 @@
 -- Script 216 · Organización 3 (Futura Farma-Mavisa): cierres contables del sistema anterior, de la carpeta «Data Cierres».
---   · CON_TIPOS_CIERRES (19): mismo catálogo que cargó el script 215; solo se agregan los que falten (no se sobrescriben).
+--   · CON_TIPOS_CIERRES (20): mismo catálogo que cargó el script 215; solo se agregan los que falten (no se sobrescriben).
 --     Única diferencia: el tipo 11 (CIERRE CENTROS 4) aquí es clasificación E y en el Hospital C; Futura Farma no lo usa.
+--     El tipo 4 lo usan 57 cierres de Futura Farma pero no viene en CON_TIPOS_CIERRES: se crea en el catálogo
+--     como cierre por centros (clasificación E), porque sus saldos vienen en CON_SALDOS_CIERRE_CC.
 --   · CON_CIERRES (182) → cierres_contables_anteriores, localidades 3-01 y 3-02, años 2023-2026.
 --   · CON_SALDOS_CIERRE (31720 filas) → saldos_cierre: solo las 12918 con algún monto; las 18802 en cero no traen información.
 --     Cada fila se liga a su cuenta (código y VERSION del catálogo de la localidad); si no existe queda el código.
