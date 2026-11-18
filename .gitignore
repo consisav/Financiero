@@ -109,3 +109,8 @@ supabase/pendientes/245_cargas_sat_organizacion_3.sql
 # Notas de venta fisicas de la organizacion 3 (NIT y nombres de clientes): solo local.
 supabase/pendientes/247_notas_venta_fisicas_organizacion_3.sql
 supabase/pendientes/249_factura_5970_organizacion_3.sql
+
+# Verificaciones con numeros de cuentas bancarias y autorizaciones de facturas recibidas: solo local.
+supabase/verificacion_233_247.sql
+supabase/verificacion_faltantes.sql
+supabase/verificacion_204_partes.sql
