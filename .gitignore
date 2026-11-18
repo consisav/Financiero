@@ -129,3 +129,12 @@ supabase/diagnostico_cuenta_y_cierre_oasturias.sql
 # Cajas chicas, subcajas y documentos de las organizaciones 4 y 7 (cuentas bancarias, responsables y proveedores): solo local.
 supabase/pendientes/254_cajas_parte_*.sql
 supabase/pendientes/255_documentos_cajas_parte_*.sql
+
+# Caja y Bancos de las organizaciones 4 y 7 (cuentas bancarias, beneficiarios, depositantes y clientes): solo local.
+supabase/pendientes/257_cheques_org*.sql
+supabase/pendientes/258_depositos_org*.sql
+supabase/pendientes/259_notas_org*.sql
+supabase/pendientes/260_conciliaciones_organizacion_4.sql
+supabase/pendientes/261_compras_notas_parte_*.sql
+supabase/verificacion_254_256.sql
+supabase/verificacion_257_261.sql
