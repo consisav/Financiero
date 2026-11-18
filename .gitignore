@@ -86,3 +86,9 @@ supabase/migrations/20261117000221_parametros_organizaciones_4_y_7.sql
 supabase/pendientes/221_parametros_organizaciones_4_y_7.sql
 supabase/migrations/20261117000223_cuentas_bancarias_organizaciones_4_y_7.sql
 supabase/pendientes/223_cuentas_bancarias_organizaciones_4_y_7.sql
+
+# Proveedores (NIT, contactos, cuentas bancarias), vendedores y clientes de las organizaciones 4 y 7: solo local.
+supabase/migrations/20261117000225_proveedores_organizaciones_4_y_7.sql
+supabase/pendientes/225_proveedores_parte_*.sql
+supabase/migrations/20261117000226_vendedores_clientes_organizaciones_4_y_7.sql
+supabase/pendientes/226_vendedores_clientes_organizaciones_4_y_7.sql
