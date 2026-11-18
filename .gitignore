@@ -96,3 +96,12 @@ supabase/pendientes/226_vendedores_clientes_organizaciones_4_y_7.sql
 # Liquidaciones de compras de las organizaciones 4 y 7 (numeros de cuentas bancarias): solo local.
 supabase/migrations/20261117000232_liquidaciones_compras_organizaciones_4_y_7.sql
 supabase/pendientes/232_liquidaciones_parte_*.sql
+
+# Organización 3, lote del 05-11-2026 al 17-11-2026: scripts con NIT, datos de clientes, cuentas bancarias o nombres de personas: solo local.
+supabase/pendientes/233_proveedores_organizacion_3.sql
+supabase/pendientes/234_clientes_organizacion_3.sql
+supabase/pendientes/236_liquidaciones_compras_organizacion_3.sql
+supabase/pendientes/237_cajas_parte_2_de_2.sql
+supabase/pendientes/238_facturas_organizacion_3.sql
+supabase/pendientes/241_envios_organizacion_3.sql
+supabase/pendientes/245_cargas_sat_organizacion_3.sql
