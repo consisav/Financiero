@@ -92,3 +92,7 @@ supabase/migrations/20261117000225_proveedores_organizaciones_4_y_7.sql
 supabase/pendientes/225_proveedores_parte_*.sql
 supabase/migrations/20261117000226_vendedores_clientes_organizaciones_4_y_7.sql
 supabase/pendientes/226_vendedores_clientes_organizaciones_4_y_7.sql
+
+# Liquidaciones de compras de las organizaciones 4 y 7 (numeros de cuentas bancarias): solo local.
+supabase/migrations/20261117000232_liquidaciones_compras_organizaciones_4_y_7.sql
+supabase/pendientes/232_liquidaciones_parte_*.sql
