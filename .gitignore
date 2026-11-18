@@ -105,3 +105,6 @@ supabase/pendientes/237_cajas_parte_2_de_2.sql
 supabase/pendientes/238_facturas_organizacion_3.sql
 supabase/pendientes/241_envios_organizacion_3.sql
 supabase/pendientes/245_cargas_sat_organizacion_3.sql
+
+# Notas de venta fisicas de la organizacion 3 (NIT y nombres de clientes): solo local.
+supabase/pendientes/247_notas_venta_fisicas_organizacion_3.sql
