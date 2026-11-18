@@ -1,0 +1,9 @@
+-- Script 256 · Detalle contable de las cajas chicas de las organizaciones 4 (Tecnoalsa) y 7 (AAPOS), de «CON_DETCON_CAJAS.xlsx» (19185 líneas: 4-01: 13251, 7-01: 5934).
+--   Se ejecuta después de los scripts 254 (cajas y subcajas) y 255 (documentos), en orden. Se puede ejecutar de nuevo: actualiza.
+--   Misma lógica del script 184: cada línea (MOVIMIENTO y LINEA del sistema anterior) queda en su subcaja con un número correlativo, en el orden del
+--   movimiento; la cuenta se busca en el catálogo de la localidad (VERSION). Al final cada línea se liga a su documento (mismo MOVIMIENTO) y su
+--   concepto dice el documento y el proveedor, como en los scripts 123 y 188.
+--   Columnas nuevas en caja_lineas (traen datos y no existían): centro_costo_id y centro_costo_anterior (CENTRO_COSTO, ligado al catálogo de centros,
+--   script 224) y documento_id (el documento de la subcaja). Las demás son las de los scripts 121 y 184 (movimiento, línea, cuenta, versión, debe y haber en dólares).
+--   6 líneas traían un monto negativo y pasan al lado contrario en positivo: 4-01 caja 5 subcaja 94 mov. 20 línea 1 (crédito -1.22); 4-01 caja 5 subcaja 94 mov. 20 línea 2 (débito -0.13); 4-01 caja 5 subcaja 94 mov. 20 línea 3 (débito -1.09); 4-01 caja 5 subcaja 94 mov. 21 línea 1 (crédito -1.32); 4-01 caja 5 subcaja 94 mov. 21 línea 2 (débito -0.14); 4-01 caja 5 subcaja 94 mov. 21 línea 3 (débito -1.18).
+--   Esta migración es el índice: el SQL está en supabase/pendientes/256_detalle_cajas_parte_1 a 8.
