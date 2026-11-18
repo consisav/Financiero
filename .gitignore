@@ -138,3 +138,4 @@ supabase/pendientes/260_conciliaciones_organizacion_4.sql
 supabase/pendientes/261_compras_notas_parte_*.sql
 supabase/verificacion_254_256.sql
 supabase/verificacion_257_261.sql
+supabase/verificacion_hoy.sql
