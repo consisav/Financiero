@@ -139,3 +139,5 @@ supabase/pendientes/261_compras_notas_parte_*.sql
 supabase/verificacion_254_256.sql
 supabase/verificacion_257_261.sql
 supabase/verificacion_hoy.sql
+supabase/pendientes/262_facturas_parte_*.sql
+supabase/pendientes/263_catalogos_y_cargas_sat_organizaciones_4_y_7.sql
