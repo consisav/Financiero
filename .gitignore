@@ -141,3 +141,5 @@ supabase/verificacion_257_261.sql
 supabase/verificacion_hoy.sql
 supabase/pendientes/262_facturas_parte_*.sql
 supabase/pendientes/263_catalogos_y_cargas_sat_organizaciones_4_y_7.sql
+supabase/pendientes/264_detalle_cargas_sat_parte_*.sql
+!supabase/pendientes/264_detalle_cargas_sat_parte_1_de_13.sql
