@@ -19,7 +19,7 @@ begin
   -- La validación de la pantalla (no se cambia el detalle de una compra anulada) se suspende durante la carga.
   alter table public.compra_items disable trigger compra_items_validar;
   with m (loc, compra, linea, descripcion, cantidad, cantidad_ant, costo, costo_ant) as (values
-      (1, -437, 1, 'COMPRAS VARIAS', 1, null, 233, null),
+      (1::integer, -437::integer, 1::integer, 'COMPRAS VARIAS'::text, 1::numeric, null::numeric, 233::numeric, null::numeric),
       (1, -436, 1, 'COMPRAS VARIAS', 1, null, 308, null),
       (1, -435, 1, 'COMPRAS VARIAS', 1, null, 575, null),
       (1, -434, 1, 'COMPRAS VARIAS', 1, null, 636.64, null),

@@ -15,7 +15,7 @@ begin
   -- b) Las líneas. Las validaciones de la pantalla (compra anulada o con partida) se suspenden durante la carga.
   alter table public.compra_lineas disable trigger compra_lineas_validar;
   with m (loc, compra, linea, cuenta, version, centro, debe, haber, debe_ant, haber_ant) as (values
-      (1, -438, 1, '6239', 1, null, 496.77, 0, null, null),
+      (1::integer, -438::integer, 1::integer, '6239'::text, 1::integer, null::text, 496.77::numeric, 0::numeric, null::numeric, null::numeric),
       (1, -438, 2, '21110102', 1, null, 0, 496.77, null, null),
       (1, 1, 1, '1141', 1, null, 6250, 0, null, null),
       (1, 1, 2, '11301', 1, null, 750, 0, null, null),
