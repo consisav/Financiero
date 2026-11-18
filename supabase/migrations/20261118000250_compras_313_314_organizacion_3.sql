@@ -75,11 +75,11 @@ begin
   -- Artículos (del kardex): línea, producto, lote, vencimiento, cantidad y costo unitario.
   alter table public.compra_articulos disable trigger compra_articulos_validar;
   with m (compra, linea, producto, lote, fabrica, vence, cantidad, costo) as (values
-      (313::integer, 1::integer, 155::integer, 'L260068'::text, null::date, date '2029-08-06', 3000::numeric, 7::numeric),
-      (313, 2, 10, 'F260103', null, date '2028-08-24', 100, 20),
-      (313, 3, 13, 'F260080', null, date '2029-06-26', 500, 15.2),
-      (313, 4, 173, 'K260054', null, date '2029-08-12', 140, 37),
-      (314, 1, 27, 'A260117', null, date '2028-01-27', 370, 25)),
+      (313::integer, 1::integer, 155::integer, 'L260068'::text, date '2026-08-06', date '2029-08-06', 3000::numeric, 7::numeric),
+      (313, 2, 10, 'F260103', date '2026-08-24', date '2028-08-24', 100, 20),
+      (313, 3, 13, 'F260080', date '2026-06-26', date '2029-06-26', 500, 15.2),
+      (313, 4, 173, 'K260054', date '2026-08-12', date '2029-08-12', 140, 37),
+      (314, 1, 27, 'A260117', date '2026-01-27', date '2028-01-27', 370, 25)),
   x as (
     insert into public.compra_articulos (compra_id, linea, producto_id, producto_codigo, producto_anterior, serie, cantidad, costo_unitario, descuento, costo_extra,
            inventario, exento, inventariado, fecha_fabricacion, fecha_vencimiento, control_fecha)
