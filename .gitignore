@@ -114,3 +114,9 @@ supabase/pendientes/249_factura_5970_organizacion_3.sql
 supabase/verificacion_233_247.sql
 supabase/verificacion_faltantes.sql
 supabase/verificacion_204_partes.sql
+
+# Borrado de la factura de prueba y de los registros de prueba de un usuario en la organizacion 3 (nombre del cliente y del usuario): solo local.
+supabase/pendientes/251_eliminar_factura_prueba_5970_organizacion_3.sql
+supabase/pendientes/252_eliminar_registros_oasturias_organizacion_3.sql
+supabase/verificacion_cierre_org3.sql
+supabase/diagnostico_registros_oasturias_org3.sql
