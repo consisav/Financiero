@@ -758,7 +758,7 @@ begin
   -- ---------- Encabezados ----------
   for r in
     select * from (values
-      (1, 1001, 'POLIZAS GENERAL', null::text, null::text, null::text, 1, null, 'A', 'C', 'N', 'S', null, null, null::text, 'FRA'::text, 45414::integer, null::text),
+      (1, 1001, 'POLIZAS GENERAL', null::text, null::text, null::text, 1::integer, null::integer, 'A'::text, 'C'::text, 'N'::text, 'S'::text, null::text, null::integer, null::text, 'FRA'::text, 45414::integer, null::text),
       (1, 1002, 'DEPOSITOS VARIOS BI Q', null, null, null, 1, null, 'A', 'C', 'N', 'S', 'AIA', 45502, null, 'AIA', 45462, null),
       (1, 1003, 'BANRURAL DEPOSITOS VARIOS', null, null, null, 1, null, 'A', 'C', 'N', 'S', 'FRA', 45574, null, 'AIA', 45462, null),
       (1, 1004, 'NOTAS DE CREDITO BANRURAL Q', null, null, null, 1, null, 'A', 'C', 'N', 'S', 'JES', 45546, null, 'FRA', 45476, null),
@@ -1710,7 +1710,7 @@ begin
   -- ---------- Encabezados ----------
   for r in
     select * from (values
-      (1, 1001, 'PARTIDAS DIARIAS', null::text, null::text, 'N'::text, 1, 1001, 'A', 'C', 'N', 'S', null, null, null::text, 'SYS'::text, 45574::integer, null::text),
+      (1, 1001, 'PARTIDAS DIARIAS', null::text, null::text, 'N'::text, 1::integer, 1001::integer, 'A'::text, 'C'::text, 'N'::text, 'S'::text, null::text, null::integer, null::text, 'SYS'::text, 45574::integer, null::text),
       (1, 1002, 'CHEQUES RIFA CTA 3445872209', null, null, 'N', 1, 1002, 'A', 'C', 'N', 'S', null, null, null, 'SYS', 45575, null),
       (1, 1003, 'CHEQUES RIFA CTA 3445923680', null, null, 'N', 1, 1003, 'A', 'C', 'N', 'S', null, null, null, 'SYS', 45576, null),
       (1, 1004, 'CHEQUES RIFA CTA 027-006935-4', null, null, 'N', 1, 1004, 'A', 'C', 'N', 'S', null, null, null, 'SYS', 45577, null),

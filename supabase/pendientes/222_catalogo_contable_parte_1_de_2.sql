@@ -758,7 +758,7 @@ begin
   -- ---------- Encabezados ----------
   for r in
     select * from (values
-      (1, 1001, 'POLIZAS GENERAL', null::text, null::text, null::text, 1, null, 'A', 'C', 'N', 'S', null, null, null::text, 'FRA'::text, 45414::integer, null::text),
+      (1, 1001, 'POLIZAS GENERAL', null::text, null::text, null::text, 1::integer, null::integer, 'A'::text, 'C'::text, 'N'::text, 'S'::text, null::text, null::integer, null::text, 'FRA'::text, 45414::integer, null::text),
       (1, 1002, 'DEPOSITOS VARIOS BI Q', null, null, null, 1, null, 'A', 'C', 'N', 'S', 'AIA', 45502, null, 'AIA', 45462, null),
       (1, 1003, 'BANRURAL DEPOSITOS VARIOS', null, null, null, 1, null, 'A', 'C', 'N', 'S', 'FRA', 45574, null, 'AIA', 45462, null),
       (1, 1004, 'NOTAS DE CREDITO BANRURAL Q', null, null, null, 1, null, 'A', 'C', 'N', 'S', 'JES', 45546, null, 'FRA', 45476, null),
