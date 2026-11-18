@@ -125,3 +125,7 @@ supabase/pendientes/253_ventas_prueba_alex_organizacion_3.sql
 supabase/pendientes/252_NO_EJECUTAR_borrado_oasturias_cancelado.txt
 supabase/pendientes/252b_NO_EJECUTAR_borrado_oasturias_cancelado.txt
 supabase/diagnostico_cuenta_y_cierre_oasturias.sql
+
+# Cajas chicas, subcajas y documentos de las organizaciones 4 y 7 (cuentas bancarias, responsables y proveedores): solo local.
+supabase/pendientes/254_cajas_parte_*.sql
+supabase/pendientes/255_documentos_cajas_parte_*.sql
