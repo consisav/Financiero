@@ -146,3 +146,5 @@ supabase/pendientes/264_detalle_cargas_sat_parte_*.sql
 supabase/pendientes/266_partidas_org*.sql
 supabase/pendientes/268_liquidacion_caja_chica_parte_*.sql
 !supabase/pendientes/268_liquidacion_caja_chica_parte_1_de_3.sql
+supabase/pendientes/272_inventario_parte_*.sql
+supabase/pendientes/273_envios_parte_*.sql
