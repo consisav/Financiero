@@ -23,15 +23,6 @@ join public.organizaciones g on g.codigo::text = '4' join public.localidades l o
 where exists (select 1 from public.tipos_cierre x where x.codigo = v.tipo)
 on conflict (localidad_id, anio, mes, tipo_cierre) do update set resultado_ejercicio = excluded.resultado_ejercicio, fecha = excluded.fecha, usuario = excluded.usuario;
 
-insert into public.cierres_contables_anteriores (organizacion_id, localidad_id, anio, mes, tipo_cierre, resultado_ejercicio, fecha, usuario)
-select l.organizacion_id, l.id, v.anio, v.mes, v.tipo, v.res, (v.f::timestamp at time zone 'America/Guatemala'), v.usr
-from (values
-
-) as v (loc, anio, mes, tipo, res, f, usr)
-join public.organizaciones g on g.codigo::text = '7' join public.localidades l on l.organizacion_id = g.id and l.correlativo = v.loc
-where exists (select 1 from public.tipos_cierre x where x.codigo = v.tipo)
-on conflict (localidad_id, anio, mes, tipo_cierre) do update set resultado_ejercicio = excluded.resultado_ejercicio, fecha = excluded.fecha, usuario = excluded.usuario;
-
 select o.codigo::text as organizacion, count(c.id) as cierres
 from public.organizaciones o left join public.cierres_contables_anteriores c on c.organizacion_id = o.id
 where o.codigo::text in ('4', '7') group by o.codigo order by 1;
