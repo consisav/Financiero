@@ -40,6 +40,14 @@
     const certificada = () => !!actual?.autorizacion;
     const editable = () => ctx.admin && (!actual || (modificando && actual.estado === 'FACTURADA' && !certificada()));
     const sim = (id) => ctx.moneda(id)?.simbolo || 'Q';
+    // Datos de la línea que vienen del producto: descripción, tipo (servicio o bien), unidad de medida, lote, registro sanitario y precio del tipo de precio.
+    const llenarLinea = (x, p, tp) => {
+      x.producto_id = p.id; x.producto_codigo = p.codigo; x.descripcion = p.nombre;
+      x.tipo = /SERVICIO/i.test(p.tipos_producto?.nombre || '') ? 'SERVICIO' : 'BIEN'; x.inventario = x.tipo === 'BIEN';
+      x.unidad_medida = p.tipos_medida?.nombre || x.unidad_medida || '';
+      x.lote = p.lote || x.lote || ''; x.registro_sanitario = p.registro_sanitario || x.registro_sanitario || '';
+      const pr = tp ? precioDe(p.id, tp) : 0; if (pr) x.precio = pr;
+    };
     const precioDe = (productoId, tipoPrecioId) => Number(preciosProd.find((x) => x.producto_id === productoId && x.tipo_precio_id === tipoPrecioId)?.precio || 0);
     const nuevaLinea = () => ({ producto_id: null, producto_codigo: null, descripcion: '', tipo: 'BIEN', cantidad: 1, precio: 0, inventario: true, cpa: false, fecha_compromiso: '', unidad_medida: '', lote: '', registro_sanitario: '', fecha_vencimiento: '', fecha_fabricacion: '' });
 
@@ -84,7 +92,7 @@
         window.UI.todo(sb.from('vendedores').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo').order('id')),
         sb.from('tipos_precio').select('id, codigo, nombre, activo').eq('localidad_id', loc).order('codigo'),
         sb.from('bodegas').select('id, codigo, nombre, estado').eq('localidad_id', loc).order('codigo'),
-        sb.from('productos').select('id, codigo, nombre, estado, tipo_medida_id, lote, precio_costo').eq('localidad_id', loc).order('codigo'),
+        sb.from('productos').select('*, tipos_medida(nombre), tipos_producto(nombre)').eq('localidad_id', loc).order('codigo'),
         sb.from('producto_precios').select('producto_id, tipo_precio_id, precio').eq('localidad_id', loc)
       ]);
       clientes = c.data || []; vendedores = v.data || []; precios = p.data || []; bodegas = b.data || []; productos = pr.data || []; preciosProd = pp.data || [];
@@ -520,7 +528,7 @@
       const tq = Number(x.cantidad || 0) * Number(x.precio || 0);
       return `<tr data-linea="${i}" class="${i === lineaSel ? 'actual' : ''}">
         <td class="pc-n">${i + 1}</td>
-        <td><input list="vf-productos" data-l="producto" value="${esc(x.producto_codigo != null ? String(x.producto_codigo) : '')}" placeholder="${ed ? 'Código' : ''}" ${dis}></td>
+        <td><div class="lov-campo"><input list="vf-productos" data-l="producto" value="${esc(x.producto_codigo != null ? String(x.producto_codigo) : '')}" placeholder="${ed ? 'Código' : ''}" aria-label="Producto de la línea ${i + 1}" ${dis}>${ed ? `<button type="button" class="icono-boton lov-btn" data-accion="lov-producto" data-lov-linea="${i}" title="Lista de productos" aria-label="Lista de productos de la línea ${i + 1}"><i class="ti ti-dots" aria-hidden="true"></i></button>` : ''}</div></td>
         <td><input data-l="descripcion" value="${esc(x.descripcion || '')}" maxlength="300" ${dis}></td>
         <td><select data-l="tipo" ${dis}>${['BIEN', 'SERVICIO'].map((y) => `<option ${x.tipo === y ? 'selected' : ''}>${y}</option>`).join('')}</select></td>
         <td class="num"><input type="number" step="any" min="0" data-l="cantidad" value="${esc(String(x.cantidad ?? ''))}" ${dis}></td>
@@ -721,7 +729,7 @@
         leerTablas();
         const tr = prod.closest('tr'); const x = lineas[Number(tr.dataset.linea)];
         const p = porCodigoProd(prod.value);
-        if (p) { x.producto_id = p.id; x.producto_codigo = p.codigo; x.descripcion = p.nombre; x.lote = x.lote || p.lote || ''; const tp = Number(form.elements.tipo_precio_id.value) || null; const pr = tp ? precioDe(p.id, tp) : 0; if (pr) x.precio = pr; }
+        if (p) llenarLinea(x, p, Number(form.elements.tipo_precio_id.value) || null);
         else { x.producto_id = null; x.producto_codigo = Number(prod.value) || null; }
         return repintar();
       }
@@ -794,6 +802,17 @@
       if (a === 'rep-envio') return repEnvio();
       if (a === 'guia') { guiaTamano = ctx.pDet.querySelector('[name=guia_tamano]:checked')?.value || 'COMPLETA'; return guia(); }
       if (a === 'excel') return excel();
+      if (a === 'lov-producto') {
+        leerTablas();
+        const i = Number(e.target.closest('[data-lov-linea]').dataset.lovLinea); const x = lineas[i]; if (!x) return null;
+        const id = await window.LOV({ titulo: 'Productos', columnas: ['Código', 'Nombre', 'Unidad', 'Lote', 'Precio'], actual: x.producto_id,
+          filas: productos.filter((p) => p.estado === 'ACTIVO').map((p) => { const tp = Number(ctx.pDet.querySelector('[name=tipo_precio_id]')?.value) || null; const pr = tp ? precioDe(p.id, tp) : 0;
+            return { id: p.id, celdas: [p.codigo, p.nombre, p.tipos_medida?.nombre || '', p.lote || '', pr ? fmt.monto(pr) : ''] }; }) });
+        const p = id ? productos.find((y) => y.id === id) : null;
+        if (!p) return null;
+        llenarLinea(x, p, Number(ctx.pDet.querySelector('[name=tipo_precio_id]')?.value) || null); lineaSel = i;
+        return repintar();
+      }
       if (a === 'lov-clientes') {
         // Lista de valores de clientes: al elegir uno se traen NIT, dirección, correo, teléfono, contacto, vendedor, precio, bodega, crédito y entrega.
         leerTablas();
