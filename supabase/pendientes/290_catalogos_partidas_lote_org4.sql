@@ -145,7 +145,7 @@ begin
 
   -- Centros de costo.
   for r in select * from (values
-    ) as x(loc, codigo) order by loc, length(codigo), codigo loop
+    (null::integer, null::text)) as x(loc, codigo) where loc is not null order by loc, length(codigo), codigo loop
     select id into v_loc from public.localidades where organizacion_id = v_org and correlativo = r.loc;
     if v_loc is null then continue; end if;
     v_kc := null;
