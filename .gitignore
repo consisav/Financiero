@@ -169,3 +169,27 @@ supabase/pendientes/292_liquidacion_caja_chica_lote_parte_*.sql
 supabase/pendientes/294_kardex_lote_organizacion_4.sql
 supabase/pendientes/295_envios_lote_organizacion_4.sql
 supabase/verificacion_274_295.sql
+
+# Lote del 05 al 17-11-2026 de la organización 2 (Hospital Miraflores): pacientes, proveedores, usuarios y cuentas bancarias: solo local.
+supabase/pendientes/296_proveedores_hm_parte_*.sql
+supabase/pendientes/297_compras_hm_parte_*.sql
+!supabase/pendientes/297_compras_hm_parte_0_de_*.sql
+supabase/pendientes/298_compras_detalle_hm_parte_*.sql
+supabase/pendientes/300_liquidaciones_hm_parte_*.sql
+supabase/pendientes/301_compras_inventario_parte_*.sql
+!supabase/pendientes/301_compras_inventario_parte_1_de_*.sql
+supabase/pendientes/302_subcajas_hm_parte_*.sql
+supabase/pendientes/303_documentos_cajas_hm_parte_*.sql
+supabase/pendientes/305_cheques_hm_parte_*.sql
+supabase/pendientes/306_depositos_hm.sql
+supabase/pendientes/307_notas_hm_parte_*.sql
+supabase/pendientes/308_compras_notas_hm_parte_*.sql
+supabase/pendientes/309_compras_cheques_hm_parte_*.sql
+supabase/pendientes/310_facturas_hm_parte_*.sql
+!supabase/pendientes/310_facturas_hm_parte_0_de_*.sql
+supabase/pendientes/311_facturas_detalle_hm.sql
+supabase/pendientes/312_cargas_sat_hm_parte_*.sql
+supabase/pendientes/313_catalogos_partidas_hm.sql
+supabase/pendientes/313_partidas_hm.sql
+supabase/pendientes/316_kardex_hm.sql
+supabase/verificacion_296_316_parte_*.sql
