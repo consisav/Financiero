@@ -9,6 +9,7 @@
 --     su número en el sistema va después del último de la localidad (el script de compras de un lote nuevo las mueve si usa ese número).
 --   · Sin compra varia y sin valor (146, p. ej. 1-4 (0), 1-257 (0), 1-365 (0), 1-900 (0), 1-910 (0), 1-911 (0), 1-921 (0), 1-929 (0), 1-935 (0), 1-936 (0), 1-944 (0), 1-949 (0), 1-953 (0), 1-970 (0), 1-977 (0)): el sistema exige valor mayor que 0;
 --     el encabezado queda en la tabla nueva sin compra y sus 844 artículos no se cargan.
+--   · Compras sin PROVEEDOR en el archivo (121): la compra nueva queda con el proveedor «SIN PROVEEDOR».
 --   · Tabla nueva compras_inventario_anteriores: el encabezado completo del sistema anterior (28 columnas con datos, con su nombre original en minúsculas),
 --     ligado a su compra (compra_id) y con el tipo de vínculo.
 --     FECHA_DOCUMENTO inválida en el archivo (3: 1-302 (76250), 1-6643 (23/10/0224), 1-6660 (29/10/0224)): queda vacía y el valor original en fecha_documento_original.
