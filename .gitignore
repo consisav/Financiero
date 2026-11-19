@@ -148,3 +148,24 @@ supabase/pendientes/268_liquidacion_caja_chica_parte_*.sql
 !supabase/pendientes/268_liquidacion_caja_chica_parte_1_de_3.sql
 supabase/pendientes/272_inventario_parte_*.sql
 supabase/pendientes/273_envios_parte_*.sql
+
+# Lote del 05 al 17-11-2026 de las organizaciones 4 y 7 (proveedores, usuarios, cuentas bancarias, clientes y responsables): solo local.
+supabase/pendientes/274_proveedores_lote_parte_*.sql
+supabase/pendientes/278_liquidaciones_lote_parte_*.sql
+supabase/pendientes/279_compras_inventario_parte_*.sql
+!supabase/pendientes/279_compras_inventario_parte_1_de_*.sql
+supabase/pendientes/280_cajas_lote_parte_*.sql
+supabase/pendientes/281_documentos_cajas_lote_parte_*.sql
+supabase/pendientes/283_cheques_lote_org*.sql
+supabase/pendientes/284_depositos_lote_org*.sql
+supabase/pendientes/285_notas_lote_org*.sql
+supabase/pendientes/286_compras_notas_lote_parte_*.sql
+supabase/pendientes/287_compras_cheques_parte_*.sql
+supabase/pendientes/288_facturas_lote_organizacion_4.sql
+supabase/pendientes/289_facturas_notas_parte_*.sql
+!supabase/pendientes/289_facturas_notas_parte_1_de_*.sql
+supabase/pendientes/290_partidas_lote_org*.sql
+supabase/pendientes/292_liquidacion_caja_chica_lote_parte_*.sql
+supabase/pendientes/294_kardex_lote_organizacion_4.sql
+supabase/pendientes/295_envios_lote_organizacion_4.sql
+supabase/verificacion_274_295.sql
