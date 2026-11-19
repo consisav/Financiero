@@ -3,12 +3,12 @@
 --   lote del 05-11 al 17-11-2026. Para la organización 2 no se habían migrado (los lotes solo traían las compras varias, scripts 198 y 297).
 --   Lógica del script 279 (organización 4) y de los scripts 89 y 90 (organización 3):
 --   · Cada compra de inventario es el ingreso a bodega de una compra cuyo registro contable es una compra varia ya migrada: COMPRA_REF es el número de esa
---     compra varia (1883 compras; 77 con el documento escrito distinto en las dos: 592→2344, 637→1314, 638→1315, 639→1319, 640→1320, 641→1321, 642→1322, 643→1323, 644→1324, 715→1475, 789→1619, 790→1620, 930→1851, 966→1747, 1099→1848, 1185→1919, 1221→1936, 1222→1937, 1322→2068, 1323→2069, 1358→2098, 1396→2168, 1397→2169, 1421→2186, 1464→2202, 1509→2238, 1664→2423, 1676→2445, 1678→2448, 1710→2471, 1724→2488, 1725→2489, 1726→2490, 1727→2491, 1728→2492, 1737→2504, 1775→2539, 1781→2545, 1782→2547, 1878→2640, 2073→2875, 2470→3358, 2549→3422, 2575→3444, 2579→3448, 2667→3519, 2689→3543, 2848→3664, 2895→3726, 2922→3752, 3123→3944, 3160→3598, 3414→4196, 3425→4204, 3525→4276, 3680→4703, 3876→4603, 3968→4683, 4363→5110, 4462→5297, 4471→5313, 4579→5427, 4623→5494, 5754→7113, 5942→7567, 6096→7977, 6664→9812, 6676→9922, 6677→9974, 7419→12159, 7422→12166, 7493→12421, 7722→12978, 206→1750, 12→528, 24→595, 32→611). Sin COMPRA_REF se busca la compra varia con el mismo
---     proveedor, tipo, serie y documento (4356). Sus artículos van a esa compra (compra_articulos); la compra varia no se modifica.
---   · Sin compra varia y con valor (3720): se crea la compra con origen_anterior = 'MEDICAMENTOS' y su número del sistema anterior en compra_anterior;
+--     compra varia (1859 compras; 64 con el documento escrito distinto en las dos: 592→2344, 637→1314, 638→1315, 639→1319, 640→1320, 641→1321, 642→1322, 643→1323, 644→1324, 715→1475, 789→1619, 790→1620, 930→1851, 966→1747, 1099→1848, 1221→1936, 1222→1937, 1358→2098, 1396→2168, 1397→2169, 1421→2186, 1509→2238, 1664→2423, 1676→2445, 1678→2448, 1724→2488, 1725→2489, 1726→2490, 1727→2491, 1728→2492, 1775→2539, 1878→2640, 2470→3358, 2549→3422, 2579→3448, 2667→3519, 2848→3664, 2895→3726, 2922→3752, 3123→3944, 3160→3598, 3414→4196, 3425→4204, 3680→4703, 3876→4603, 3968→4683, 4363→5110, 4462→5297, 4471→5313, 4579→5427, 4623→5494, 5942→7567, 6096→7977, 6664→9812, 6676→9922, 6677→9974, 7419→12159, 7422→12166, 7493→12421, 7722→12978, 206→1750, 12→528, 24→595, 32→611). Sin COMPRA_REF se busca la compra varia con el mismo
+--     proveedor, tipo, serie y documento (4345). Solo cuentan las compras varias con valor (las de valor 0 no se migraron). Sus artículos van a esa compra (compra_articulos); la compra varia no se modifica.
+--   · Sin compra varia y con valor (3753): se crea la compra con origen_anterior = 'MEDICAMENTOS' y su número del sistema anterior en compra_anterior;
 --     su número en el sistema va después del último de la localidad (el script de compras de un lote nuevo las mueve si usa ese número).
---   · Sin compra varia y sin valor (146, p. ej. 1-4 (0), 1-257 (0), 1-365 (0), 1-900 (0), 1-910 (0), 1-911 (0), 1-921 (0), 1-929 (0), 1-935 (0), 1-936 (0), 1-944 (0), 1-949 (0), 1-953 (0), 1-970 (0), 1-977 (0)): el sistema exige valor mayor que 0;
---     el encabezado queda en la tabla nueva sin compra y sus 844 artículos no se cargan.
+--   · Sin compra varia y sin valor (148, p. ej. 1-4 (0), 1-257 (0), 1-365 (0), 1-900 (0), 1-910 (0), 1-911 (0), 1-921 (0), 1-929 (0), 1-935 (0), 1-936 (0), 1-944 (0), 1-949 (0), 1-953 (0), 1-970 (0), 1-977 (0)): el sistema exige valor mayor que 0;
+--     el encabezado queda en la tabla nueva sin compra y sus 845 artículos no se cargan.
 --   · Compras sin PROVEEDOR en el archivo (121): la compra nueva queda con el proveedor «SIN PROVEEDOR».
 --   · Tabla nueva compras_inventario_anteriores: el encabezado completo del sistema anterior (28 columnas con datos, con su nombre original en minúsculas),
 --     ligado a su compra (compra_id) y con el tipo de vínculo.
@@ -18,7 +18,7 @@
 --     Columnas nuevas en compra_articulos: costo_total_anterior (COSTO_TOTAL del archivo; el costo total lo calcula la base de datos) y compra_inventario_anterior
 --     (número de la compra de inventario) y costo_unitario_anterior (costo unitario negativo del archivo en 5 líneas: 1-437 línea 6, 1-4020 línea 1, 1-4382 línea 1, 1-5769 línea 1, 1-6551 línea 2;
 --     su costo es COSTO_TOTAL / CANTIDAD). Las 119 líneas con cantidad 0 no se cargan (el sistema exige cantidad mayor que 0).
---     71 compras varias reciben artículos de más de una compra de inventario: la segunda usa las líneas 1001 en adelante.
+--     69 compras varias reciben artículos de más de una compra de inventario: la segunda usa las líneas 1001 en adelante.
 --   · Contable (ACT_DETCON_COMPRAS_MED): es la partida del ingreso a bodega (inventario contra proveedores), distinta de la de la compra varia; para no duplicar
 --     la cuenta por pagar de la compra varia no va a su detalle contable, sino a la tabla nueva compras_inventario_contable_anteriores (cuenta del catálogo
 --     de la localidad, versión, débito y crédito), ligada a su encabezado y a su compra.

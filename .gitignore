@@ -177,6 +177,7 @@ supabase/pendientes/297_compras_hm_parte_*.sql
 supabase/pendientes/298_compras_detalle_hm_parte_*.sql
 supabase/pendientes/300_liquidaciones_hm_parte_*.sql
 supabase/pendientes/301_compras_inventario_parte_*.sql
+supabase/pendientes/301b_compras_inventario_correccion_parte_*.sql
 !supabase/pendientes/301_compras_inventario_parte_1_de_*.sql
 supabase/pendientes/302_subcajas_hm_parte_*.sql
 supabase/pendientes/303_documentos_cajas_hm_parte_*.sql
