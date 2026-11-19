@@ -414,12 +414,16 @@
       const dato = (r, val) => `<div class="vf-pr-dato"><span>${r}</span><b>${esc(val || '') || '—'}</b></div>`;
       const tf = { M: 'MANUAL', A: 'AUTOMÁTICA' }[v.tipo_factura_anterior] || v.tipo_factura_anterior || (f ? 'MANUAL' : '');
       const nf = !f ? 'disabled title="Registra primero la factura"' : '';
+      // Cada botón desactivado dice por qué; se activan al registrar la factura.
+      const motivoCert = !f ? 'Registra primero la factura' : f.estado !== 'FACTURADA' ? 'La factura está anulada' : certificada() ? 'La factura ya está certificada' : '';
+      const motivoAnul = !f ? 'Registra primero la factura' : f.estado !== 'FACTURADA' ? 'La factura ya está anulada' : !ctx.admin ? 'Solo un administrador puede anular facturas' : modificando ? 'Termina o cancela la modificación' : '';
+      const des = (m) => m ? `disabled title="${m}"` : '';
       return `<div class="vf-pr-grid">
         <section class="vf-pr-col">
           <h3 class="ta-col-titulo"><i class="ti ti-file-invoice" aria-hidden="true"></i> Factura</h3>
-          <button type="button" class="boton secundario-sm" data-accion="certificar" ${f && !certificada() && f.estado === 'FACTURADA' ? '' : 'disabled'}><i class="ti ti-certificate" aria-hidden="true"></i> Certificar factura</button>
+          <button type="button" class="boton secundario-sm" data-accion="certificar" ${des(motivoCert)}><i class="ti ti-certificate" aria-hidden="true"></i> Certificar factura</button>
           <button type="button" class="boton secundario-sm" data-accion="pdf" ${nf}><i class="ti ti-printer" aria-hidden="true"></i> Imprimir factura</button>
-          <button type="button" class="boton secundario-sm rp-peligro" data-accion="anular" ${puede ? '' : 'disabled'}><i class="ti ti-ban" aria-hidden="true"></i> Anular factura</button>
+          <button type="button" class="boton secundario-sm rp-peligro" data-accion="anular" ${puede ? '' : des(motivoAnul || 'No se puede anular')}><i class="ti ti-ban" aria-hidden="true"></i> Anular factura</button>
           <button type="button" class="boton secundario-sm" data-accion="validar" ${nf}><i class="ti ti-checklist" aria-hidden="true"></i> Validar factura</button>
           ${f && f.estado === 'FACTURADA' ? `<div class="vf-pr-notas"><span>Emitir nota</span>${[['notas-de-credito-electronicas', 'Crédito', 'ti-file-minus'], ['notas-de-debito-electronicas', 'Débito', 'ti-file-plus'], ['notas-de-abono-electronicas', 'Abono', 'ti-file-dollar']].map(([r, t, i]) => `<a class="boton secundario-sm" href="#/facturacion/${r}/factura-${f.id}" title="Nota de ${t.toLowerCase()} con esta factura de referencia"><i class="ti ${i}" aria-hidden="true"></i> ${t}</a>`).join('')}</div>` : ''}
           ${f?.estado === 'ANULADA' && f.motivo_anulacion ? `<p class="cc-ingreso">Anulada: ${esc(f.motivo_anulacion)}</p>` : ''}
