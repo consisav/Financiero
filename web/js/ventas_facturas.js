@@ -153,7 +153,7 @@
       return { cliente_codigo: c.codigo, cliente_id: c.id, nombre: c.nombre, nit: c.tipo_documento === 'CF' ? 'CF' : c.documento, consumidor_final: c.tipo_documento === 'CF', contacto: c.contacto || '', telefono: c.telefono || '',
         correo: c.correo || '', direccion: c.direccion || '', direccion_envio: c.direccion_envio || '', nit_externo: c.nit_externo || '', vendedor_id: c.vendedor_id, tipo_precio_id: c.tipo_precio_id, bodega_id: c.bodega_id,
         forma_pago: c.forma_pago || 'CONTADO', dias_credito: c.dias_credito || 0, fecha_cobro: c.forma_pago === 'CRÉDITO' ? sumar(c.dias_credito, fecha) : '', modo_entrega: c.modo_entrega || 'OFICINA',
-        agente_retenedor: !!c.agente_retenedor };
+        agente_retenedor: !!c.agente_retenedor, incoterm: c.exp_incoterm || '' };
     }
     const valoresNuevos = () => {
       const gtq = ctx.monedaBase();
@@ -214,7 +214,7 @@
               <section class="bm-bloque dpb-banda vf">
                 <h3 class="ta-col-titulo"><i class="ti ti-user" aria-hidden="true"></i> Cliente</h3>
                 <div class="dpb-g vfb-g1">
-                  <label class="campo"><span>Código</span><input list="vf-clientes" name="cliente_codigo" value="${esc(String(v.cliente_codigo ?? ''))}" placeholder="Código o nombre" ${dis}></label>
+                  <div class="campo"><span>Código</span><div class="lov-campo"><input list="vf-clientes" name="cliente_codigo" value="${esc(String(v.cliente_codigo ?? ''))}" placeholder="Código o nombre" aria-label="Código del cliente" ${dis}><button type="button" class="icono-boton lov-btn" data-accion="lov-clientes" title="Lista de clientes (${clientes.length})" aria-label="Lista de clientes" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
                   <label class="campo"><span>Cliente *</span><input name="nombre" value="${esc(v.nombre || '')}" maxlength="150" ${dis}></label>
                   <label class="campo"><span>NIT</span><input name="nit" value="${esc(v.consumidor_final ? 'CF' : v.nit || '')}" maxlength="25" ${dis || (v.consumidor_final ? 'disabled' : '')}></label>
                   <label class="pc-check vf-chk"><input type="checkbox" name="consumidor_final" ${v.consumidor_final ? 'checked' : ''} ${dis}> C. F.</label>
@@ -794,6 +794,15 @@
       if (a === 'rep-envio') return repEnvio();
       if (a === 'guia') { guiaTamano = ctx.pDet.querySelector('[name=guia_tamano]:checked')?.value || 'COMPLETA'; return guia(); }
       if (a === 'excel') return excel();
+      if (a === 'lov-clientes') {
+        // Lista de valores de clientes: al elegir uno se traen NIT, dirección, correo, teléfono, contacto, vendedor, precio, bodega, crédito y entrega.
+        leerTablas();
+        const id = await window.LOV({ titulo: 'Clientes', columnas: ['Código', 'Nombre', 'NIT', 'Dirección', 'Teléfono'], actual: clientes.find((x) => String(x.codigo) === String(ctx.pDet.querySelector('[name=cliente_codigo]')?.value || '').trim())?.id,
+          filas: clientes.filter((x) => x.estado !== 'INACTIVO').map((x) => ({ id: x.id, celdas: [x.codigo, x.nombre, x.tipo_documento === 'CF' ? 'CF' : x.documento || '', x.direccion || '', x.telefono || ''] })) });
+        const c = id ? cliente(id) : null;
+        if (c) return repintar(datosCliente(c, actual?.fecha_emision));
+        return null;
+      }
     });
     cont.addEventListener('submit', (e) => {
       if (!e.target.matches('.vf-form')) return;
