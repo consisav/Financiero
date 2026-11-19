@@ -198,3 +198,6 @@ supabase/verificacion_296_316_parte_*.sql
 supabase/pendientes/318_fel_hm_parte_*.sql
 !supabase/pendientes/318_fel_hm_parte_0_de_*.sql
 supabase/pendientes/319_comentarios_facturas_hm_parte_*.sql
+# Historial FEL de las organizaciones 4 y 7 (emisor, NIT y nombres de clientes): solo local. La parte 0 (estructura) si se publica.
+supabase/pendientes/320_fel_tecnoalsa_parte_*.sql
+!supabase/pendientes/320_fel_tecnoalsa_parte_0_de_*.sql
