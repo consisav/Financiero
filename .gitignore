@@ -194,3 +194,7 @@ supabase/pendientes/313_catalogos_partidas_hm.sql
 supabase/pendientes/313_partidas_hm.sql
 supabase/pendientes/316_kardex_hm.sql
 supabase/verificacion_296_316_parte_*.sql
+# Historial FEL de la organizacion 2 (emisores, NIT y nombres de clientes) y comentarios de facturas: solo local. La parte 0 (estructura) si se publica.
+supabase/pendientes/318_fel_hm_parte_*.sql
+!supabase/pendientes/318_fel_hm_parte_0_de_*.sql
+supabase/pendientes/319_comentarios_facturas_hm_parte_*.sql
