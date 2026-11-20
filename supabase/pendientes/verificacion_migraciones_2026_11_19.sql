@@ -1,5 +1,5 @@
 -- Verificación de las migraciones del 19-11-2026 (scripts 296 a 320). SOLO LECTURA: no cambia nada, se puede ejecutar las veces que se quiera.
---   Muestra una fila por revisión con lo esperado, lo que hay en la base y si está completo (OK / FALTA / REVISAR).
+--   Muestra solo lo que falta; si todo está completo, una sola fila «TODO COMPLETO».
 --   Los scripts 296 a 316 son lotes: la tabla puede tener más filas que el lote (de lotes anteriores), por eso se pide "al menos".
 with org as (
   select g.codigo::text as codigo, l.id as localidad_id, g.id as organizacion_id
@@ -14,9 +14,9 @@ cuenta as (
         'select count(*) as n from public.%I t where %s', x.tabla,
         case
           when exists (select 1 from information_schema.columns c where c.table_schema = 'public' and c.table_name = x.tabla and c.column_name = 'organizacion_id')
-            then format('t.organizacion_id = (select id from public.organizaciones where codigo = %L)', x.codigo)
+            then format('t.organizacion_id = (select id from public.organizaciones where codigo::text = %L)', x.codigo)
           when exists (select 1 from information_schema.columns c where c.table_schema = 'public' and c.table_name = x.tabla and c.column_name = 'localidad_id')
-            then format('t.localidad_id in (select l.id from public.localidades l join public.organizaciones g on g.id = l.organizacion_id where g.codigo = %L)', x.codigo)
+            then format('t.localidad_id in (select l.id from public.localidades l join public.organizaciones g on g.id = l.organizacion_id where g.codigo::text = %L)', x.codigo)
           else 'true'
         end), false, true, '')))[1]::text::bigint
     end as hay
@@ -62,15 +62,15 @@ emisores as (
   union all
   select 31, '320', 'sat_emisores (NIT del emisor por localidad)', '4', 1, 'igual',
     (select count(*) from public.sat_emisores e join org on org.localidad_id = e.localidad_id where org.codigo = '4' and e.nit is not null)
+),
+todo as (select * from cuenta union all select * from hijos union all select * from emisores),
+faltan as (
+  select orden, script, tabla, 'Org. ' || codigo as organizacion, modo || ' ' || esperado as esperado, coalesce(hay::text, 'NO EXISTE LA TABLA') as en_la_base, 'FALTA' as estado
+  from todo
+  where hay is null or not ((modo = 'igual' and hay = esperado) or (modo = 'al menos' and hay >= esperado))
 )
-select script, tabla, 'Org. ' || codigo as organizacion, modo || ' ' || esperado as esperado, coalesce(hay::text, 'NO EXISTE LA TABLA') as en_la_base,
-  case
-    when hay is null then 'FALTA'
-    when hay = 0 then 'FALTA'
-    when modo = 'igual' and hay = esperado then 'OK'
-    when modo = 'al menos' and hay >= esperado then 'OK'
-    when hay < esperado then 'FALTA'
-    else 'REVISAR'
-  end as estado
-from (select * from cuenta union all select * from hijos union all select * from emisores) r
-order by orden;
+select script, tabla, organizacion, esperado, en_la_base, estado from faltan
+union all
+select '296-320', 'TODO COMPLETO: ' || (select count(*) from todo) || ' revisiones en OK', '', '', '', 'OK'
+where not exists (select 1 from faltan)
+order by 1;
