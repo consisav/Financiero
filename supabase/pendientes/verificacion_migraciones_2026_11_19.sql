@@ -6,7 +6,7 @@ with org as (
   from public.organizaciones g join public.localidades l on l.organizacion_id = g.id
 ),
 cuenta as (
-  -- Cuenta las filas de una tabla para una organización, usando localidad_id u organizacion_id según la tabla tenga una u otra.
+  -- Cuenta las filas de una tabla para una organización, usando organizacion_id o, si la tabla no la tiene, localidad_id.
   select x.orden, x.script, x.tabla, x.codigo, x.esperado, x.modo,
     case
       when to_regclass('public.' || x.tabla) is null then null
