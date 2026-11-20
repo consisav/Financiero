@@ -201,3 +201,6 @@ supabase/pendientes/319_comentarios_facturas_hm_parte_*.sql
 # Historial FEL de las organizaciones 4 y 7 (emisor, NIT y nombres de clientes): solo local. La parte 0 (estructura) si se publica.
 supabase/pendientes/320_fel_tecnoalsa_parte_*.sql
 !supabase/pendientes/320_fel_tecnoalsa_parte_0_de_*.sql
+# Servidor Consisav (organizaciones 8 a 12): empresas, usuarios y parametros con NIT, nombres y cuentas: solo local. La parte 0 (estructura) si se publica.
+supabase/pendientes/321_consisav_parte_*.sql
+!supabase/pendientes/321_consisav_parte_0_de_*.sql
