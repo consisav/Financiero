@@ -2,7 +2,7 @@
 --   Muestra una fila por revisión con lo esperado, lo que hay en la base y si está completo (OK / FALTA / REVISAR).
 --   Los scripts 296 a 316 son lotes: la tabla puede tener más filas que el lote (de lotes anteriores), por eso se pide "al menos".
 with org as (
-  select g.codigo, l.id as localidad_id, g.id as organizacion_id
+  select g.codigo::text as codigo, l.id as localidad_id, g.id as organizacion_id
   from public.organizaciones g join public.localidades l on l.organizacion_id = g.id
 ),
 cuenta as (
