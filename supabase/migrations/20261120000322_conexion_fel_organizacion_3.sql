@@ -4,8 +4,8 @@
 --   dato_certificar = IDENTIFICADOR (tipo 1); dato_anular = IDENTIFICADOR (tipo 2); transaccion_consulta = TRANSACCION (tipo 3);
 --   dato_consulta = IDENTIFICADOR (tipo 3); url_anterior = URL del sistema anterior.
 --   · Si la conexión de la empresa ya existe, se actualiza (no se tocan url, ambiente ni activo, que se llenan en Integraciones SAT); si no existe, se crea inactiva.
---   · REQUESTOR, USUARIO y CONTRASEÑA NO se migran (credenciales): van como secretos de la función fel-cofidi. El REQUESTOR es distinto en cada
---     empresa, por eso cada una lleva su secreto con el id de la localidad; la consulta del final muestra el nombre exacto de cada secreto.
+--   · REQUESTOR, USUARIO y CONTRASEÑA NO se migran (credenciales): van como secretos de la función fel-cofidi. Van por organización y ambiente
+--     (PRUEBAS y PRODUCCION); el REQUESTOR de 3-01 y 3-02 es distinto, por eso cada empresa lleva el suyo. Nombres exactos: script 323.
 --   Se puede ejecutar de nuevo: actualiza.
 alter table public.sat_fel_conexiones add column if not exists dato_consulta text;
 alter table public.sat_fel_conexiones add column if not exists url_anterior text;
@@ -39,8 +39,8 @@ notify pgrst, 'reload schema';
 
 -- Conexiones y nombre de los secretos que debe tener cada empresa en Edge Functions › Secrets (los valores salen de CAR_DATOS_FEL: REQUESTOR y USUARIO de esa empresa).
 select l.codigo as empresa, c.ambiente, c.activo, c.url, c.transaccion, c.dato_certificar, c.dato_anular, c.transaccion_consulta, c.dato_consulta,
-       coalesce(c.secreto, 'COFIDI') || '_REQUESTOR_' || l.id as secreto_requestor,
-       coalesce(c.secreto, 'COFIDI') || '_USUARIO_' || l.id as secreto_usuario
+       coalesce(nullif(c.secreto, ''), 'COFIDI') || '_REQUESTOR_' || c.ambiente || '_ORG' || g.codigo as secreto_requestor,
+       coalesce(nullif(c.secreto, ''), 'COFIDI') || '_USUARIO_' || c.ambiente || '_ORG' || g.codigo as secreto_usuario
   from public.sat_fel_conexiones c
   join public.localidades l on l.id = c.localidad_id
   join public.organizaciones g on g.id = l.organizacion_id and g.codigo::text = '3'

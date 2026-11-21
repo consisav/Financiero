@@ -6,8 +6,9 @@
 //   3. Con la llave de servicio registra la respuesta (sat_fel_registrar_respuesta): autorización, serie, número,
 //      fecha de certificación y XML certificado, y actualiza la factura o nota.
 // Credenciales: nunca en tablas, en el repositorio ni en el navegador. Van en Edge Functions › Secrets:
-//   COFIDI_REQUESTOR y COFIDI_USUARIO (o <prefijo>_REQUESTOR_<localidad_id> / <prefijo>_USUARIO_<localidad_id>
-//   si cada establecimiento tiene las suyas; el prefijo es sat_fel_conexiones.secreto).
+//   uno por organización y ambiente: COFIDI_REQUESTOR_PRUEBAS_ORG3, COFIDI_USUARIO_PRUEBAS_ORG3, COFIDI_REQUESTOR_PRODUCCION_ORG3,
+//   COFIDI_USUARIO_PRODUCCION_ORG3; y, si una empresa tiene credenciales propias, COFIDI_REQUESTOR_PRODUCCION_3_02, etc.
+//   El ambiente sale de sat_fel_conexiones.ambiente y el prefijo de sat_fel_conexiones.secreto (COFIDI si está vacío).
 // Instalación: Edge Functions › Deploy a new function › nombre «fel-cofidi» › pegar este archivo › Deploy.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
@@ -29,8 +30,17 @@ function base64Utf8(texto: string): string {
   return btoa(bin);
 }
 
-function secreto(prefijo: string, nombre: string, localidad: number): string | undefined {
-  return Deno.env.get(`${prefijo}_${nombre}_${localidad}`) ?? Deno.env.get(`${prefijo}_${nombre}`);
+// Secretos por ambiente (PRUEBAS / PRODUCCION), independientes entre sí. Se busca en este orden y gana el primero que exista:
+//   1. <prefijo>_<nombre>_<AMBIENTE>_<empresa>   p. ej. COFIDI_REQUESTOR_PRODUCCION_3_02 (empresa 3-02: el guion va como _)
+//   2. <prefijo>_<nombre>_<AMBIENTE>_ORG<código> p. ej. COFIDI_REQUESTOR_PRODUCCION_ORG3 (todas las empresas de la organización 3)
+// Nunca se usa un secreto de PRODUCCION en PRUEBAS ni al revés.
+function nombresSecreto(prefijo: string, nombre: string, ambiente: string, empresa: string, org: string | number): string[] {
+  const amb = String(ambiente || "PRODUCCION").toUpperCase();
+  return [`${prefijo}_${nombre}_${amb}_${String(empresa).replace(/-/g, "_")}`, `${prefijo}_${nombre}_${amb}_ORG${org}`];
+}
+function secreto(nombres: string[]): string | undefined {
+  for (const n of nombres) { const v = Deno.env.get(n); if (v) return v; }
+  return undefined;
 }
 
 Deno.serve(async (req) => {
@@ -57,9 +67,14 @@ Deno.serve(async (req) => {
       return responder({ ...(data ?? {}), ok: false, error: msg }, 200);
     };
     if (!cx || !cx.activo || !cx.url) return await falla("La conexión con COFIDI de este establecimiento no está configurada o activa (Integraciones SAT › Conexión FEL).");
-    const requestor = secreto(cx.secreto || "COFIDI", "REQUESTOR", prep.localidad_id);
-    const user = secreto(cx.secreto || "COFIDI", "USUARIO", prep.localidad_id);
-    if (!requestor || !user) return await falla(`Faltan los secretos ${cx.secreto || "COFIDI"}_REQUESTOR y ${cx.secreto || "COFIDI"}_USUARIO en Supabase (Edge Functions › Secrets).`);
+    const { data: loc } = await admin.from("localidades").select("codigo, organizacion_id").eq("id", prep.localidad_id).maybeSingle();
+    const { data: org } = await admin.from("organizaciones").select("codigo").eq("id", loc?.organizacion_id ?? cx.organizacion_id).maybeSingle();
+    const pref = cx.secreto || "COFIDI";
+    const nReq = nombresSecreto(pref, "REQUESTOR", cx.ambiente, loc?.codigo ?? "", org?.codigo ?? "");
+    const nUsr = nombresSecreto(pref, "USUARIO", cx.ambiente, loc?.codigo ?? "", org?.codigo ?? "");
+    const requestor = secreto(nReq);
+    const user = secreto(nUsr);
+    if (!requestor || !user) return await falla(`Faltan los secretos de ${cx.ambiente} en Supabase (Edge Functions › Secrets): ${nReq[1]} y ${nUsr[1]} (o ${nReq[0]} y ${nUsr[0]} si esta empresa usa credenciales propias).`);
 
     // Datos según el tipo de conexión del sistema anterior: 1 certificar (Data1 identificador, Data2 XML, Data3 no. interno),
     // 2 anular (Data1 identificador, Data2 XML), 3 consultar (Data1 no. interno).
