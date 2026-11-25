@@ -45,10 +45,41 @@
       x.producto_id = p.id; x.producto_codigo = p.codigo; x.descripcion = p.nombre;
       x.tipo = /SERVICIO/i.test(p.tipos_producto?.nombre || '') ? 'SERVICIO' : 'BIEN'; x.inventario = x.tipo === 'BIEN';
       x.unidad_medida = p.tipos_medida?.nombre || x.unidad_medida || '';
-      x.lote = p.lote || x.lote || ''; x.registro_sanitario = p.registro_sanitario || x.registro_sanitario || '';
+      const otro = x.producto_id !== p.id;
+      x.producto_id = p.id;
+      x.lote = p.lote || (otro ? '' : x.lote) || ''; if (otro) x.fecha_vencimiento = ''; x.registro_sanitario = p.registro_sanitario || x.registro_sanitario || '';
       const pr = tp ? precioDe(p.id, tp) : 0; if (pr) x.precio = pr;
     };
     const precioDe = (productoId, tipoPrecioId) => Number(preciosProd.find((x) => x.producto_id === productoId && x.tipo_precio_id === tipoPrecioId)?.precio || 0);
+    // Lotes con existencia del producto en el inventario de la empresa (medicamentos y perecederos), el que vence primero arriba.
+    // Si la factura tiene bodega, se usan los de esa bodega cuando los hay.
+    const lotesInv = new Map();
+    async function lotesDe(pid) {
+      if (!lotesInv.has(pid)) {
+        const { data } = await window.UI.todo(sb.from('inventario_movimientos').select('bodega_id, lote, fecha_vencimiento, cantidad').eq('localidad_id', ctx.sel.loc).eq('producto_id', pid).order('id'));
+        const g = new Map();
+        (data || []).filter((m) => m.lote).forEach((m) => { const k = `${m.bodega_id}|${m.lote}`; const a = g.get(k) || { bodega: m.bodega_id, lote: m.lote, vence: null, q: 0 }; a.q += Number(m.cantidad || 0); if (m.fecha_vencimiento) a.vence = m.fecha_vencimiento; g.set(k, a); });
+        lotesInv.set(pid, [...g.values()].filter((a) => a.q > 0.00005).sort((a, b) => String(a.vence || '9').localeCompare(String(b.vence || '9'))));
+      }
+      const todos = lotesInv.get(pid); const bod = Number(ctx.pDet.querySelector('[name=bodega_id]')?.value) || null;
+      const enBodega = bod ? todos.filter((a) => a.bodega === bod) : [];
+      const lista = enBodega.length ? enBodega : todos; const uno = new Map();
+      lista.forEach((a) => { const u = uno.get(a.lote); if (u) u.q += a.q; else uno.set(a.lote, { ...a }); });
+      return [...uno.values()];
+    }
+    async function ponerLote(x) {
+      if (!x?.producto_id || x.tipo !== 'BIEN') return;
+      try {
+        const ls = await lotesDe(x.producto_id);
+        const l = ls.find((a) => a.lote === x.lote) || ls[0];
+        if (l) { x.lote = l.lote; if (l.vence) x.fecha_vencimiento = l.vence; }
+      } catch { /* sin inventario: queda el lote del producto */ }
+    }
+    async function listaLotes(l) {
+      const dl = ctx.pDet.querySelector('#vf-lotes'); if (!dl || !l?.producto_id) { if (dl) dl.innerHTML = ''; return; }
+      const ls = await lotesDe(l.producto_id).catch(() => []);
+      dl.innerHTML = ls.map((a) => `<option value="${esc(a.lote)}">Existencia ${fmt.monto(a.q)}${a.vence ? ` · vence ${esc(fmt.fechaDia(a.vence))}` : ''}</option>`).join('');
+    }
     const nuevaLinea = () => ({ producto_id: null, producto_codigo: null, descripcion: '', tipo: 'BIEN', cantidad: 1, precio: 0, inventario: true, cpa: false, fecha_compromiso: '', unidad_medida: '', lote: '', registro_sanitario: '', fecha_vencimiento: '', fecha_fabricacion: '' });
 
     function pintarFiltros() {
@@ -85,6 +116,7 @@
     }
     let locCargada = null; // empresa cuyos clientes, vendedores, bodegas y catálogos están cargados
     async function cargarLocalidad() {
+      lotesInv.clear();
       const loc = ctx.sel.loc || 0;
       locCargada = loc;
       const [c, v, p, b, pr, pp] = await Promise.all([
@@ -308,12 +340,12 @@
                 <aside class="vf-lado vfd-lado" aria-label="Datos de la línea">${l ? `
                 <small>Línea ${lineaSel + 1}</small>
                 <label class="campo"><span>Unidad de medida</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
-                <label class="campo"><span>Lote</span><input data-lado="lote" value="${esc(l.lote || '')}" maxlength="40" ${dis}></label>
+                <label class="campo"><span>Lote</span><input data-lado="lote" list="vf-lotes" value="${esc(l.lote || '')}" maxlength="40" placeholder="Lote del inventario" ${dis}></label>
                 <label class="campo"><span>Registro sanitario</span><input data-lado="registro_sanitario" value="${esc(l.registro_sanitario || '')}" maxlength="60" ${dis}></label>
                 <label class="campo"><span>Fecha de vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
                 <label class="campo"><span>Fecha de fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>` : '<small>Sin línea</small>'}</aside>
               </div>
-              <datalist id="vf-productos">${productos.filter((p) => p.estado !== 'INACTIVO').map((p) => `<option value="${esc(p.nombre)} — ${p.codigo}"></option>`).join('')}</datalist>
+              <datalist id="vf-lotes"></datalist><datalist id="vf-productos">${productos.filter((p) => p.estado !== 'INACTIVO').map((p) => `<option value="${esc(p.nombre)} — ${p.codigo}"></option>`).join('')}</datalist>
             </div>
             <div class="bm-panel" data-panel="CONTABLE" ${pestana === 'CONTABLE' ? '' : 'hidden'}>
               <div class="pc-lineas"><table class="vf-conta"><thead><tr><th class="pc-n">#</th><th class="vf-k-cta">Cuenta</th><th>Nombre de la cuenta</th><th class="vf-k-cc">Centro de costo</th><th class="vf-k-con">Nombre del centro de costo</th><th class="num vf-k-m">Débito</th><th class="num vf-k-m">Débito MI</th><th class="num vf-k-m">Crédito</th><th class="num vf-k-m">Crédito MI</th><th class="pq-x"></th></tr></thead>
@@ -592,6 +624,7 @@
     function repintar(cambios = {}) {
       const form = ctx.pDet.querySelector('.vf-form'); if (!form) return;
       pintar({ ...(actual || valoresNuevos()), ...encabezado(form), estado: actual?.estado, fecha_emision: actual?.fecha_emision || new Date().toISOString(), fecha_certificacion: actual?.fecha_certificacion, ...cambios });
+      listaLotes(lineas[lineaSel]);
     }
     // Totales en vivo (sin repintar el formulario mientras se escribe).
     function totalizar() {
@@ -709,6 +742,7 @@
     cont.addEventListener('change', (e) => { const i = e.target; if (i && i.matches && i.matches('input[list]')) { const k = i.value.lastIndexOf(' — '); if (k >= 0) i.value = i.value.slice(k + 3).trim(); } }, true);
     // ---------- Eventos ----------
     cont.addEventListener('change', (e) => {
+      if (e.target.dataset?.lado === 'lote') { const x = lineas[lineaSel]; const p = x?.producto_id && lotesInv.get(x.producto_id); const a = p && p.find((y) => y.lote === e.target.value); if (a?.vence) { const fv = ctx.pDet.querySelector('[data-lado=fecha_vencimiento]'); if (fv) fv.value = a.vence; x.fecha_vencimiento = a.vence; } }
       const cambio = ctx.cambioOrgLoc(e);
       if (cambio === 'org' || cambio === 'loc') return cargarLocalidad().then(() => abrir(null));
       const form = e.target.closest('.vf-form');
@@ -729,8 +763,8 @@
         leerTablas();
         const tr = prod.closest('tr'); const x = lineas[Number(tr.dataset.linea)];
         const p = porCodigoProd(prod.value);
-        if (p) llenarLinea(x, p, Number(form.elements.tipo_precio_id.value) || null);
-        else { x.producto_id = null; x.producto_codigo = Number(prod.value) || null; }
+        if (p) { llenarLinea(x, p, Number(form.elements.tipo_precio_id.value) || null); lineaSel = Number(tr.dataset.linea); return ponerLote(x).then(() => repintar()); }
+        x.producto_id = null; x.producto_codigo = Number(prod.value) || null;
         return repintar();
       }
       if (e.target.closest('[data-c=cuenta], [data-c=centro]')) { leerTablas(); return repintar(); }
@@ -754,10 +788,11 @@
       const l = lineas[lineaSel]; const dis = editable() ? '' : 'disabled';
       if (lado && l) lado.innerHTML = `<small>Línea ${lineaSel + 1}</small>
         <label class="campo"><span>Unidad de medida</span><input data-lado="unidad_medida" value="${esc(l.unidad_medida || '')}" maxlength="60" ${dis}></label>
-        <label class="campo"><span>Lote</span><input data-lado="lote" value="${esc(l.lote || '')}" maxlength="40" ${dis}></label>
+        <label class="campo"><span>Lote</span><input data-lado="lote" list="vf-lotes" value="${esc(l.lote || '')}" maxlength="40" placeholder="Lote del inventario" ${dis}></label>
         <label class="campo"><span>Registro sanitario</span><input data-lado="registro_sanitario" value="${esc(l.registro_sanitario || '')}" maxlength="60" ${dis}></label>
         <label class="campo"><span>Fecha de vencimiento</span><input type="date" data-lado="fecha_vencimiento" value="${esc(l.fecha_vencimiento || '')}" ${dis}></label>
         <label class="campo"><span>Fecha de fabricación</span><input type="date" data-lado="fecha_fabricacion" value="${esc(l.fecha_fabricacion || '')}" ${dis}></label>`;
+      listaLotes(l);
     });
     cont.addEventListener('click', async (e) => {
       const tab = e.target.closest('[data-pestana]');
@@ -811,6 +846,7 @@
         const p = id ? productos.find((y) => y.id === id) : null;
         if (!p) return null;
         llenarLinea(x, p, Number(ctx.pDet.querySelector('[name=tipo_precio_id]')?.value) || null); lineaSel = i;
+        await ponerLote(x);
         return repintar();
       }
       if (a === 'lov-clientes') {
