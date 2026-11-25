@@ -6861,3 +6861,13 @@ body .vf-form .vfa .vfd-lado > .campo:nth-of-type(n+4) { grid-column: span 3; }
 body .vf-form .vfa .vfd-lado > .campo > span { text-align: left; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body .vf-form .vfa .vfd-lado .campo input { height: 30px; }
 @media (max-width: 1500px) { .vfa .vf-detalle { grid-template-columns: minmax(0, 1fr) 330px; } }
+/* Detalle: descripción aún más ancha y cantidad angosta */
+.vfa .vf-lineas .pc-n { width: 30px; } .vfa .vf-lineas .vf-c-prod { width: 64px; } .vfa .vf-lineas .vf-c-tipo { width: 86px; }
+.vfa .vf-lineas .vf-c-num { width: 86px; } .vfa .vf-lineas thead th.vf-c-num:nth-child(5) { width: 64px; }
+.vfa .vf-lineas .vf-c-chk { width: 38px; } .vfa .vf-lineas .vf-c-fecha { width: 120px; }
+@media (max-width: 1750px) { .vfa .vf-lineas .vf-c-num { width: 80px; } .vfa .vf-lineas thead th.vf-c-num:nth-child(5) { width: 60px; } .vfa .vf-lineas .vf-c-fecha { width: 116px; } .vfa .vf-lineas .vf-c-tipo { width: 82px; } }
+body .vf-form .pc-lineas .vf-lineas td:nth-child(5) input { padding-left: 4px; padding-right: 6px; }
+.vfa .vf-detalle { grid-template-columns: minmax(0, 1fr) 340px; }
+@media (max-width: 1500px) { .vfa .vf-detalle { grid-template-columns: minmax(0, 1fr) 320px; } }
+body .vf-form .pc-lineas .vf-lineas thead th { white-space: normal; line-height: 1.15; letter-spacing: .02em; padding: 7px 5px; vertical-align: bottom; }
+.vfa .vf-lineas .vf-c-prod { width: 72px; } .vfa .vf-lineas thead th.vf-c-num:nth-child(5) { width: 70px; }
