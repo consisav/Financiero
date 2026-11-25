@@ -6783,3 +6783,66 @@ body .vfa-cards .vfb-card.fel-card .fel-g3 { grid-template-columns: repeat(3, mi
 /* Compras: serie y número del documento del proveedor destacados */
 .campo.fel-num > span { font-weight: 700; color: var(--fel-rotulo); }
 .campo.fel-num input { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 15px !important; font-weight: 800 !important; color: var(--fel-texto); background: var(--fel-fondo) !important; border-color: var(--fel-borde) !important; }
+
+/* ---------- Facturas y Notas de venta: Cliente, Documento FEL y Detalle más grandes, en negrita y sin cortes ---------- */
+.vf-form .vfa .vfb-card.fel-card .campo input, .vf-form .vfa .vfb-card.fel-card .campo select,
+.vf-form .vfa-arriba > .dpb-banda .campo input, .vf-form .vfa-arriba > .dpb-banda .campo select { height: 34px; padding: 4px 10px; font-size: 14px; font-weight: 700; line-height: 1.25; }
+.vf-form .vfa .vfb-card.fel-card .campo, .vf-form .vfa-arriba > .dpb-banda .campo { font-size: 12px; gap: 3px; }
+.vf-form .vfa-arriba > .dpb-banda .campo > span, .vf-form .vfa .vfb-card.fel-card .campo > span { font-weight: 700; color: var(--suave); }
+.vf-form .vfa-arriba > .dpb-banda { padding: 8px 14px 10px; gap: 6px; }
+.vf-form .vfa-arriba > .dpb-banda .dpb-g { gap: 7px 10px; }
+.vf-form .vfa-arriba > .dpb-banda .ta-col-titulo, .vf-form .vfb-card.fel-card .ta-col-titulo { font-size: 13px; }
+.vf-form .vfa-arriba > .dpb-banda .lov-campo button, .vf-form .vfa-arriba > .dpb-banda .lov-campo .boton { height: 34px; }
+.vf-form .vfa-arriba > .dpb-banda .vf-chk { font-size: 13.5px; font-weight: 700; padding-bottom: 8px; }
+.vf-form .vfa-arriba > .dpb-banda .vf-chk input { width: 17px; height: 17px; }
+/* Detalle de productos */
+.vf-form .vf-lineas { font-size: 14px; }
+.vf-form .pc-lineas .vf-lineas th { font-size: 12px; font-weight: 700; color: var(--suave); padding: 8px 8px; }
+.vf-form .pc-lineas .vf-lineas td { padding: 4px 6px; }
+body .vf-form .pc-lineas .vf-lineas td input, body .vf-form .pc-lineas .vf-lineas td select { height: 32px; padding: 4px 8px; font-size: 14px; font-weight: 600; }
+.vf-form .vf-lineas td.num, .vf-form .vf-lineas tfoot td { font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.vf-form .vf-lineas td input[type=checkbox] { width: 18px; height: 18px; }
+.vfa .vf-lineas .pc-n { width: 38px; } .vfa .vf-lineas .vf-c-prod { width: 104px; } .vfa .vf-lineas .vf-c-tipo { width: 124px; }
+.vfa .vf-lineas .vf-c-num { width: 108px; } .vfa .vf-lineas .vf-c-chk { width: 46px; } .vfa .vf-lineas .vf-c-fecha { width: 146px; }
+@media (max-width: 1750px) { .vfa .vf-lineas .vf-c-num { width: 96px; } .vfa .vf-lineas .vf-c-fecha { width: 136px; } .vfa .vf-lineas .vf-c-tipo { width: 112px; } }
+/* Datos de la línea (panel derecho) */
+.vf-form .vfd-lado { gap: 6px; padding: 8px 12px; }
+.vf-form .vfd-lado > small { font-size: 12.5px; }
+body .vf-form .vfa .vfd-lado .campo { font-size: 12px; grid-template-columns: 120px minmax(0, 1fr); }
+.vf-form .vfd-lado .campo span { font-weight: 700; color: var(--suave); }
+body .vf-form .vfa .vfd-lado .campo input { height: 32px; padding: 4px 9px; font-size: 14px; font-weight: 600; }
+.vfa .vf-detalle { grid-template-columns: minmax(0, 1fr) 320px; }
+
+/* ---------- Misma escala en Compras, Notas de compras, Notas de venta y Anulación DTE ---------- */
+/* Compras */
+body .cf-form.cf-compacto .campo { font-size: 12px; gap: 3px; }
+body .cf-form.cf-compacto .campo > span { font-weight: 700; }
+body .cf-form.cf-compacto .campo :is(input, select) { height: 34px; padding: 4px 10px !important; font-size: 14px !important; font-weight: 700; line-height: 1.25; }
+body .cf-form.cf-compacto .cf-cabecera > section { padding: 8px 12px 10px; gap: 6px; }
+body .cf-form.cf-compacto .cfx { gap: 7px 10px; }
+body .cf-form.cf-compacto .cc-calc { height: 34px; }
+body .cf-form.cf-compacto .cc-calc b { font-size: 14px; }
+body .cf-form.cf-compacto .cf-cifras dt { font-size: 12px; font-weight: 700; }
+body .cf-form.cf-compacto .cf-cifras dd { font-size: 15px; font-weight: 700; }
+body .cf-form.cf-compacto .cf-cifras dd input { height: 30px; font-size: 14px; font-weight: 700; }
+body .cf-form.cf-compacto .pc-check { font-size: 13px; font-weight: 700; }
+body .cf-form.cf-compacto .pc-check input { width: 16px; height: 16px; }
+body .cf-form.cf-compacto .campo.fel-num input { font-size: 16px !important; }
+/* Notas de compras */
+body .nq-form .campo { font-size: 12px; gap: 3px; }
+body .nq-form .campo > span { font-weight: 700; color: var(--suave); }
+body .nq-form .campo :is(input, select) { height: 34px; padding: 4px 10px; font-size: 14px; font-weight: 700; }
+body .nq-form .nq-txt { min-height: 34px; padding: 6px 10px; font-size: 14px; font-weight: 700; }
+body .nq-form .nq-banda select { height: 32px; font-size: 13px; }
+/* Anulación DTE */
+body .va-form .campo { font-size: 12px; gap: 3px; }
+body .va-form .campo > span { font-weight: 700; color: var(--suave); }
+body .va-form .campo :is(input, select) { height: 34px; padding: 4px 10px; font-size: 14px; font-weight: 700; }
+body .va-form .campo textarea { font-size: 14px; font-weight: 600; }
+/* Detalle de productos de Compras y Notas de compras */
+body :is(.cf-form, .nq-form) .pc-lineas table { font-size: 14px; }
+body :is(.cf-form, .nq-form) .pc-lineas th { font-size: 12px; font-weight: 700; color: var(--suave); padding: 8px; }
+body :is(.cf-form, .nq-form) .pc-lineas td { padding: 4px 6px; }
+body :is(.cf-form, .nq-form) .pc-lineas td :is(input, select):not([type=checkbox]) { height: 32px; padding: 4px 8px; font-size: 14px; font-weight: 600; }
+body :is(.cf-form, .nq-form) .pc-lineas td.num, body :is(.cf-form, .nq-form) .pc-lineas tfoot td { font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+body :is(.cf-form, .nq-form) .pc-lineas td input[type=checkbox] { width: 18px; height: 18px; }
