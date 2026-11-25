@@ -426,7 +426,20 @@
     if (!sb.__fromOriginal) sb.__fromOriginal = sb.from.bind(sb);
     const original = sb.__fromOriginal;
     if (!perfil.localidad_id) { sb.from = original; return; }
-    if (perfil.es_global && perfil.rol_id === 'superadministrador') { sb.from = original; return; }
+    // Super Administrador Global: en cada pantalla ve solo las empresas de la organización a la que está conectado
+    // (al cambiar de empresa en el encabezado cambia también la organización). Administración y Replicación ven todas.
+    if (perfil.es_global && perfil.rol_id === 'superadministrador') {
+      if (!perfil.organizacion_id) { sb.from = original; return; }
+      const libre = () => /^#\/administracion(\/|$)/.test(location.hash) || /replicacion/.test(location.hash);
+      sb.from = (tabla) => {
+        const q = original(tabla);
+        if ((tabla !== 'localidades' && tabla !== 'organizaciones') || libre()) return q;
+        const select = q.select.bind(q);
+        q.select = (...args) => select(...args).eq(tabla === 'localidades' ? 'organizacion_id' : 'id', perfil.organizacion_id);
+        return q;
+      };
+      return;
+    }
     const limite = { localidades: perfil.localidad_id, organizaciones: perfil.organizacion_id };
     const enAdministracion = () => /^#\/administracion(\/|$)/.test(location.hash);
     const adminOrg = ['superadministrador', 'administrador'].includes(perfil.rol_id);
@@ -492,7 +505,7 @@
     caja.innerHTML = `<span class="cx-icono"><i class="ti ti-building-community" aria-hidden="true"></i></span>
       <div class="cx-texto"><small>Conectado a la empresa</small>
         <b>${esc(loc.codigo)} · ${esc(loc.nombre_comercial)}</b>
-        <span>${esc(org ? `${org.codigo} · ${org.nombre}` : '')} · Rol: <b>${esc(nombreRol())}</b>. ${perfil.es_global ? 'Como Super Administrador Global ves todas las organizaciones y empresas; cada pantalla empieza en esta.' : 'Todos los módulos y operaciones corresponden a esta empresa.'}</span></div>
+        <span>${esc(org ? `${org.codigo} · ${org.nombre}` : '')} · Rol: <b>${esc(nombreRol())}</b>. ${perfil.es_global ? 'Como Super Administrador Global, en cada pantalla ves las empresas de esta organización; para trabajar en otra organización, cambia de empresa aquí o en el encabezado.' : 'Todos los módulos y operaciones corresponden a esta empresa.'}</span></div>
       ${varias ? `<div class="cx-cambiar"><span>Cambiar de empresa</span>${selector}</div>` : ''}`;
     conectarSelector(caja.querySelector('[data-empresa-activa]'));
     caja.hidden = false;
