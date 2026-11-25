@@ -6846,3 +6846,18 @@ body :is(.cf-form, .nq-form) .pc-lineas td { padding: 4px 6px; }
 body :is(.cf-form, .nq-form) .pc-lineas td :is(input, select):not([type=checkbox]) { height: 32px; padding: 4px 8px; font-size: 14px; font-weight: 600; }
 body :is(.cf-form, .nq-form) .pc-lineas td.num, body :is(.cf-form, .nq-form) .pc-lineas tfoot td { font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 body :is(.cf-form, .nq-form) .pc-lineas td input[type=checkbox] { width: 18px; height: 18px; }
+
+/* ---------- Detalle factura: código angosto, descripción ancha y datos de la línea completos sin scroll ---------- */
+.vfa .vf-lineas .pc-n { width: 32px; } .vfa .vf-lineas .vf-c-prod { width: 68px; } .vfa .vf-lineas .vf-c-tipo { width: 100px; }
+.vfa .vf-lineas .vf-c-num { width: 94px; } .vfa .vf-lineas .vf-c-chk { width: 42px; } .vfa .vf-lineas .vf-c-fecha { width: 132px; }
+@media (max-width: 1750px) { .vfa .vf-lineas .vf-c-num { width: 86px; } .vfa .vf-lineas .vf-c-fecha { width: 124px; } .vfa .vf-lineas .vf-c-tipo { width: 92px; } }
+body .vf-form .pc-lineas .vf-lineas td:nth-child(2) input { padding-left: 6px; padding-right: 4px; }
+/* Datos de la línea en cuadrícula: fila 1 unidad, lote y registro sanitario; fila 2 vencimiento y fabricación */
+.vfa .vf-detalle { grid-template-columns: minmax(0, 1fr) 380px; }
+body .vf-form .vfa .vfd-lado { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-content: start; gap: 4px 8px; padding: 6px 12px; overflow: visible; }
+body .vf-form .vfa .vfd-lado > small { grid-column: 1 / -1; font-size: 12px; line-height: 1.1; }
+body .vf-form .vfa .vfd-lado > .campo { display: flex; flex-direction: column; align-items: stretch; gap: 2px; grid-column: span 2; min-width: 0; }
+body .vf-form .vfa .vfd-lado > .campo:nth-of-type(n+4) { grid-column: span 3; }
+body .vf-form .vfa .vfd-lado > .campo > span { text-align: left; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body .vf-form .vfa .vfd-lado .campo input { height: 30px; }
+@media (max-width: 1500px) { .vfa .vf-detalle { grid-template-columns: minmax(0, 1fr) 330px; } }
