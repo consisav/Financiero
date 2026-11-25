@@ -130,9 +130,7 @@
           ${!n && !ed ? `<p class="ck-elige"><i class="ti ti-hand-click" aria-hidden="true"></i> No hay notas con esos filtros${ctx.admin ? ': crea una con «Nueva»' : ''}.</p>` : `
           <section class="nq-cab">
             <div class="nq-doc">
-              <label class="campo nq-aut"><span>Número de autorización</span><input name="numero_autorizacion" value="${esc(v.numero_autorizacion || '')}" maxlength="60" ${dis}></label>
-              <label class="campo"><span>Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
-              <label class="campo"><span>Número *</span><input name="documento" value="${esc(v.documento || '')}" maxlength="40" ${dis}></label>
+              ${window.UI.felBanda([{ t: 'Serie', name: 'serie', v: v.serie, max: 20 }, { t: 'Número *', name: 'documento', v: v.documento, max: 40 }, { t: 'Número de autorización', name: 'numero_autorizacion', v: v.numero_autorizacion, max: 60, ph: 'Autorización del DTE del proveedor' }], { dis, clase: 'fel-tres nq-fel' })}
               <label class="campo"><span>Fecha *</span><input type="date" name="fecha" value="${esc(v.fecha || '')}" ${dis}></label>
               <div class="campo"><span>Estado</span>${marca(v.estado || 'VIGENTE')}</div>
             </div>

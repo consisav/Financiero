@@ -309,8 +309,8 @@
                 <label class="campo"><span>Año</span><input type="number" name="anio_presentacion" min="1900" max="2999" value="${esc(String(v.anio_presentacion || ''))}" ${dis}></label>
                 <div class="campo cf-numero"><span>Compra</span><b>${c ? c.numero : 'Auto'}</b></div>
                 <div class="campo cf-inv" title="Ingreso de la orden de compra que se convierte en esta compra"><span>Compra inv.</span><div class="lov-campo"><input name="compra_inventario" value="${esc(v.compra_inventario || '')}" maxlength="30" readonly placeholder="—" aria-label="Compra de inventario"><button type="button" class="icono-boton lov-btn" data-accion="lov-ingresos" title="Ingresos que aún no se han convertido en compra (${ingresosLibres.length})" aria-label="Ingresos sin compra" ${dis}><i class="ti ti-dots" aria-hidden="true"></i></button></div></div>
-                <label class="campo"><span># Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
-                <label class="campo"><span># Documento *</span><input name="documento" value="${esc(v.documento || '')}" maxlength="40" ${dis}></label>
+                <label class="campo fel-num"><span># Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
+                <label class="campo fel-num"><span># Documento *</span><input name="documento" value="${esc(v.documento || '')}" maxlength="40" ${dis}></label>
                 <label class="campo cfx2"><span>Fecha *</span><input type="date" name="fecha_documento" value="${esc(v.fecha_documento || '')}" ${dis}></label>
                 <label class="campo cfx2"><span>Días de crédito</span><select name="dias_credito" ${dis || (v.pago_inmediato ? 'disabled' : '')}>${[...new Set([...DIAS, Number(v.dias_credito) || 0])].sort((a, b) => a - b).map((d) => `<option value="${d}" ${Number(v.dias_credito) === d ? 'selected' : ''}>${d ? `${d} DÍAS` : 'INMEDIATO'}</option>`).join('')}</select></label>
                 <label class="campo cfx2"><span>Fecha de pago</span><input type="date" name="fecha_vencimiento" value="${esc(v.fecha_vencimiento || '')}" ${dis}></label>

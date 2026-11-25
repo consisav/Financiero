@@ -308,7 +308,18 @@
     return normNombre(c.nombre) === normNombre(x.nombre);
   }
 
-  window.UI = { esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar, todo, autocompletar, clientesConVentas, esDelCliente, normNombre };
+  // Banda de certificación FEL: serie, número DTE y número de autorización en letra grande y negrita (mismos inputs del
+  // formulario: conservan name y disabled). c = [{ k, t, v, name, max, ancho }] y estado = texto de la marca (Certificada, etc.).
+  function felBanda(campos, opc = {}) {
+    const dis = opc.dis || "";
+    return `<div class="fel-banda${opc.clase ? ` ${opc.clase}` : ""}">${campos.map((c) => `<label class="fel-dato${c.ancho ? " fel-ancho" : ""}"><span>${esc(c.t)}</span><input ${c.name ? `name="${esc(c.name)}"` : ""} value="${esc(c.v || "")}" ${c.max ? `maxlength="${c.max}"` : ""} ${c.name ? dis : "disabled"} placeholder="${esc(c.ph || "—")}" spellcheck="false" autocomplete="off"></label>`).join("")}</div>`;
+  }
+  function felMarca(autorizado, anulado) {
+    if (anulado) return `<span class="fel-marca anulada"><i class="ti ti-ban" aria-hidden="true"></i> Anulada</span>`;
+    return autorizado ? `<span class="fel-marca"><i class="ti ti-circle-check" aria-hidden="true"></i> Certificada</span>` : `<span class="fel-marca pendiente"><i class="ti ti-clock" aria-hidden="true"></i> Sin certificar</span>`;
+  }
+
+  window.UI = { felBanda, felMarca, esc, fecha, fechaCorta, romano, barraContexto, estado, bandera, auditoria, tabla, formulario, cascadaUbicacion, traducirError, filtrar, todo, autocompletar, clientesConVentas, esDelCliente, normNombre };
 })();
 
 // Ver u ocultar la clave: cada campo de contraseña (inicio de sesión, crear cuenta, cambiar clave y los

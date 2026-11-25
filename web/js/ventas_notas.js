@@ -185,15 +185,13 @@
               </section>
             </div>
             <div class="vfa-cards vf vn-cards">
-              <section class="vfb-card">
-                <h3 class="ta-col-titulo"><i class="ti ti-certificate" aria-hidden="true"></i> Documento FEL</h3>
-                <div class="vfb-g">
-                  <label class="campo vfb-c2"><span>Número de autorización</span><input name="autorizacion" value="${esc(v.autorizacion || '')}" maxlength="60" placeholder="Lo asigna COFIDI al certificar" ${dis}></label>
-                  <label class="campo"><span>Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
-                  <label class="campo"><span>Número DTE</span><input name="numero_dte" value="${esc(v.numero_dte || '')}" maxlength="20" ${dis}></label>
-                  <label class="campo vfb-c2"><span>Fecha y hora de emisión</span><input type="datetime-local" name="fecha_emision" value="${esc(fechaLocal(v.fecha_emision))}" ${dis}></label>
-                  <label class="campo vfb-c2"><span>Fecha y hora de certificación</span><input type="datetime-local" name="fecha_certificacion" value="${esc(fechaLocal(v.fecha_certificacion))}" ${dis}></label>
-                  <label class="campo vfb-c2"><span>Estado</span><input value="${esc(txt)}" disabled></label>
+              <section class="vfb-card fel-card">
+                <h3 class="ta-col-titulo"><i class="ti ti-certificate" aria-hidden="true"></i> Documento FEL ${window.UI.felMarca(!!v.autorizacion, v.estado === 'ANULADA')}</h3>
+                ${window.UI.felBanda([{ t: 'Serie', name: 'serie', v: v.serie, max: 20 }, { t: 'Número DTE', name: 'numero_dte', v: v.numero_dte, max: 20 }, { t: 'Número de autorización', name: 'autorizacion', v: v.autorizacion, max: 60, ph: 'Lo asigna COFIDI al certificar' }], { dis, clase: 'fel-tres' })}
+                <div class="vfb-g fel-g3">
+                  <label class="campo"><span>Fecha y hora de emisión</span><input type="datetime-local" name="fecha_emision" value="${esc(fechaLocal(v.fecha_emision))}" ${dis}></label>
+                  <label class="campo"><span>Fecha y hora de certificación</span><input type="datetime-local" name="fecha_certificacion" value="${esc(fechaLocal(v.fecha_certificacion))}" ${dis}></label>
+                  <label class="campo"><span>Estado</span><input value="${esc(txt)}" disabled></label>
                 </div>
               </section>
               <section class="vfb-card vn-ref">

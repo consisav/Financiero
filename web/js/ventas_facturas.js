@@ -283,15 +283,13 @@
               </section>
             </div>
             <div class="vfa-cards vf">
-              <section class="vfb-card">
-                <h3 class="ta-col-titulo"><i class="ti ti-certificate" aria-hidden="true"></i> Documento FEL</h3>
-                <div class="vfb-g">
-                  <label class="campo vfb-c2"><span>Tipo de factura</span><select name="tipo_factura" ${dis}>${TIPOS_FACTURA.map((t) => `<option ${v.tipo_factura === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+              <section class="vfb-card fel-card">
+                <h3 class="ta-col-titulo"><i class="ti ti-certificate" aria-hidden="true"></i> Documento FEL ${window.UI.felMarca(!!v.autorizacion, v.estado === 'ANULADA')}</h3>
+                ${window.UI.felBanda([{ t: 'Serie', name: 'serie', v: v.serie, max: 20 }, { t: 'No. DTE', name: 'numero_dte', v: v.numero_dte, max: 20 }, { t: 'No. de autorización', name: 'autorizacion', v: v.autorizacion, max: 60, ph: 'Lo asigna COFIDI al certificar' }], { dis, clase: 'fel-tres' })}
+                <div class="vfb-g fel-g5">
+                  <label class="campo"><span>Tipo de factura</span><select name="tipo_factura" ${dis}>${TIPOS_FACTURA.map((t) => `<option ${v.tipo_factura === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
                   <label class="campo"><span>Tipo DTE</span><select name="tipo_dte" ${dis}>${TIPOS_DTE.map(([k, t]) => `<option value="${k}" ${v.tipo_dte === k ? 'selected' : ''} title="${t}">${k}</option>`).join('')}</select></label>
-                  <label class="campo"><span>Serie</span><input name="serie" value="${esc(v.serie || '')}" maxlength="20" ${dis}></label>
-                  <label class="campo vfb-c2"><span>No. DTE</span><input name="numero_dte" value="${esc(v.numero_dte || '')}" maxlength="20" ${dis}></label>
-                  <label class="campo vfb-c2"><span>No. de autorización</span><input name="autorizacion" value="${esc(v.autorizacion || '')}" maxlength="60" placeholder="Lo asigna COFIDI al certificar" ${dis}></label>
-                  <label class="campo vfb-c2"><span>Tipo de documento</span><input name="tipo_documento" value="${esc(v.tipo_documento || '')}" maxlength="80" placeholder="Ej. Factura cambiaria · genéricos" ${dis}></label>
+                  <label class="campo"><span>Tipo de documento</span><input name="tipo_documento" value="${esc(v.tipo_documento || '')}" maxlength="80" placeholder="Ej. Factura cambiaria · genéricos" ${dis}></label>
                   <label class="campo"><span>Moneda</span><select name="moneda_id" ${dis}>${ctx.monedas.map((x) => `<option value="${x.id}" ${v.moneda_id === x.id ? 'selected' : ''}>${esc(x.nombre)}</option>`).join('')}</select></label>
                   <label class="campo"><span>Cambio</span><input type="number" step="any" min="0" name="tipo_cambio" value="${esc(String(v.tipo_cambio ?? 1))}" ${dis}></label>
                 </div>

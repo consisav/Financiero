@@ -82,15 +82,13 @@
           </header>
           <p class="modal-error tk-error" role="alert"></p>
           <div class="va-cuerpo">
-            <section class="vfb-card va-doc">
-              <h3 class="ta-col-titulo"><i class="ti ti-file-search" aria-hidden="true"></i> Documento a anular</h3>
+            <section class="vfb-card va-doc fel-card">
+              <h3 class="ta-col-titulo"><i class="ti ti-file-search" aria-hidden="true"></i> Documento a anular${d ? window.UI.felMarca(!!d.autorizacion, d.estado === 'ANULADA') : ''}</h3>
+              ${window.UI.felBanda([{ t: 'Serie', v: d?.serie }, { t: 'Número DTE', v: d?.numero_dte }, { t: 'Número de autorización', v: d?.autorizacion }], { clase: 'fel-tres' })}
               <div class="va-g va-g1">
                 <label class="campo"><span>Documento</span><select name="tipo_doc" ${a ? 'disabled' : ''}>${[['FACTURA', 'Factura'], ['NOTA', 'Nota (crédito, débito o abono)']].map(([k, t]) => `<option value="${k}" ${tipoDoc === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
                 <label class="campo"><span>No. interno</span><input name="buscar" inputmode="numeric" value="${esc(d ? String(d.numero) : '')}" placeholder="${tipoDoc === 'NOTA' ? 'Número de la nota' : 'Número de la factura'}" ${a ? 'disabled' : ''}></label>
                 <label class="campo va-c2"><span>Tipo de documento</span><input value="${esc(d ? (d.tipo_documento || (tipoDoc === 'NOTA' ? `NOTA DE ${d.tipo}` : d.tipo_factura)) : '')}" disabled></label>
-                <label class="campo va-c2"><span>Número de autorización</span><input value="${esc(d?.autorizacion || '')}" disabled></label>
-                <label class="campo"><span>Serie</span><input value="${esc(d?.serie || '')}" disabled></label>
-                <label class="campo"><span>Número DTE</span><input value="${esc(d?.numero_dte || '')}" disabled></label>
                 <label class="campo"><span>Emisión</span><input value="${esc(d ? fmt.fechaHora(d.fecha_emision) : '')}" disabled></label>
                 <label class="campo"><span>Certificación</span><input value="${esc(d?.fecha_certificacion ? fmt.fechaHora(d.fecha_certificacion) : '')}" disabled></label>
                 <label class="campo"><span>Valor</span><input class="va-num" value="${d ? `${sim(d.moneda_id)} ${fmt.monto(valor)}` : ''}" disabled></label>

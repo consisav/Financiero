@@ -6730,3 +6730,56 @@ td .vi-est { padding: 3px 9px; font-size: 11.5px; }
   .mm-elementos tr, .mm-parametros tr { padding: 6px 10px; border-top: 1px solid var(--borde); }
   .mm-elementos td, .mm-parametros td { padding: 1px 0; border: 0; }
 }
+
+/* ---------- Documento FEL: banda de certificación (serie, número DTE y autorización) en letra grande y negrita ---------- */
+:root { --fel-fondo: #e7f5ee; --fel-borde: #9fd6b9; --fel-rotulo: #1e7a4c; --fel-texto: #0a3b25; --fel-marca: #d3efe0; --fel-pend: #fdf0d5; --fel-pend-t: #8a5a00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fel-fondo: #12301f; --fel-borde: #2e6b4a; --fel-rotulo: #7fd3a7; --fel-texto: #e3f7ec; --fel-marca: #1d4a32; --fel-pend: #3d2f12; --fel-pend-t: #f3c871; } }
+:root[data-theme="dark"] { --fel-fondo: #12301f; --fel-borde: #2e6b4a; --fel-rotulo: #7fd3a7; --fel-texto: #e3f7ec; --fel-marca: #1d4a32; --fel-pend: #3d2f12; --fel-pend-t: #f3c871; }
+.fel-banda { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 6px 14px; padding: 8px 12px 10px; border: 1px solid var(--fel-borde); border-radius: 10px; background: var(--fel-fondo); }
+.fel-banda.fel-tres { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, 3fr); }
+.fel-banda.fel-tres .fel-dato:last-child input { font-size: 16px; letter-spacing: 0; }
+.fel-dato { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.fel-dato.fel-ancho { grid-column: 1 / -1; }
+.fel-dato > span { font-size: 11.5px; font-weight: 700; color: var(--fel-rotulo); text-transform: uppercase; letter-spacing: .05em; }
+.fel-dato input { width: 100%; min-width: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; padding: 2px 4px; margin-left: -4px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 18px; font-weight: 800; letter-spacing: .02em; color: var(--fel-texto); }
+.fel-dato.fel-ancho input { font-size: 16.5px; }
+.fel-dato input:not(:disabled):hover { border-color: var(--fel-borde); }
+.fel-dato input:not(:disabled):focus { outline: none; border-color: var(--fel-rotulo); background: var(--panel); }
+.fel-dato input:disabled { opacity: 1; -webkit-text-fill-color: var(--fel-texto); cursor: text; }
+.fel-dato input::placeholder { color: var(--tenue); font-weight: 600; }
+.fel-marca { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; text-transform: none; letter-spacing: 0; background: var(--fel-marca); color: var(--fel-rotulo); }
+.fel-marca.pendiente { background: var(--fel-pend); color: var(--fel-pend-t); }
+.fel-marca.anulada { background: color-mix(in srgb, #c0392b 15%, var(--panel)); color: #b23a32; }
+/* Campos de los bloques FEL más grandes y en negrita */
+body .vfb-card.fel-card { gap: 8px; }
+body .vfb-card.fel-card .ta-col-titulo { font-size: 13px; width: 100%; }
+body .vfb-card.fel-card .campo { font-size: 12px; gap: 3px; }
+body .vfb-card.fel-card .campo > span { font-weight: 700; color: var(--suave); }
+body .vfb-card.fel-card .campo input, body .vfb-card.fel-card .campo select { font-size: 14px; font-weight: 700; padding: 6px 9px; }
+body .vfb-card.fel-card .vfb-g { gap: 8px 10px; }
+/* En Facturas y Notas de venta el bloque FEL ocupa toda la fila: banda a la izquierda y datos del documento a la derecha */
+body .vfa-cards .vfb-card.fel-card { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: center; gap: 6px 16px; padding: 8px 12px 10px; }
+body .vfa-cards .vfb-card.fel-card > .ta-col-titulo { grid-column: 1 / -1; }
+.vf-form .vfa-cards:has(> .fel-card) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body .vfa-cards .vfb-card.fel-card .fel-g5 { grid-template-columns: minmax(0, 1.65fr) minmax(0, .8fr) minmax(0, 1.6fr) minmax(0, 1.25fr) minmax(0, .7fr) !important; }
+body .vfa-cards .vfb-card.fel-card .fel-g3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+@media (max-width: 1500px) {
+  body .vfa-cards .vfb-card.fel-card { grid-template-columns: minmax(0, 1fr); }
+  body .vfa-cards .vfb-card.fel-card .fel-g5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 900px) {
+  .vf-form .vfa-cards:has(> .fel-card) { grid-template-columns: minmax(0, 1fr); }
+  body .vfa-cards .vfb-card.fel-card .fel-g5, body .vfa-cards .vfb-card.fel-card .fel-g3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .fel-banda.fel-tres { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .fel-banda.fel-tres .fel-dato:last-child { grid-column: 1 / -1; }
+}
+.vf-form .vn-cards:has(> .fel-card) { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+@media (max-width: 1700px) { .vf-form .vn-cards:has(> .fel-card) { grid-template-columns: minmax(0, 1fr); } }
+/* Notas compras: la banda ocupa la fila del documento; fecha y estado debajo */
+.nq-doc .fel-banda.nq-fel { grid-column: 1 / -1; }
+.nq-doc:has(.nq-fel) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Anulación DTE: banda bajo el título */
+.va-doc.fel-card .fel-banda { margin: 2px 0 4px; }
+/* Compras: serie y número del documento del proveedor destacados */
+.campo.fel-num > span { font-weight: 700; color: var(--fel-rotulo); }
+.campo.fel-num input { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 15px !important; font-weight: 800 !important; color: var(--fel-texto); background: var(--fel-fondo) !important; border-color: var(--fel-borde) !important; }
