@@ -718,6 +718,11 @@
     function pdf() {
       const f = actual;
       if (!f) return window.FIN.aviso('Registra primero la factura');
+      // Representación gráfica FEL (diseño del sistema anterior); si el módulo no cargó, el formato sencillo.
+      if (window.FACTURA_FEL) return window.FACTURA_FEL.aplica(f).then((si) => (si ? window.FACTURA_FEL.imprimir(f, lineas, { vendedor: vendedores.find((x) => x.id === f.vendedor_id), moneda: ctx.moneda(f.moneda_id) }) : formatoSencillo(f)));
+      return formatoSencillo(f);
+    }
+    function formatoSencillo(f) {
       imprimir(`Factura ${f.numero}`, `<h1>Factura ${esc(f.serie ? `${f.serie}-${f.numero_dte || ''}` : `interna ${f.numero}`)}${f.estado === 'ANULADA' ? ' · ANULADA' : ''}</h1><h2>${esc(datosImpresion().join(' · '))}</h2>
         <table><thead><tr><th>#</th><th>Producto</th><th>Descripción</th><th>Lote</th><th>Vence</th><th class="n">Cantidad</th><th class="n">Precio</th><th class="n">Total</th></tr></thead><tbody>
         ${lineas.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(String(x.producto_codigo ?? ''))}</td><td>${esc(x.descripcion)}</td><td>${esc(x.lote || '')}</td><td>${esc(x.fecha_vencimiento ? fmt.fechaDia(x.fecha_vencimiento) : '')}</td><td class="n">${fmt.monto(x.cantidad)}</td><td class="n">${fmt.monto(x.precio)}</td><td class="n">${fmt.monto(x.cantidad * x.precio)}</td></tr>`).join('')}</tbody>
