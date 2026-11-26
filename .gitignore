@@ -216,3 +216,8 @@ supabase/pendientes/326_consisav_partidas_parte_*.sql
 !supabase/pendientes/326_consisav_partidas_parte_0_de_*.sql
 supabase/pendientes/327_consisav_saldos_mensuales_parte_*.sql
 !supabase/pendientes/327_consisav_saldos_mensuales_parte_0_de_*.sql
+# Script 328 (Consisav): proveedores, compras, detalle contable y documentos de caja chica con NIT, nombres y cuentas bancarias: solo local
+# (archivos CSV y partes 1 en adelante). La parte 0 (estructura y funciones) si se publica.
+supabase/pendientes/328_csv/
+supabase/pendientes/328_consisav_compras_parte_*.sql
+!supabase/pendientes/328_consisav_compras_parte_0_de_*.sql
