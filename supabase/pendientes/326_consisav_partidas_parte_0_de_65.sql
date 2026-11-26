@@ -54,8 +54,8 @@ drop table if exists public.mig326_polizas, public.mig326_lineas, public.mig326_
 create table public.mig326_polizas (pid int primary key, org int, loc int, anio int, mes int, numero int, anual int, anual_ant int, fecha numeric, descripcion text,
   estado text, modulo int, tipo text, usuario text, aprobada text, fecha_aprob numeric, usuario_aprob text, clasif text, transaccion int, moneda_int int, cambio numeric,
   documento text, corr_aux int, siglas text, clasificacion text);
-create table public.mig326_lineas (pid int, linea int, codigo text, debito numeric, credito numeric, debito_mi numeric, credito_mi numeric, fecha_cierre int, clasif text, cambio numeric);
-create table public.mig326_trx (org int, loc int, numero int, descripcion text);
+create table public.mig326_lineas (pid int, linea int, codigo text, debito numeric, credito numeric, debito_mi numeric, credito_mi numeric, fecha_cierre int, clasif text, cambio numeric, primary key (pid, linea));
+create table public.mig326_trx (org int, loc int, numero int, descripcion text, primary key (org, loc, numero));
 do $$
 declare t text;
 begin
