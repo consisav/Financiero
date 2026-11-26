@@ -1,0 +1,9 @@
+{
+  "name": "carga-csv",
+  "private": true,
+  "description": "Carga los scripts de migración con CSV (328, 329 y 330) directo a la base de Supabase.",
+  "dependencies": {
+    "pg": "8.13.1",
+    "pg-copy-streams": "6.0.6"
+  }
+}
