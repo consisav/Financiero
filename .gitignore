@@ -225,3 +225,7 @@ supabase/pendientes/328_consisav_compras_parte_*.sql
 supabase/pendientes/329_csv/
 supabase/pendientes/329_consisav_ventas_parte_*.sql
 !supabase/pendientes/329_consisav_ventas_parte_0_de_*.sql
+# Script 330 (Consisav): archivos de facturas SAT con nombres y NIT de emisores y receptores: solo local (CSV y partes 1 en adelante). La parte 0 si se publica.
+supabase/pendientes/330_csv/
+supabase/pendientes/330_consisav_archivos_sat_parte_*.sql
+!supabase/pendientes/330_consisav_archivos_sat_parte_0_de_*.sql
