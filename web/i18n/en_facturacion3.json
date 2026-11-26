@@ -452,5 +452,20 @@
  "Serie, documento, póliza…": "Series, document, entry…",
  "Sin partida contable.": "No journal entry.",
  "Sin serie": "No series",
- "Ver todos": "View all"
+ "Ver todos": "View all",
+ "Facturas FEL anteriores": "Previous FEL invoices",
+ "Facturas FEL emitidas que se migraron de un sistema anterior (Consisav): encabezado del DTE con cliente, autorización, total, IVA, otros impuestos, estado y archivo de origen. Solo consulta, con reportes en PDF y Excel.": "FEL invoices issued in a previous system (Consisav): DTE header with customer, authorization, total, VAT, other taxes, status and source file. Inquiry only, with PDF and Excel reports.",
+ "Tipo de DTE": "DTE type",
+ "Cargando las facturas FEL…": "Loading FEL invoices…",
+ "Cargando la factura…": "Loading the invoice…",
+ "Cliente, NIT, serie, autorización…": "Customer, tax ID, series, authorization…",
+ "Buscar facturas FEL": "Search FEL invoices",
+ "Estado en la SAT": "SAT status",
+ "Otros impuestos": "Other taxes",
+ "Archivo de origen": "Source file",
+ "Fecha en el sistema anterior": "Date in the previous system",
+ "no existe en la nomenclatura": "not in the chart of accounts",
+ "Esta empresa no tiene facturas FEL emitidas migradas de un sistema anterior.": "This company has no FEL invoices migrated from a previous system.",
+ "Serie · número": "Series · number",
+ "Falta instalar el script 330 (archivos SAT de Consisav) en Supabase.": "Script 330 (Consisav SAT files) must be installed in Supabase."
 }

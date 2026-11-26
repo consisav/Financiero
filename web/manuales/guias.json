@@ -3339,5 +3339,15 @@
    "Elige la empresa, las fechas, la serie y el estado.",
    "Selecciona un resumen para ver sus documentos y su partida; genera el PDF o Excel."
   ]
+ },
+ "facturas-fel-anteriores": {
+  "puntos": [
+   "Facturas FEL emitidas migradas del sistema anterior: solo el encabezado del DTE, sin productos ni pagos."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Registros › Facturas › Facturas FEL anteriores.",
+   "Elige la empresa, las fechas, el tipo de DTE y el estado; busca por cliente, NIT, serie o autorización.",
+   "Selecciona una factura para ver su detalle; genera el PDF o Excel."
+  ]
  }
 }
