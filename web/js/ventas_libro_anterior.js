@@ -56,7 +56,7 @@
       if (prueba.error) { ctx.espacio.innerHTML = `<section class="panel"><p class="vacio">${/ventas_libro_anteriores/.test(prueba.error.message) ? 'Falta instalar el script 329 (libro de ventas anterior) en Supabase.' : esc(prueba.error.message)}</p></section>`; return; }
       await cargarLocalidad();
     }
-    // Al abrir o cambiar de empresa: el periodo por omisión es el último mes con datos de esa empresa.
+    // Al abrir o cambiar de empresa: el periodo por omisión es toda la historia de la empresa (o sus últimos tres meses si es muy grande).
     async function cargarLocalidad() {
       const loc = ctx.sel.loc;
       rango = null; f.serie = '';
@@ -67,7 +67,9 @@
         ]);
         if (u.data?.length) {
           rango = { n: u.count || 0, desde: p.data?.[0]?.fecha || u.data[0].fecha, hasta: u.data[0].fecha };
-          f.hasta = rango.hasta; f.desde = `${rango.hasta.slice(0, 8)}01`;
+          // Hasta 5,000 resúmenes: toda la historia; si son más, los últimos tres meses con datos (con «Ver todos» arriba).
+          const [y, m] = rango.hasta.split('-').map(Number); const k = y * 12 + m - 1 - 2;
+          f.hasta = rango.hasta; f.desde = rango.n <= 5000 ? rango.desde : `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`;
         } else { f.desde = fmt.hoy(); f.hasta = fmt.hoy(); }
       }
       pintarFiltros();
@@ -130,6 +132,7 @@
             <span class="ta-total"><b>Q ${fmt.monto(vivos.reduce((t, x) => t + n(x.iva), 0))}</b> IVA</span>
             <span class="ta-total"><b>Q ${fmt.monto(vivos.reduce((t, x) => t + n(x.total), 0))}</b> total</span>
             ${filas.length - vivos.length ? `<span class="ta-total sin"><b>${filas.length - vivos.length}</b> anulados</span>` : ''}
+            ${rango && (f.desde > rango.desde || f.hasta < rango.hasta) ? `<span class="ta-total sin">La empresa tiene <b>${rango.n.toLocaleString('es-GT')}</b> del ${esc(fmt.fechaDia(rango.desde))} al ${esc(fmt.fechaDia(rango.hasta))} <button type="button" class="boton secundario-sm" data-ver-todos>Ver todos</button></span>` : ''}
           </div>
           <label class="tk-buscar"><i class="ti ti-search" aria-hidden="true"></i><input type="search" data-buscar placeholder="Serie, documento, póliza…" value="${esc(f.buscar)}" aria-label="Buscar resúmenes"></label>
         </header>
