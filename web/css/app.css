@@ -4769,6 +4769,7 @@ td.tk-vacio > .ti { display: block; margin: 0 auto 6px; }
 }
 .vfc-tabla col.w-vf-num { width: 130px; } .vfc-tabla col.w-vf-vend { width: 150px; } .vfc-tabla col.w-vf-pago { width: 96px; } .vfc-tabla col.w-estado { width: 150px; }
 .vfc-det .vfc-pagos { margin-top: 8px; }
+.vla-tabla col.w-vla-serie { width: 150px; } .vla-tabla col.w-vla-n { width: 70px; } .vla-tabla col.w-vla-pol { width: 140px; }
 .vf-facturas .bm-form { overflow: auto !important; }
 .vf-facturas .bm-pestanas { min-height: 260px; }
 /* ===== Facturas Ventas · opción B: productos a la izquierda y panel lateral de resumen ===== */

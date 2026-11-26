@@ -3329,5 +3329,15 @@
    "Si un DTE certificado no tiene factura, presiona «Crear la factura»; «Enlazar documentos» vuelve a relacionar los DTE con las facturas y notas por número interno o autorización.",
    "Exporta el listado a PDF o Excel."
   ]
+ },
+ "libro-ventas-anterior": {
+  "puntos": [
+   "Libro de ventas migrado del sistema anterior: resúmenes diarios con sus documentos y su partida contable."
+  ],
+  "pasos": [
+   "Abre Facturación/Ventas › Registros › Facturas › Libro de ventas anterior.",
+   "Elige la empresa, las fechas, la serie y el estado.",
+   "Selecciona un resumen para ver sus documentos y su partida; genera el PDF o Excel."
+  ]
  }
 }
