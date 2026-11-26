@@ -211,3 +211,8 @@ supabase/pendientes/324_consisav_contable_parte_*.sql
 # Script 325 (Consisav): bancos, cuentas bancarias, cheques y cajas con numeros de cuenta y nombres de personas: solo local. La parte 0 (estructura) si se publica.
 supabase/pendientes/325_consisav_bancos_cajas_parte_*.sql
 !supabase/pendientes/325_consisav_bancos_cajas_parte_0_de_*.sql
+# Scripts 326 y 327 (Consisav): partidas contables y saldos mensuales con descripciones, nombres de personas y montos: solo local. La parte 0 (estructura) si se publica.
+supabase/pendientes/326_consisav_partidas_parte_*.sql
+!supabase/pendientes/326_consisav_partidas_parte_0_de_*.sql
+supabase/pendientes/327_consisav_saldos_mensuales_parte_*.sql
+!supabase/pendientes/327_consisav_saldos_mensuales_parte_0_de_*.sql
