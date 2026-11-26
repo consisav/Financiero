@@ -221,3 +221,7 @@ supabase/pendientes/327_consisav_saldos_mensuales_parte_*.sql
 supabase/pendientes/328_csv/
 supabase/pendientes/328_consisav_compras_parte_*.sql
 !supabase/pendientes/328_consisav_compras_parte_0_de_*.sql
+# Script 329 (Consisav): libro de ventas con nombres y NIT: solo local (CSV y partes 1 en adelante). La parte 0 si se publica.
+supabase/pendientes/329_csv/
+supabase/pendientes/329_consisav_ventas_parte_*.sql
+!supabase/pendientes/329_consisav_ventas_parte_0_de_*.sql
