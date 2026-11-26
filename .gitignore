@@ -204,3 +204,7 @@ supabase/pendientes/320_fel_tecnoalsa_parte_*.sql
 # Servidor Consisav (organizaciones 8 a 12): empresas, usuarios y parametros con NIT, nombres y cuentas: solo local. La parte 0 (estructura) si se publica.
 supabase/pendientes/321_consisav_parte_*.sql
 !supabase/pendientes/321_consisav_parte_0_de_*.sql
+
+# Servidor Consisav (organizaciones 13 a 17), script 324: cuentas, transacciones y reportes contables con nombres de personas y empresas: solo local. La parte 0 (estructura) si se publica.
+supabase/pendientes/324_consisav_contable_parte_*.sql
+!supabase/pendientes/324_consisav_contable_parte_0_de_*.sql
